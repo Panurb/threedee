@@ -1,0 +1,114 @@
+cmake_minimum_required(VERSION 3.18)
+
+project(threedee C)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
+    set(USE_FLAGS "-s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS=\"[\"\"png\"\"]\" -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+endif()
+
+include_directories(cJSON/include)
+include_directories(threedee/include)
+
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
+    include_directories(SDL/include)
+    include_directories(SDL_image/include)
+    include_directories(SDL_ttf/include)
+    include_directories(SDL_mixer/include)
+endif()
+
+set(SOURCES
+    cJSON/src/cJSON.c
+    threedee/src/animation.c
+    threedee/src/app.c
+    threedee/src/camera.c
+    threedee/src/collider.c
+    threedee/src/component.c
+    threedee/src/game.c
+    threedee/src/grid.c
+    threedee/src/heap.c
+    threedee/src/image.c
+    threedee/src/input.c
+    threedee/src/interface.c
+    threedee/src/list.c
+    threedee/src/menu.c
+    threedee/src/navigation.c
+    threedee/src/particle.c
+        threedee/src/perlin.c
+    threedee/src/physics.c
+    threedee/src/player.c
+    threedee/src/raycast.c
+    threedee/src/settings.c
+    threedee/src/sound.c
+    threedee/src/util.c
+    threedee/src/threedee.c
+    threedee/src/widget.c
+    threedee/src/outline.frag
+)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
+    add_executable(threedee ${SOURCES})
+    set_target_properties(threedee PROPERTIES LINK_FLAGS "--preload-file=data -s ALLOW_MEMORY_GROWTH=1 --shell-file ../shell.html")
+
+    file(COPY threedee/data
+        DESTINATION ${CMAKE_BINARY_DIR}
+        FILES_MATCHING 
+            PATTERN "*.png"
+            PATTERN "*.ttf"
+            PATTERN "*.wav"
+            PATTERN "*.json"
+            PATTERN "*.ogg"
+    )   
+else()
+    # Enable console by removing WIN32 flag
+    add_executable(threedee ${SOURCES})
+endif()
+
+install(TARGETS threedee
+    DESTINATION ${CMAKE_BINARY_DIR})
+
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+    set(LIBS
+        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/SDL2main.lib
+        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/SDL2.lib
+        ${CMAKE_SOURCE_DIR}/SDL_image/lib/x64/SDL2_image.lib
+        ${CMAKE_SOURCE_DIR}/SDL_ttf/lib/x64/SDL2_ttf.lib
+        ${CMAKE_SOURCE_DIR}/SDL_mixer/lib/x64/SDL2_mixer.lib
+    )
+
+    target_link_libraries(threedee ${LIBS})
+
+    set(DLLS
+        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/SDL2.dll
+        ${CMAKE_SOURCE_DIR}/SDL_image/lib/x64/SDL2_image.dll
+        ${CMAKE_SOURCE_DIR}/SDL_ttf/lib/x64/SDL2_ttf.dll
+        ${CMAKE_SOURCE_DIR}/SDL_mixer/lib/x64/SDL2_mixer.dll
+    )
+
+    install(FILES ${DLLS}
+        DESTINATION ${CMAKE_BINARY_DIR}
+    )
+
+    install(DIRECTORY threedee/data
+        DESTINATION ${CMAKE_BINARY_DIR}
+        FILES_MATCHING 
+            PATTERN "*.png"
+            PATTERN "*.ttf"
+            PATTERN "*.wav"
+            PATTERN "*.json"
+            PATTERN "*.ogg"
+    )
+
+    install(FILES ${EXTERNAL_DLLS}
+        DESTINATION ${CMAKE_BINARY_DIR}
+    )
+
+    set(CONFIG 
+        ${CMAKE_SOURCE_DIR}/threedee/config.cfg
+    )
+
+    install(FILES ${CONFIG}
+        DESTINATION ${CMAKE_BINARY_DIR}
+    )
+endif()
