@@ -8,8 +8,7 @@
 #include "util.h"
 #include "component.h"
 #include "camera.h"
-#include "vehicle.h"
-#include "item.h"
+#include "game.h"
 #include "settings.h"
 
 
@@ -141,7 +140,7 @@ bool keybind_pressed(PlayerAction i) {
     if (keybind.device == DEVICE_KEYBOARD) {
         return SDL_GetKeyboardState(NULL)[keybind.key];
     } else if (keybind.device == DEVICE_MOUSE) {
-        return SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(keybind.key);
+        return SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_MASK(keybind.key);
     } else {
         return false;
     }
@@ -251,11 +250,11 @@ void update_controller(int camera, int i) {
             player->controller.buttons_down[b] = down;
         }
     } else {
-        SDL_GameController* controller = app.controllers[joystick];
+        SDL_Gamepad* controller = app.controllers[joystick];
 
-        left_stick.x = map_to_range(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX), 
+        left_stick.x = map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTX),
             SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
-        left_stick.y = -map_to_range(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTY), 
+        left_stick.y = -map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTY),
             SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
         if (fabsf(left_stick.x) < 0.05f) {
             left_stick.x = 0.0f;
@@ -265,9 +264,9 @@ void update_controller(int camera, int i) {
         }
         player->controller.left_stick = left_stick;
 
-        right_stick.x = map_to_range(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX), 
+        right_stick.x = map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHTX),
             SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
-        right_stick.y = -map_to_range(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY),
+        right_stick.y = -map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHTY),
             SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
         if (norm(right_stick) < 0.25f) {
             right_stick = zeros();
@@ -277,13 +276,13 @@ void update_controller(int camera, int i) {
         }
         player->controller.right_stick = right_stick;
 
-        float trigger = 0.01f * SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+        float trigger = 0.01f * SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
         if (fabsf(trigger) < 0.1f) {
             trigger = 0.0f;
         }
         player->controller.left_trigger = trigger;
 
-        trigger = 0.01f * SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+        trigger = 0.01f * SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
         if (fabsf(trigger) < 0.1f) {
             trigger = 0.0f;
         }
@@ -293,8 +292,8 @@ void update_controller(int camera, int i) {
         // player->controller.dpad.y = 0.01f * SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
 
         for (int b = BUTTON_A; b <= BUTTON_R; b++) {
-            SDL_GameControllerButton button = player->controller.buttons[b];
-            bool down = SDL_GameControllerGetButton(controller, player->controller.buttons[b]);
+            SDL_GamepadButton button = player->controller.buttons[b];
+            bool down = SDL_GetGamepadButton(controller, player->controller.buttons[b]);
             if (b == BUTTON_LT) {
                 down = (player->controller.left_trigger > 0.5f);
             } else if (b == BUTTON_RT) {

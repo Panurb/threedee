@@ -8,7 +8,6 @@
 #include "component.h"
 #include "settings.h"
 #include "widget.h"
-#include "light.h"
 #include "input.h"
 #include "app.h"
 #include "util.h"
@@ -341,14 +340,17 @@ void toggle_controls(int entity) {
         if (app.controllers[i] == NULL) {
             continue;
         }
-        strcpy(CONTROLLERS[i + 2], SDL_GameControllerName(app.controllers[i]));
+        strcpy(CONTROLLERS[i + 2], SDL_GetGamepadName(app.controllers[i]));
     }
 
     for (int i = 0; i < 4; i++) {
         char buffer[128];
         snprintf(buffer, 128, "Player %d", i + 1);
         int left = create_label(buffer, zeros());
-        int right = create_dropdown(zeros(), CONTROLLERS, SDL_NumJoysticks() + 2);
+        int controllers = 0;
+        SDL_JoystickID* joysticks = SDL_GetJoysticks(&controllers);
+        free(joysticks);
+        int right = create_dropdown(zeros(), CONTROLLERS, controllers + 2);
         WidgetComponent* widget = WidgetComponent_get(right);
         widget->on_change = set_controller;
         widget->value = app.player_controllers[i] + 2;

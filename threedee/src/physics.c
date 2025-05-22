@@ -3,12 +3,9 @@
 #include <math.h>
 
 #include "component.h"
+#include "game.h"
 #include "util.h"
-#include "collider.h"
 #include "grid.h"
-#include "enemy.h"
-#include "sound.h"
-#include "health.h"
 
 
 void apply_force(int entity, Vector2f force) {

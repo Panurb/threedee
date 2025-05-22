@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "interface.h"
 
@@ -12,7 +12,7 @@
 typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
-    SDL_GameController* controllers[8];
+    SDL_Gamepad* controllers[8];
     int player_controllers[4];
     bool quit;
     bool focus;

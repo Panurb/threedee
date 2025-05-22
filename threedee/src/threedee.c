@@ -1,12 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include <stdlib.h>
-#include <time.h>
 #include <math.h>
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_mixer.h>
+#include <SDL3/SDL.h>
 #ifdef __EMSCRIPTEN__
     #include <emscripten.h>
 #endif

@@ -15,6 +15,11 @@
 #include "settings.h"
 
 
+SDL_FColor color_to_fcolor(Color color) {
+    return (SDL_FColor) { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f };
+}
+
+
 int create_camera() {
     int i = create_entity();
     CoordinateComponent_add(i, zeros(), 0.0);
@@ -114,7 +119,7 @@ void draw_line(int camera, Vector2f start, Vector2f end, float width, Color colo
     for (int i = 0; i < 4; i++) {
         Vector2f v = world_to_screen(camera, corners[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
-        vertices[i].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[i].color = color_to_fcolor(color);
     }
 
     int indices[6] = { 0, 1, 2, 2, 3, 0 };
@@ -132,7 +137,7 @@ void draw_circle(int camera, Vector2f position, float radius, Color color) {
     for (int i = 0; i < points_size; i++) {
         Vector2f v = world_to_screen(camera, points[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
-        vertices[i].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[i].color = color_to_fcolor(color);
     }
     vertices[points_size] = vertices[1];
 
@@ -150,9 +155,9 @@ void draw_ellipse_two_color(int camera, Vector2f position, float major, float mi
     for (int i = 0; i < points_size; i++) {
         Vector2f v = world_to_screen(camera, points[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
-        vertices[i].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[i].color = color_to_fcolor(color);
     }
-    vertices[0].color = (SDL_Color) { color_center.r, color_center.g, color_center.b, color_center.a };
+    vertices[0].color = color_to_fcolor(color_center);
 
     draw_triangle_fan(camera, vertices, points_size);
 }
@@ -178,7 +183,7 @@ void draw_ellipse(int camera, Vector2f position, float major, float minor, float
     for (int i = 0; i < 20; i++) {
         Vector2f v = world_to_screen(camera, points[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
-        vertices[i].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[i].color = color_to_fcolor(color);
     }
     vertices[20] = vertices[1];
 
@@ -194,7 +199,7 @@ void draw_rectangle(int camera, Vector2f position, float width, float height, fl
     for (int i = 0; i < 4; i++) {
         Vector2f v = world_to_screen(camera, corners[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
-        vertices[i].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[i].color = color_to_fcolor(color);
     }
 
     int indices[6] = { 0, 1, 2, 2, 3, 0 };
@@ -227,11 +232,11 @@ void draw_slice(int camera, Vector2f position, float min_range, float max_range,
     for (int k = 0; k < points / 2; k += 1) {
         Vector2f pos = world_to_screen(camera, sum(position, start));
         vertices[2 * k].position = (SDL_FPoint) { pos.x, pos.y };
-        vertices[2 * k].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[2 * k].color = color_to_fcolor(color);
         
         pos = world_to_screen(camera, sum(position, end));
         vertices[2 * k + 1].position = (SDL_FPoint) { pos.x, pos.y };
-        vertices[2 * k + 1].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[2 * k + 1].color = color_to_fcolor(color);
 
         start = matrix_mult(rot, start);
         end = matrix_mult(rot, end);
@@ -274,178 +279,178 @@ void draw_slice_outline(int camera, Vector2f position, float min_range, float ma
 }
 
 
-void draw_sprite(int camera, int texture_index, float width, float height, int offset, Vector2f position, float angle, 
+void draw_sprite(int camera, int texture_index, float width, float height, int offset, Vector2f position, float angle,
         Vector2f scale, float alpha) {
     if (texture_index == -1) {
         return;
     }
 
-    CameraComponent* cam = CameraComponent_get(camera);
-
-    Vector2f scaling = mult(cam->zoom / PIXELS_PER_UNIT, scale);
-
-    SDL_Texture* texture = resources.textures[texture_index];
-    SDL_SetTextureAlphaMod(texture, 255 * alpha);
-
-    SDL_Rect src = { 0, 0, width * PIXELS_PER_UNIT, height * PIXELS_PER_UNIT };
-    if (offset != 0) {
-        src.x = offset * width * PIXELS_PER_UNIT;
-    }
-
-    bool tile = false;
-    int texture_width;
-    int texture_height;
-    SDL_QueryTexture(texture, NULL, NULL, &texture_width, &texture_height);
-    if (texture_width < width * PIXELS_PER_UNIT || texture_height < height * PIXELS_PER_UNIT) {
-        tile = true;
-    }
-
-    if (width == 0.0f || height == 0.0f) {
-        SDL_QueryTexture(texture, NULL, NULL, &src.w, &src.h);
-        width = (float)src.w / PIXELS_PER_UNIT;
-        height = (float)src.h / PIXELS_PER_UNIT;
-    }
-
-    Vector2f pos = world_to_screen(camera, position);
-
-    SDL_FRect dest;
-    dest.w = width * scaling.x * PIXELS_PER_UNIT;
-    dest.h = height * scaling.y * PIXELS_PER_UNIT;
-    dest.x = pos.x - 0.5f * dest.w;
-    dest.y = pos.y - 0.5f * dest.h;
-
-    SDL_Rect* psrc = &src;
-    if (width == 0.0f || height == 0.0f) {
-        SDL_Rect* psrc = NULL;
-    }
-    SDL_RenderCopyExF(app.renderer, texture, psrc, &dest, -to_degrees(angle), NULL, SDL_FLIP_NONE);
+    // CameraComponent* cam = CameraComponent_get(camera);
+    //
+    // Vector2f scaling = mult(cam->zoom / PIXELS_PER_UNIT, scale);
+    //
+    // SDL_Texture* texture = resources.textures[texture_index];
+    // SDL_SetTextureAlphaMod(texture, 255 * alpha);
+    //
+    // SDL_Rect src = { 0, 0, width * PIXELS_PER_UNIT, height * PIXELS_PER_UNIT };
+    // if (offset != 0) {
+    //     src.x = offset * width * PIXELS_PER_UNIT;
+    // }
+    //
+    // bool tile = false;
+    // int texture_width;
+    // int texture_height;
+    // SDL_QueryTexture(texture, NULL, NULL, &texture_width, &texture_height);
+    // if (texture_width < width * PIXELS_PER_UNIT || texture_height < height * PIXELS_PER_UNIT) {
+    //     tile = true;
+    // }
+    //
+    // if (width == 0.0f || height == 0.0f) {
+    //     SDL_QueryTexture(texture, NULL, NULL, &src.w, &src.h);
+    //     width = (float)src.w / PIXELS_PER_UNIT;
+    //     height = (float)src.h / PIXELS_PER_UNIT;
+    // }
+    //
+    // Vector2f pos = world_to_screen(camera, position);
+    //
+    // SDL_FRect dest;
+    // dest.w = width * scaling.x * PIXELS_PER_UNIT;
+    // dest.h = height * scaling.y * PIXELS_PER_UNIT;
+    // dest.x = pos.x - 0.5f * dest.w;
+    // dest.y = pos.y - 0.5f * dest.h;
+    //
+    // SDL_Rect* psrc = &src;
+    // if (width == 0.0f || height == 0.0f) {
+    //     SDL_Rect* psrc = NULL;
+    // }
+    // SDL_RenderCopyExF(app.renderer, texture, psrc, &dest, -to_degrees(angle), NULL, SDL_FLIP_NONE);
 }
 
 
-void draw_tiles(int camera, int texture_index, float width, float height, Vector2f offset, Vector2f position, 
+void draw_tiles(int camera, int texture_index, float width, float height, Vector2f offset, Vector2f position,
         float angle, Vector2f scale, float alpha) {
     if (texture_index == -1) {
         return;
     }
 
-    CameraComponent* cam = CameraComponent_get(camera);
-
-    SDL_Texture* texture = resources.textures[texture_index];
-    SDL_Rect src = { 0, 0, 0, 0 };
-    
-    Resolution texture_size = resources.texture_sizes[texture_index];
-    src.w = texture_size.w * PIXELS_PER_UNIT;
-    src.h = texture_size.h * PIXELS_PER_UNIT;
-    float tile_width = texture_size.w;
-    float tile_height = texture_size.h;
-    
-    if (offset.x > tile_width || offset.y > tile_height || offset.x < 0.0f || offset.y < 0.0f) {
-        LOG_ERROR("Offset: %f, %f out of bounds: %f, %f", offset.x, offset.y, tile_width, tile_height);
-    }
-
-    SDL_FRect dest = { 0, 0, 0, 0 };
-
-    Vector2f x = polar_to_cartesian(1.0f, angle);
-
-    // Flip y-axis because of screen coordinates, offset is inverted as well
-    Vector2f y = mult(-1.0f, perp(x));
-    offset.y = tile_height - offset.y;
-    
-    float accumulated_width = 0.0f;
-    float current_tile_width = (tile_width - offset.x) * scale.x;
-    src.x = offset.x * PIXELS_PER_UNIT;
-
-    while (accumulated_width < width) {
-        if ((width - accumulated_width) * scale.x < current_tile_width) {
-            current_tile_width = (width - accumulated_width) * scale.x;
-        }
-        
-        float accumulated_height = 0.0f;
-        float current_tile_height = (tile_height - offset.y) * scale.y;
-        src.y = offset.y * PIXELS_PER_UNIT;
-        while (accumulated_height < height) {
-            if ((height - accumulated_height) * scale.y < current_tile_height) {
-                current_tile_height = (height - accumulated_height) * scale.y;
-            }
-
-            Vector2f p = sum(position, lin_comb(accumulated_width - 0.5f * (width - current_tile_width), x, 
-                                                accumulated_height - 0.5f * (height - current_tile_height), y));
-            Vector2f pos = world_to_screen(camera, p);
-
-            src.w = current_tile_width * PIXELS_PER_UNIT / scale.x;
-            src.h = current_tile_height * PIXELS_PER_UNIT / scale.y;
-
-            dest.w = current_tile_width * cam->zoom;
-            dest.h = current_tile_height * cam->zoom;
-            dest.x = pos.x - 0.5f * dest.w;
-            dest.y = pos.y - 0.5f * dest.h;
-
-            SDL_RenderCopyExF(app.renderer, texture, &src, &dest, -to_degrees(angle), NULL, SDL_FLIP_NONE);
-            // draw_rectangle_outline(camera, p, current_tile_width, current_tile_height, angle, 0.05f, COLOR_WHITE);
-            
-            accumulated_height += current_tile_height;
-            current_tile_height = tile_height * scale.y;
-            src.y = 0;
-        }
-        accumulated_width += current_tile_width;
-        current_tile_width = tile_width * scale.x;
-        src.x = 0;
-    }
+    // CameraComponent* cam = CameraComponent_get(camera);
+    //
+    // SDL_Texture* texture = resources.textures[texture_index];
+    // SDL_Rect src = { 0, 0, 0, 0 };
+    //
+    // Resolution texture_size = resources.texture_sizes[texture_index];
+    // src.w = texture_size.w * PIXELS_PER_UNIT;
+    // src.h = texture_size.h * PIXELS_PER_UNIT;
+    // float tile_width = texture_size.w;
+    // float tile_height = texture_size.h;
+    //
+    // if (offset.x > tile_width || offset.y > tile_height || offset.x < 0.0f || offset.y < 0.0f) {
+    //     LOG_ERROR("Offset: %f, %f out of bounds: %f, %f", offset.x, offset.y, tile_width, tile_height);
+    // }
+    //
+    // SDL_FRect dest = { 0, 0, 0, 0 };
+    //
+    // Vector2f x = polar_to_cartesian(1.0f, angle);
+    //
+    // // Flip y-axis because of screen coordinates, offset is inverted as well
+    // Vector2f y = mult(-1.0f, perp(x));
+    // offset.y = tile_height - offset.y;
+    //
+    // float accumulated_width = 0.0f;
+    // float current_tile_width = (tile_width - offset.x) * scale.x;
+    // src.x = offset.x * PIXELS_PER_UNIT;
+    //
+    // while (accumulated_width < width) {
+    //     if ((width - accumulated_width) * scale.x < current_tile_width) {
+    //         current_tile_width = (width - accumulated_width) * scale.x;
+    //     }
+    //
+    //     float accumulated_height = 0.0f;
+    //     float current_tile_height = (tile_height - offset.y) * scale.y;
+    //     src.y = offset.y * PIXELS_PER_UNIT;
+    //     while (accumulated_height < height) {
+    //         if ((height - accumulated_height) * scale.y < current_tile_height) {
+    //             current_tile_height = (height - accumulated_height) * scale.y;
+    //         }
+    //
+    //         Vector2f p = sum(position, lin_comb(accumulated_width - 0.5f * (width - current_tile_width), x,
+    //                                             accumulated_height - 0.5f * (height - current_tile_height), y));
+    //         Vector2f pos = world_to_screen(camera, p);
+    //
+    //         src.w = current_tile_width * PIXELS_PER_UNIT / scale.x;
+    //         src.h = current_tile_height * PIXELS_PER_UNIT / scale.y;
+    //
+    //         dest.w = current_tile_width * cam->zoom;
+    //         dest.h = current_tile_height * cam->zoom;
+    //         dest.x = pos.x - 0.5f * dest.w;
+    //         dest.y = pos.y - 0.5f * dest.h;
+    //
+    //         SDL_RenderCopyExF(app.renderer, texture, &src, &dest, -to_degrees(angle), NULL, SDL_FLIP_NONE);
+    //         // draw_rectangle_outline(camera, p, current_tile_width, current_tile_height, angle, 0.05f, COLOR_WHITE);
+    //
+    //         accumulated_height += current_tile_height;
+    //         current_tile_height = tile_height * scale.y;
+    //         src.y = 0;
+    //     }
+    //     accumulated_width += current_tile_width;
+    //     current_tile_width = tile_width * scale.x;
+    //     src.x = 0;
+    // }
 }
 
 
-void draw_sprite_outline(int camera, int texture_index, float width, float height, int offset, Vector2f position, 
+void draw_sprite_outline(int camera, int texture_index, float width, float height, int offset, Vector2f position,
         float angle, Vector2f scale) {
     if (texture_index == -1) {
         return;
     }
 
-    CameraComponent* cam = CameraComponent_get(camera);
-
-    Vector2f scaling = mult(cam->zoom / PIXELS_PER_UNIT, scale);
-
-    SDL_Texture* texture = resources.outline_textures[texture_index];
-
-    SDL_Rect src = { 0, 0, width * PIXELS_PER_UNIT, height * PIXELS_PER_UNIT };
-    if (offset != 0) {
-        src.x = offset * width * PIXELS_PER_UNIT;
-    }
-
-    bool tile = false;
-    int texture_width;
-    int texture_height;
-    SDL_QueryTexture(texture, NULL, NULL, &texture_width, &texture_height);
-    if (texture_width < width * PIXELS_PER_UNIT || texture_height < height * PIXELS_PER_UNIT) {
-        tile = true;
-    }
-
-    if (tile) {
-        draw_rectangle_outline(camera, position, width, height, angle, 0.05f, COLOR_WHITE);
-    } else {
-        if (width == 0.0f || height == 0.0f) {
-            SDL_QueryTexture(texture, NULL, NULL, &src.w, &src.h);
-            width = (float)src.w / PIXELS_PER_UNIT;
-            height = (float)src.h / PIXELS_PER_UNIT;
-        }
-
-        Vector2f pos = world_to_screen(camera, position);
-
-        SDL_FRect dest;
-        dest.w = width * scaling.x * PIXELS_PER_UNIT;
-        dest.h = height * scaling.y * PIXELS_PER_UNIT;
-        dest.x = pos.x - 0.5f * dest.w;
-        dest.y = pos.y - 0.5f * dest.h;
-
-        SDL_Rect* psrc = &src;
-        if (width == 0.0f || height == 0.0f) {
-            SDL_Rect* psrc = NULL;
-        }
-        SDL_RenderCopyExF(app.renderer, texture, psrc, &dest, -to_degrees(angle), NULL, SDL_FLIP_NONE);
-    }  
+    // CameraComponent* cam = CameraComponent_get(camera);
+    //
+    // Vector2f scaling = mult(cam->zoom / PIXELS_PER_UNIT, scale);
+    //
+    // SDL_Texture* texture = resources.outline_textures[texture_index];
+    //
+    // SDL_Rect src = { 0, 0, width * PIXELS_PER_UNIT, height * PIXELS_PER_UNIT };
+    // if (offset != 0) {
+    //     src.x = offset * width * PIXELS_PER_UNIT;
+    // }
+    //
+    // bool tile = false;
+    // int texture_width;
+    // int texture_height;
+    // SDL_QueryTexture(texture, NULL, NULL, &texture_width, &texture_height);
+    // if (texture_width < width * PIXELS_PER_UNIT || texture_height < height * PIXELS_PER_UNIT) {
+    //     tile = true;
+    // }
+    //
+    // if (tile) {
+    //     draw_rectangle_outline(camera, position, width, height, angle, 0.05f, COLOR_WHITE);
+    // } else {
+    //     if (width == 0.0f || height == 0.0f) {
+    //         SDL_QueryTexture(texture, NULL, NULL, &src.w, &src.h);
+    //         width = (float)src.w / PIXELS_PER_UNIT;
+    //         height = (float)src.h / PIXELS_PER_UNIT;
+    //     }
+    //
+    //     Vector2f pos = world_to_screen(camera, position);
+    //
+    //     SDL_FRect dest;
+    //     dest.w = width * scaling.x * PIXELS_PER_UNIT;
+    //     dest.h = height * scaling.y * PIXELS_PER_UNIT;
+    //     dest.x = pos.x - 0.5f * dest.w;
+    //     dest.y = pos.y - 0.5f * dest.h;
+    //
+    //     SDL_Rect* psrc = &src;
+    //     if (width == 0.0f || height == 0.0f) {
+    //         SDL_Rect* psrc = NULL;
+    //     }
+    //     SDL_RenderCopyExF(app.renderer, texture, psrc, &dest, -to_degrees(angle), NULL, SDL_FLIP_NONE);
+    // }
 }
 
 
-void draw_text(int camera, Vector2f position, char string[100], int size, Color color) {
+void draw_text(int camera, Vector2f position, String string, int size, Color color) {
     if (color.a == 0) {
         return;
     }
@@ -463,11 +468,11 @@ void draw_text(int camera, Vector2f position, char string[100], int size, Color 
 
     Vector2f pos = world_to_screen(camera, position);
     SDL_Color c = { color.r, color.g, color.b, color.a };
-    SDL_Surface* surface = TTF_RenderText_Blended(font, string, c);
+    SDL_Surface* surface = TTF_RenderText_Blended(font, string, STRING_SIZE, c);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(app.renderer, surface);
     SDL_FRect dest = { pos.x - 0.5f * surface->w, pos.y - 0.5f * surface->h, surface->w, surface->h };
-    SDL_RenderCopyF(app.renderer, texture, NULL, &dest);
-    SDL_FreeSurface(surface);
+    SDL_RenderTexture(app.renderer, texture, NULL, &dest);
+    SDL_DestroySurface(surface);
     SDL_DestroyTexture(texture);
 }
 
@@ -477,7 +482,7 @@ void draw_skewed(int camera, int texture_index, Vector2f corners[4]) {
     for (int i = 0; i < 4; i++) {
         Vector2f v = world_to_screen(camera, corners[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
-        vertices[i].color = (SDL_Color) { 255, 255, 255, 255 };
+        vertices[i].color = color_to_fcolor((Color) { 255, 255, 255, 255 });
     }
     vertices[0].tex_coord = (SDL_FPoint) { 0.0f, 0.0f };
     vertices[1].tex_coord = (SDL_FPoint) { 1.0f, 0.0f };
@@ -531,12 +536,12 @@ void draw_spline(Entity camera, int texture_index, Vector2f p0, Vector2f p1, Vec
 
         Vector2f v = world_to_screen(camera, sum(pos, normal));
         vertices[2 * i].position = (SDL_FPoint) { v.x, v.y };
-        vertices[2 * i].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[2 * i].color = color_to_fcolor(color);
         vertices[2 * i].tex_coord = (SDL_FPoint) { t, 0.0f };
 
         v = world_to_screen(camera, diff(pos, normal));
         vertices[2 * i + 1].position = (SDL_FPoint) { v.x, v.y };
-        vertices[2 * i + 1].color = (SDL_Color) { color.r, color.g, color.b, color.a };
+        vertices[2 * i + 1].color = color_to_fcolor(color);
         vertices[2 * i + 1].tex_coord = (SDL_FPoint) { t, 1.0f };
     }
 

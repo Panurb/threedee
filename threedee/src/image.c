@@ -2,8 +2,8 @@
 #include <string.h>
 #include <math.h>
 
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 
 #include "app.h"
 #include "image.h"
@@ -37,16 +37,18 @@ Resolution get_texture_size(Filename filename) {
     }
     Resolution resolution;
     int index = get_texture_index(filename);
-    SDL_QueryTexture(resources.textures[index], NULL, NULL, &resolution.w, &resolution.h);
+    resolution.w = resources.textures[index]->w;
+    resolution.h = resources.textures[index]->h;
     return resolution;
 }
 
 
 void set_pixel(SDL_Surface *surface, int x, int y, Color color) {
-    const Uint32 pixel = SDL_MapRGBA(surface->format, color.r, color.g, color.b, color.a);
+
+    const Uint32 pixel = SDL_MapRGBA(SDL_GetPixelFormatDetails(surface->format), NULL, color.r, color.g, color.b, color.a);
     Uint32 * const target_pixel = (Uint32 *) ((Uint8 *) surface->pixels
                                                 + y * surface->pitch
-                                                + x * surface->format->BytesPerPixel);
+                                                + x * SDL_GetPixelFormatDetails(surface->format)->bytes_per_pixel);
     *target_pixel = pixel;
 }
 
@@ -58,10 +60,10 @@ Color get_pixel(SDL_Surface *surface, int x, int y) {
 
     Uint32 * const target_pixel = (Uint32 *) ((Uint8 *) surface->pixels
                                                 + y * surface->pitch
-                                                + x * surface->format->BytesPerPixel);
+                                                + x * SDL_GetPixelFormatDetails(surface->format)->bytes_per_pixel);
     Uint32 pixel = *target_pixel;
     Uint8 r, g, b, a;
-    SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
+    SDL_GetRGBA(pixel, SDL_GetPixelFormatDetails(surface->format), NULL, &r, &g, &b, &a);
     return (Color) { r, g, b, a };
 }
 
@@ -72,63 +74,6 @@ int create_decal(Vector2f pos, Filename filename, float lifetime) {
     ImageComponent_add(i, filename, 0.0f, 0.0f, LAYER_DECALS);
 
     return i;
-}
-
-
-SDL_Texture* create_outline_texture(Filename path) {
-    SDL_Surface* surface = IMG_Load(path);
-
-    // Create transparent surface
-    SDL_Surface* outline_surface = SDL_CreateRGBSurface(0, surface->w, surface->h, 32, 
-        0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-
-    int offset = 5;
-    for (int x = 0; x < surface->w; x++) {
-        for (int y = 0; y < surface->h; y++) {
-            if (get_pixel(surface, x, y).a > 0) {
-                set_pixel(outline_surface, x, y, get_color(0.0f, 0.0f, 0.0f, 0.0f));
-                continue;
-            }
-
-            int au = get_pixel(surface, x, y - offset).a;
-            int ad = get_pixel(surface, x, y + offset).a;
-            int al = get_pixel(surface, x - offset, y).a;
-            int ar = get_pixel(surface, x + offset, y).a;
-
-            if (au > 0 || ad > 0 || al > 0 || ar > 0) {
-                set_pixel(outline_surface, x, y, COLOR_WHITE);
-            }
-        }
-    }
-
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(app.renderer, outline_surface);
-    SDL_FreeSurface(outline_surface);
-    SDL_FreeSurface(surface);
-
-    return texture;
-}
-
-
-SDL_Texture* create_blood_particle_texture() {
-    SDL_Surface* surface = SDL_CreateRGBSurface(0, PIXELS_PER_UNIT, PIXELS_PER_UNIT, 32, 
-        0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-
-    for (int i = 0; i < PIXELS_PER_UNIT; i++) {
-        for (int j = 0; j < PIXELS_PER_UNIT; j++) {
-            float x = 2.0f * i / (float) PIXELS_PER_UNIT - 1.0f;
-            float y = 2.0f * j / (float) PIXELS_PER_UNIT - 1.0f;
-            float r = sqrtf(x * x + y * y);
-
-            if (r == 0.0f) {
-                set_pixel(surface, i, j, get_color(1.0f, 0.0f, 0.0f, 1.0f));
-            } else {
-                float a = clamp(0.1f / r - 0.1f, 0.0f, 1.0f);
-                set_pixel(surface, i, j, get_color(1.0f, 0.0f, 0.0f, a));
-            }
-        }
-    }
-
-    return SDL_CreateTextureFromSurface(app.renderer, surface);
 }
 
 
@@ -150,7 +95,6 @@ void load_textures() {
         SDL_Texture* texture = IMG_LoadTexture(app.renderer, path);
 
         resources.textures[i] = texture;
-        resources.outline_textures[i] = create_outline_texture(path);
     }
 
     for (int i = 0; i < resources.textures_size; i++) {

@@ -1,6 +1,9 @@
+#define _USE_MATH_DEFINES
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "navigation.h"
 #include "util.h"

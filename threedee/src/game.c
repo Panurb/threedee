@@ -2,37 +2,23 @@
 #include <time.h>
 #include <string.h>
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "app.h"
 #include "game.h"
+
+#include <math.h>
+#include <stdlib.h>
+
 #include "camera.h"
-#include "player.h"
 #include "component.h"
-#include "collider.h"
-#include "physics.h"
 #include "util.h"
 #include "image.h"
-#include "light.h"
 #include "grid.h"
-#include "enemy.h"
-#include "particle.h"
 #include "navigation.h"
-#include "perlin.h"
-#include "weapon.h"
-#include "path.h"
 #include "sound.h"
-#include "hud.h"
-#include "animation.h"
-#include "door.h"
-#include "menu.h"
-#include "serialize.h"
-#include "item.h"
-#include "widget.h"
 #include "settings.h"
-#include "health.h"
-#include "weather.h"
 
 
 GameState game_state = STATE_MENU;
@@ -48,7 +34,7 @@ void load_resources() {
     for (int size = 1; size <= 300; size++) {
         resources.fonts[size] = TTF_OpenFont("data/Helvetica.ttf", size);
         if (!resources.fonts[size]) {
-            fprintf(stderr, "Error loading font: %s\n", TTF_GetError());
+            fprintf(stderr, "Error loading font: %s\n", SDL_GetError());
             exit(1);
         }
     }

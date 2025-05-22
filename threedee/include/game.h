@@ -1,7 +1,7 @@
 #pragma once
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <SDL_mixer.h>
 
 #include "component.h"
@@ -48,7 +48,6 @@ typedef struct {
     String texture_names[MAX_TEXTURES];
     int textures_size;
     SDL_Texture* textures[MAX_TEXTURES];
-    SDL_Texture* outline_textures[MAX_TEXTURES];
     Resolution texture_sizes[MAX_TEXTURES];
     TTF_Font* fonts[301];
     String sound_names[MAX_SOUNDS];

@@ -11,13 +11,8 @@
 #include "util.h"
 #include "grid.h"
 #include "physics.h"
-#include "raycast.h"
-#include "sound.h"
-#include "particle.h"
 #include "image.h"
-#include "health.h"
 #include "game.h"
-#include "enemy.h"
 
 
 float collider_width(int i) {

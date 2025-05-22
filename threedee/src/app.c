@@ -1,15 +1,16 @@
 #include <stdio.h>
 
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL3/SDL.h>
 
 #include "app.h"
+
+#include <math.h>
+#include <stdlib.h>
+
 #include "game.h"
 #include "settings.h"
 #include "interface.h"
-#include "player.h"
 #include "menu.h"
-#include "input.h"
 
 
 App app;
@@ -20,11 +21,10 @@ static int debug_level = 0;
 
 
 void create_game_window() {
-    app.window = SDL_CreateWindow("ThreeDee", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        game_settings.width, game_settings.height, SDL_WINDOW_SHOWN);
+    app.window = SDL_CreateWindow("ThreeDee", game_settings.width, game_settings.height, 0);
     SDL_SetWindowFullscreen(app.window, game_settings.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, game_settings.vsync ? "1" : "0");
-    app.renderer = SDL_CreateRenderer(app.window, -1, SDL_RENDERER_ACCELERATED);
+    app.renderer = SDL_CreateRenderer(app.window, NULL);
 }
 
 
@@ -53,22 +53,25 @@ void resize_game_window() {
 void init() {
     setbuf(stdout, NULL);
 
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO);
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-    SDL_ShowCursor(SDL_DISABLE);
-    
-    IMG_Init(IMG_INIT_PNG);
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO);
+    // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+    SDL_HideCursor();
+
+    // IMG_Init(IMG_INIT_PNG);
     TTF_Init();
-    Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 2048);
+    Mix_OpenAudio(0, NULL);
     Mix_AllocateChannels(32);
 
     memset(app.controllers, 0, sizeof(app.controllers));
 
-    int controllers = SDL_NumJoysticks();
+    int controllers = 0;
+    SDL_JoystickID* joysticks = SDL_GetGamepads(&controllers);
+    free(joysticks);
+
     for (int i = 0; i < controllers; i++) {
-        if (SDL_IsGameController(i)) {
+        if (SDL_IsGamepad(i)) {
             if (app.controllers[i] == NULL) {
-                app.controllers[i] = SDL_GameControllerOpen(i);
+                app.controllers[i] = SDL_OpenGamepad(i);
             }
         }
     }
@@ -94,7 +97,7 @@ void quit() {
 
     Mix_CloseAudio();
     TTF_Quit();
-    IMG_Quit();
+    // IMG_Quit();
     SDL_Quit();
 }
 
@@ -102,8 +105,8 @@ void quit() {
 void input_game(SDL_Event sdl_event) {
     switch (game_state) {
         case STATE_GAME:
-            if (sdl_event.type == SDL_KEYDOWN && sdl_event.key.repeat == 0) {
-                if (sdl_event.key.keysym.sym == SDLK_F1) {
+            if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.repeat == 0) {
+                if (sdl_event.key.key == SDLK_F1) {
                     if (game_settings.debug) {
                         debug_level = (debug_level + 1) % 4;
                     }
@@ -120,28 +123,26 @@ void input() {
     while (SDL_PollEvent(&sdl_event))
     {
         switch (sdl_event.type) {
-            case SDL_WINDOWEVENT:
-                if (sdl_event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-                    app.focus = false;
-                } else if (sdl_event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-                    app.focus = true;
-                }
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+                app.focus = false;
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                app.focus = true;
                 break;
-            case SDL_QUIT:
+            case SDL_EVENT_QUIT:
                 app.quit = true;
                 return;
-            case SDL_JOYDEVICEADDED:
+            case SDL_EVENT_JOYSTICK_ADDED:
                 if (app.controllers[sdl_event.jdevice.which] == NULL) {
-                    app.controllers[sdl_event.jdevice.which] = SDL_GameControllerOpen(sdl_event.jdevice.which);
+                    app.controllers[sdl_event.jdevice.which] = SDL_OpenGamepad(sdl_event.jdevice.which);
                     LOG_INFO("Joystick added: %d", sdl_event.jdevice.which)
                 }
                 break;
-            case SDL_JOYDEVICEREMOVED:
+            case SDL_EVENT_JOYSTICK_REMOVED:
                 for (int i = 0; i < 8; i++) {
                     if (app.controllers[i] == NULL) continue;
 
-                    if (SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(app.controllers[i])) == sdl_event.jdevice.which) {
-                        SDL_GameControllerClose(app.controllers[i]);
+                    if (SDL_GetGamepadID(app.controllers[i]) == sdl_event.jdevice.which) {
+                        SDL_CloseGamepad(app.controllers[i]);
                         app.controllers[i] = NULL;
                         LOG_INFO("Joystick removed: %d", sdl_event.jdevice.which)
                     }

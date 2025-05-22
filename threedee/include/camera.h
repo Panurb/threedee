@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL_image.h>
+#include <SDL3_image/SDL_image.h>
 
 #include "component.h"
 

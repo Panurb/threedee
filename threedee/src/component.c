@@ -252,10 +252,12 @@ PlayerComponent* PlayerComponent_add(int entity) {
 
     player->controller.joystick = -1;
     
-    int buttons[12] = { SDL_CONTROLLER_BUTTON_A, SDL_CONTROLLER_BUTTON_B, SDL_CONTROLLER_BUTTON_X, SDL_CONTROLLER_BUTTON_Y,
-                        SDL_CONTROLLER_BUTTON_LEFTSHOULDER, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, SDL_CONTROLLER_BUTTON_START,
-                        SDL_CONTROLLER_BUTTON_BACK, SDL_CONTROLLER_BUTTON_LEFTSTICK, SDL_CONTROLLER_BUTTON_RIGHTSTICK,
-                        SDL_CONTROLLER_BUTTON_DPAD_UP, SDL_CONTROLLER_BUTTON_DPAD_DOWN};
+    int buttons[12] = {
+        SDL_GAMEPAD_BUTTON_SOUTH, SDL_GAMEPAD_BUTTON_EAST, SDL_GAMEPAD_BUTTON_WEST, SDL_GAMEPAD_BUTTON_NORTH,
+        SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, SDL_GAMEPAD_BUTTON_START,
+        SDL_GAMEPAD_BUTTON_BACK, SDL_GAMEPAD_BUTTON_LEFT_STICK, SDL_GAMEPAD_BUTTON_RIGHT_STICK,
+        SDL_GAMEPAD_BUTTON_DPAD_UP, SDL_GAMEPAD_BUTTON_DPAD_DOWN
+    };
     memcpy(player->controller.buttons, buttons, sizeof(buttons));
 
     player->controller.left_stick = zeros();
@@ -283,7 +285,7 @@ void PlayerComponent_remove(int entity) {
     PlayerComponent* player = PlayerComponent_get(entity);
     if (player) {
         if (player->controller.joystick != -1) {
-            SDL_GameControllerClose(app.controllers[player->controller.joystick]);
+            SDL_CloseGamepad(app.controllers[player->controller.joystick]);
             app.controllers[player->controller.joystick] = NULL;
         }
         free(player);

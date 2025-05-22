@@ -1,10 +1,8 @@
 #pragma once
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "util.h"
-#include "component.h"
-#include "camera.h"
 #include "settings.h"
 
 

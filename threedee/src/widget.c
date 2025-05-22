@@ -529,12 +529,12 @@ bool input_widgets(int camera, SDL_Event event) {
     static int grabbed_window = -1;
     static Vector2f grab_offset = { 0.0f, 0.0f };
     
-    if (event.type == SDL_MOUSEMOTION) {
+    if (event.type == SDL_EVENT_MOUSE_MOTION) {
         Vector2f mouse_screen = { event.motion.x, event.motion.y };
         mouse_position = screen_to_world(camera, mouse_screen);
-    } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+    } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
         mouse_down = true;
-    } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+    } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
         mouse_down = false;
         grabbed_window = -1;
     }
@@ -551,7 +551,7 @@ bool input_widgets(int camera, SDL_Event event) {
 
         CoordinateComponent* coord = CoordinateComponent_get(i);
 
-        if (event.type == SDL_MOUSEMOTION) {
+        if (event.type == SDL_EVENT_MOUSE_MOTION) {
             if (widget->type == WIDGET_WINDOW) {
                 if (i == grabbed_window) {
                     coord->position = sum(mouse_position, grab_offset);
@@ -568,7 +568,7 @@ bool input_widgets(int camera, SDL_Event event) {
                     return true;
                 }
             }
-        } else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+        } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT) {
             if (widget->type == WIDGET_WINDOW) {
                 grabbed_window = i;
                 grab_offset = diff(coord->position, mouse_position);
@@ -578,12 +578,12 @@ bool input_widgets(int camera, SDL_Event event) {
             int root = get_root(i);
             bring_to_top(root);
             return true;
-        } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+        } else if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
             if (widget->on_click) {
                 widget->on_click(i);
                 return true;
             }
-        } else if (event.type == SDL_MOUSEWHEEL) {
+        } else if (event.type == SDL_EVENT_MOUSE_WHEEL) {
             int delta = -event.wheel.y;
             if (widget->type == WIDGET_CONTAINER || widget->type == WIDGET_SPINBOX 
                     || widget->type == WIDGET_SCROLLBAR) {
@@ -603,7 +603,7 @@ bool input_widgets(int camera, SDL_Event event) {
 
     if (top_textbox != -1) {
         WidgetComponent* widget = WidgetComponent_get(top_textbox);
-        if (event.type == SDL_TEXTINPUT) {
+        if (event.type == SDL_EVENT_TEXT_INPUT) {
             char* character = (char*) &event.text.text;
             int len = strlen(widget->string);
             if (len < widget->max_value - 1) {
@@ -611,8 +611,8 @@ bool input_widgets(int camera, SDL_Event event) {
             }
 
             input_detected = true;
-        } else if (event.type == SDL_KEYDOWN) {
-            if (event.key.keysym.sym == SDLK_BACKSPACE) {
+        } else if (event.type == SDL_EVENT_KEY_DOWN) {
+            if (event.key.key == SDLK_BACKSPACE) {
                 int len = strlen(widget->string);
                 if (len > 0) {
                     widget->string[len - 1] = '\0';

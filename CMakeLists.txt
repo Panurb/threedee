@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.18)
 project(threedee C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
-    set(USE_FLAGS "-s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS=\"[\"\"png\"\"]\" -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2")
+    set(USE_FLAGS "-s USE_SDL=3 -s USE_SDL_IMAGE=3 -s SDL3_IMAGE_FORMATS=\"[\"\"png\"\"]\" -s USE_SDL_TTF=3 -s USE_SDL_MIXER=3")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
 endif()
@@ -35,7 +35,7 @@ set(SOURCES
     threedee/src/menu.c
     threedee/src/navigation.c
     threedee/src/particle.c
-        threedee/src/perlin.c
+    threedee/src/perlin.c
     threedee/src/physics.c
     threedee/src/player.c
     threedee/src/raycast.c
@@ -70,20 +70,20 @@ install(TARGETS threedee
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(LIBS
-        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/SDL2main.lib
-        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/SDL2.lib
-        ${CMAKE_SOURCE_DIR}/SDL_image/lib/x64/SDL2_image.lib
-        ${CMAKE_SOURCE_DIR}/SDL_ttf/lib/x64/SDL2_ttf.lib
-        ${CMAKE_SOURCE_DIR}/SDL_mixer/lib/x64/SDL2_mixer.lib
+#        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/sdl3main.lib
+        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/sdl3.lib
+        ${CMAKE_SOURCE_DIR}/SDL_image/lib/x64/sdl3_image.lib
+        ${CMAKE_SOURCE_DIR}/SDL_ttf/lib/x64/sdl3_ttf.lib
+        ${CMAKE_SOURCE_DIR}/SDL_mixer/lib/x64/sdl3_mixer.lib
     )
 
     target_link_libraries(threedee ${LIBS})
 
     set(DLLS
-        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/SDL2.dll
-        ${CMAKE_SOURCE_DIR}/SDL_image/lib/x64/SDL2_image.dll
-        ${CMAKE_SOURCE_DIR}/SDL_ttf/lib/x64/SDL2_ttf.dll
-        ${CMAKE_SOURCE_DIR}/SDL_mixer/lib/x64/SDL2_mixer.dll
+        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/sdl3.dll
+        ${CMAKE_SOURCE_DIR}/SDL_image/lib/x64/sdl3_image.dll
+        ${CMAKE_SOURCE_DIR}/SDL_ttf/lib/x64/sdl3_ttf.dll
+        ${CMAKE_SOURCE_DIR}/SDL_mixer/lib/x64/sdl3_mixer.dll
     )
 
     install(FILES ${DLLS}
