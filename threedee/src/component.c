@@ -765,7 +765,6 @@ AnimationComponent* AnimationComponent_add(int entity, int frames) {
     anim->framerate = 10.0f;
     anim->timer = 0.0f;
     anim->play_once = false;
-    anim->wind_factor = 0.0f;
 
     game_data->components->animation[entity] = anim;
     return anim;

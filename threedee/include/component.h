@@ -432,7 +432,6 @@ typedef struct {
     float timer;
     float framerate;
     bool play_once;
-    float wind_factor;
 } AnimationComponent;
 
 static const String DOOR_KEY_NAMES[] = {

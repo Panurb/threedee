@@ -15,25 +15,6 @@
 
 
 typedef enum {
-    STATE_MENU,
-    STATE_START,
-    STATE_END,
-    STATE_RESET,
-    STATE_GAME,
-    STATE_PAUSE,
-    STATE_SAVE,
-    STATE_LOAD,
-    STATE_APPLY,
-    STATE_CREATE,
-    STATE_LOAD_EDITOR,
-    STATE_EDITOR,
-    STATE_QUIT,
-    STATE_GAME_OVER,
-    STATE_INTRO
-} GameState;
-
-
-typedef enum {
     MODE_SURVIVAL,
     MODE_CAMPAIGN,
     MODE_TUTORIAL
@@ -68,24 +49,16 @@ typedef enum {
 typedef struct {
     ComponentData* components;
     ColliderGrid* grid;
-    float ambient_light;
-    Weather weather;
-    Vector2 wind;
-    float wind_speed;
-    int seed;
     int camera;
     int menu_camera;
     ButtonText map_name;
     GameMode game_mode;
-    bool testing;
-    Vector2 start_position;
     int music;
-} GameData;
+} Scene;
 
 
 // Globals
-extern GameState game_state;
-extern GameData* game_data;
+extern Scene* game_data;
 
 extern Resources resources;
 

@@ -22,6 +22,10 @@ static int debug_level = 0;
 
 void create_game_window() {
     app.window = SDL_CreateWindow("ThreeDee", game_settings.width, game_settings.height, 0);
+
+    SDL_GPUDevice* gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERSTAGE_FRAGMENT | SDL_GPU_SHADERSTAGE_VERTEX,  false, "vulkan");
+    SDL_ClaimWindowForGPUDevice(gpu, app.window);
+
     SDL_SetWindowFullscreen(app.window, game_settings.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
     SDL_SetHint(SDL_HINT_RENDER_VSYNC, game_settings.vsync ? "1" : "0");
     app.renderer = SDL_CreateRenderer(app.window, NULL);
@@ -88,6 +92,7 @@ void init() {
     app.focus = true;
     app.time_step = 1.0f / 60.0f;
     app.delta = 0.0f;
+    app.state = STATE_GAME;
 }
 
 
@@ -103,7 +108,7 @@ void quit() {
 
 
 void input_game(SDL_Event sdl_event) {
-    switch (game_state) {
+    switch (app.state) {
         case STATE_GAME:
             if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.repeat == 0) {
                 if (sdl_event.key.key == SDLK_F1) {
@@ -156,16 +161,16 @@ void input() {
 
 
 void update(float time_step) {
-    static GameState previous_state = STATE_MENU;
+    static AppState previous_state = STATE_MENU;
 
-    GameState state = game_state;
+    AppState state = app.state;
 
-    switch (game_state) {
+    switch (app.state) {
         case STATE_GAME:
             break;
     }
 
-    if (state != game_state) {
+    if (state != app.state) {
         previous_state = state;
     }
 }
@@ -176,7 +181,7 @@ void draw() {
     SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
     SDL_RenderClear(app.renderer);
 
-    switch (game_state) {
+    switch (app.state) {
         case STATE_GAME:
             break;
         default:
@@ -196,7 +201,7 @@ void play_audio() {
     static float music_fade = 0.0f;
     static int current_music = -1;
 
-    switch(game_state) {
+    switch(app.state) {
         case STATE_MENU:
             game_data->music = 0;
             break;

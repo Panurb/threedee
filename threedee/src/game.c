@@ -21,8 +21,7 @@
 #include "settings.h"
 
 
-GameState game_state = STATE_MENU;
-GameData* game_data;
+Scene* game_data;
 
 Resources resources;
 
@@ -46,7 +45,7 @@ void load_resources() {
 
 
 void create_game() {
-    game_data = malloc(sizeof(GameData));
+    game_data = malloc(sizeof(Scene));
 
     strcpy(game_data->map_name, "");
 
@@ -58,17 +57,10 @@ void create_game() {
     int menu_camera = create_menu_camera();
 
     game_data->grid = grid;
-    game_data->ambient_light = ambient_light;
-    game_data->weather = WEATHER_NONE;
-    game_data->wind = zeros();
-    game_data->wind_speed = 1.0f;
-    game_data->seed = seed;
     game_data->camera = camera;
     game_data->menu_camera = menu_camera;
 
     game_data->game_mode = MODE_SURVIVAL;
-    game_data->testing = false;
-    game_data->start_position = zeros();
 
     game_data->music = 0;
 }

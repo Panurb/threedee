@@ -139,7 +139,7 @@ Vector2 normalized(Vector2 v);
 
 double to_degrees(double radians);
 
-float dot(Vector2 a, Vector2 b);
+float dot2(Vector2 a, Vector2 b);
 
 float dot4(Vector4 a, Vector4 b);
 

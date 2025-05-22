@@ -9,6 +9,26 @@
 #define CONTROLLER_NONE -2
 #define CONTROLLER_MKB -1
 
+
+typedef enum {
+    STATE_MENU,
+    STATE_START,
+    STATE_END,
+    STATE_RESET,
+    STATE_GAME,
+    STATE_PAUSE,
+    STATE_SAVE,
+    STATE_LOAD,
+    STATE_APPLY,
+    STATE_CREATE,
+    STATE_LOAD_EDITOR,
+    STATE_EDITOR,
+    STATE_QUIT,
+    STATE_GAME_OVER,
+    STATE_INTRO
+} AppState;
+
+
 typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
@@ -19,7 +39,9 @@ typedef struct {
     FpsCounter* fps;
     float time_step;
     float delta;
+    AppState state;
 } App;
+
 
 extern App app;
 

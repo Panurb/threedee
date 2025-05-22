@@ -63,7 +63,7 @@ double to_degrees(double radians) {
     return radians * (180.0 / M_PI);
 }
 
-float dot(Vector2 a, Vector2 b) {
+float dot2(Vector2 a, Vector2 b) {
     return a.x * b.x + a.y * b.y;
 }
 
@@ -152,7 +152,7 @@ Vector2 mult(float c, Vector2 v) {
 
 Vector2 proj(Vector2 a, Vector2 b) {
     Vector2 b_norm = normalized(b);
-    return mult(dot(a, b_norm), b_norm);
+    return mult(dot2(a, b_norm), b_norm);
 }
 
 Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u) {
@@ -444,7 +444,7 @@ bool point_inside_rectangle(Vector2 position, float angle, float width, float he
     Vector2 ab = diff(b, a);
     Vector2 ad = diff(d, a);
 
-    if (0.0f < dot(am, ab) && dot(am, ab) < dot(ab, ab) && 0.0f < dot(am, ad) && dot(am, ad) < dot(ad, ad)) {
+    if (0.0f < dot2(am, ab) && dot2(am, ab) < dot2(ab, ab) && 0.0f < dot2(am, ad) && dot2(am, ad) < dot2(ad, ad)) {
         return true;
     }
     return false;

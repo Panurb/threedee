@@ -249,7 +249,6 @@ void update_particles(int camera, float time_step) {
             int p = (part->first + j) % part->max_particles;
             part->position[p] = sum(part->position[p], mult(time_step, part->velocity[p]));
             part->time[p] = fmax(0.0f, part->time[p] - time_step);
-            part->velocity[p] = sum(part->velocity[p], mult(time_step * part->wind_factor, game_data->wind));
         }
 
         if (part->particles > 0 && part->time[part->first] == 0.0f) {

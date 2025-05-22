@@ -43,7 +43,7 @@ void reset_ids() {
 
 void change_state_end(int entity) {
     UNUSED(entity);
-    game_state = STATE_END;
+    app.state = STATE_END;
     reset_ids();
 }
 
@@ -51,7 +51,7 @@ void change_state_end(int entity) {
 void change_state_create(int entity) {
     UNUSED(entity);
     strcpy(game_data->map_name, WidgetComponent_get(map_name_textbox)->string);
-    game_state = STATE_CREATE;
+    app.state = STATE_CREATE;
     reset_ids();
 }
 
@@ -59,48 +59,48 @@ void change_state_create(int entity) {
 void change_state_start(int entity) {
     WidgetComponent* widget = WidgetComponent_get(entity);
     strcpy(game_data->map_name, widget->string);
-    game_state = STATE_START;
+    app.state = STATE_START;
     reset_ids();
 }
 
 
 void change_state_reset(int entity) {
     UNUSED(entity);
-    game_state = STATE_RESET;
+    app.state = STATE_RESET;
     reset_ids();
 }
 
 
 void change_state_game(int entity) {
     UNUSED(entity);
-    game_state = STATE_GAME;
+    app.state = STATE_GAME;
     reset_ids();
 }
 
 
 void change_state_save(int entity) {
     UNUSED(entity);
-    game_state = STATE_SAVE;
+    app.state = STATE_SAVE;
 }
 
 
 void change_state_load(int entity) {
     UNUSED(entity);
-    game_state = STATE_LOAD;
+    app.state = STATE_LOAD;
 }
 
 
 void change_state_load_editor(int entity) {
     WidgetComponent* widget = WidgetComponent_get(entity);
     strcpy(game_data->map_name, widget->string);
-    game_state = STATE_LOAD_EDITOR;
+    app.state = STATE_LOAD_EDITOR;
     reset_ids();
 }
 
 
 void change_state_quit(int entity) {
     UNUSED(entity);
-    game_state = STATE_QUIT;
+    app.state = STATE_QUIT;
 }
 
 
@@ -118,7 +118,7 @@ void apply(int entity) {
     widget = WidgetComponent_get(fullscreen_id);
     game_settings.fullscreen = widget->value;
 
-    game_state = STATE_APPLY;
+    app.state = STATE_APPLY;
 }
 
 
@@ -393,7 +393,7 @@ void toggle_credits(int entity) {
 void start_campaign(int entity) {
     UNUSED(entity);
     strcpy(game_data->map_name, "Campaign");
-    game_state = STATE_INTRO;
+    app.state = STATE_INTRO;
     reset_ids();
 }
 

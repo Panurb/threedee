@@ -93,7 +93,7 @@ float axis_half_width(int i, Vector2 axis) {
     if (col->type == COLLIDER_RECTANGLE) {
         Vector2 hw = half_width(i);
         Vector2 hh = half_height(i);
-        return fabs(dot(hw, axis)) + fabs(dot(hh, axis));
+        return fabs(dot2(hw, axis)) + fabs(dot2(hh, axis));
     } else {
         return collider_radius(i);
     }
@@ -102,7 +102,7 @@ float axis_half_width(int i, Vector2 axis) {
 
 
 float axis_overlap(float w1, Vector2 r1, float w2, Vector2 r2, Vector2 axis) {
-    float r = dot(diff(r1, r2), axis);
+    float r = dot2(diff(r1, r2), axis);
     float o = w1 + w2 - fabs(r);
     if (o > 0.0) {
         if (fabs(r) < 1e-6) {
@@ -252,7 +252,7 @@ Vector2 overlap_rectangle_image(int i, int j) {
     for (int k = 0; k < 4; k++) {
         Vector2 hw = polar_to_cartesian(0.5 * image_width(j), get_angle(j));
         Vector2 hh = polar_to_cartesian(0.5 * image_height(j), get_angle(j) + 0.5 * M_PI);
-        float image_axis_half_width = fabs(dot(hw, axes[k])) + fabs(dot(hh, axes[k]));
+        float image_axis_half_width = fabs(dot2(hw, axes[k])) + fabs(dot2(hh, axes[k]));
 
         overlaps[k] = axis_overlap(axis_half_width(i, axes[k]), a,
                                    image_axis_half_width, b, axes[k]);
@@ -368,7 +368,7 @@ void collide(int entity) {
                     m = physics_other->mass / (physics->mass + physics_other->mass);
                 }
 
-                Vector2 new_vel = diff(physics->velocity, mult(2.0f * m * dot(dv, no), no));
+                Vector2 new_vel = diff(physics->velocity, mult(2.0f * m * dot2(dv, no), no));
 
                 switch (collision_type) {
                     case 0:

@@ -53,8 +53,8 @@ Hit ray_intersection(int i, Vector2 start, Vector2 velocity, float range) {
 
         float radius = col->radius;
         Vector2 oc = diff(start, get_position(i));
-        float delta = powf(dot(velocity, oc), 2) - norm2(oc) + powf(radius, 2);
-        float t = -dot(velocity, oc) - sqrtf(delta);
+        float delta = powf(dot2(velocity, oc), 2) - norm2(oc) + powf(radius, 2);
+        float t = -dot2(velocity, oc) - sqrtf(delta);
 
         if (delta >= 0.0 && t >= 0.0 && t < hit.time) {
             hit.time = t;
