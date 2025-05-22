@@ -18,14 +18,14 @@
 
 
 float image_width(int entity) {
-    Vector2f scale = get_scale(entity);
+    Vector2 scale = get_scale(entity);
     ImageComponent* image = ImageComponent_get(entity);
     return scale.x * image->width;
 }
 
 
 float image_height(int entity) {
-    Vector2f scale = get_scale(entity);
+    Vector2 scale = get_scale(entity);
     ImageComponent* image = ImageComponent_get(entity);
     return scale.y * image->height;
 }
@@ -68,7 +68,7 @@ Color get_pixel(SDL_Surface *surface, int x, int y) {
 }
 
 
-int create_decal(Vector2f pos, Filename filename, float lifetime) {
+int create_decal(Vector2 pos, Filename filename, float lifetime) {
     int i = create_entity();
     CoordinateComponent_add(i, pos, rand_angle())->lifetime = lifetime;
     ImageComponent_add(i, filename, 0.0f, 0.0f, LAYER_DECALS);
@@ -122,13 +122,13 @@ void draw_image(int entity, int camera) {
         return;
     }
 
-    Vector2f scale = get_scale_interpolated(entity, app.delta);
+    Vector2 scale = get_scale_interpolated(entity, app.delta);
     float stretch_extrapolated = image->stretch + app.delta * app.time_step * image->stretch_speed;
 
     scale.x *= 1.0f - stretch_extrapolated;
     scale.y *= 1.0f + stretch_extrapolated;
 
-    Vector2f pos = get_position_interpolated(entity, app.delta);
+    Vector2 pos = get_position_interpolated(entity, app.delta);
     float w = scale.x * image->width;
     float h = scale.y * image->height;
     float r = sqrtf(w * w + h * h);
@@ -247,8 +247,8 @@ void change_layer(int entity, Layer layer) {
 // }
 
 
-bool point_inside_image(int entity, Vector2f point) {
-    Vector2f position = get_position(entity);
+bool point_inside_image(int entity, Vector2 point) {
+    Vector2 position = get_position(entity);
     float angle = get_angle(entity);
     ImageComponent* image = ImageComponent_get(entity);
     return point_inside_rectangle(position, angle, image_width(entity), image_height(entity), point);

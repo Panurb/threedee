@@ -70,7 +70,7 @@ typedef struct {
     ColliderGrid* grid;
     float ambient_light;
     Weather weather;
-    Vector2f wind;
+    Vector2 wind;
     float wind_speed;
     int seed;
     int camera;
@@ -78,7 +78,7 @@ typedef struct {
     ButtonText map_name;
     GameMode game_mode;
     bool testing;
-    Vector2f start_position;
+    Vector2 start_position;
     int music;
 } GameData;
 
@@ -122,8 +122,8 @@ void draw_game_over();
 
 void draw_game_mode();
 
-int create_tutorial(Vector2f position);
+int create_tutorial(Vector2 position);
 
-int create_level_end(Vector2f position, float angle, float width, float height);
+int create_level_end(Vector2 position, float angle, float width, float height);
 
 void draw_tutorials();

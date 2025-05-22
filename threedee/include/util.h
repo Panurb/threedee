@@ -35,7 +35,7 @@
 typedef struct {
     float x;
     float y;
-} Vector2f;
+} Vector2;
 
 typedef struct {
     float x;
@@ -55,7 +55,7 @@ typedef struct {
     float b;
     float c;
     float d;
-} Matrix2f;
+} Matrix2;
 
 typedef struct {
     float a;
@@ -123,31 +123,31 @@ void fill(int* array, int value, int size);
 
 bool close_enough(float a, float b, float epsilon);
 
-Vector2f zeros();
+Vector2 zeros();
 
-Vector2f ones();
+Vector2 ones();
 
-Vector2f vec(float x, float y);
+Vector2 vec(float x, float y);
 
-float norm(Vector2f v);
+float norm(Vector2 v);
 
-float norm2(Vector2f v);
+float norm2(Vector2 v);
 
-float dist(Vector2f a, Vector2f b);
+float dist(Vector2 a, Vector2 b);
 
-Vector2f normalized(Vector2f v);
+Vector2 normalized(Vector2 v);
 
 double to_degrees(double radians);
 
-float dot(Vector2f a, Vector2f b);
+float dot(Vector2 a, Vector2 b);
 
 float dot4(Vector4 a, Vector4 b);
 
-float signed_angle(Vector2f a, Vector2f b);
+float signed_angle(Vector2 a, Vector2 b);
 
-Vector2f bisector(Vector2f a, Vector2f b);
+Vector2 bisector(Vector2 a, Vector2 b);
 
-Vector2f polar_to_cartesian(float length, float angle);
+Vector2 polar_to_cartesian(float length, float angle);
 
 int abs_argmin(float* a, int n);
 
@@ -157,19 +157,19 @@ int argmin(float* a, int n);
 
 float mean(float* array, int size);
 
-Vector2f perp(Vector2f v);
+Vector2 perp(Vector2 v);
 
 float sign(float x);
 
-Vector2f sum(Vector2f v, Vector2f u);
+Vector2 sum(Vector2 v, Vector2 u);
 
-Vector2f diff(Vector2f v, Vector2f u);
+Vector2 diff(Vector2 v, Vector2 u);
 
-Vector2f mult(float c, Vector2f v);
+Vector2 mult(float c, Vector2 v);
 
-Vector2f proj(Vector2f a, Vector2f b);
+Vector2 proj(Vector2 a, Vector2 b);
 
-Vector2f lin_comb(float a, Vector2f v, float b, Vector2f u);
+Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u);
 
 float randf(float min, float max);
 
@@ -177,7 +177,7 @@ int randi(int low, int upp);
 
 float rand_angle();
 
-Vector2f rand_vector();
+Vector2 rand_vector();
 
 int rand_choice(float* probs, int size);
 
@@ -191,29 +191,29 @@ int maxi(int a, int b);
 
 float mod(float x, float y);
 
-float cross(Vector2f v, Vector2f u);
+float cross(Vector2 v, Vector2 u);
 
-Vector2f rotate(Vector2f v, float angle);
+Vector2 rotate(Vector2 v, float angle);
 
-float polar_angle(Vector2f v);
+float polar_angle(Vector2 v);
 
-Matrix2f rotation_matrix(float angle);
+Matrix2 rotation_matrix(float angle);
 
-Vector2f matrix_mult(Matrix2f m, Vector2f v);
+Vector2 matrix_mult(Matrix2 m, Vector2 v);
 
-Matrix2f transpose(Matrix2f m);
+Matrix2 transpose(Matrix2 m);
 
-Matrix2f matrix_inverse(Matrix2f m);
+Matrix2 matrix_inverse(Matrix2 m);
 
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n);
 
-Matrix3 transform_matrix(Vector2f position, float angle, Vector2f scale);
+Matrix3 transform_matrix(Vector2 position, float angle, Vector2 scale);
 
 Vector4 matrix4_map(Matrix4 m, Vector4 v);
 
-Vector2f position_from_transform(Matrix3 m);
+Vector2 position_from_transform(Matrix3 m);
 
-Vector2f scale_from_transform(Matrix3 m);
+Vector2 scale_from_transform(Matrix3 m);
 
 float angle_from_transform(Matrix3 m);
 
@@ -231,7 +231,7 @@ int list_files_alphabetically(String path, String* files);
 
 int binary_search_filename(String filename, String* array, int size);
 
-bool non_zero(Vector2f v);
+bool non_zero(Vector2 v);
 
 float clamp(float val, float min_val, float max_val);
 
@@ -239,14 +239,14 @@ float angle_normalized(float angle);
 
 float angle_diff(float a, float b);
 
-bool collides_aabb(Vector2f pos1, float w1, float h1, Vector2f pos2, float w2, float h2);
+bool collides_aabb(Vector2 pos1, float w1, float h1, Vector2 pos2, float w2, float h2);
 
-bool point_inside_rectangle(Vector2f position, float angle, float width, float height, Vector2f point);
+bool point_inside_rectangle(Vector2 position, float angle, float width, float height, Vector2 point);
 
-void get_circle_points(Vector2f position, float radius, int n, Vector2f* points);
+void get_circle_points(Vector2 position, float radius, int n, Vector2* points);
 
-void get_ellipse_points(Vector2f position, float major, float minor, float angle, int n, Vector2f* points);
+void get_ellipse_points(Vector2 position, float major, float minor, float angle, int n, Vector2* points);
 
-void get_rect_corners(Vector2f position, float angle, float width, float height, Vector2f* corners);
+void get_rect_corners(Vector2 position, float angle, float width, float height, Vector2* corners);
 
 float map_to_range(int x, int min_x, int max_x, float min_y, float max_y);

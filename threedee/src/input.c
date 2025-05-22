@@ -173,11 +173,11 @@ void replace_actions(String output, String input) {
 }
 
 
-Vector2f get_mouse_position(int camera) {
+Vector2 get_mouse_position(int camera) {
     int x;
     int y;
     SDL_GetMouseState(&x, &y);
-    return screen_to_world(camera, (Vector2f) {x, y});
+    return screen_to_world(camera, (Vector2) {x, y});
 }
 
 
@@ -185,8 +185,8 @@ void update_controller(int camera, int i) {
     PlayerComponent* player = PlayerComponent_get(i);
     int joystick = player->controller.joystick;
 
-    Vector2f left_stick = zeros();
-    Vector2f right_stick = zeros();
+    Vector2 left_stick = zeros();
+    Vector2 right_stick = zeros();
     if (player->controller.joystick == -1) {
         if (keybind_pressed(ACTION_LEFT)) {
             left_stick.x -= 1.0f;
@@ -202,7 +202,7 @@ void update_controller(int camera, int i) {
         }
         player->controller.left_stick = normalized(left_stick);
 
-        Vector2f mouse = get_mouse_position(camera);
+        Vector2 mouse = get_mouse_position(camera);
         right_stick = diff(mouse, get_position(i));
         player->controller.right_stick = normalized(right_stick);
 

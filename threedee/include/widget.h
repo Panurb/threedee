@@ -19,15 +19,15 @@
 
 void bring_to_top(int entity);
 
-int create_window(Vector2f position, ButtonText text, int width, OnClick on_close);
+int create_window(Vector2 position, ButtonText text, int width, OnClick on_close);
 
-int create_label(ButtonText text, Vector2f position);
+int create_label(ButtonText text, Vector2 position);
 
-int create_button(ButtonText text, Vector2f position, OnClick on_click);
+int create_button(ButtonText text, Vector2 position, OnClick on_click);
 
-int create_button_small(ButtonText text, Vector2f position, OnClick on_click);
+int create_button_small(ButtonText text, Vector2 position, OnClick on_click);
 
-int create_container(Vector2f position, int width, int height);
+int create_container(Vector2 position, int width, int height);
 
 void add_widget_to_container(int container, int entity);
 
@@ -39,22 +39,22 @@ void add_row_to_container(int container, int left, int right);
 
 void add_files_to_container(int container, Filename path, OnClick on_click);
 
-int create_dropdown(Vector2f position, ButtonText* strings, int size);
+int create_dropdown(Vector2 position, ButtonText* strings, int size);
 
-void set_slider(int entity, Vector2f mouse_position);
+void set_slider(int entity, Vector2 mouse_position);
 
-int create_slider(Vector2f position, int min_value, int max_value, int value, 
+int create_slider(Vector2 position, int min_value, int max_value, int value,
     OnChange on_change);
 
-void set_scrollbar(int entity, Vector2f mouse_position);
+void set_scrollbar(int entity, Vector2 mouse_position);
 
-int create_scrollbar(Vector2f position, int height, int max_value, OnChange on_change);
+int create_scrollbar(Vector2 position, int height, int max_value, OnChange on_change);
 
 void add_scrollbar_to_container(int container);
 
-int create_textbox(Vector2f position, int width);
+int create_textbox(Vector2 position, int width);
 
-int create_checkbox(Vector2f position, bool value, OnChange on_change);
+int create_checkbox(Vector2 position, bool value, OnChange on_change);
 
 void update_widgets(int camera);
 

@@ -36,36 +36,36 @@ int create_menu_camera() {
 }
 
 
-Vector2f camera_size(int camera) {
+Vector2 camera_size(int camera) {
     CameraComponent* cam = CameraComponent_get(camera);
     Resolution res = cam->resolution;
     float zoom = cam->zoom;
-    return (Vector2f) { res.w / zoom, res.h / zoom };
+    return (Vector2) { res.w / zoom, res.h / zoom };
 }
 
 
-Vector2f world_to_screen(int camera, Vector2f a) {
+Vector2 world_to_screen(int camera, Vector2 a) {
     CameraComponent* cam = CameraComponent_get(camera);
-    Vector2f pos = sum(get_position_interpolated(camera, app.delta), cam->shake.position);
-    Vector2f b;
+    Vector2 pos = sum(get_position_interpolated(camera, app.delta), cam->shake.position);
+    Vector2 b;
     b.x = (a.x - pos.x) * cam->zoom + 0.5 * cam->resolution.w;
     b.y = (pos.y - a.y) * cam->zoom + 0.5 * cam->resolution.h;
     return b;
 }
 
 
-Vector2f screen_to_world(int camera, Vector2f a) {
+Vector2 screen_to_world(int camera, Vector2 a) {
     CameraComponent* cam = CameraComponent_get(camera);
-    Vector2f pos = sum(get_position_interpolated(camera, app.delta), cam->shake.position);
-    Vector2f b;
+    Vector2 pos = sum(get_position_interpolated(camera, app.delta), cam->shake.position);
+    Vector2 b;
     b.x = (a.x - 0.5 * cam->resolution.w) / cam->zoom + pos.x;
     b.y = (0.5 * cam->resolution.h - a.y) / cam->zoom + pos.y;
     return b;
 }
 
 
-SDL_FRect world_to_screen_rect(int camera, Vector2f position, float width, float height) {
-    Vector2f pos = world_to_screen(camera, position);
+SDL_FRect world_to_screen_rect(int camera, Vector2 position, float width, float height) {
+    Vector2 pos = world_to_screen(camera, position);
     CameraComponent* cam = CameraComponent_get(camera);
     float w = width * cam->zoom;
     float h = height * cam->zoom;
@@ -103,21 +103,21 @@ void draw_triangle_strip(int camera, int texture_index, SDL_Vertex* vertices, in
 }
 
 
-void draw_line(int camera, Vector2f start, Vector2f end, float width, Color color) {
+void draw_line(int camera, Vector2 start, Vector2 end, float width, Color color) {
     CameraComponent* cam = CameraComponent_get(camera);
 
     // Prevent lines from disappearing when zoomed out
     if (width * cam->zoom < 1.0f) {
         width = 1.0f / cam->zoom;
     }
-    Vector2f r = diff(end, start);
+    Vector2 r = diff(end, start);
 
-    Vector2f corners[4];
+    Vector2 corners[4];
     get_rect_corners(sum(start, mult(0.5f, r)), atan2(r.y, r.x), dist(start, end), width, corners);
 
     SDL_Vertex vertices[4];
     for (int i = 0; i < 4; i++) {
-        Vector2f v = world_to_screen(camera, corners[i]);
+        Vector2 v = world_to_screen(camera, corners[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
         vertices[i].color = color_to_fcolor(color);
     }
@@ -128,14 +128,14 @@ void draw_line(int camera, Vector2f start, Vector2f end, float width, Color colo
 }
 
 
-void draw_circle(int camera, Vector2f position, float radius, Color color) {
+void draw_circle(int camera, Vector2 position, float radius, Color color) {
     int points_size = clamp(20 * radius, 20, 100);
-    Vector2f points[100];
+    Vector2 points[100];
     get_circle_points(position, radius, points_size, points);
 
     SDL_Vertex vertices[101];
     for (int i = 0; i < points_size; i++) {
-        Vector2f v = world_to_screen(camera, points[i]);
+        Vector2 v = world_to_screen(camera, points[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
         vertices[i].color = color_to_fcolor(color);
     }
@@ -145,15 +145,15 @@ void draw_circle(int camera, Vector2f position, float radius, Color color) {
 }
 
 
-void draw_ellipse_two_color(int camera, Vector2f position, float major, float minor, float angle, 
+void draw_ellipse_two_color(int camera, Vector2 position, float major, float minor, float angle,
         Color color, Color color_center) {
     int points_size = clamp(20 * major, 20, 100);
-    Vector2f points[100];
+    Vector2 points[100];
     get_ellipse_points(position, major, minor, angle, 20, points);
 
     SDL_Vertex vertices[100];
     for (int i = 0; i < points_size; i++) {
-        Vector2f v = world_to_screen(camera, points[i]);
+        Vector2 v = world_to_screen(camera, points[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
         vertices[i].color = color_to_fcolor(color);
     }
@@ -163,9 +163,9 @@ void draw_ellipse_two_color(int camera, Vector2f position, float major, float mi
 }
 
 
-void draw_circle_outline(int camera, Vector2f position, float radius, float line_width, Color color) {
+void draw_circle_outline(int camera, Vector2 position, float radius, float line_width, Color color) {
     int points_size = clamp(20 * radius, 20, 100);
-    Vector2f points[100];
+    Vector2 points[100];
     get_circle_points(position, radius, points_size, points);
     points[0] = points[points_size - 1];
 
@@ -175,13 +175,13 @@ void draw_circle_outline(int camera, Vector2f position, float radius, float line
 }
 
 
-void draw_ellipse(int camera, Vector2f position, float major, float minor, float angle, Color color) {
-    Vector2f points[20];
+void draw_ellipse(int camera, Vector2 position, float major, float minor, float angle, Color color) {
+    Vector2 points[20];
     get_ellipse_points(position, major, minor, angle, 20, points);
 
     SDL_Vertex vertices[21];
     for (int i = 0; i < 20; i++) {
-        Vector2f v = world_to_screen(camera, points[i]);
+        Vector2 v = world_to_screen(camera, points[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
         vertices[i].color = color_to_fcolor(color);
     }
@@ -191,13 +191,13 @@ void draw_ellipse(int camera, Vector2f position, float major, float minor, float
 }
 
 
-void draw_rectangle(int camera, Vector2f position, float width, float height, float angle, Color color) {
-    Vector2f corners[4];
+void draw_rectangle(int camera, Vector2 position, float width, float height, float angle, Color color) {
+    Vector2 corners[4];
     get_rect_corners(position, angle, width, height, corners);
 
     SDL_Vertex vertices[4];
     for (int i = 0; i < 4; i++) {
-        Vector2f v = world_to_screen(camera, corners[i]);
+        Vector2 v = world_to_screen(camera, corners[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
         vertices[i].color = color_to_fcolor(color);
     }
@@ -208,9 +208,9 @@ void draw_rectangle(int camera, Vector2f position, float width, float height, fl
 
 
 
-void draw_rectangle_outline(int camera, Vector2f position, float width, float height, 
+void draw_rectangle_outline(int camera, Vector2 position, float width, float height,
         float angle, float line_width, Color color) {
-    Vector2f corners[4];
+    Vector2 corners[4];
     get_rect_corners(position, angle, width, height, corners);
 
     for (int i = 0; i < 4; i++) {
@@ -219,21 +219,21 @@ void draw_rectangle_outline(int camera, Vector2f position, float width, float he
 }
 
 
-void draw_slice(int camera, Vector2f position, float min_range, float max_range, 
+void draw_slice(int camera, Vector2 position, float min_range, float max_range,
         float angle, float spread, Color color) {
     int points = 10 * ceil(max_range * spread);
     SDL_Vertex* vertices = malloc(points * sizeof(SDL_Vertex));
 
-    Vector2f start = polar_to_cartesian(min_range, angle - 0.5 * spread);
-    Vector2f end = polar_to_cartesian(max_range, angle - 0.5 * spread);
+    Vector2 start = polar_to_cartesian(min_range, angle - 0.5 * spread);
+    Vector2 end = polar_to_cartesian(max_range, angle - 0.5 * spread);
 
-    Matrix2f rot = rotation_matrix(spread / (points / 2.0f - 1));
+    Matrix2 rot = rotation_matrix(spread / (points / 2.0f - 1));
 
     for (int k = 0; k < points / 2; k += 1) {
-        Vector2f pos = world_to_screen(camera, sum(position, start));
+        Vector2 pos = world_to_screen(camera, sum(position, start));
         vertices[2 * k].position = (SDL_FPoint) { pos.x, pos.y };
         vertices[2 * k].color = color_to_fcolor(color);
-        
+
         pos = world_to_screen(camera, sum(position, end));
         vertices[2 * k + 1].position = (SDL_FPoint) { pos.x, pos.y };
         vertices[2 * k + 1].color = color_to_fcolor(color);
@@ -246,13 +246,13 @@ void draw_slice(int camera, Vector2f position, float min_range, float max_range,
 }
 
 
-void draw_arc(int camera, Vector2f position, float range, float angle, float spread) {
+void draw_arc(int camera, Vector2 position, float range, float angle, float spread) {
     int n = 5 * ceil(range * spread);
 
-    Matrix2f rot = rotation_matrix(spread / n);
+    Matrix2 rot = rotation_matrix(spread / n);
 
-    Vector2f start = polar_to_cartesian(range, angle - 0.5 * spread);
-    Vector2f end = start;
+    Vector2 start = polar_to_cartesian(range, angle - 0.5 * spread);
+    Vector2 end = start;
 
     for (int k = 0; k < n; k++) {
         end = matrix_mult(rot, end);
@@ -262,9 +262,9 @@ void draw_arc(int camera, Vector2f position, float range, float angle, float spr
 }
 
 
-void draw_slice_outline(int camera, Vector2f position, float min_range, float max_range, float angle, float spread) {
-    Vector2f start = polar_to_cartesian(max_range, angle - 0.5 * spread);
-    Vector2f end = mult(min_range / max_range, start);
+void draw_slice_outline(int camera, Vector2 position, float min_range, float max_range, float angle, float spread) {
+    Vector2 start = polar_to_cartesian(max_range, angle - 0.5 * spread);
+    Vector2 end = mult(min_range / max_range, start);
 
     draw_line(camera, sum(position, start), sum(position, end), 0.05, COLOR_WHITE);
 
@@ -273,14 +273,14 @@ void draw_slice_outline(int camera, Vector2f position, float min_range, float ma
     draw_arc(camera, position, max_range, angle, spread);
 
     start = polar_to_cartesian(min_range, angle + 0.5 * spread);
-    end = mult(max_range / min_range, start);    
-    
+    end = mult(max_range / min_range, start);
+
     draw_line(camera, sum(position, start), sum(position, end), 0.05, COLOR_WHITE);
 }
 
 
-void draw_sprite(int camera, int texture_index, float width, float height, int offset, Vector2f position, float angle,
-        Vector2f scale, float alpha) {
+void draw_sprite(int camera, int texture_index, float width, float height, int offset, Vector2 position, float angle,
+        Vector2 scale, float alpha) {
     if (texture_index == -1) {
         return;
     }
@@ -327,8 +327,8 @@ void draw_sprite(int camera, int texture_index, float width, float height, int o
 }
 
 
-void draw_tiles(int camera, int texture_index, float width, float height, Vector2f offset, Vector2f position,
-        float angle, Vector2f scale, float alpha) {
+void draw_tiles(int camera, int texture_index, float width, float height, Vector2 offset, Vector2 position,
+        float angle, Vector2 scale, float alpha) {
     if (texture_index == -1) {
         return;
     }
@@ -399,8 +399,8 @@ void draw_tiles(int camera, int texture_index, float width, float height, Vector
 }
 
 
-void draw_sprite_outline(int camera, int texture_index, float width, float height, int offset, Vector2f position,
-        float angle, Vector2f scale) {
+void draw_sprite_outline(int camera, int texture_index, float width, float height, int offset, Vector2 position,
+        float angle, Vector2 scale) {
     if (texture_index == -1) {
         return;
     }
@@ -450,7 +450,7 @@ void draw_sprite_outline(int camera, int texture_index, float width, float heigh
 }
 
 
-void draw_text(int camera, Vector2f position, String string, int size, Color color) {
+void draw_text(int camera, Vector2 position, String string, int size, Color color) {
     if (color.a == 0) {
         return;
     }
@@ -466,7 +466,7 @@ void draw_text(int camera, Vector2f position, String string, int size, Color col
         return;
     }
 
-    Vector2f pos = world_to_screen(camera, position);
+    Vector2 pos = world_to_screen(camera, position);
     SDL_Color c = { color.r, color.g, color.b, color.a };
     SDL_Surface* surface = TTF_RenderText_Blended(font, string, 0, c);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(app.renderer, surface);
@@ -478,10 +478,10 @@ void draw_text(int camera, Vector2f position, String string, int size, Color col
 }
 
 
-void draw_skewed(int camera, int texture_index, Vector2f corners[4]) {
+void draw_skewed(int camera, int texture_index, Vector2 corners[4]) {
     SDL_Vertex vertices[4];
     for (int i = 0; i < 4; i++) {
-        Vector2f v = world_to_screen(camera, corners[i]);
+        Vector2 v = world_to_screen(camera, corners[i]);
         vertices[i].position = (SDL_FPoint) { v.x, v.y };
         vertices[i].color = color_to_fcolor((Color) { 255, 255, 255, 255 });
     }
@@ -496,14 +496,14 @@ void draw_skewed(int camera, int texture_index, Vector2f corners[4]) {
     int err = SDL_RenderGeometry(app.renderer, texture, vertices, 4, indices, 6);
     if (err != 0) {
         LOG_ERROR("Error drawing skewed texture: %s", SDL_GetError());
-    } 
+    }
 }
 
 
-void draw_spline(Entity camera, int texture_index, Vector2f p0, Vector2f p1, Vector2f p2, Vector2f p3, float width, 
+void draw_spline(Entity camera, int texture_index, Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float width,
         bool flip, Color color) {
     // https://www.mvps.org/directx/articles/catmull/
-    static Matrix4 CATMULL_ROM = { 
+    static Matrix4 CATMULL_ROM = {
         0.0f, 1.0f, 0.0f, 0.0f,
         -0.5f, 0.0f, 0.5f, 0.0f,
         1.0f, -2.5f, 2.0f, -0.5f,
@@ -525,17 +525,17 @@ void draw_spline(Entity camera, int texture_index, Vector2f p0, Vector2f p1, Vec
         float t = i / (float) (points_size - 1);
 
         Vector4 ts = { 1.0f, t, t * t, t * t * t };
-        Vector2f pos = { dot4(ts, mx), dot4(ts, my) };
+        Vector2 pos = { dot4(ts, mx), dot4(ts, my) };
 
         Vector4 dts = { 0.0f, 1.0f, 2.0f * t, 3.0f * t * t };
-        Vector2f dir = { dot4(dts, mx), dot4(dts, my) };
-        Vector2f normal = mult(0.5f * width, normalized(perp(dir)));
+        Vector2 dir = { dot4(dts, mx), dot4(dts, my) };
+        Vector2 normal = mult(0.5f * width, normalized(perp(dir)));
 
         if (flip) {
             t = 1.0f - t;
         }
 
-        Vector2f v = world_to_screen(camera, sum(pos, normal));
+        Vector2 v = world_to_screen(camera, sum(pos, normal));
         vertices[2 * i].position = (SDL_FPoint) { v.x, v.y };
         vertices[2 * i].color = color_to_fcolor(color);
         vertices[2 * i].tex_coord = (SDL_FPoint) { t, 0.0f };
@@ -556,7 +556,7 @@ void update_camera(int camera, float time_step, bool follow_players) {
     CoordinateComponent* coord = CoordinateComponent_get(camera);
     CameraComponent* cam = CameraComponent_get(camera);
 
-    Vector2f pos = zeros();
+    Vector2 pos = zeros();
 
     if (follow_players) {
         int n = 0;
@@ -581,8 +581,8 @@ void update_camera(int camera, float time_step, bool follow_players) {
 }
 
 
-bool on_screen(int camera, Vector2f position, float width, float height) {
-    Vector2f pos = get_position(camera);
+bool on_screen(int camera, Vector2 position, float width, float height) {
+    Vector2 pos = get_position(camera);
     CameraComponent* cam = CameraComponent_get(camera);
 
     if (fabsf(position.x - pos.x) < 0.5f * (width + cam->resolution.w / cam->zoom)) {
@@ -608,7 +608,7 @@ void draw_overlay(int camera, float alpha) {
     CameraComponent* cam = CameraComponent_get(camera);
     float width = cam->resolution.w / cam->zoom;
     float height = cam->resolution.h / cam->zoom;
-    Vector2f pos = get_position(camera);
+    Vector2 pos = get_position(camera);
     Color color = get_color(0.0f, 0.0f, 0.0f, alpha);
     draw_rectangle(camera, pos, width, height, 0.0f, color);
 }

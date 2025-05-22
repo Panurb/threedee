@@ -19,7 +19,7 @@
 static int counter = 0;
 
 
-int create_waypoint(Vector2f pos) {
+int create_waypoint(Vector2 pos) {
     int i = create_entity();
     CoordinateComponent_add(i, pos, 0.0);
     WaypointComponent_add(i);
@@ -104,9 +104,9 @@ bool a_star(int start, int goal, List* path) {
 
 
 float connection_distance(int i, int j) {
-    Vector2f a = get_position(i);
-    Vector2f b = get_position(j);
-    Vector2f v = diff(b, a);
+    Vector2 a = get_position(i);
+    Vector2 b = get_position(j);
+    Vector2 v = diff(b, a);
     float d = norm(v);
 
     if (d > WaypointComponent_get(i)->range) {
@@ -121,13 +121,13 @@ float connection_distance(int i, int j) {
         float angle = get_angle(i);
         float radius = 0.4f * collider_width(i);
 
-        Vector2f left = polar_to_cartesian(radius, angle + 0.5f * M_PI);
+        Vector2 left = polar_to_cartesian(radius, angle + 0.5f * M_PI);
         HitInfo info_l = raycast(sum(a, left), v, d, GROUP_RAYS);
         if (info_l.entity != -1) {
             return 0.0f;
         }
 
-        Vector2f right = polar_to_cartesian(radius, angle - 0.5f * M_PI);
+        Vector2 right = polar_to_cartesian(radius, angle - 0.5f * M_PI);
         HitInfo info_r = raycast(sum(a, right), v, d, GROUP_RAYS);
         if (info_r.entity != -1) {
             return 0.0f;
@@ -229,7 +229,7 @@ void draw_waypoints(int camera, bool draw_neighbors) {
         if (!waypoint) continue;
         if (ImageComponent_get(i)) continue;
 
-        Vector2f pos = get_position(i);
+        Vector2 pos = get_position(i);
         float radius = ColliderComponent_get(i)->radius;
         draw_circle(camera, pos, radius, COLOR_WHITE);
 

@@ -13,17 +13,17 @@ typedef int Entity;
 
 
 typedef struct {
-    Vector2f position;
+    Vector2 position;
     float angle;
     int parent;
     List* children;
     float lifetime;
     Filename prefab;
-    Vector2f scale;
+    Vector2 scale;
     struct {
-        Vector2f position;
+        Vector2 position;
         float angle;
-        Vector2f scale;
+        Vector2 scale;
     } previous;
 } CoordinateComponent;
 
@@ -57,7 +57,7 @@ typedef struct {
     float stretch;
     float stretch_speed;
     bool tile;
-    Vector2f offset;
+    Vector2 offset;
     float tile_width;
     float tile_height;
 } ImageComponent;
@@ -65,17 +65,17 @@ typedef struct {
 typedef enum {
     AXIS_NONE,
     AXIS_POSITION,
-    AXIS_ANGLE, 
+    AXIS_ANGLE,
     AXIS_ALL
 } AxisLock;
 
 typedef struct {
-    Vector2f velocity;
-    Vector2f acceleration;
+    Vector2 velocity;
+    Vector2 acceleration;
     struct {
         List* entities;
-        Vector2f overlap;
-        Vector2f velocity;
+        Vector2 overlap;
+        Vector2 velocity;
     } collision;
     float angular_velocity;
     float angular_acceleration;
@@ -165,9 +165,9 @@ typedef struct {
     bool buttons_pressed[12];
     bool buttons_released[12];
     int axes[8];
-    Vector2f left_stick;
-    Vector2f right_stick;
-    Vector2f dpad;
+    Vector2 left_stick;
+    Vector2 right_stick;
+    Vector2 dpad;
     float left_trigger;
     float right_trigger;
 } Controller;
@@ -234,7 +234,7 @@ typedef struct {
     float attack_timer;
     float turn_speed;
     int bounty;
-    Vector2f start_position;
+    Vector2 start_position;
     bool boss;
 } EnemyComponent;
 
@@ -269,8 +269,8 @@ typedef struct {
     float speed_spread;
     float speed;
     float max_time;
-    Vector2f position[100];
-    Vector2f velocity[100];
+    Vector2 position[100];
+    Vector2 velocity[100];
     float time[100];
     float start_size;
     float end_size;
@@ -278,7 +278,7 @@ typedef struct {
     Color inner_color;
     float rate;
     float timer;
-    Vector2f origin;
+    Vector2 origin;
     float width;
     float height;
     float stretch;
@@ -294,7 +294,7 @@ typedef struct {
     float turning;
     int size;
     int riders[4];
-    Vector2f seats[4];
+    Vector2 seats[4];
 } VehicleComponent;
 
 typedef enum {
@@ -392,11 +392,11 @@ typedef struct {
     Resolution resolution;
     float zoom;
     float zoom_target;
-    Matrix2f matrix;
-    Matrix2f inv_matrix;
+    Matrix2 matrix;
+    Matrix2 inv_matrix;
     struct {
-        Vector2f position;
-        Vector2f velocity;
+        Vector2 position;
+        Vector2 velocity;
     } shake;
 } CameraComponent;
 
@@ -536,7 +536,7 @@ struct ComponentData {
 
 ComponentData* ComponentData_create();
 
-CoordinateComponent* CoordinateComponent_add(int entity, Vector2f pos, float angle);
+CoordinateComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle);
 CoordinateComponent* CoordinateComponent_get(int entity);
 void CoordinateComponent_remove(int entity);
 
@@ -637,13 +637,13 @@ void remove_prefab(int entity);
 
 void ComponentData_clear();
 
-Vector2f get_position(int i);
+Vector2 get_position(int i);
 float get_angle(int i);
-Vector2f get_scale(int entity);
+Vector2 get_scale(int entity);
 
-Vector2f get_position_interpolated(int entity, float delta);
+Vector2 get_position_interpolated(int entity, float delta);
 float get_angle_interpolated(int entity, float delta);
-Vector2f get_scale_interpolated(int entity, float delta);
+Vector2 get_scale_interpolated(int entity, float delta);
 
 bool entity_exists(int entity);
 
@@ -651,4 +651,4 @@ int get_parent(int entity);
 
 List* get_children(int entity);
 
-Vector2f get_entities_center(List* entities);
+Vector2 get_entities_center(List* entities);

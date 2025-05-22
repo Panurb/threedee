@@ -51,7 +51,7 @@ ComponentData* ComponentData_create() {
 }
 
 
-CoordinateComponent* CoordinateComponent_add(int entity, Vector2f pos, float angle) {
+CoordinateComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle) {
     CoordinateComponent* coord = malloc(sizeof(CoordinateComponent));
     coord->position = pos;
     coord->angle = angle;
@@ -375,7 +375,7 @@ void EnemyComponent_remove(int entity) {
 }
 
 
-ParticleComponent* ParticleComponent_add(int entity, float angle, float spread, 
+ParticleComponent* ParticleComponent_add(int entity, float angle, float spread,
         float start_size, float end_size, float speed, float rate, Color outer_color, Color inner_color) {
     ParticleComponent* particle = malloc(sizeof(ParticleComponent));
     particle->type = PARTICLE_NONE;
@@ -439,10 +439,10 @@ VehicleComponent* VehicleComponent_add(int entity, float max_fuel) {
     for (int i = 0; i < vehicle->size; i++) {
         vehicle->riders[i] = -1;
     }
-    vehicle->seats[0] = (Vector2f) { 1.5f, 0.75f };
-    vehicle->seats[1] = (Vector2f) { 1.5f, -0.75f };
-    vehicle->seats[2] = (Vector2f) { 0.0f, 0.75f };
-    vehicle->seats[3] = (Vector2f) { 0.0f, -0.75f };
+    vehicle->seats[0] = (Vector2) { 1.5f, 0.75f };
+    vehicle->seats[1] = (Vector2) { 1.5f, -0.75f };
+    vehicle->seats[2] = (Vector2) { 0.0f, 0.75f };
+    vehicle->seats[3] = (Vector2) { 0.0f, -0.75f };
 
     game_data->components->vehicle[entity] = vehicle;
 
@@ -634,8 +634,8 @@ CameraComponent* CameraComponent_add(int entity, Resolution resolution, float zo
     camera->zoom_target = zoom;
     camera->zoom = camera->zoom_target * camera->resolution.h / 720.0;
 
-    camera->matrix = (Matrix2f) { 0.0f, 0.0f, 0.0f, 0.0f };
-    camera->inv_matrix = (Matrix2f) { 0.0f, 0.0f, 0.0f, 0.0f };
+    camera->matrix = (Matrix2) { 0.0f, 0.0f, 0.0f, 0.0f };
+    camera->inv_matrix = (Matrix2) { 0.0f, 0.0f, 0.0f, 0.0f };
 
     camera->shake.position = zeros();
     camera->shake.velocity = rand_vector();
@@ -1044,7 +1044,7 @@ Matrix3 get_transform(int entity) {
 }
 
 
-Vector2f get_position(int entity) {
+Vector2 get_position(int entity) {
     Matrix3 transform = get_transform(entity);
     return position_from_transform(transform);
 }
@@ -1056,20 +1056,20 @@ float get_angle(int entity) {
 }
 
 
-Vector2f get_scale(int entity) {
+Vector2 get_scale(int entity) {
     Matrix3 transform = get_transform(entity);
     return scale_from_transform(transform);
 }
 
 
-Vector2f get_position_interpolated(int entity, float delta) {
-    Vector2f previous_position = CoordinateComponent_get(entity)->previous.position;
-    Vector2f current_position = get_position(entity);
+Vector2 get_position_interpolated(int entity, float delta) {
+    Vector2 previous_position = CoordinateComponent_get(entity)->previous.position;
+    Vector2 current_position = get_position(entity);
 
     float x = lerp(previous_position.x, current_position.x, delta);
     float y = lerp(previous_position.y, current_position.y, delta);
 
-    return (Vector2f) { x, y };
+    return (Vector2) { x, y };
 }
 
 
@@ -1081,14 +1081,14 @@ float get_angle_interpolated(int entity, float delta) {
 }
 
 
-Vector2f get_scale_interpolated(int entity, float delta) {
-    Vector2f previous_scale = CoordinateComponent_get(entity)->previous.scale;
-    Vector2f current_scale = get_scale(entity);
+Vector2 get_scale_interpolated(int entity, float delta) {
+    Vector2 previous_scale = CoordinateComponent_get(entity)->previous.scale;
+    Vector2 current_scale = get_scale(entity);
 
     float x = lerp(previous_scale.x, current_scale.x, delta);
     float y = lerp(previous_scale.y, current_scale.y, delta);
 
-    return (Vector2f) { x, y };
+    return (Vector2) { x, y };
 }
 
 
@@ -1113,8 +1113,8 @@ List* get_children(int entity) {
 }
 
 
-Vector2f get_entities_center(List* entities) {
-    Vector2f center = zeros();
+Vector2 get_entities_center(List* entities) {
+    Vector2 center = zeros();
     ListNode* node;
     FOREACH(node, entities) {
         int i = node->value;

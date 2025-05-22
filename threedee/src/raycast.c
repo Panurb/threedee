@@ -15,11 +15,11 @@
 
 typedef struct {
     float time;
-    Vector2f normal;
+    Vector2 normal;
 } Hit;
 
 
-Hit ray_intersection(int i, Vector2f start, Vector2f velocity, float range) {
+Hit ray_intersection(int i, Vector2 start, Vector2 velocity, float range) {
     Hit hit = { range, perp(velocity) };
 
     ColliderComponent* col = ColliderComponent_get(i);
@@ -29,12 +29,12 @@ Hit ray_intersection(int i, Vector2f start, Vector2f velocity, float range) {
     if (col->type == COLLIDER_RECTANGLE) {
         // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
 
-        Vector2f corners[4];
+        Vector2 corners[4];
         get_corners(i, corners);
 
         int n = 0;
         for (int k = 0; k < 4; k++) {
-            Vector2f dir = diff(corners[(k + 1) % 4], corners[k]);
+            Vector2 dir = diff(corners[(k + 1) % 4], corners[k]);
             float t = cross(diff(corners[k], start), dir) / cross(velocity, dir);
             float u = cross(diff(start, corners[k]), velocity) / cross(dir, velocity);
 
@@ -52,13 +52,13 @@ Hit ray_intersection(int i, Vector2f start, Vector2f velocity, float range) {
         // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
 
         float radius = col->radius;
-        Vector2f oc = diff(start, get_position(i));
+        Vector2 oc = diff(start, get_position(i));
         float delta = powf(dot(velocity, oc), 2) - norm2(oc) + powf(radius, 2);
         float t = -dot(velocity, oc) - sqrtf(delta);
 
         if (delta >= 0.0 && t >= 0.0 && t < hit.time) {
             hit.time = t;
-            Vector2f p = sum(start, mult(t, velocity));
+            Vector2 p = sum(start, mult(t, velocity));
             hit.normal = diff(p, get_position(i));
         }
     }
@@ -67,7 +67,7 @@ Hit ray_intersection(int i, Vector2f start, Vector2f velocity, float range) {
 }
 
 
-HitInfo raycast(Vector2f start, Vector2f velocity, float range, ColliderGroup group) {
+HitInfo raycast(Vector2 start, Vector2 velocity, float range, ColliderGroup group) {
     // http://www.cs.yorku.ca/~amana/research/grid.pdf
 
     static int id = MAX_ENTITIES;

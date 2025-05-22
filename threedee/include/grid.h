@@ -35,7 +35,7 @@ ColliderGrid* ColliderGrid_create();
 
 void ColliderGrid_clear(ColliderGrid* grid);
 
-List* get_entities(Vector2f origin, float radius);
+List* get_entities(Vector2 origin, float radius);
 
 void update_grid(int i);
 
@@ -49,6 +49,6 @@ void get_neighbors(int i, int entities[100]);
 
 void draw_grid(int camera, float tile_width, float tile_height);
 
-Vector2f snap_to_grid(Vector2f vector, float tile_width, float tile_height);
+Vector2 snap_to_grid(Vector2 vector, float tile_width, float tile_height);
 
-Vector2f snap_to_grid_center(Vector2f vector, float tile_width, float tile_height);
+Vector2 snap_to_grid_center(Vector2 vector, float tile_width, float tile_height);

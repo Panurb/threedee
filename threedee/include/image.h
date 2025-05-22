@@ -9,7 +9,7 @@
 float image_width(int entity);
 float image_height(int entity);
 
-int create_decal(Vector2f pos, Filename filename, float lifetime);
+int create_decal(Vector2 pos, Filename filename, float lifetime);
 
 void load_textures();
 
@@ -27,4 +27,4 @@ void change_texture(int entity, Filename filename, float width, float height);
 
 void change_layer(int entity, Layer layer);
 
-bool point_inside_image(int entity, Vector2f point);
+bool point_inside_image(int entity, Vector2 point);

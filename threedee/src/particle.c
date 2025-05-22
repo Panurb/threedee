@@ -191,7 +191,7 @@ ParticleComponent* ParticleComponent_add_type(int entity, ParticleType type, flo
 
 
 void add_particles(int entity, int n) {
-    Vector2f scale = get_scale(entity);
+    Vector2 scale = get_scale(entity);
     ParticleComponent* part = ParticleComponent_get(entity);
 
     for (int i = 0; i < n; i++) {
@@ -200,7 +200,7 @@ void add_particles(int entity, int n) {
         if (part->width > 0.0f && part->height > 0.0f) {
             float dx = 0.5f * part->width * scale.x;
             float dy = 0.5f * part->height * scale.y;
-            part->origin = (Vector2f) { 
+            part->origin = (Vector2) {
                 randf(-dx, dx), 
                 randf(-dy, dy)
             };
@@ -274,7 +274,7 @@ void draw_particles(int camera) {
 
             // Always extrapolate particles
             float time = part->time[p] + app.delta * app.time_step;
-            Vector2f position = sum(part->position[p], mult(app.delta * app.time_step, part->velocity[p]));
+            Vector2 position = sum(part->position[p], mult(app.delta * app.time_step, part->velocity[p]));
 
             float t = 1.0f - part->time[p] / part->max_time;
             float r = lerp(part->start_size, part->end_size, t);
@@ -294,7 +294,7 @@ void draw_particles(int camera) {
 
             // Always extrapolate particles
             float time = part->time[p] + app.delta * app.time_step;
-            Vector2f position = sum(part->position[p], mult(app.delta * app.time_step, part->velocity[p]));
+            Vector2 position = sum(part->position[p], mult(app.delta * app.time_step, part->velocity[p]));
 
             float t = 1.0f - part->time[p] / part->max_time;
             float r = 0.5f * lerp(part->start_size, part->end_size, t);

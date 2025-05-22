@@ -38,21 +38,21 @@ float collider_width(int i);
 float collider_height(int i);
 float collider_radius(int i);
 
-bool point_inside_collider(int i, Vector2f point);
+bool point_inside_collider(int i, Vector2 point);
 
-void get_corners(int i, Vector2f* corners) ;
+void get_corners(int i, Vector2* corners) ;
 
-Vector2f half_width(int i);
+Vector2 half_width(int i);
 
-Vector2f half_height(int i);
+Vector2 half_height(int i);
 
-float axis_half_width(int i, Vector2f axis);
+float axis_half_width(int i, Vector2 axis);
 
-Vector2f overlap_rectangle_rectangle(int i, int j);
+Vector2 overlap_rectangle_rectangle(int i, int j);
 
-Vector2f overlap_collider_collider(int i, int j);
+Vector2 overlap_collider_collider(int i, int j);
 
-Vector2f overlap_rectangle_image(int i, int j);
+Vector2 overlap_rectangle_image(int i, int j);
 
 bool collides_with(int entity, List* entities);
 

@@ -25,45 +25,45 @@ bool close_enough(float a, float b, float epsilon) {
     return fabs(a - b) < epsilon;
 }
 
-Vector2f zeros() {
-    return (Vector2f) { 0.0f, 0.0f };
+Vector2 zeros() {
+    return (Vector2) { 0.0f, 0.0f };
 }
 
-Vector2f ones() {
-    return (Vector2f) { 1.0f, 1.0f };
+Vector2 ones() {
+    return (Vector2) { 1.0f, 1.0f };
 }
 
-Vector2f vec(float x, float y) {
-    return (Vector2f) { x, y };
+Vector2 vec(float x, float y) {
+    return (Vector2) { x, y };
 }
 
-float norm(Vector2f v) {
+float norm(Vector2 v) {
     return sqrtf(v.x * v.x + v.y * v.y);
 }
 
-float norm2(Vector2f v) {
+float norm2(Vector2 v) {
     return v.x * v.x + v.y * v.y;
 }
 
-float dist(Vector2f a, Vector2f b) {
+float dist(Vector2 a, Vector2 b) {
     float x = a.x - b.x;
     float y = a.y - b.y;
     return sqrtf(x * x + y * y);
 }
 
-Vector2f normalized(Vector2f v) {
+Vector2 normalized(Vector2 v) {
     float n = norm(v);
     if (n == 0.0) {
         return v;
     }
-    return (Vector2f) { v.x / n, v.y / n };
+    return (Vector2) { v.x / n, v.y / n };
 }
 
 double to_degrees(double radians) {
     return radians * (180.0 / M_PI);
 }
 
-float dot(Vector2f a, Vector2f b) {
+float dot(Vector2 a, Vector2 b) {
     return a.x * b.x + a.y * b.y;
 }
 
@@ -71,17 +71,17 @@ float dot4(Vector4 a, Vector4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
-float signed_angle(Vector2f a, Vector2f b) {
+float signed_angle(Vector2 a, Vector2 b) {
     // https://stackoverflow.com/questions/2150050/finding-signed-angle-between-vectors
     return atan2f(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
 }
 
-Vector2f bisector(Vector2f a, Vector2f b) {
+Vector2 bisector(Vector2 a, Vector2 b) {
     return normalized(sum(normalized(a), normalized(b)));
 }
 
-Vector2f polar_to_cartesian(float length, float angle) {
-    Vector2f v = { length * cosf(angle), length * sinf(angle) };
+Vector2 polar_to_cartesian(float length, float angle) {
+    Vector2 v = { length * cosf(angle), length * sinf(angle) };
     return v;
 }
 
@@ -129,8 +129,8 @@ float mean(float* array, int size) {
     return tot / size;
 }
 
-Vector2f perp(Vector2f v) {
-    return (Vector2f) { -v.y, v.x };
+Vector2 perp(Vector2 v) {
+    return (Vector2) { -v.y, v.x };
 }
 
 float sign(float x) {
@@ -138,24 +138,24 @@ float sign(float x) {
     return copysignf(1.0, x);
 }
 
-Vector2f sum(Vector2f v, Vector2f u) {
-    return (Vector2f) { v.x + u.x, v.y + u.y };
+Vector2 sum(Vector2 v, Vector2 u) {
+    return (Vector2) { v.x + u.x, v.y + u.y };
 }
 
-Vector2f diff(Vector2f v, Vector2f u) {
-    return (Vector2f) { v.x - u.x, v.y - u.y };
+Vector2 diff(Vector2 v, Vector2 u) {
+    return (Vector2) { v.x - u.x, v.y - u.y };
 }
 
-Vector2f mult(float c, Vector2f v) {
-    return (Vector2f) { c * v.x, c * v.y };
+Vector2 mult(float c, Vector2 v) {
+    return (Vector2) { c * v.x, c * v.y };
 }
 
-Vector2f proj(Vector2f a, Vector2f b) {
-    Vector2f b_norm = normalized(b);
+Vector2 proj(Vector2 a, Vector2 b) {
+    Vector2 b_norm = normalized(b);
     return mult(dot(a, b_norm), b_norm);
 }
 
-Vector2f lin_comb(float a, Vector2f v, float b, Vector2f u) {
+Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u) {
     return sum(mult(a, v), mult(b, u));
 }
 
@@ -172,7 +172,7 @@ float rand_angle() {
     return randf(0.0, 2 * M_PI);
 }
 
-Vector2f rand_vector() {
+Vector2 rand_vector() {
     return polar_to_cartesian(1.0, rand_angle());
 }
 
@@ -223,37 +223,37 @@ float mod(float x, float y) {
     return fmodf(fmodf(x, y) + y, y);
 }
 
-float cross(Vector2f v, Vector2f u) {
+float cross(Vector2 v, Vector2 u) {
     return v.x * u.y - v.y * u.x;
 }
 
-Vector2f rotate(Vector2f v, float angle) {
+Vector2 rotate(Vector2 v, float angle) {
     float c = cosf(angle);
     float s = sinf(angle);
-    return (Vector2f) { v.x * c - v.y * s, v.x * s + v.y * c };
+    return (Vector2) { v.x * c - v.y * s, v.x * s + v.y * c };
 }
 
-float polar_angle(Vector2f v) {
+float polar_angle(Vector2 v) {
     return atan2f(v.y, v.x);
 }
 
-Matrix2f rotation_matrix(float angle) {
+Matrix2 rotation_matrix(float angle) {
     float c = cosf(angle);
     float s = sinf(angle);
-    return (Matrix2f) { c, -s, s, c };
+    return (Matrix2) { c, -s, s, c };
 }
 
-Vector2f matrix_mult(Matrix2f m, Vector2f v) {
-    return (Vector2f) { m.a * v.x + m.b * v.y, m.c * v.x + m.d * v.y };
+Vector2 matrix_mult(Matrix2 m, Vector2 v) {
+    return (Vector2) { m.a * v.x + m.b * v.y, m.c * v.x + m.d * v.y };
 }
 
-Matrix2f transpose(Matrix2f m) {
-    return (Matrix2f) { m.a, m.c, m.b, m.d };
+Matrix2 transpose(Matrix2 m) {
+    return (Matrix2) { m.a, m.c, m.b, m.d };
 }
 
-Matrix2f matrix_inverse(Matrix2f m) {
+Matrix2 matrix_inverse(Matrix2 m) {
     float det = m.a * m.d - m.b * m.c;
-    return (Matrix2f) { m.d / det, -m.b / det, -m.c / det, m.a / det };
+    return (Matrix2) { m.d / det, -m.b / det, -m.c / det, m.a / det };
 }
 
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n) {
@@ -267,11 +267,11 @@ Matrix3 matrix3_mult(Matrix3 m, Matrix3 n) {
     mn.g = m.g * n.a + m.h * n.d + m.i * n.g;
     mn.h = m.g * n.b + m.h * n.e + m.i * n.h;
     mn.i = m.g * n.c + m.h * n.f + m.i * n.i;
-    
+
     return mn;
 }
 
-Matrix3 transform_matrix(Vector2f position, float angle, Vector2f scale) {
+Matrix3 transform_matrix(Vector2 position, float angle, Vector2 scale) {
     float c = cosf(angle);
     float s = sinf(angle);
     return (Matrix3) { scale.x * c, -scale.y * s, position.x, scale.x * s, scale.y * c, position.y, 0.0f, 0.0f, 1.0f };
@@ -286,13 +286,13 @@ Vector4 matrix4_map(Matrix4 m, Vector4 v) {
     return result;
 }
 
-Vector2f position_from_transform(Matrix3 m) {
-    return (Vector2f) { m.c, m.f };
+Vector2 position_from_transform(Matrix3 m) {
+    return (Vector2) { m.c, m.f };
 }
 
 
-Vector2f scale_from_transform(Matrix3 m) {
-    return (Vector2f) { norm((Vector2f) { m.a, m.d }), norm((Vector2f) { m.b, m.e }) };
+Vector2 scale_from_transform(Matrix3 m) {
+    return (Vector2) { norm((Vector2) { m.a, m.d }), norm((Vector2) { m.b, m.e }) };
 }
 
 
@@ -407,7 +407,7 @@ int binary_search_filename(String filename, String* array, int size) {
     return -1;
 }
 
-bool non_zero(Vector2f v) {
+bool non_zero(Vector2 v) {
     return (v.x != 0.0f || v.y != 0.0f);
 }
 
@@ -424,25 +424,25 @@ float angle_diff(float a, float b) {
     return angle_normalized(a - b);
 }
 
-bool collides_aabb(Vector2f pos1, float w1, float h1, Vector2f pos2, float w2, float h2) {
+bool collides_aabb(Vector2 pos1, float w1, float h1, Vector2 pos2, float w2, float h2) {
     if (pos1.x < pos2.x + w2 && pos1.x + w1 > pos2.x && pos1.y < pos2.y + h2 && pos1.y + h1 > pos2.y) {
         return true;
     }
     return false;
 }
 
-bool point_inside_rectangle(Vector2f position, float angle, float width, float height, Vector2f point) {
-    Vector2f hw = polar_to_cartesian(0.5f * width, angle);
-    Vector2f hh = mult(height / width, perp(hw));
+bool point_inside_rectangle(Vector2 position, float angle, float width, float height, Vector2 point) {
+    Vector2 hw = polar_to_cartesian(0.5f * width, angle);
+    Vector2 hh = mult(height / width, perp(hw));
 
-    Vector2f a = sum(position, sum(hw, hh));
-    Vector2f b = diff(a, mult(2, hh));
-    Vector2f c = diff(b, mult(2, hw));
-    Vector2f d = sum(c, mult(2, hh));
+    Vector2 a = sum(position, sum(hw, hh));
+    Vector2 b = diff(a, mult(2, hh));
+    Vector2 c = diff(b, mult(2, hw));
+    Vector2 d = sum(c, mult(2, hh));
 
-    Vector2f am = diff(point, a);
-    Vector2f ab = diff(b, a);
-    Vector2f ad = diff(d, a);
+    Vector2 am = diff(point, a);
+    Vector2 ab = diff(b, a);
+    Vector2 ad = diff(d, a);
 
     if (0.0f < dot(am, ab) && dot(am, ab) < dot(ab, ab) && 0.0f < dot(am, ad) && dot(am, ad) < dot(ad, ad)) {
         return true;
@@ -450,7 +450,7 @@ bool point_inside_rectangle(Vector2f position, float angle, float width, float h
     return false;
 }
 
-void get_circle_points(Vector2f position, float radius, int n, Vector2f* points) {
+void get_circle_points(Vector2 position, float radius, int n, Vector2* points) {
     points[0] = position;
     for (int i = 0; i < n - 1; i++) {
         float angle = 2.0f * M_PI * i / (n - 1);
@@ -458,9 +458,9 @@ void get_circle_points(Vector2f position, float radius, int n, Vector2f* points)
     }
 }
 
-void get_ellipse_points(Vector2f position, float major, float minor, float angle, int n, Vector2f* points) {
+void get_ellipse_points(Vector2 position, float major, float minor, float angle, int n, Vector2* points) {
     points[0] = position;
-    Matrix2f rot = rotation_matrix(angle);
+    Matrix2 rot = rotation_matrix(angle);
 
     for (int i = 0; i < n - 1; i++) {
         float a = 2.0f * M_PI * i / (n - 1);
@@ -468,14 +468,14 @@ void get_ellipse_points(Vector2f position, float major, float minor, float angle
     }
 }
 
-void get_rect_corners(Vector2f position, float angle, float width, float height, Vector2f* corners) {
-    Vector2f hw = polar_to_cartesian(0.5f * width, angle);
-    Vector2f hh = mult(height / width, perp(hw));
+void get_rect_corners(Vector2 position, float angle, float width, float height, Vector2* corners) {
+    Vector2 hw = polar_to_cartesian(0.5f * width, angle);
+    Vector2 hh = mult(height / width, perp(hw));
 
-    Vector2f a = sum(position, sum(hw, hh));
-    Vector2f b = diff(a, mult(2, hh));
-    Vector2f c = diff(b, mult(2, hw));
-    Vector2f d = sum(c, mult(2, hh));
+    Vector2 a = sum(position, sum(hw, hh));
+    Vector2 b = diff(a, mult(2, hh));
+    Vector2 c = diff(b, mult(2, hw));
+    Vector2 d = sum(c, mult(2, hh));
 
     corners[0] = a;
     corners[1] = b;
