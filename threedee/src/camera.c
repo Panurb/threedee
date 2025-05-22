@@ -468,9 +468,10 @@ void draw_text(int camera, Vector2f position, String string, int size, Color col
 
     Vector2f pos = world_to_screen(camera, position);
     SDL_Color c = { color.r, color.g, color.b, color.a };
-    SDL_Surface* surface = TTF_RenderText_Blended(font, string, STRING_SIZE, c);
+    SDL_Surface* surface = TTF_RenderText_Blended(font, string, 0, c);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(app.renderer, surface);
     SDL_FRect dest = { pos.x - 0.5f * surface->w, pos.y - 0.5f * surface->h, surface->w, surface->h };
+    LOG_INFO("surface width: %d, height: %d", surface->w, surface->h);
     SDL_RenderTexture(app.renderer, texture, NULL, &dest);
     SDL_DestroySurface(surface);
     SDL_DestroyTexture(texture);
