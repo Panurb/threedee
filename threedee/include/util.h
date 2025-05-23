@@ -94,10 +94,10 @@ typedef struct {
 } Resolution;
 
 typedef struct {
-    char r;
-    char g;
-    char b;
-    char a;
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
 } Color;
 
 #define COLOR_NONE get_color(0.0f, 0.0f, 0.0f, 0.0f)
