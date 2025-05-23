@@ -98,6 +98,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
             PATTERN "*.wav"
             PATTERN "*.json"
             PATTERN "*.ogg"
+            PATTERN "*.spv"
     )
 
     install(FILES ${EXTERNAL_DLLS}

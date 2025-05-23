@@ -28,7 +28,8 @@ Resources resources;
 
 void load_resources() {
     load_textures();
-    LOG_INFO("Loaded %d textures", resources.textures_size);
+
+    LOG_INFO("Loading fonts");
     resources.fonts[0] = NULL;
     for (int size = 1; size <= 300; size++) {
         resources.fonts[size] = TTF_OpenFont("data/Helvetica.ttf", size);
@@ -38,13 +39,14 @@ void load_resources() {
         }
     }
     LOG_INFO("Loaded %d fonts", 300);
+
     load_sounds();
-    resources.music[0] = Mix_LoadMUS("data/music/zsong.ogg");
-    resources.music[1] = Mix_LoadMUS("data/music/zsong2.ogg");
 }
 
 
 void create_game() {
+    LOG_INFO("Creating game");
+
     game_data = malloc(sizeof(Scene));
 
     strcpy(game_data->map_name, "");
@@ -63,6 +65,8 @@ void create_game() {
     game_data->game_mode = MODE_SURVIVAL;
 
     game_data->music = 0;
+
+    LOG_INFO("Game created");
 }
 
 

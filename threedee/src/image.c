@@ -35,10 +35,13 @@ Resolution get_texture_size(Filename filename) {
     if (filename[0] == '\0') {
         return (Resolution) { 0, 0 };
     }
+    LOG_INFO("Loading texture from %s", filename);
     Resolution resolution;
     int index = get_texture_index(filename);
+    LOG_INFO("Texture index is %d", index);
     resolution.w = resources.textures[index]->w;
     resolution.h = resources.textures[index]->h;
+    LOG_INFO("Texture size: %dx%d", resolution.w, resolution.h);
     return resolution;
 }
 
@@ -84,11 +87,6 @@ void load_textures() {
     LOG_INFO("Found %d textures", resources.textures_size);
 
     for (int i = 0; i < resources.textures_size; i++) {
-        // if (strcmp(files[i], "blood_particle") == 0) {
-        //     resources.blood_particle = create_blood_particle_texture();
-        //     continue;
-        // }
-
         String path;
         snprintf(path, sizeof(path), "%s%s%s", "data/images/", resources.texture_names[i], ".png");
 
@@ -103,6 +101,8 @@ void load_textures() {
         texture_size.h /= PIXELS_PER_UNIT;
         resources.texture_sizes[i] = texture_size;
     }
+
+    LOG_INFO("Loaded textures");
 }
 
 

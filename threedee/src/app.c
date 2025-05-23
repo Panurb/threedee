@@ -19,16 +19,203 @@ static String version = "0.0";
 
 static int debug_level = 0;
 
+static SDL_GPUGraphicsPipeline* pipeline;
+static SDL_GPUBuffer* vertex_buffer;
+
+
+typedef struct Vertex
+{
+    Vector3 position;
+    Color color;
+} Vertex;
+
+
+SDL_GPUShader* load_shader(
+	SDL_GPUDevice* device,
+	const char* shader_filename,
+	Uint32 sampler_count,
+	Uint32 uniform_buffer_count,
+	Uint32 storage_buffer_count,
+	Uint32 storage_texture_count
+) {
+	// Auto-detect the shader stage from the file name for convenience
+	SDL_GPUShaderStage stage;
+	if (SDL_strstr(shader_filename, ".vert"))
+	{
+		stage = SDL_GPU_SHADERSTAGE_VERTEX;
+	}
+	else if (SDL_strstr(shader_filename, ".frag"))
+	{
+		stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
+	}
+	else
+	{
+		SDL_Log("Invalid shader stage!");
+		return NULL;
+	}
+
+	char fullPath[256];
+	SDL_GPUShaderFormat backendFormats = SDL_GetGPUShaderFormats(device);
+	SDL_GPUShaderFormat format = SDL_GPU_SHADERFORMAT_INVALID;
+	const char *entrypoint;
+
+	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sdata/shaders/compiled/SPIRV/%s.spv", app.base_path, shader_filename);
+		format = SDL_GPU_SHADERFORMAT_SPIRV;
+		entrypoint = "main";
+	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sdata/shaders/compiled/MSL/%s.msl", app.base_path, shader_filename);
+		format = SDL_GPU_SHADERFORMAT_MSL;
+		entrypoint = "main0";
+	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
+		SDL_snprintf(fullPath, sizeof(fullPath), "%sdata/shaders/compiled/DXIL/%s.dxil", app.base_path, shader_filename);
+		format = SDL_GPU_SHADERFORMAT_DXIL;
+		entrypoint = "main";
+	} else {
+		SDL_Log("%s", "Unrecognized backend shader format!");
+		return NULL;
+	}
+
+	size_t codeSize;
+	void* code = SDL_LoadFile(fullPath, &codeSize);
+	if (code == NULL)
+	{
+		SDL_Log("Failed to load shader from disk! %s", fullPath);
+		return NULL;
+	}
+
+	SDL_GPUShaderCreateInfo shaderInfo = {
+		.code = code,
+		.code_size = codeSize,
+		.entrypoint = entrypoint,
+		.format = format,
+		.stage = stage,
+		.num_samplers = sampler_count,
+		.num_uniform_buffers = uniform_buffer_count,
+		.num_storage_buffers = storage_buffer_count,
+		.num_storage_textures = storage_texture_count
+	};
+	SDL_GPUShader* shader = SDL_CreateGPUShader(device, &shaderInfo);
+	if (shader == NULL)
+	{
+		SDL_Log("Failed to create shader!");
+		SDL_free(code);
+		return NULL;
+	}
+
+	SDL_free(code);
+	return shader;
+}
+
 
 void create_game_window() {
+    LOG_INFO("Creating game window");
+
     app.window = SDL_CreateWindow("ThreeDee", game_settings.width, game_settings.height, 0);
-
-    SDL_GPUDevice* gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERSTAGE_FRAGMENT | SDL_GPU_SHADERSTAGE_VERTEX,  false, "vulkan");
-    SDL_ClaimWindowForGPUDevice(gpu, app.window);
-
     SDL_SetWindowFullscreen(app.window, game_settings.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
-    SDL_SetHint(SDL_HINT_RENDER_VSYNC, game_settings.vsync ? "1" : "0");
-    app.renderer = SDL_CreateRenderer(app.window, NULL);
+
+    app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
+    SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
+
+    SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "PositionColor.vert", 0, 0, 0, 0);
+    if (!vertex_shader) {
+        LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
+        return;
+    }
+
+    SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "SolidColor.frag", 0, 0, 0, 0);
+    if (!fragment_shader) {
+        LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
+        return;
+    }
+
+    SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+        .target_info = {
+            .num_color_targets = 1,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+                .format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+            }},
+        },
+        // This is set up to match the vertex shader layout!
+        .vertex_input_state = (SDL_GPUVertexInputState){
+            .num_vertex_buffers = 1,
+            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+                .slot = 0,
+                .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+                .instance_step_rate = 0,
+                .pitch = sizeof(Vertex)
+            }},
+            .num_vertex_attributes = 2,
+            .vertex_attributes = (SDL_GPUVertexAttribute[]){{
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                .location = 0,
+                .offset = 0
+            }, {
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+                .location = 1,
+                .offset = sizeof(float) * 3
+            }}
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .vertex_shader = vertex_shader,
+        .fragment_shader = fragment_shader,
+    };
+
+    pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+    if (!pipeline) {
+        LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+        return;
+    }
+
+    SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
+    SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
+
+    vertex_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+            .size = sizeof(Vertex) * 3
+        }
+    );
+
+    SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
+        app.gpu_device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(Vertex) * 3
+        }
+    );
+
+    Vertex* vertices = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+
+    vertices[0] = (Vertex) { -1, -1, 0, 255, 0, 0, 255 };
+    vertices[1] = (Vertex) { 1, -1, 0, 0, 255, 0, 255 };
+    vertices[2] = (Vertex) { 0, 1, 0, 0, 0, 255, 255 };
+
+    SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+    SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
+
+    SDL_GPUTransferBufferLocation source = {
+        .transfer_buffer = transfer_buffer,
+        .offset = 0
+    };
+    SDL_GPUBufferRegion destination = {
+        .buffer = vertex_buffer,
+        .offset = 0,
+        .size = sizeof(Vertex) * 3
+    };
+
+    SDL_UploadToGPUBuffer(copy_pass, &source, &destination, false);
+
+    SDL_EndGPUCopyPass(copy_pass);
+    SDL_SubmitGPUCommandBuffer(upload_command_buffer);
+    SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+    LOG_INFO("Game window created");
 }
 
 
@@ -36,9 +223,13 @@ void destroy_game_window() {
     SDL_DestroyWindow(app.window);
     app.window = NULL;
 
-    // This will also destroy all textures
-    SDL_DestroyRenderer(app.renderer);
-    app.renderer = NULL;
+    SDL_ReleaseGPUGraphicsPipeline(app.gpu_device, pipeline);
+    pipeline = NULL;
+    SDL_ReleaseGPUBuffer(app.gpu_device, vertex_buffer);
+    vertex_buffer = NULL;
+
+    SDL_DestroyGPUDevice(app.gpu_device);
+    app.gpu_device = NULL;
 }
 
 
@@ -61,7 +252,6 @@ void init() {
     // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
     SDL_HideCursor();
 
-    // IMG_Init(IMG_INIT_PNG);
     TTF_Init();
     Mix_OpenAudio(0, NULL);
     Mix_AllocateChannels(32);
@@ -84,8 +274,6 @@ void init() {
     }
     app.player_controllers[0] = CONTROLLER_MKB;
 
-    create_game_window();
-
     app.fps = FpsCounter_create();
 
     app.quit = false;
@@ -93,6 +281,9 @@ void init() {
     app.time_step = 1.0f / 60.0f;
     app.delta = 0.0f;
     app.state = STATE_GAME;
+    app.base_path = SDL_GetBasePath();
+
+    create_game_window();
 }
 
 
@@ -102,7 +293,6 @@ void quit() {
 
     Mix_CloseAudio();
     TTF_Quit();
-    // IMG_Quit();
     SDL_Quit();
 }
 
@@ -177,23 +367,37 @@ void update(float time_step) {
 
 
 void draw() {
-    SDL_SetRenderDrawBlendMode(app.renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
-    SDL_RenderClear(app.renderer);
+    LOG_INFO("Start draw");
 
-    switch (app.state) {
-        case STATE_GAME:
-            break;
-        default:
-            break;
+    SDL_GPUCommandBuffer* gpu_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+    if (!gpu_command_buffer) {
+        LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
+        return;
     }
 
-    if (debug_level) {
-        draw_debug(debug_level);
-    }
-    FPSCounter_draw(app.fps);
+    SDL_GPUTexture* swapchain_texture;
+    SDL_WaitAndAcquireGPUSwapchainTexture(gpu_command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
-    SDL_RenderPresent(app.renderer);
+    if (swapchain_texture) {
+        SDL_GPUColorTargetInfo color_target_info = {
+            .texture = swapchain_texture,
+            .load_op = SDL_GPU_LOADOP_CLEAR,
+            .store_op = SDL_GPU_STOREOP_STORE,
+            .clear_color = { 0.0f, 0.0f, 0.0f, 1.0f }
+        };
+
+        SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(gpu_command_buffer, &color_target_info, 1, NULL);
+
+        SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
+        SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = vertex_buffer, .offset = 0 }, 1);
+        SDL_DrawGPUPrimitives(render_pass, 3, 1, 0, 0);
+
+        SDL_EndGPURenderPass(render_pass);
+    }
+
+    SDL_SubmitGPUCommandBuffer(gpu_command_buffer);
+
+    LOG_INFO("End draw");
 }
 
 
@@ -202,16 +406,7 @@ void play_audio() {
     static int current_music = -1;
 
     switch(app.state) {
-        case STATE_MENU:
-            game_data->music = 0;
-            break;
         case STATE_GAME:
-        case STATE_INTRO:
-        case STATE_PAUSE:
-            game_data->music = 1;
-            break;
-        default:
-            game_data->music = -1;
             break;
     }
 

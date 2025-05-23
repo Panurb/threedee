@@ -34,7 +34,6 @@ void main_loop() {
     time_since_last_update += delta_time;
 
     input();
-    LOG_INFO("Inputed");
 
     if (app.focus) {
         while (elapsed_time > app.time_step) {

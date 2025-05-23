@@ -31,7 +31,8 @@ typedef enum {
 
 typedef struct {
     SDL_Window* window;
-    SDL_Renderer* renderer;
+    SDL_Renderer* renderer;  // TODO: remove
+    SDL_GPUDevice* gpu_device;
     SDL_Gamepad* controllers[8];
     int player_controllers[4];
     bool quit;
@@ -40,6 +41,7 @@ typedef struct {
     float time_step;
     float delta;
     AppState state;
+    const char* base_path;
 } App;
 
 

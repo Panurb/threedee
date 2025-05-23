@@ -35,7 +35,6 @@ typedef struct {
     int sounds_size;
     Mix_Chunk* sounds[100];
     Mix_Music* music[10];
-    SDL_Texture* blood_particle;
 } Resources;
 
 
