@@ -5,6 +5,8 @@
 
 #include "linalg.h"
 
+#include <stdio.h>
+
 
 Vector2 zeros2() {
     return (Vector2) { 0.0f, 0.0f };
@@ -147,6 +149,28 @@ Matrix3 matrix3_mult(Matrix3 m, Matrix3 n) {
     return mn;
 }
 
+Matrix4 matrix4_mult(Matrix4 m, Matrix4 n) {
+    // Do not assume homogenous matrices
+    Matrix4 mn;
+    mn._11 = m._11 * n._11 + m._12 * n._21 + m._13 * n._31 + m._14 * n._41;
+    mn._12 = m._11 * n._12 + m._12 * n._22 + m._13 * n._32 + m._14 * n._42;
+    mn._13 = m._11 * n._13 + m._12 * n._23 + m._13 * n._33 + m._14 * n._43;
+    mn._14 = m._11 * n._14 + m._12 * n._24 + m._13 * n._34 + m._14 * n._44;
+    mn._21 = m._21 * n._11 + m._22 * n._21 + m._23 * n._31 + m._24 * n._41;
+    mn._22 = m._21 * n._12 + m._22 * n._22 + m._23 * n._32 + m._24 * n._42;
+    mn._23 = m._21 * n._13 + m._22 * n._23 + m._23 * n._33 + m._24 * n._43;
+    mn._24 = m._21 * n._14 + m._22 * n._24 + m._23 * n._34 + m._24 * n._44;
+    mn._31 = m._31 * n._11 + m._32 * n._21 + m._33 * n._31 + m._34 * n._41;
+    mn._32 = m._31 * n._12 + m._32 * n._22 + m._33 * n._32 + m._34 * n._42;
+    mn._33 = m._31 * n._13 + m._32 * n._23 + m._33 * n._33 + m._34 * n._43;
+    mn._34 = m._31 * n._14 + m._32 * n._24 + m._33 * n._34 + m._34 * n._44;
+    mn._41 = m._41 * n._11 + m._42 * n._21 + m._43 * n._31 + m._44 * n._41;
+    mn._42 = m._41 * n._12 + m._42 * n._22 + m._43 * n._32 + m._44 * n._42;
+    mn._43 = m._41 * n._13 + m._42 * n._23 + m._43 * n._33 + m._44 * n._43;
+    mn._44 = m._41 * n._14 + m._42 * n._24 + m._43 * n._34 + m._44 * n._44;
+    return mn;
+}
+
 Matrix4 matrix4_id() {
     return (Matrix4) {
         1.0f, 0.0f, 0.0f, 0.0f,
@@ -165,35 +189,35 @@ Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale) {
     float c3 = cosf(rotation.z);
     float s3 = sinf(rotation.z);
 
-    m.a = c2 * c3 * scale.x;
-    m.b = -c2 * s3 * scale.x;
-    m.c = s2 * scale.x;
-    m.d = position.x;
+    m._11 = c2 * c3 * scale.x;
+    m._12 = -c2 * s3 * scale.x;
+    m._13 = s2 * scale.x;
+    m._14 = position.x;
 
-    m.e = (s * s2 * c3 + c * s3) * scale.y;
-    m.f = (-s * s2 * s3 + c * c3) * scale.y;
-    m.g = -s * c2 * scale.y;
-    m.h = position.y;
+    m._21 = (s * s2 * c3 + c * s3) * scale.y;
+    m._22 = (-s * s2 * s3 + c * c3) * scale.y;
+    m._23 = -s * c2 * scale.y;
+    m._24 = position.y;
 
-    m.i = (-c * s2 * c3 + s * s3) * scale.z;
-    m.j = (c * s2 * s3 + s * c3) * scale.z;
-    m.k = c * c2 * scale.z;
-    m.l = position.z;
+    m._31 = (-c * s2 * c3 + s * s3) * scale.z;
+    m._32 = (c * s2 * s3 + s * c3) * scale.z;
+    m._33 = c * c2 * scale.z;
+    m._34 = position.z;
 
-    m.m = 0.0f; // Homogeneous coordinate
-    m.n = 0.0f; // Homogeneous coordinate
-    m.o = 0.0f; // Homogeneous coordinate
-    m.p = 1.0f; // Homogeneous coordinate
+    m._41 = 0.0f; // Homogeneous coordinate
+    m._42 = 0.0f; // Homogeneous coordinate
+    m._43 = 0.0f; // Homogeneous coordinate
+    m._44 = 1.0f; // Homogeneous coordinate
 
     return m;
 }
 
 Vector4 matrix4_map(Matrix4 m, Vector4 v) {
     Vector4 result;
-    result.x = m.a * v.x + m.b * v.y + m.c * v.z + m.d * v.w;
-    result.y = m.e * v.x + m.f * v.y + m.g * v.z + m.h * v.w;
-    result.z = m.i * v.x + m.j * v.y + m.k * v.z + m.l * v.w;
-    result.w = m.m * v.x + m.n * v.y + m.o * v.z + m.p * v.w;
+    result.x = m._11 * v.x + m._12 * v.y + m._13 * v.z + m._14 * v.w;
+    result.y = m._21 * v.x + m._22 * v.y + m._23 * v.z + m._24 * v.w;
+    result.z = m._31 * v.x + m._32 * v.y + m._33 * v.z + m._34 * v.w;
+    result.w = m._41 * v.x + m._42 * v.y + m._43 * v.z + m._44 * v.w;
     return result;
 }
 
@@ -213,4 +237,33 @@ float angle_from_transform(Matrix3 m) {
 
 bool non_zero(Vector2 v) {
     return (v.x != 0.0f || v.y != 0.0f);
+}
+
+Matrix4 perspective_projection_matrix(float fov, float aspect_ratio, float near, float far) {
+    float f = 1.0f / tanf(fov / 2.0f);
+    Matrix4 m = matrix4_id();
+    m._11 = f / aspect_ratio;
+    m._21 = f;
+    m._31 = (far + near) / (near - far);
+    m._32 = (2.0f * far * near) / (near - far);
+    m._33 = -1.0f;
+    return m;
+}
+
+Matrix4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far) {
+    Matrix4 m = matrix4_id();
+    m._11 = 2.0f / (right - left);
+    m._22 = 2.0f / (top - bottom);
+    m._33 = -2.0f / (far - near);
+    m._41 = -(right + left) / (right - left);
+    m._42 = -(top + bottom) / (top - bottom);
+    m._43 = -(far + near) / (far - near);
+    return m;
+}
+
+void matrix4_print(Matrix4 m) {
+    printf("[[%.2f, %.2f, %.2f, %.2f]\n", m._11, m._12, m._13, m._14);
+    printf("[%.2f, %.2f, %.2f, %.2f]\n", m._21, m._22, m._23, m._24);
+    printf("[%.2f, %.2f, %.2f, %.2f]\n", m._31, m._32, m._33, m._34);
+    printf("[%.2f, %.2f, %.2f, %.2f]]\n", m._41, m._42, m._43, m._44);
 }

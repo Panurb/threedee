@@ -1,6 +1,6 @@
 cbuffer TransformBlock : register(b0, space1)
 {
-    float4x4 TransformMatrix : packoffset(c0);
+    row_major float4x4 TransformMatrix : packoffset(c0);
 };
 
 struct Input

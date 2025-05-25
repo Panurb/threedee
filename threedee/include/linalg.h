@@ -33,10 +33,10 @@ typedef struct {
 } Matrix3;
 
 typedef struct {
-    float a, b, c, d;
-    float e, f, g, h;
-    float i, j, k, l;
-    float m, n, o, p;
+    float _11, _12, _13, _14;
+    float _21, _22, _23, _24;
+    float _31, _32, _33, _34;
+    float _41, _42, _43, _44;
 } Matrix4;
 
 typedef struct {
@@ -103,6 +103,8 @@ Matrix2 matrix_inverse(Matrix2 m);
 
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n);
 
+Matrix4 matrix4_mult(Matrix4 m, Matrix4 n);
+
 Matrix4 matrix4_id();
 
 Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale);
@@ -116,3 +118,9 @@ Vector2 scale_from_transform(Matrix3 m);
 float angle_from_transform(Matrix3 m);
 
 bool non_zero(Vector2 v);
+
+Matrix4 perspective_projection_matrix(float fov, float aspect, float near, float far);
+
+Matrix4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far);
+
+void matrix4_print(Matrix4 m);

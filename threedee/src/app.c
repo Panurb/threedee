@@ -435,8 +435,13 @@ void draw() {
             SDL_GPU_INDEXELEMENTSIZE_16BIT
         );
 
-        Matrix4 transform = transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0.0f, 0.0f, 0.0f }, ones3());
-        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &transform, sizeof(Matrix4));
+        Matrix4 transform = transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0.0f, 0.0f, angle }, ones3());
+        float aspect_ratio = (float)game_settings.width / (float)game_settings.height;
+        Matrix4 projection = orthographic_projection_matrix(
+            -aspect_ratio, aspect_ratio, -1.0f, 1.0f, -1.0f, 1.0f
+        );
+        Matrix4 m = matrix4_mult(projection, transform);
+        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &m, sizeof(Matrix4));
 
         SDL_DrawGPUIndexedPrimitives(render_pass, num_indices, 1,  0, 0, 0);
 
