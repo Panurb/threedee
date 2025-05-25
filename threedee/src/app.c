@@ -57,40 +57,40 @@ SDL_GPUShader* load_shader(
 		return NULL;
 	}
 
-	char fullPath[256];
+	char full_path[256];
 	SDL_GPUShaderFormat backendFormats = SDL_GetGPUShaderFormats(device);
 	SDL_GPUShaderFormat format = SDL_GPU_SHADERFORMAT_INVALID;
-	const char *entrypoint;
+	const char *entry_point;
 
 	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sdata/shaders/compiled/SPIRV/%s.spv", app.base_path, shader_filename);
+		SDL_snprintf(full_path, sizeof(full_path), "%sdata/shaders/compiled/SPIRV/%s.spv", app.base_path, shader_filename);
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
-		entrypoint = "main";
+		entry_point = "main";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sdata/shaders/compiled/MSL/%s.msl", app.base_path, shader_filename);
+		SDL_snprintf(full_path, sizeof(full_path), "%sdata/shaders/compiled/MSL/%s.msl", app.base_path, shader_filename);
 		format = SDL_GPU_SHADERFORMAT_MSL;
-		entrypoint = "main0";
+		entry_point = "main0";
 	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%sdata/shaders/compiled/DXIL/%s.dxil", app.base_path, shader_filename);
+		SDL_snprintf(full_path, sizeof(full_path), "%sdata/shaders/compiled/DXIL/%s.dxil", app.base_path, shader_filename);
 		format = SDL_GPU_SHADERFORMAT_DXIL;
-		entrypoint = "main";
+		entry_point = "main";
 	} else {
 		SDL_Log("%s", "Unrecognized backend shader format!");
 		return NULL;
 	}
 
-	size_t codeSize;
-	void* code = SDL_LoadFile(fullPath, &codeSize);
+	size_t code_size;
+	void* code = SDL_LoadFile(full_path, &code_size);
 	if (code == NULL)
 	{
-		SDL_Log("Failed to load shader from disk! %s", fullPath);
+		SDL_Log("Failed to load shader from disk! %s", full_path);
 		return NULL;
 	}
 
-	SDL_GPUShaderCreateInfo shaderInfo = {
+	SDL_GPUShaderCreateInfo shader_info = {
 		.code = code,
-		.code_size = codeSize,
-		.entrypoint = entrypoint,
+		.code_size = code_size,
+		.entrypoint = entry_point,
 		.format = format,
 		.stage = stage,
 		.num_samplers = sampler_count,
@@ -98,7 +98,7 @@ SDL_GPUShader* load_shader(
 		.num_storage_buffers = storage_buffer_count,
 		.num_storage_textures = storage_texture_count
 	};
-	SDL_GPUShader* shader = SDL_CreateGPUShader(device, &shaderInfo);
+	SDL_GPUShader* shader = SDL_CreateGPUShader(device, &shader_info);
 	if (shader == NULL)
 	{
 		SDL_Log("Failed to create shader!");
@@ -120,7 +120,7 @@ void create_game_window() {
     app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
     SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
 
-    SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "PositionColor.vert", 0, 0, 0, 0);
+    SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "triangle.vert", 0, 1, 0, 0);
     if (!vertex_shader) {
         LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
         return;
@@ -203,18 +203,14 @@ void create_game_window() {
 
     Vertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
 
-    transfer_data[0] = (Vertex) { -0.5f, -0.5f, 0, 255, 0, 0, 255 };
-    transfer_data[1] = (Vertex) { 0.5f, -0.5f, 0, 0, 255, 0, 255 };
-    transfer_data[2] = (Vertex) { 0.5f, 0.5f, 0, 0, 255, 0, 255 };
-    transfer_data[3] = (Vertex) { -0.5f, 0.5f, 0, 0, 0, 255, 255 };
+    transfer_data[0] = (Vertex) { {-0.5f, -0.5f, 0.0f}, {255, 0, 0, 255}};
+    transfer_data[1] = (Vertex) { {0.5f, -0.5f, 0.0f}, {0, 255, 0, 255}};
+    transfer_data[2] = (Vertex) { {0.5f, 0.5f, 0.0f}, {0, 255, 0, 255}};
+    transfer_data[3] = (Vertex) { {-0.5f, 0.5f, 0.0f}, {0, 0, 255, 255} };
 
     Uint16* index_data = (Uint16*) &transfer_data[num_vertices];
-    index_data[0] = 0;
-    index_data[1] = 1;
-    index_data[2] = 2;
-    index_data[3] = 0;
-    index_data[4] = 2;
-    index_data[5] = 3;
+    const Uint16 indices[6] = { 0, 1, 2, 0, 2, 3 };
+    SDL_memcpy(index_data, indices, sizeof(indices));
 
     SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
@@ -405,6 +401,9 @@ void update(float time_step) {
 
 
 void draw() {
+    static float angle = 0.0f;
+    angle += 0.01f;
+
     SDL_GPUCommandBuffer* gpu_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
     if (!gpu_command_buffer) {
         LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
@@ -435,8 +434,10 @@ void draw() {
             SDL_GPU_INDEXELEMENTSIZE_16BIT
         );
 
+        Matrix4 transform = transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0.0f, 0.0f, 0.0f }, ones3());
+        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &transform, sizeof(Matrix4));
+
         SDL_DrawGPUIndexedPrimitives(render_pass, num_indices, 1,  0, 0, 0);
-        // SDL_DrawGPUPrimitives(render_pass, num_vertices, 1, 0, 0);
 
         SDL_EndGPURenderPass(render_pass);
     }

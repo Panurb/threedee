@@ -44,7 +44,6 @@ set(SOURCES
     threedee/src/util.c
     threedee/src/threedee.c
     threedee/src/widget.c
-    threedee/src/outline.frag
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
@@ -65,12 +64,33 @@ else()
     add_executable(threedee ${SOURCES})
 endif()
 
+set(SHADER_SRC_DIR ${CMAKE_SOURCE_DIR}/threedee/data/shaders/source)
+set(SHADER_BIN_DIR ${CMAKE_BINARY_DIR}/data/shaders/compiled/SPIRV)
+
+file(GLOB SHADERS "${SHADER_SRC_DIR}/*.vert.hlsl" "${SHADER_SRC_DIR}/*.frag.hlsl")
+
+foreach(SHADER ${SHADERS})
+    message(STATUS "Compiling shader: ${SHADER}")
+    get_filename_component(FILE_NAME ${SHADER} NAME_WLE)
+    set(SPIRV ${SHADER_BIN_DIR}/${FILE_NAME}.spv)
+    add_custom_command(
+            OUTPUT ${SPIRV}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_BIN_DIR}
+            COMMAND glslangValidator -V -e main ${SHADER} -o ${SPIRV}
+            DEPENDS ${SHADER}
+            COMMENT "Compiling shader ${FILE_NAME}"
+    )
+    list(APPEND SPIRV_SHADERS ${SPIRV})
+endforeach()
+
+add_custom_target(compile_shaders ALL DEPENDS ${SPIRV_SHADERS})
+add_dependencies(threedee compile_shaders)
+
 install(TARGETS threedee
     DESTINATION ${CMAKE_BINARY_DIR})
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(LIBS
-#        ${CMAKE_SOURCE_DIR}/SDL/lib/x64/sdl3main.lib
         ${CMAKE_SOURCE_DIR}/SDL/lib/x64/sdl3.lib
         ${CMAKE_SOURCE_DIR}/SDL_image/lib/x64/sdl3_image.lib
         ${CMAKE_SOURCE_DIR}/SDL_ttf/lib/x64/sdl3_ttf.lib
@@ -98,7 +118,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
             PATTERN "*.wav"
             PATTERN "*.json"
             PATTERN "*.ogg"
-            PATTERN "*.spv"
     )
 
     install(FILES ${EXTERNAL_DLLS}

@@ -160,7 +160,7 @@ void add_widget_to_container(int container, int entity) {
 
 
 int add_button_to_container(int container, ButtonText string, OnClick on_click) {
-    int i = create_button(string, zeros(), on_click);
+    int i = create_button(string, zeros2(), on_click);
     add_widget_to_container(container, i);
     return i;
 }
@@ -452,7 +452,7 @@ void draw_widgets(int camera) {
 
         float w = collider->width;
         float h = collider->height;
-        Vector2 r = zeros();
+        Vector2 r = zeros2();
         switch (widget->type) {
         case WIDGET_WINDOW:
             draw_rectangle(camera, pos, w + BORDER_WIDTH, h + BORDER_WIDTH, 0.0f, 

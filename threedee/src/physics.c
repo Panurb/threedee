@@ -45,7 +45,7 @@ void update_physics(float time_step) {
             Vector2 r = diff(parent_position, coord->position);
             float d = norm(r);
 
-            Vector2 f = zeros();
+            Vector2 f = zeros2();
             if (d > joint->max_length) {
                 f = mult(d - joint->max_length, normalized(r));
             } else if (d < joint->min_length) {
@@ -69,7 +69,7 @@ void update_physics(float time_step) {
         Vector2 a = lin_comb(-physics->drag, v_forward, -physics->drag_sideways, v_sideways);
         physics->acceleration = sum(physics->acceleration, a);
         physics->velocity = sum(physics->velocity, mult(time_step, physics->acceleration));
-        physics->acceleration = zeros();
+        physics->acceleration = zeros2();
 
         switch (physics->lock) {
             case AXIS_NONE:
@@ -79,13 +79,13 @@ void update_physics(float time_step) {
                 physics->angular_velocity = 0.0f;
                 break;
             case AXIS_ANGLE:
-                delta_pos = zeros();
-                physics->velocity = zeros();
+                delta_pos = zeros2();
+                physics->velocity = zeros2();
                 break;
             case AXIS_ALL:
-                delta_pos = zeros();
+                delta_pos = zeros2();
                 delta_angle = 0.0f;
-                physics->velocity = zeros();
+                physics->velocity = zeros2();
                 physics->angular_velocity = 0.0f;
                 break;
         }
@@ -106,7 +106,7 @@ void update_physics(float time_step) {
             max_speed *= 0.6f;
         }
         if (physics->speed < 0.1f) {
-            physics->velocity = zeros();
+            physics->velocity = zeros2();
             physics->speed = 0.0f;
         } else if (physics->speed > max_speed) {
             physics->velocity = mult(max_speed / physics->speed, physics->velocity);
@@ -130,8 +130,8 @@ void update_physics(float time_step) {
         }
         
         List_clear(physics->collision.entities);
-        physics->collision.overlap = zeros();
-        physics->collision.velocity = zeros();
+        physics->collision.overlap = zeros2();
+        physics->collision.velocity = zeros2();
 
         physics->slowed = false;
         physics->on_ground = false;

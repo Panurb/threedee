@@ -210,7 +210,7 @@ Vector2 overlap_rectangle_rectangle(int i, int j) {
 
 
 Vector2 overlap_collider_collider(int i, int j) {
-    Vector2 ol = zeros();
+    Vector2 ol = zeros2();
 
     ColliderComponent* a = ColliderComponent_get(i);
     ColliderComponent* b = ColliderComponent_get(j);
@@ -258,7 +258,7 @@ Vector2 overlap_rectangle_image(int i, int j) {
                                    image_axis_half_width, b, axes[k]);
 
         if (fabs(overlaps[k]) < 1e-6) {
-            return zeros();
+            return zeros2();
         }
     }
 

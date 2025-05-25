@@ -76,7 +76,7 @@ HitInfo raycast(Vector2 start, Vector2 velocity, float range, ColliderGroup grou
     HitInfo info;
     info.entity = -1;
     info.normal = mult(-1.0f, velocity);
-    info.position = zeros();
+    info.position = zeros2();
     info.distance = range;
 
     float v = norm(velocity);

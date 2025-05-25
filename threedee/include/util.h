@@ -51,42 +51,28 @@ typedef struct {
 } Vector4;
 
 typedef struct {
-    float a;
-    float b;
-    float c;
-    float d;
+    float a, b;
+    float c, d;
 } Matrix2;
 
 typedef struct {
-    float a;
-    float b;
-    float c;
-    float d;
-    float e;
-    float f;
-    float g;
-    float h;
-    float i;
+    float a, b, c;
+    float d, e, f;
+    float g, h, i;
 } Matrix3;
 
 typedef struct {
-    float a;
-    float b;
-    float c;
-    float d;
-    float e;
-    float f;
-    float g;
-    float h;
-    float i;
-    float j;
-    float k;
-    float l;
-    float m;
-    float n;
-    float o;
-    float p;
+    float a, b, c, d;
+    float e, f, g, h;
+    float i, j, k, l;
+    float m, n, o, p;
 } Matrix4;
+
+typedef struct {
+    float x;
+    float y;
+    float z;
+} Rotation;
 
 typedef struct {
     int w;
@@ -123,11 +109,17 @@ void fill(int* array, int value, int size);
 
 bool close_enough(float a, float b, float epsilon);
 
-Vector2 zeros();
+Vector2 zeros2();
+
+Vector3 zeros3();
 
 Vector2 ones();
 
+Vector3 ones3();
+
 Vector2 vec(float x, float y);
+
+Vector3 vec3(float x, float y, float z);
 
 float norm(Vector2 v);
 
@@ -207,7 +199,9 @@ Matrix2 matrix_inverse(Matrix2 m);
 
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n);
 
-Matrix3 transform_matrix(Vector2 position, float angle, Vector2 scale);
+Matrix4 identity4();
+
+Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale);
 
 Vector4 matrix4_map(Matrix4 m, Vector4 v);
 

@@ -25,16 +25,28 @@ bool close_enough(float a, float b, float epsilon) {
     return fabs(a - b) < epsilon;
 }
 
-Vector2 zeros() {
+Vector2 zeros2() {
     return (Vector2) { 0.0f, 0.0f };
+}
+
+Vector3 zeros3() {
+    return (Vector3) { 0.0f, 0.0f, 0.0f };
 }
 
 Vector2 ones() {
     return (Vector2) { 1.0f, 1.0f };
 }
 
+Vector3 ones3() {
+    return (Vector3) { 1.0f, 1.0f, 1.0f };
+}
+
 Vector2 vec(float x, float y) {
     return (Vector2) { x, y };
+}
+
+Vector3 vec3(float x, float y, float z) {
+    return (Vector3) { x, y, z };
 }
 
 float norm(Vector2 v) {
@@ -271,10 +283,45 @@ Matrix3 matrix3_mult(Matrix3 m, Matrix3 n) {
     return mn;
 }
 
-Matrix3 transform_matrix(Vector2 position, float angle, Vector2 scale) {
-    float c = cosf(angle);
-    float s = sinf(angle);
-    return (Matrix3) { scale.x * c, -scale.y * s, position.x, scale.x * s, scale.y * c, position.y, 0.0f, 0.0f, 1.0f };
+Matrix4 identity4() {
+    return (Matrix4) {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+}
+
+Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale) {
+    Matrix4 m;
+    float c = cosf(rotation.x);
+    float s = sinf(rotation.x);
+    float c2 = cosf(rotation.y);
+    float s2 = sinf(rotation.y);
+    float c3 = cosf(rotation.z);
+    float s3 = sinf(rotation.z);
+
+    m.a = c2 * c3 * scale.x;
+    m.b = -c2 * s3 * scale.x;
+    m.c = s2 * scale.x;
+    m.d = position.x;
+
+    m.e = (s * s2 * c3 + c * s3) * scale.y;
+    m.f = (-s * s2 * s3 + c * c3) * scale.y;
+    m.g = -s * c2 * scale.y;
+    m.h = position.y;
+
+    m.i = (-c * s2 * c3 + s * s3) * scale.z;
+    m.j = (c * s2 * s3 + s * c3) * scale.z;
+    m.k = c * c2 * scale.z;
+    m.l = position.z;
+
+    m.m = 0.0f; // Homogeneous coordinate
+    m.n = 0.0f; // Homogeneous coordinate
+    m.o = 0.0f; // Homogeneous coordinate
+    m.p = 1.0f; // Homogeneous coordinate
+
+    return m;
 }
 
 Vector4 matrix4_map(Matrix4 m, Vector4 v) {

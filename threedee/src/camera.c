@@ -22,7 +22,7 @@ SDL_FColor color_to_fcolor(Color color) {
 
 int create_camera() {
     int i = create_entity();
-    CoordinateComponent_add(i, zeros(), 0.0);
+    CoordinateComponent_add(i, zeros2(), 0.0);
     CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, 40.0f);
     return i;
 }
@@ -30,7 +30,7 @@ int create_camera() {
 
 int create_menu_camera() {
     int i = create_entity();
-    CoordinateComponent_add(i, zeros(), 0.0);
+    CoordinateComponent_add(i, zeros2(), 0.0);
     CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, 25.0f);
     return i;
 }
@@ -556,7 +556,7 @@ void update_camera(int camera, float time_step, bool follow_players) {
     CoordinateComponent* coord = CoordinateComponent_get(camera);
     CameraComponent* cam = CameraComponent_get(camera);
 
-    Vector2 pos = zeros();
+    Vector2 pos = zeros2();
 
     if (follow_players) {
         int n = 0;

@@ -160,8 +160,8 @@ void toggle_new_map(int entity) {
     int container = create_container(vec(0.0f, -1.5f * BUTTON_HEIGHT), 2, 2);
     add_child(window_new_map, container);
 
-    int label = create_label("NAME", zeros());
-    map_name_textbox = create_textbox(zeros(), 1);
+    int label = create_label("NAME", zeros2());
+    map_name_textbox = create_textbox(zeros2(), 1);
     add_row_to_container(container, label, map_name_textbox);
     add_button_to_container(container, "CREATE", change_state_create);
 }
@@ -227,22 +227,22 @@ void toggle_settings(int entity) {
 
     int label = -1;
     #ifndef __EMSCRIPTEN__
-        label = create_label("Resolution", zeros());
-        RESOLUTION_ID = create_dropdown(zeros(), RESOLUTIONS, sizeof(RESOLUTIONS) / sizeof(RESOLUTIONS[0]));
+        label = create_label("Resolution", zeros2());
+        RESOLUTION_ID = create_dropdown(zeros2(), RESOLUTIONS, sizeof(RESOLUTIONS) / sizeof(RESOLUTIONS[0]));
         WidgetComponent_get(RESOLUTION_ID)->value = get_resolution_index();
         add_row_to_container(container, label, RESOLUTION_ID);
 
-        label = create_label("Fullscreen", zeros());
-        fullscreen_id = create_checkbox(zeros(), game_settings.fullscreen, NULL);
+        label = create_label("Fullscreen", zeros2());
+        fullscreen_id = create_checkbox(zeros2(), game_settings.fullscreen, NULL);
         add_row_to_container(container, label, fullscreen_id);
     #endif
 
-    label = create_label("Sound", zeros());
-    int slider = create_slider(zeros(), 0, 100, game_settings.volume, set_volume);
+    label = create_label("Sound", zeros2());
+    int slider = create_slider(zeros2(), 0, 100, game_settings.volume, set_volume);
     add_row_to_container(container, label, slider);
 
-    label = create_label("Music", zeros());
-    slider = create_slider(zeros(), 0, 100, game_settings.music, set_music);
+    label = create_label("Music", zeros2());
+    slider = create_slider(zeros2(), 0, 100, game_settings.music, set_music);
     add_row_to_container(container, label, slider);
 
     #ifndef __EMSCRIPTEN__
@@ -266,8 +266,8 @@ void toggle_keyboard_controls(int entity) {
     add_child(window_keyboard_controls, container);
 
     for (int i = 0; i < ACTIONS_SIZE; i++) {
-        int label = create_label(ACTIONS[i], zeros());
-        int button = create_button(keybind_to_string(game_settings.keybinds[i]), zeros(), NULL);
+        int label = create_label(ACTIONS[i], zeros2());
+        int button = create_button(keybind_to_string(game_settings.keybinds[i]), zeros2(), NULL);
         add_row_to_container(container, label, button);
     }
     add_scrollbar_to_container(container);
@@ -289,8 +289,8 @@ void toggle_xbox_controls(int entity) {
     add_child(window_xbox_controls, container);
 
     for (int i = 0; i < ACTIONS_SIZE; i++) {
-        int label = create_label(ACTIONS[i], zeros());
-        int button = create_button(ACTION_BUTTONS_XBOX[i], zeros(), NULL);
+        int label = create_label(ACTIONS[i], zeros2());
+        int button = create_button(ACTION_BUTTONS_XBOX[i], zeros2(), NULL);
         add_row_to_container(container, label, button);
     }
     add_scrollbar_to_container(container);
@@ -346,19 +346,19 @@ void toggle_controls(int entity) {
     for (int i = 0; i < 4; i++) {
         char buffer[128];
         snprintf(buffer, 128, "Player %d", i + 1);
-        int left = create_label(buffer, zeros());
+        int left = create_label(buffer, zeros2());
         int controllers = 0;
         SDL_JoystickID* joysticks = SDL_GetJoysticks(&controllers);
         free(joysticks);
-        int right = create_dropdown(zeros(), CONTROLLERS, controllers + 2);
+        int right = create_dropdown(zeros2(), CONTROLLERS, controllers + 2);
         WidgetComponent* widget = WidgetComponent_get(right);
         widget->on_change = set_controller;
         widget->value = app.player_controllers[i] + 2;
         add_row_to_container(container, left, right);
     }
 
-    int left = create_button("KEYBOARD", zeros(), toggle_keyboard_controls);
-    int right = create_button("XBOX", zeros(), toggle_xbox_controls);
+    int left = create_button("KEYBOARD", zeros2(), toggle_keyboard_controls);
+    int right = create_button("XBOX", zeros2(), toggle_xbox_controls);
     add_row_to_container(container, left, right);
 }
 
@@ -377,16 +377,16 @@ void toggle_credits(int entity) {
     int container = create_container(vec(0.0f, -3.5f * BUTTON_HEIGHT), 2, 6);
     add_child(window_credits, container);
 
-    add_row_to_container(container, create_label("Programming, art, music", zeros()), create_label("Panu Keskinen", zeros()));
+    add_row_to_container(container, create_label("Programming, art, music", zeros2()), create_label("Panu Keskinen", zeros2()));
     #ifdef __EMSCRIPTEN__
         add_row_to_container(container, create_label("Made with", zeros()), create_label("C, SDL2, cJSON, Emscripten", zeros()));
     #else 
-        add_row_to_container(container, create_label("Made with", zeros()), create_label("C, SDL2, cJSON", zeros()));
+        add_row_to_container(container, create_label("Made with", zeros2()), create_label("C, SDL2, cJSON", zeros2()));
     #endif
-    add_row_to_container(container, create_label("Software used", zeros()), create_label("Visual Studio Code", zeros()));
-    add_row_to_container(container, create_label("", zeros()), create_label("Gimp", zeros()));
-    add_row_to_container(container, create_label("", zeros()), create_label("Ableton Live Lite", zeros()));
-    add_row_to_container(container, create_label("", zeros()), create_label("Audacity", zeros()));
+    add_row_to_container(container, create_label("Software used", zeros2()), create_label("Visual Studio Code", zeros2()));
+    add_row_to_container(container, create_label("", zeros2()), create_label("Gimp", zeros2()));
+    add_row_to_container(container, create_label("", zeros2()), create_label("Ableton Live Lite", zeros2()));
+    add_row_to_container(container, create_label("", zeros2()), create_label("Audacity", zeros2()));
 }
 
 

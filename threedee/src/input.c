@@ -185,8 +185,8 @@ void update_controller(int camera, int i) {
     PlayerComponent* player = PlayerComponent_get(i);
     int joystick = player->controller.joystick;
 
-    Vector2 left_stick = zeros();
-    Vector2 right_stick = zeros();
+    Vector2 left_stick = zeros2();
+    Vector2 right_stick = zeros2();
     if (player->controller.joystick == -1) {
         if (keybind_pressed(ACTION_LEFT)) {
             left_stick.x -= 1.0f;
@@ -269,7 +269,7 @@ void update_controller(int camera, int i) {
         right_stick.y = -map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHTY),
             SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
         if (norm(right_stick) < 0.25f) {
-            right_stick = zeros();
+            right_stick = zeros2();
         }
         if (norm(right_stick) > 1.0f) {
             right_stick = normalized(right_stick);

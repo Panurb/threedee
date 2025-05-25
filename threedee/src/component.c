@@ -107,7 +107,7 @@ ImageComponent* ImageComponent_add(int entity, Filename filename, float width, f
     image->stretch = 0.0f;
     image->stretch_speed = 0.0f;
     image->tile = false;
-    image->offset = zeros();
+    image->offset = zeros2();
     
     game_data->components->image.array[entity] = image;
 
@@ -137,11 +137,11 @@ void ImageComponent_remove(int entity) {
 
 PhysicsComponent* PhysicsComponent_add(int entity, float mass) {
     PhysicsComponent* phys = malloc(sizeof(PhysicsComponent));
-    phys->velocity = zeros();
-    phys->acceleration = zeros();
+    phys->velocity = zeros2();
+    phys->acceleration = zeros2();
     phys->collision.entities = List_create();
-    phys->collision.overlap = zeros();
-    phys->collision.velocity = zeros();
+    phys->collision.overlap = zeros2();
+    phys->collision.velocity = zeros2();
     phys->angular_velocity = 0.0f;
     phys->angular_acceleration = 0.0f;
     phys->mass = mass;
@@ -260,8 +260,8 @@ PlayerComponent* PlayerComponent_add(int entity) {
     };
     memcpy(player->controller.buttons, buttons, sizeof(buttons));
 
-    player->controller.left_stick = zeros();
-    player->controller.right_stick = zeros();
+    player->controller.left_stick = zeros2();
+    player->controller.right_stick = zeros2();
     for (int i = 0; i < 12; i++) {
         player->controller.buttons_down[i] = false;
         player->controller.buttons_pressed[i] = false;
@@ -392,15 +392,15 @@ ParticleComponent* ParticleComponent_add(int entity, float angle, float spread,
     particle->speed_spread = 0.5;
     particle->max_time = 0.5;
     for (int i = 0; i < particle->max_particles; i++) {
-        particle->position[i] = zeros();
-        particle->velocity[i] = zeros();
+        particle->position[i] = zeros2();
+        particle->velocity[i] = zeros2();
         particle->time[i] = 0.0;
     }
     particle->rate = rate;
     particle->timer = 0.0;
     particle->outer_color = outer_color;
     particle->inner_color = inner_color;
-    particle->origin = zeros();
+    particle->origin = zeros2();
     particle->width = 0.0f;
     particle->height = 0.0f;
     particle->stretch = 0.1f;
@@ -637,7 +637,7 @@ CameraComponent* CameraComponent_add(int entity, Resolution resolution, float zo
     camera->matrix = (Matrix2) { 0.0f, 0.0f, 0.0f, 0.0f };
     camera->inv_matrix = (Matrix2) { 0.0f, 0.0f, 0.0f, 0.0f };
 
-    camera->shake.position = zeros();
+    camera->shake.position = zeros2();
     camera->shake.velocity = rand_vector();
 
     game_data->components->camera[entity] = camera;
@@ -1034,12 +1034,16 @@ void ComponentData_clear() {
 
 
 Matrix3 get_transform(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
-    Matrix3 transform = transform_matrix(coord->position, coord->angle, coord->scale);
-    if (coord->parent != -1) {
-        return matrix3_mult(get_transform(coord->parent), transform);
-    }
-    return transform;
+    // CoordinateComponent* coord = CoordinateComponent_get(entity);
+    // Matrix3 transform = transform_matrix(coord->position, coord->angle, coord->scale);
+    // if (coord->parent != -1) {
+    //     return matrix3_mult(get_transform(coord->parent), transform);
+    // }
+    return (Matrix3) { 1.0f, 0.0f, 0.0f,
+                     0.0f, 1.0f, 0.0f,
+                     CoordinateComponent_get(entity)->position.x,
+                     CoordinateComponent_get(entity)->position.y,
+                     1.0f };
 }
 
 
@@ -1113,7 +1117,7 @@ List* get_children(int entity) {
 
 
 Vector2 get_entities_center(List* entities) {
-    Vector2 center = zeros();
+    Vector2 center = zeros2();
     ListNode* node;
     FOREACH(node, entities) {
         int i = node->value;
