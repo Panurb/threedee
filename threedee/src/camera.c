@@ -113,7 +113,7 @@ void draw_line(int camera, Vector2 start, Vector2 end, float width, Color color)
     Vector2 r = diff(end, start);
 
     Vector2 corners[4];
-    get_rect_corners(sum(start, mult(0.5f, r)), atan2(r.y, r.x), dist(start, end), width, corners);
+    get_rect_corners(sum(start, mult(0.5f, r)), atan2(r.y, r.x), dist2(start, end), width, corners);
 
     SDL_Vertex vertices[4];
     for (int i = 0; i < 4; i++) {
@@ -529,7 +529,7 @@ void draw_spline(Entity camera, int texture_index, Vector2 p0, Vector2 p1, Vecto
 
         Vector4 dts = { 0.0f, 1.0f, 2.0f * t, 3.0f * t * t };
         Vector2 dir = { dot4(dts, mx), dot4(dts, my) };
-        Vector2 normal = mult(0.5f * width, normalized(perp(dir)));
+        Vector2 normal = mult(0.5f * width, normalized2(perp(dir)));
 
         if (flip) {
             t = 1.0f - t;

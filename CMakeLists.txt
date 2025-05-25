@@ -31,6 +31,7 @@ set(SOURCES
     threedee/src/image.c
     threedee/src/input.c
     threedee/src/interface.c
+    threedee/src/linalg.c
     threedee/src/list.c
     threedee/src/menu.c
     threedee/src/navigation.c

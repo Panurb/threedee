@@ -43,13 +43,13 @@ void update_physics(float time_step) {
         if (joint && joint->parent != -1) {
             Vector2 parent_position = CoordinateComponent_get(joint->parent)->position;
             Vector2 r = diff(parent_position, coord->position);
-            float d = norm(r);
+            float d = norm2(r);
 
             Vector2 f = zeros2();
             if (d > joint->max_length) {
-                f = mult(d - joint->max_length, normalized(r));
+                f = mult(d - joint->max_length, normalized2(r));
             } else if (d < joint->min_length) {
-                f = mult(d - joint->min_length, normalized(r));
+                f = mult(d - joint->min_length, normalized2(r));
             }
             delta_pos = sum(delta_pos, mult(joint->strength, f));
             
@@ -63,7 +63,7 @@ void update_physics(float time_step) {
             }
         }
 
-        Vector2 v_hat = normalized(physics->velocity);
+        Vector2 v_hat = normalized2(physics->velocity);
         Vector2 v_forward = proj(v_hat, polar_to_cartesian(1.0, coord->angle));
         Vector2 v_sideways = diff(v_hat, v_forward);
         Vector2 a = lin_comb(-physics->drag, v_forward, -physics->drag_sideways, v_sideways);
@@ -100,7 +100,7 @@ void update_physics(float time_step) {
             update_grid(i);
         }
         
-        physics->speed = norm(physics->velocity);
+        physics->speed = norm2(physics->velocity);
         float max_speed = physics->max_speed;
         if (physics->slowed && !physics->on_ground) {
             max_speed *= 0.6f;

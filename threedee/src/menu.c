@@ -130,10 +130,10 @@ void toggle_survival(int entity) {
         return;
     }
 
-    Vector2 pos = sum(vec(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
+    Vector2 pos = sum(vec2(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
     window_play = create_window(pos, "PLAY", 1, toggle_survival);
 
-    int container = create_container(vec(0.0f, -2.0f * BUTTON_HEIGHT), 1, 3);
+    int container = create_container(vec2(0.0f, -2.0f * BUTTON_HEIGHT), 1, 3);
     add_child(window_play, container);
 
     if (game_settings.debug) {
@@ -154,10 +154,10 @@ void toggle_new_map(int entity) {
         return;
     }
 
-    Vector2 pos = sum(vec(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
+    Vector2 pos = sum(vec2(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
     window_new_map = create_window(pos, "NEW MAP", 2, toggle_new_map);
 
-    int container = create_container(vec(0.0f, -1.5f * BUTTON_HEIGHT), 2, 2);
+    int container = create_container(vec2(0.0f, -1.5f * BUTTON_HEIGHT), 2, 2);
     add_child(window_new_map, container);
 
     int label = create_label("NAME", zeros2());
@@ -175,10 +175,10 @@ void toggle_editor(int entity) {
         return;
     }
 
-    Vector2 pos = sum(vec(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
+    Vector2 pos = sum(vec2(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
     window_editor = create_window(pos, "EDITOR", 1, toggle_editor);
 
-    int container = create_container(vec(0.0f, -3 * BUTTON_HEIGHT), 1, 5);
+    int container = create_container(vec2(0.0f, -3 * BUTTON_HEIGHT), 1, 5);
     add_child(window_editor, container);
 
     add_button_to_container(container, "NEW MAP", toggle_new_map);
@@ -219,10 +219,10 @@ void toggle_settings(int entity) {
         return;
     }
 
-    Vector2 pos = sum(vec(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
+    Vector2 pos = sum(vec2(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
     window_settings = create_window(pos, "SETTINGS", 2, toggle_settings);
 
-    int container = create_container(vec(0.0f, -3.0f * BUTTON_HEIGHT), 2, 5);
+    int container = create_container(vec2(0.0f, -3.0f * BUTTON_HEIGHT), 2, 5);
     add_child(window_settings, container);
 
     int label = -1;
@@ -259,10 +259,10 @@ void toggle_keyboard_controls(int entity) {
         return;
     }
 
-    Vector2 pos = sum(vec(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
+    Vector2 pos = sum(vec2(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
     window_keyboard_controls = create_window(pos, "KEYBOARD CONTROLS", 2, toggle_keyboard_controls);
 
-    int container = create_container(vec(0.0f, -3 * BUTTON_HEIGHT), 2, 5);
+    int container = create_container(vec2(0.0f, -3 * BUTTON_HEIGHT), 2, 5);
     add_child(window_keyboard_controls, container);
 
     for (int i = 0; i < ACTIONS_SIZE; i++) {
@@ -282,10 +282,10 @@ void toggle_xbox_controls(int entity) {
         return;
     }
 
-    Vector2 pos = sum(vec(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
+    Vector2 pos = sum(vec2(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
     window_xbox_controls = create_window(pos, "CONTROLS", 2, toggle_xbox_controls);
 
-    int container = create_container(vec(0.0f, -3 * BUTTON_HEIGHT), 2, 5);
+    int container = create_container(vec2(0.0f, -3 * BUTTON_HEIGHT), 2, 5);
     add_child(window_xbox_controls, container);
 
     for (int i = 0; i < ACTIONS_SIZE; i++) {
@@ -328,10 +328,10 @@ void toggle_controls(int entity) {
         return;
     }
 
-    Vector2 pos = sum(vec(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
+    Vector2 pos = sum(vec2(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
     window_controls = create_window(pos, "CONTROLS", 2, toggle_controls);
 
-    int container = create_container(vec(0.0f, -3.0f * BUTTON_HEIGHT), 2, 5);
+    int container = create_container(vec2(0.0f, -3.0f * BUTTON_HEIGHT), 2, 5);
     add_child(window_controls, container);
 
     static ButtonText CONTROLLERS[9] = {"None", "Keyboard", "", "", "", "", "", "", ""};
@@ -371,10 +371,10 @@ void toggle_credits(int entity) {
         return;
     }
 
-    Vector2 pos = sum(vec(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
+    Vector2 pos = sum(vec2(0.0f, 2 * BUTTON_HEIGHT), mult(BUTTON_HEIGHT, rand_vector()));
     window_credits = create_window(pos, "CREDITS", 2, toggle_credits);
 
-    int container = create_container(vec(0.0f, -3.5f * BUTTON_HEIGHT), 2, 6);
+    int container = create_container(vec2(0.0f, -3.5f * BUTTON_HEIGHT), 2, 6);
     add_child(window_credits, container);
 
     add_row_to_container(container, create_label("Programming, art, music", zeros2()), create_label("Panu Keskinen", zeros2()));
@@ -429,7 +429,7 @@ void create_menu() {
     if (game_settings.debug) {
         height++;
     }
-    int container = create_container(vec(-18.0f, -2.0f), 1, height);
+    int container = create_container(vec2(-18.0f, -2.0f), 1, height);
     WidgetComponent_get(container)->enabled = false;
 
     #ifndef __EMSCRIPTEN__
@@ -465,7 +465,7 @@ void destroy_menu() {
 
 void create_pause_menu() {
     int height = game_data->game_mode == MODE_CAMPAIGN ? 5 : 3;
-    int container = create_container(vec(-20.0f, 0.0f), 1, height);
+    int container = create_container(vec2(-20.0f, 0.0f), 1, height);
     add_button_to_container(container, "RESUME", change_state_game);
     if (game_data->game_mode == MODE_CAMPAIGN) {
         add_button_to_container(container, "SAVE", change_state_save);
@@ -496,14 +496,14 @@ void draw_menu() {
 
 void create_game_over_menu() {
     if (game_data->game_mode == MODE_CAMPAIGN && save_exists()) {
-        create_button("Load save", vec(0.0f, -1.0f * BUTTON_HEIGHT), load_campaign);
+        create_button("Load save", vec2(0.0f, -1.0f * BUTTON_HEIGHT), load_campaign);
     } else {
-        create_button("Restart", vec(0.0f, -1.0f * BUTTON_HEIGHT), change_state_reset);
+        create_button("Restart", vec2(0.0f, -1.0f * BUTTON_HEIGHT), change_state_reset);
     }
-    create_button("Quit", vec(0.0f, -2.0f * BUTTON_HEIGHT), change_state_end);
+    create_button("Quit", vec2(0.0f, -2.0f * BUTTON_HEIGHT), change_state_end);
 }
 
 
 void create_win_menu() {
-    create_button("Continue", vec(0.0f, -1.0f * BUTTON_HEIGHT), change_state_end);
+    create_button("Continue", vec2(0.0f, -1.0f * BUTTON_HEIGHT), change_state_end);
 }

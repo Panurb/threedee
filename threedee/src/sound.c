@@ -85,7 +85,7 @@ void play_sounds(int camera) {
         SoundComponent* scomp = SoundComponent_get(i);
         if (!scomp) continue;
 
-        float dist = norm(diff(get_position(i), get_position(camera)));
+        float dist = norm2(diff(get_position(i), get_position(camera)));
 
         if (scomp->loop_sound[0] != '\0') {
             if (!scomp->events[0]) {

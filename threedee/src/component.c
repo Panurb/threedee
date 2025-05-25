@@ -59,10 +59,10 @@ CoordinateComponent* CoordinateComponent_add(int entity, Vector2 pos, float angl
     coord->children = List_create();
     coord->lifetime = -1.0f;
     coord->prefab[0] = '\0';
-    coord->scale = ones();
+    coord->scale = ones2();
     coord->previous.position = pos;
     coord->previous.angle = coord->angle;
-    coord->previous.scale = ones();
+    coord->previous.scale = ones2();
 
     game_data->components->coordinate[entity] = coord;
 

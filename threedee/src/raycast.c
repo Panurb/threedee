@@ -53,7 +53,7 @@ Hit ray_intersection(int i, Vector2 start, Vector2 velocity, float range) {
 
         float radius = col->radius;
         Vector2 oc = diff(start, get_position(i));
-        float delta = powf(dot2(velocity, oc), 2) - norm2(oc) + powf(radius, 2);
+        float delta = powf(dot2(velocity, oc), 2) - normsqr2(oc) + powf(radius, 2);
         float t = -dot2(velocity, oc) - sqrtf(delta);
 
         if (delta >= 0.0 && t >= 0.0 && t < hit.time) {
@@ -79,7 +79,7 @@ HitInfo raycast(Vector2 start, Vector2 velocity, float range, ColliderGroup grou
     info.position = zeros2();
     info.distance = range;
 
-    float v = norm(velocity);
+    float v = norm2(velocity);
 
     if (v == 0.0f) {
         LOG_WARNING("Raycast with zero velocity");
@@ -152,7 +152,7 @@ HitInfo raycast(Vector2 start, Vector2 velocity, float range, ColliderGroup grou
     }
 
     info.position = sum(start, mult(t_min, velocity));
-    info.normal = normalized(info.normal);
+    info.normal = normalized2(info.normal);
 
     // draw_line(game_data->camera, start, sum(start, mult(range, velocity)), 0.01f, COLOR_WHITE);
     // draw_line(game_data->camera, start, info.position, 0.05f, COLOR_WHITE);

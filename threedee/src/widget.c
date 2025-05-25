@@ -38,7 +38,7 @@ int create_window(Vector2 position, ButtonText text, int width, OnClick on_close
     ColliderComponent_add_rectangle(i, width * BUTTON_WIDTH, BUTTON_HEIGHT, GROUP_WALLS)->enabled = false;
     WidgetComponent_add(i, text, WIDGET_WINDOW);
 
-    int j = create_button_small("X", vec(0.5 * (width * BUTTON_WIDTH - BUTTON_HEIGHT), 0.0f), on_close);
+    int j = create_button_small("X", vec2(0.5 * (width * BUTTON_WIDTH - BUTTON_HEIGHT), 0.0f), on_close);
     add_child(i, j);
 
     return i;
@@ -67,7 +67,7 @@ int create_button(ButtonText text, Vector2 position, OnClick on_click) {
 
 int create_button_small(ButtonText text, Vector2 position, OnClick on_click) {
     int i = create_entity();
-    CoordinateComponent_add(i, sum(position, vec(0.0f, 0.25f * BORDER_WIDTH)), 0.0f);
+    CoordinateComponent_add(i, sum(position, vec2(0.0f, 0.25f * BORDER_WIDTH)), 0.0f);
     float height = BUTTON_HEIGHT - 0.5f * BORDER_WIDTH;
     ColliderComponent_add_rectangle(i, BUTTON_HEIGHT, height, GROUP_WALLS)->enabled = false;
     WidgetComponent_add(i, text, WIDGET_BUTTON)->on_click = on_click;
@@ -89,7 +89,7 @@ int create_container(Vector2 position, int width, int height) {
 
 void increment_value(int entity, int direction) {
     WidgetComponent* button = WidgetComponent_get(entity);
-    Vector2 v = vec(0.0f, direction * BUTTON_HEIGHT);
+    Vector2 v = vec2(0.0f, direction * BUTTON_HEIGHT);
     button->value += direction;
 
     if (button->value > button->max_value) {
@@ -146,7 +146,7 @@ void add_widget_to_container(int container, int entity) {
 
     int columns = collider->width / BUTTON_WIDTH;
     int rows = coord->children->size / columns;
-    Vector2 pos = vec(0.0f, 0.5f * collider->height - rows * BUTTON_HEIGHT - 0.5f * BUTTON_HEIGHT);
+    Vector2 pos = vec2(0.0f, 0.5f * collider->height - rows * BUTTON_HEIGHT - 0.5f * BUTTON_HEIGHT);
     CoordinateComponent* coord_child = CoordinateComponent_get(entity);
     coord_child->position = pos;
     add_child(container, entity);
@@ -173,7 +173,7 @@ void add_row_to_container(int container, int left, int right) {
 
     add_child(container, right);
     CoordinateComponent* coord_right = CoordinateComponent_get(right);
-    Vector2 pos = sum(coord_left->position, vec(BUTTON_WIDTH, 0.0f));
+    Vector2 pos = sum(coord_left->position, vec2(BUTTON_WIDTH, 0.0f));
     float height = ColliderComponent_get(container)->height;
     coord_right->position = pos;
     WidgetComponent_get(right)->enabled = (pos.y > -0.5f * height && pos.y < 0.5f * height);
@@ -259,13 +259,13 @@ void add_scrollbar_to_container(int container) {
         int i = node->value;
         ColliderComponent_get(i)->width = BUTTON_WIDTH - SCROLLBAR_WIDTH;
         CoordinateComponent* coord_child = CoordinateComponent_get(i);
-        coord_child->position = diff(coord_child->position, vec(0.5f * SCROLLBAR_WIDTH, 0.0f));
+        coord_child->position = diff(coord_child->position, vec2(0.5f * SCROLLBAR_WIDTH, 0.0f));
     }
 
     int parent = coord->parent;
     int height = collider->height / BUTTON_HEIGHT;
     float w = ColliderComponent_get(parent)->width;
-    Vector2 pos = vec(0.5f * w - 0.5f * SCROLLBAR_WIDTH, -0.5f * (height + 1) * BUTTON_HEIGHT);
+    Vector2 pos = vec2(0.5f * w - 0.5f * SCROLLBAR_WIDTH, -0.5f * (height + 1) * BUTTON_HEIGHT);
     int scrollbar = create_scrollbar(pos, height, widget->max_value, scroll_container);
     add_child(parent, scrollbar);
 }
@@ -279,7 +279,7 @@ void toggle_dropdown(int entity) {
     } else {
         int height = mini(3, widget->max_value + 1);
 
-        int container = create_container(vec(0.0f, -0.5f * (height + 1) * BUTTON_HEIGHT), 1, height);
+        int container = create_container(vec2(0.0f, -0.5f * (height + 1) * BUTTON_HEIGHT), 1, height);
         add_child(entity, container);
         for (int i = widget->min_value; i <= widget->max_value; i++) {
             int j = add_button_to_container(container, "", set_dropdown);
@@ -430,7 +430,7 @@ void update_widgets(int camera) {
 void draw_button(int camera, Vector2 position, float width,
         float height, bool selected) {
     draw_rectangle(camera, position, width, height, 0.0f, COLOR_SHADOW);
-    Vector2 r = sum(position, vec(-0.5f * BORDER_WIDTH, 0.5f * BORDER_WIDTH));
+    Vector2 r = sum(position, vec2(-0.5f * BORDER_WIDTH, 0.5f * BORDER_WIDTH));
     draw_rectangle(camera, r, width - BORDER_WIDTH, height - BORDER_WIDTH, 0.0f, 
         COLOR_SELECTED);
     Color color = selected ? COLOR_SELECTED : COLOR_BUTTON;
@@ -464,7 +464,7 @@ void draw_widgets(int camera) {
                 COLOR_BORDER);
             draw_rectangle(camera, pos, w, h, 0.0f, COLOR_CONTAINER);
             if (coord->children->size > h / BUTTON_HEIGHT) {
-                r = sum(pos, vec(0.5f * w - 0.5f * BUTTON_HEIGHT, 0.0f));
+                r = sum(pos, vec2(0.5f * w - 0.5f * BUTTON_HEIGHT, 0.0f));
                 draw_rectangle(camera, r, BUTTON_HEIGHT, h, 0.0f, COLOR_CONTAINER);
             }
             break;
@@ -476,10 +476,10 @@ void draw_widgets(int camera) {
         case WIDGET_DROPDOWN:
             draw_rectangle(camera, pos, w - MARGIN, h - MARGIN, 0.0f, COLOR_SHADOW);
 
-            r = sum(pos, vec(-0.1f, 0.1f));
+            r = sum(pos, vec2(-0.1f, 0.1f));
             draw_rectangle(camera, r, w - BORDER_WIDTH - MARGIN, h - BORDER_WIDTH - MARGIN, 0.0f, COLOR_BUTTON);
 
-            r = sum(pos, vec(0.5f * BUTTON_WIDTH - 0.5f * BUTTON_HEIGHT, 0.0f));
+            r = sum(pos, vec2(0.5f * BUTTON_WIDTH - 0.5f * BUTTON_HEIGHT, 0.0f));
             if (CoordinateComponent_get(i)->children->size == 0) {
                 draw_text(camera, r, "v", 20, COLOR_WHITE);
             } else {
@@ -489,7 +489,7 @@ void draw_widgets(int camera) {
         case WIDGET_SLIDER:
             draw_rectangle(camera, pos, w - MARGIN, h - MARGIN, 0.0f, COLOR_SHADOW);
             float x = widget->value / (float) (widget->max_value - widget->min_value);
-            draw_rectangle(camera, sum(pos, vec(0.5f * (x - 1.0f) * w, 0.0f)), x * w, h, 
+            draw_rectangle(camera, sum(pos, vec2(0.5f * (x - 1.0f) * w, 0.0f)), x * w, h, 
                 0.0f, COLOR_BUTTON);
             char buffer[256];
             sprintf(buffer, "%d", widget->value);
@@ -500,7 +500,7 @@ void draw_widgets(int camera) {
             float n = widget->max_value - widget->min_value + 1;
             float y = widget->value / n;
             float bar = h / n;
-            r = sum(pos, vec(0.0f, 0.5f * (h - bar) - y * h));
+            r = sum(pos, vec2(0.0f, 0.5f * (h - bar) - y * h));
             draw_button(camera, r, w, bar, widget->selected);
             break;
         case WIDGET_TEXTBOX:

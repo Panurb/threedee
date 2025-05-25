@@ -11,6 +11,7 @@
 #include "settings.h"
 #include "interface.h"
 #include "menu.h"
+#include "linalg.h"
 
 
 App app;

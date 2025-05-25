@@ -4,6 +4,7 @@
 
 #include "util.h"
 #include "list.h"
+#include "linalg.h"
 
 #define MAX_ENTITIES 2000
 

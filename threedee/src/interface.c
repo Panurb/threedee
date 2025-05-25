@@ -33,7 +33,7 @@ void FPSCounter_draw(FpsCounter* fps) {
     snprintf(buffer, 20, "%.0f", 1.0 / fps->frame_avg);
 
     Vector2 size = camera_size(game_data->menu_camera);
-    Vector2 pos = vec(-0.49f * size.x, 0.49f * size.y);
+    Vector2 pos = vec2(-0.49f * size.x, 0.49f * size.y);
     draw_text(game_data->menu_camera, pos, buffer, 20, COLOR_WHITE);
     LOG_INFO("draw fps");
 }

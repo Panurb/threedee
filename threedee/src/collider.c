@@ -33,7 +33,7 @@ float collider_radius(int i) {
     Vector2 scale = get_scale(i);
     ColliderComponent* col = ColliderComponent_get(i);
     if (col->type == COLLIDER_RECTANGLE) {
-        return 0.5f * norm(vec(col->width * scale.x, col->height * scale.y));
+        return 0.5f * norm2(vec2(col->width * scale.x, col->height * scale.y));
     }
 
     if (!close_enough(scale.x, scale.y, 0.01f)) {
@@ -54,7 +54,7 @@ bool point_inside_collider(int i, Vector2 point) {
         return point_inside_rectangle(pos, angle, width, height, point);
     } else if (col->type == COLLIDER_CIRCLE) {
         float radius = collider_radius(i);
-        if (norm2(diff(get_position(i), point)) < radius * radius) {
+        if (normsqr2(diff(get_position(i), point)) < radius * radius) {
             return true;
         }
     }
@@ -120,7 +120,7 @@ Vector2 overlap_circle_circle(int i, int j) {
     Vector2 a = get_position(i);
     Vector2 b = get_position(j);
 
-    float d = dist(a, b);
+    float d = dist2(a, b);
     float r = collider_radius(i) + collider_radius(j);
 
     if (d > r) {
@@ -169,7 +169,7 @@ Vector2 overlap_rectangle_circle(int i, int j) {
 
     Vector2 corner = diff(a, sum(mult(sign(overlaps[0]), hw), mult(sign(overlaps[1]), hh)));
 
-    Vector2 axis = normalized(diff(corner, b));
+    Vector2 axis = normalized2(diff(corner, b));
 
     float overlap = axis_overlap(axis_half_width(i, axis), a, radius, b, axis);
 
@@ -358,7 +358,7 @@ void collide(int entity) {
                 }
 
                 Vector2 dv = physics->velocity;
-                Vector2 no = normalized(ol);
+                Vector2 no = normalized2(ol);
 
                 float m = 1.0f;
 
@@ -379,12 +379,12 @@ void collide(int entity) {
                         List_add(physics->collision.entities, n);
                         break;
                     case 2:
-                        apply_force(entity, mult(fminf(50.0f * norm(ol), 50.0f), normalized(ol)));
+                        apply_force(entity, mult(fminf(50.0f * norm2(ol), 50.0f), normalized2(ol)));
 
                         ImageComponent* image = ImageComponent_get(n);
                         if (image) {
-                            float x = norm(proj(ol, half_width(n)));
-                            float y = norm(proj(ol, half_height(n)));
+                            float x = norm2(proj(ol, half_width(n)));
+                            float y = norm2(proj(ol, half_height(n)));
                             image->stretch = x / collider_width(n) - y / collider_height(n);
                             image->stretch *= 0.5f;
                             image->stretch_speed = 0.0f;

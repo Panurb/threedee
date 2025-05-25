@@ -141,7 +141,7 @@ void draw_image(int entity, int camera) {
 
     float angle = get_angle_interpolated(entity, app.delta);
     if (image->tile) {
-        draw_tiles(camera, image->texture_index, w, h, image->offset, pos, angle, ones(), image->alpha);
+        draw_tiles(camera, image->texture_index, w, h, image->offset, pos, angle, ones2(), image->alpha);
         return;
     }
 

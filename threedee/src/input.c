@@ -200,11 +200,11 @@ void update_controller(int camera, int i) {
         if (keybind_pressed(ACTION_UP)) {
             left_stick.y += 1.0f;
         }
-        player->controller.left_stick = normalized(left_stick);
+        player->controller.left_stick = normalized2(left_stick);
 
         Vector2 mouse = get_mouse_position(camera);
         right_stick = diff(mouse, get_position(i));
-        player->controller.right_stick = normalized(right_stick);
+        player->controller.right_stick = normalized2(right_stick);
 
         player->controller.left_trigger = keybind_pressed(ACTION_ATTACK) ? 1.0f : 0.0f;
         player->controller.right_trigger = keybind_pressed(ACTION_PICKUP) ? 1.0f : 0.0f;
@@ -268,11 +268,11 @@ void update_controller(int camera, int i) {
             SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
         right_stick.y = -map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHTY),
             SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
-        if (norm(right_stick) < 0.25f) {
+        if (norm2(right_stick) < 0.25f) {
             right_stick = zeros2();
         }
-        if (norm(right_stick) > 1.0f) {
-            right_stick = normalized(right_stick);
+        if (norm2(right_stick) > 1.0f) {
+            right_stick = normalized2(right_stick);
         }
         player->controller.right_stick = right_stick;
 

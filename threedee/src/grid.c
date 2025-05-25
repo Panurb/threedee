@@ -77,7 +77,7 @@ List* get_entities(Vector2 origin, float radius) {
                 ColliderComponent* col = ColliderComponent_get(n);
                 if (col->last_collision == id) continue;
 
-                if (dist(origin, get_position(n)) <= radius + collider_radius(n)) {
+                if (dist2(origin, get_position(n)) <= radius + collider_radius(n)) {
                     List_add(list, n);
                 }
 
@@ -161,12 +161,12 @@ void draw_grid(int camera, float tile_width, float tile_height) {
     
     for (float x = left - mod(left, tile_width); x < right; x += tile_width) {
         float linewidth = mod(x, major_lines) == 0.0f ? 0.2f : 0.01f;
-        draw_line(camera, vec(x, bottom), vec(x, top), linewidth, color);
+        draw_line(camera, vec2(x, bottom), vec2(x, top), linewidth, color);
     }
 
     for (float y = bottom - mod(bottom, tile_height); y < top; y += tile_height) {
         float linewidth = mod(y, major_lines) == 0.0f ? 0.2f : 0.01f;
-        draw_line(camera, vec(left, y), vec(right, y), linewidth, color);
+        draw_line(camera, vec2(left, y), vec2(right, y), linewidth, color);
     }
 }
 

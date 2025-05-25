@@ -39,7 +39,7 @@ void reconstruct_path(int current, List* path) {
 
 
 float heuristic(int start, int goal) {
-    return dist(get_position(start), get_position(goal));
+    return dist2(get_position(start), get_position(goal));
 }
 
 
@@ -107,7 +107,7 @@ float connection_distance(int i, int j) {
     Vector2 a = get_position(i);
     Vector2 b = get_position(j);
     Vector2 v = diff(b, a);
-    float d = norm(v);
+    float d = norm2(v);
 
     if (d > WaypointComponent_get(i)->range) {
         return 0.0f;
