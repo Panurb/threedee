@@ -1,3 +1,8 @@
+cbuffer TransformBlock : register(b0, space1)
+{
+    row_major float4x4 projection_matrix : packoffset(c0);
+};
+
 StructuredBuffer<float4x4> TransformMatrices : register(t0, space0);
 
 struct Input
@@ -17,6 +22,6 @@ Output main(Input input, uint instanceID : SV_InstanceID)
     Output output;
     output.Color = input.Color;
     float4x4 transform = TransformMatrices[instanceID];
-    output.Position = mul(transform, float4(input.Position, 1.0f));
+    output.Position = mul(mul(projection_matrix, transform), float4(input.Position, 1.0f));
     return output;
 }
