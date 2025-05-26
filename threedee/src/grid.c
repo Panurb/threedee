@@ -41,7 +41,7 @@ void ColliderGrid_clear(ColliderGrid* grid) {
 
 
 Bounds get_bounds(int i) {
-    Vector2 pos = get_position(i);
+    Vector2 pos = get_xy(i);
     
     float x = (pos.x + 0.5 * game_data->grid->width) / game_data->grid->tile_width;
     float y = (pos.y + 0.5 * game_data->grid->height) / game_data->grid->tile_height;
@@ -77,7 +77,7 @@ List* get_entities(Vector2 origin, float radius) {
                 ColliderComponent* col = ColliderComponent_get(n);
                 if (col->last_collision == id) continue;
 
-                if (dist2(origin, get_position(n)) <= radius + collider_radius(n)) {
+                if (dist2(origin, get_xy(n)) <= radius + collider_radius(n)) {
                     List_add(list, n);
                 }
 
@@ -151,7 +151,7 @@ void draw_grid(int camera, float tile_width, float tile_height) {
     CameraComponent* cam = CameraComponent_get(camera);
     float width = cam->resolution.w / cam->zoom;
     float height = cam->resolution.h / cam->zoom;
-    Vector2 pos = get_position(camera);
+    Vector2 pos = get_xy(camera);
     float major_lines = 16.0f;
     float left = pos.x - 0.5f * width;
     float right = pos.x + 0.5f * width;

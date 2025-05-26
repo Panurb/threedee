@@ -47,14 +47,14 @@ bool point_inside_collider(int i, Vector2 point) {
     // https://math.stackexchange.com/questions/190111/how-to-check-if-a-point-is-inside-a-rectangle
     ColliderComponent* col = ColliderComponent_get(i);
     if (col->type == COLLIDER_RECTANGLE) {
-        Vector2 pos = get_position(i);
+        Vector2 pos = get_xy(i);
         float angle = get_angle(i);
         float width = collider_width(i);
         float height = collider_height(i);
         return point_inside_rectangle(pos, angle, width, height, point);
     } else if (col->type == COLLIDER_CIRCLE) {
         float radius = collider_radius(i);
-        if (normsqr2(diff(get_position(i), point)) < radius * radius) {
+        if (normsqr2(diff(get_xy(i), point)) < radius * radius) {
             return true;
         }
     }
@@ -63,7 +63,7 @@ bool point_inside_collider(int i, Vector2 point) {
 
 
 void get_corners(int i, Vector2* corners) {
-    Vector2 pos = get_position(i);
+    Vector2 pos = get_xy(i);
 
     Vector2 hw = half_width(i);
     Vector2 hh = half_height(i);
@@ -117,8 +117,8 @@ float axis_overlap(float w1, Vector2 r1, float w2, Vector2 r2, Vector2 axis) {
 
 
 Vector2 overlap_circle_circle(int i, int j) {
-    Vector2 a = get_position(i);
-    Vector2 b = get_position(j);
+    Vector2 a = get_xy(i);
+    Vector2 b = get_xy(j);
 
     float d = dist2(a, b);
     float r = collider_radius(i) + collider_radius(j);
@@ -143,8 +143,8 @@ Vector2 overlap_rectangle_circle(int i, int j) {
     axes[0] = polar_to_cartesian(1.0, get_angle(i));
     axes[1] = perp(axes[0]);
 
-    Vector2 a = get_position(i);
-    Vector2 b = get_position(j);
+    Vector2 a = get_xy(i);
+    Vector2 b = get_xy(j);
     float radius = ColliderComponent_get(j)->radius;
 
     for (int k = 0; k < 2; k++) {
@@ -191,8 +191,8 @@ Vector2 overlap_rectangle_rectangle(int i, int j) {
     float overlaps[4];
     Vector2 axes[4] = { hw_i, perp(hw_i), hw_j, perp(hw_j) };
 
-    Vector2 a = get_position(i);
-    Vector2 b = get_position(j);
+    Vector2 a = get_xy(i);
+    Vector2 b = get_xy(j);
 
     for (int k = 0; k < 4; k++) {
         overlaps[k] = axis_overlap(axis_half_width(i, axes[k]), a,
@@ -246,8 +246,8 @@ Vector2 overlap_rectangle_image(int i, int j) {
     float overlaps[4] = { 0.0, 0.0, 0.0, 0.0 };
     Vector2 axes[4] = { hw_i, perp(hw_i), hw_j, perp(hw_j) };
 
-    Vector2 a = get_position(i);
-    Vector2 b = get_position(j);
+    Vector2 a = get_xy(i);
+    Vector2 b = get_xy(j);
 
     for (int k = 0; k < 4; k++) {
         Vector2 hw = polar_to_cartesian(0.5 * image_width(j), get_angle(j));
@@ -307,7 +307,7 @@ bool collides_with(int i, List* entities) {
 
 
 void apply_trigger(int trigger, int target) {
-    CoordinateComponent* coord = CoordinateComponent_get(trigger);
+    TransformComponent* coord = CoordinateComponent_get(trigger);
     ColliderComponent* collider = ColliderComponent_get(trigger);
     PlayerComponent* player = PlayerComponent_get(target);
     PhysicsComponent* physics = PhysicsComponent_get(target);
@@ -448,7 +448,7 @@ void draw_colliders(int camera) {
         ColliderComponent* col = game_data->components->collider[i];
         if (!col) continue;
 
-        Vector2 pos = get_position(i);
+        Vector2 pos = get_xy(i);
         if (col->type == COLLIDER_CIRCLE) {
             draw_circle(camera, pos, collider_radius(i), get_color(1.0, 0.0, 1.0, 0.25));
             draw_line(camera, pos, sum(pos, half_width(i)), 0.05f, COLOR_WHITE);
@@ -456,7 +456,7 @@ void draw_colliders(int camera) {
             Color color = get_color(0.0, 1.0, 1.0, 0.25);
             float width = collider_width(i);
             float height = collider_height(i);
-            draw_rectangle(camera, get_position(i), width, height, get_angle(i), color);
+            draw_rectangle(camera, get_xy(i), width, height, get_angle(i), color);
         }
     }
 }

@@ -51,8 +51,8 @@ ComponentData* ComponentData_create() {
 }
 
 
-CoordinateComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle) {
-    CoordinateComponent* coord = malloc(sizeof(CoordinateComponent));
+TransformComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle) {
+    TransformComponent* coord = malloc(sizeof(TransformComponent));
     coord->position = pos;
     coord->angle = angle;
     coord->parent = -1;
@@ -70,20 +70,20 @@ CoordinateComponent* CoordinateComponent_add(int entity, Vector2 pos, float angl
 }
 
 
-CoordinateComponent* CoordinateComponent_get(int entity) {
+TransformComponent* CoordinateComponent_get(int entity) {
     if (entity == -1) return NULL;
     return game_data->components->coordinate[entity];
 }
 
 
 void CoordinateComponent_remove(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     if (coord) {
         // if (coord->parent != -1) {
         //     List_remove(CoordinateComponent_get(coord->parent)->children, entity);
         // }
         for (ListNode* node = coord->children->head; node; node = node->next) {
-            CoordinateComponent* child = CoordinateComponent_get(node->value);
+            TransformComponent* child = CoordinateComponent_get(node->value);
             if (child) {
                 child->parent = -1;
             }
@@ -350,7 +350,7 @@ EnemyComponent* EnemyComponent_add(int entity) {
     enemy->turn_speed = 5.0f;
     enemy->spawner = false;
     enemy->bounty = 100;
-    enemy->start_position = get_position(entity);
+    enemy->start_position = get_xy(entity);
     enemy->boss = false;
 
     game_data->components->enemy[entity] = enemy;
@@ -925,7 +925,7 @@ int create_entity() {
 
 
 int get_root(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     if (coord->parent != -1) {
         return get_root(coord->parent);
     }
@@ -944,7 +944,7 @@ void add_child(int parent, int child) {
 
 
 void remove_children(int parent) {
-    CoordinateComponent* coord = CoordinateComponent_get(parent);
+    TransformComponent* coord = CoordinateComponent_get(parent);
     for (ListNode* node = coord->children->head; node; node = node->next) {
         CoordinateComponent_get(node->value)->parent = -1;
     }
@@ -953,7 +953,7 @@ void remove_children(int parent) {
 
 
 void remove_parent(int child) {
-    CoordinateComponent* coord = CoordinateComponent_get(child);
+    TransformComponent* coord = CoordinateComponent_get(child);
     if (coord->parent != NULL_ENTITY) {
         List_remove(CoordinateComponent_get(coord->parent)->children, child);
         coord->parent = NULL_ENTITY;
@@ -962,7 +962,7 @@ void remove_parent(int child) {
 
 
 void remove_prefab(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     coord->prefab[0] = '\0';
 }
 
@@ -1010,7 +1010,7 @@ void destroy_entities(List* entities) {
 
 
 void do_destroy_entity_recursive(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     for (ListNode* node = coord->children->head; node; node = node->next) {
         do_destroy_entity_recursive(node->value);
     }
@@ -1047,7 +1047,7 @@ Matrix3 get_transform(int entity) {
 }
 
 
-Vector2 get_position(int entity) {
+Vector2 get_xy(int entity) {
     Matrix3 transform = get_transform(entity);
     return position_from_transform(transform);
 }
@@ -1067,7 +1067,7 @@ Vector2 get_scale(int entity) {
 
 Vector2 get_position_interpolated(int entity, float delta) {
     Vector2 previous_position = CoordinateComponent_get(entity)->previous.position;
-    Vector2 current_position = get_position(entity);
+    Vector2 current_position = get_xy(entity);
 
     float x = lerp(previous_position.x, current_position.x, delta);
     float y = lerp(previous_position.y, current_position.y, delta);
@@ -1096,7 +1096,7 @@ Vector2 get_scale_interpolated(int entity, float delta) {
 
 
 bool entity_exists(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     if (coord) {
         return true;
     }
@@ -1105,13 +1105,13 @@ bool entity_exists(int entity) {
 
 
 int get_parent(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     return coord->parent;
 }
 
 
 List* get_children(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     return coord->children;
 }
 
@@ -1122,7 +1122,7 @@ Vector2 get_entities_center(List* entities) {
     FOREACH(node, entities) {
         int i = node->value;
         if (CoordinateComponent_get(i)->parent == -1) {
-            center = sum(center, get_position(i));
+            center = sum(center, get_xy(i));
         }
     }
     if (entities->size != 0) {

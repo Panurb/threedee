@@ -10,7 +10,6 @@
 #include "camera.h"
 #include "component.h"
 #include "util.h"
-#include "image.h"
 #include "game.h"
 #include "settings.h"
 
@@ -553,7 +552,7 @@ void draw_spline(Entity camera, int texture_index, Vector2 p0, Vector2 p1, Vecto
 
 
 void update_camera(int camera, float time_step, bool follow_players) {
-    CoordinateComponent* coord = CoordinateComponent_get(camera);
+    TransformComponent* coord = CoordinateComponent_get(camera);
     CameraComponent* cam = CameraComponent_get(camera);
 
     Vector2 pos = zeros2();
@@ -566,7 +565,7 @@ void update_camera(int camera, float time_step, bool follow_players) {
             PlayerComponent* player = PlayerComponent_get(i);
             if (player->state != PLAYER_DEAD) {
                 n += 1;
-                pos = sum(pos, get_position(i));
+                pos = sum(pos, get_xy(i));
             }
         }
         if (n != 0) {
@@ -582,7 +581,7 @@ void update_camera(int camera, float time_step, bool follow_players) {
 
 
 bool on_screen(int camera, Vector2 position, float width, float height) {
-    Vector2 pos = get_position(camera);
+    Vector2 pos = get_xy(camera);
     CameraComponent* cam = CameraComponent_get(camera);
 
     if (fabsf(position.x - pos.x) < 0.5f * (width + cam->resolution.w / cam->zoom)) {
@@ -608,7 +607,7 @@ void draw_overlay(int camera, float alpha) {
     CameraComponent* cam = CameraComponent_get(camera);
     float width = cam->resolution.w / cam->zoom;
     float height = cam->resolution.h / cam->zoom;
-    Vector2 pos = get_position(camera);
+    Vector2 pos = get_xy(camera);
     Color color = get_color(0.0f, 0.0f, 0.0f, alpha);
     draw_rectangle(camera, pos, width, height, 0.0f, color);
 }

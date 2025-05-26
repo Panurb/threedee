@@ -1,12 +1,12 @@
+#define _USE_MATH_DEFINES
+
 #include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 
 #include <SDL3/SDL.h>
 
 #include "app.h"
-
-#include <math.h>
-#include <stdlib.h>
-
 #include "game.h"
 #include "settings.h"
 #include "interface.h"
@@ -25,10 +25,12 @@ static SDL_GPUBuffer* vertex_buffer = NULL;
 static int num_vertices = 0;
 static SDL_GPUBuffer* index_buffer = NULL;
 static int num_indices = 0;
+static SDL_GPUBuffer* instance_buffer = NULL;
+static int num_instances = 10;
+static SDL_GPUTransferBuffer* instance_transfer_buffer = NULL;
 
 
-typedef struct Vertex
-{
+typedef struct Vertex {
     Vector3 position;
     Color color;
 } Vertex;
@@ -121,7 +123,7 @@ void create_game_window() {
     app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
     SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
 
-    SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "triangle.vert", 0, 1, 0, 0);
+    SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "triangle.vert", 0, 0, 1, 0);
     if (!vertex_shader) {
         LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
         return;
@@ -134,7 +136,7 @@ void create_game_window() {
     }
 
     SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
-        .target_info = {
+        .target_info = (SDL_GPUGraphicsPipelineTargetInfo){
             .num_color_targets = 1,
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
                 .format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
@@ -199,6 +201,22 @@ void create_game_window() {
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
             .size = sizeof(Vertex) * num_vertices + sizeof(Uint16) * num_indices,
+        }
+    );
+
+    instance_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+            .size = sizeof(Matrix4) * num_instances,
+        }
+    );
+
+    instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
+        app.gpu_device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(Matrix4) * num_instances,
         }
     );
 
@@ -402,6 +420,8 @@ void update(float time_step) {
 
 
 void draw() {
+    LOG_INFO("Start draw");
+
     static float angle = 0.0f;
     angle += 0.01f;
 
@@ -415,6 +435,42 @@ void draw() {
     SDL_WaitAndAcquireGPUSwapchainTexture(gpu_command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
     if (swapchain_texture) {
+        LOG_INFO("Swapchain texture acquired");
+
+        Matrix4* matrices = SDL_MapGPUTransferBuffer(app.gpu_device, instance_transfer_buffer, false);
+        LOG_INFO("GPU transfer buffer created");
+
+        // Fill matrices[0..num_instances-1] with your transforms
+        float aspect_ratio = (float)game_settings.width / (float)game_settings.height;
+        Matrix4 projection = orthographic_projection_matrix(
+            -aspect_ratio, aspect_ratio, -1.0f, 1.0f, -1.0f, 1.0f
+        );
+        for (int i = 0; i < num_instances; i++) {
+            Matrix4 t = transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / num_instances) }, ones3());
+            matrices[i] = matrix4_mult(projection, t);
+        }
+        LOG_INFO("GPU transfer buffer updated");
+
+        // 3. Upload to GPU buffer
+        SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
+        SDL_UploadToGPUBuffer(
+            copy_pass,
+            &(SDL_GPUTransferBufferLocation) {
+                .transfer_buffer = instance_transfer_buffer,
+                .offset = 0
+            },
+            &(SDL_GPUBufferRegion) {
+                .buffer = instance_buffer,
+                .offset = 0,
+                .size = sizeof(Matrix4) * num_instances
+            },
+            true
+        );
+        SDL_EndGPUCopyPass(copy_pass);
+        LOG_INFO("GPU copy pass updated");
+
+        // SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
         SDL_GPUColorTargetInfo color_target_info = {
             .texture = swapchain_texture,
             .load_op = SDL_GPU_LOADOP_CLEAR,
@@ -427,28 +483,21 @@ void draw() {
         SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
         SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = vertex_buffer, .offset = 0 }, 1);
         SDL_BindGPUIndexBuffer(
-            render_pass,
-            &(SDL_GPUBufferBinding) {
-                .buffer = index_buffer,
-                .offset = 0,
-            },
-            SDL_GPU_INDEXELEMENTSIZE_16BIT
+            render_pass, &(SDL_GPUBufferBinding) { .buffer = index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
         );
+        // 4. Bind the buffer as a shader resource before drawing
+        SDL_BindGPUVertexStorageBuffers(render_pass, 0, &instance_buffer, 1);
+        LOG_INFO("Buffers bound");
 
-        Matrix4 transform = transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0.0f, 0.0f, angle }, ones3());
-        float aspect_ratio = (float)game_settings.width / (float)game_settings.height;
-        Matrix4 projection = orthographic_projection_matrix(
-            -aspect_ratio, aspect_ratio, -1.0f, 1.0f, -1.0f, 1.0f
-        );
-        Matrix4 m = matrix4_mult(projection, transform);
-        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &m, sizeof(Matrix4));
-
-        SDL_DrawGPUIndexedPrimitives(render_pass, num_indices, 1,  0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(render_pass, num_indices, num_instances,  0, 0, 0);
+        LOG_INFO("Drew indexed primitives");
 
         SDL_EndGPURenderPass(render_pass);
     }
 
     SDL_SubmitGPUCommandBuffer(gpu_command_buffer);
+
+    LOG_INFO("End draw");
 }
 
 

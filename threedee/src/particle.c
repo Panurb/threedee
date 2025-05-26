@@ -205,7 +205,7 @@ void add_particles(int entity, int n) {
                 randf(-dy, dy)
             };
         }
-        part->position[next] = sum(get_position(entity), rotate(part->origin, get_angle(entity)));
+        part->position[next] = sum(get_xy(entity), rotate(part->origin, get_angle(entity)));
         float r = part->speed * randf(1.0 - part->speed_spread, 1.0 + part->speed_spread);
         float angle = randf(part->angle - 0.5 * part->spread, part->angle + 0.5 * part->spread);
         part->velocity[next] = polar_to_cartesian(r, get_angle(entity) + angle);
@@ -226,7 +226,7 @@ void update_particles(int camera, float time_step) {
         if (!part) continue;
 
         float w = 3.0f * part->max_time * part->speed;
-        bool visible = on_screen(camera, get_position(i), w, w);
+        bool visible = on_screen(camera, get_xy(i), w, w);
         if (part->loop && !visible) {
             continue;
         }

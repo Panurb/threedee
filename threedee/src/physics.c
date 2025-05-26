@@ -38,7 +38,7 @@ void update_physics(float time_step) {
         Vector2 delta_pos = sum(physics->collision.overlap, mult(time_step, physics->velocity));
         float delta_angle = time_step * physics->angular_velocity;
 
-        CoordinateComponent* coord = CoordinateComponent_get(i);
+        TransformComponent* coord = CoordinateComponent_get(i);
         JointComponent* joint = JointComponent_get(i);
         if (joint && joint->parent != -1) {
             Vector2 parent_position = CoordinateComponent_get(joint->parent)->position;
@@ -144,7 +144,7 @@ void draw_vectors(int camera) {
         PhysicsComponent* physics = PhysicsComponent_get(i);
         if (!physics) continue;
 
-        CoordinateComponent* coord = CoordinateComponent_get(i);
+        TransformComponent* coord = CoordinateComponent_get(i);
         if (!coord) continue;
 
         Vector2 pos = coord->position;

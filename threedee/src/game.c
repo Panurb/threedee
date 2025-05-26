@@ -104,7 +104,7 @@ void init_game() {
 
 void update_lifetimes(float time_step) {
     for (int i = 0; i < game_data->components->entities; i++) {
-        CoordinateComponent* coord = CoordinateComponent_get(i);
+        TransformComponent* coord = CoordinateComponent_get(i);
         if (!coord) continue;
 
         if (coord->lifetime > 0.0f) {
@@ -144,9 +144,9 @@ void update_lifetimes(float time_step) {
 
 void update_coordinates() {
     for (int i = 0; i < game_data->components->entities; i++) {
-        CoordinateComponent* coord = CoordinateComponent_get(i);
+        TransformComponent* coord = CoordinateComponent_get(i);
         if (coord) {
-            coord->previous.position = get_position(i);
+            coord->previous.position = get_xy(i);
             coord->previous.angle = get_angle(i);
             coord->previous.scale = get_scale(i);
         }

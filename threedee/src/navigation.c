@@ -39,7 +39,7 @@ void reconstruct_path(int current, List* path) {
 
 
 float heuristic(int start, int goal) {
-    return dist2(get_position(start), get_position(goal));
+    return dist2(get_xy(start), get_xy(goal));
 }
 
 
@@ -104,8 +104,8 @@ bool a_star(int start, int goal, List* path) {
 
 
 float connection_distance(int i, int j) {
-    Vector2 a = get_position(i);
-    Vector2 b = get_position(j);
+    Vector2 a = get_xy(i);
+    Vector2 b = get_xy(j);
     Vector2 v = diff(b, a);
     float d = norm2(v);
 
@@ -203,7 +203,7 @@ void update_waypoints() {
             if (!waypoint) continue;
             
             if (c % groups == counter - 1) {
-                List* neighbors = get_entities(get_position(i), waypoint->range);
+                List* neighbors = get_entities(get_xy(i), waypoint->range);
                 ListNode* node;
                 FOREACH(node, neighbors) {
                     int n = node->value;
@@ -229,7 +229,7 @@ void draw_waypoints(int camera, bool draw_neighbors) {
         if (!waypoint) continue;
         if (ImageComponent_get(i)) continue;
 
-        Vector2 pos = get_position(i);
+        Vector2 pos = get_xy(i);
         float radius = ColliderComponent_get(i)->radius;
         draw_circle(camera, pos, radius, COLOR_WHITE);
 
@@ -238,7 +238,7 @@ void draw_waypoints(int camera, bool draw_neighbors) {
                 int k = node->value;
                 Color color = COLOR_WHITE;
                 color.a = 64;
-                draw_line(camera, pos, get_position(k), 0.04f, color);
+                draw_line(camera, pos, get_xy(k), 0.04f, color);
             }
         }
     }

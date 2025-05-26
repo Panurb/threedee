@@ -203,7 +203,7 @@ void update_controller(int camera, int i) {
         player->controller.left_stick = normalized2(left_stick);
 
         Vector2 mouse = get_mouse_position(camera);
-        right_stick = diff(mouse, get_position(i));
+        right_stick = diff(mouse, get_xy(i));
         player->controller.right_stick = normalized2(right_stick);
 
         player->controller.left_trigger = keybind_pressed(ACTION_ATTACK) ? 1.0f : 0.0f;

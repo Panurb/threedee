@@ -14,6 +14,7 @@ typedef int Entity;
 
 
 typedef struct {
+    Matrix4 transform;
     Vector2 position;
     float angle;
     int parent;
@@ -26,7 +27,7 @@ typedef struct {
         float angle;
         Vector2 scale;
     } previous;
-} CoordinateComponent;
+} TransformComponent;
 
 typedef enum {
     LAYER_GROUND,
@@ -510,7 +511,7 @@ typedef struct {
 struct ComponentData {
     int entities;
     List* added_entities;
-    CoordinateComponent* coordinate[MAX_ENTITIES];
+    TransformComponent* coordinate[MAX_ENTITIES];
     OrderedArray image;
     PhysicsComponent* physics[MAX_ENTITIES];
     ColliderComponent* collider[MAX_ENTITIES];
@@ -536,8 +537,8 @@ struct ComponentData {
 
 ComponentData* ComponentData_create();
 
-CoordinateComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle);
-CoordinateComponent* CoordinateComponent_get(int entity);
+TransformComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle);
+TransformComponent* CoordinateComponent_get(int entity);
 void CoordinateComponent_remove(int entity);
 
 ImageComponent* ImageComponent_add(int entity, Filename filename, float width, float height, Layer layer);
@@ -637,7 +638,7 @@ void remove_prefab(int entity);
 
 void ComponentData_clear();
 
-Vector2 get_position(int i);
+Vector2 get_xy(int i);
 float get_angle(int i);
 Vector2 get_scale(int entity);
 

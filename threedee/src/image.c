@@ -248,7 +248,7 @@ void change_layer(int entity, Layer layer) {
 
 
 bool point_inside_image(int entity, Vector2 point) {
-    Vector2 position = get_position(entity);
+    Vector2 position = get_xy(entity);
     float angle = get_angle(entity);
     ImageComponent* image = ImageComponent_get(entity);
     return point_inside_rectangle(position, angle, image_width(entity), image_height(entity), point);

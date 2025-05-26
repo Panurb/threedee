@@ -22,7 +22,7 @@ void bring_to_top(int entity) {
         int entity = List_pop(queue);
         List_remove(game_data->components->widget.order, entity);
         List_append(game_data->components->widget.order, entity);
-        CoordinateComponent* coord = CoordinateComponent_get(entity);
+        TransformComponent* coord = CoordinateComponent_get(entity);
         for (ListNode* node = coord->children->head; node; node = node->next) {
             int child = node->value;
             List_append(queue, child);
@@ -112,9 +112,9 @@ void increment_value(int entity, int direction) {
     }
 
     float height = ColliderComponent_get(entity)->height;
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     for (ListNode* node = coord->children->head; node; node = node->next) {
-        CoordinateComponent* coord_child = CoordinateComponent_get(node->value);
+        TransformComponent* coord_child = CoordinateComponent_get(node->value);
         coord_child->position = sum(coord_child->position, v);
 
         Vector2 pos = coord_child->position;
@@ -128,7 +128,7 @@ void increment_value(int entity, int direction) {
 
 
 void scroll_container(int entity, int delta) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     coord = CoordinateComponent_get(coord->parent);
     for (ListNode* node = coord->children->head; node; node = node->next) {
         int i = node->value;
@@ -140,14 +140,14 @@ void scroll_container(int entity, int delta) {
 
 
 void add_widget_to_container(int container, int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(container);
+    TransformComponent* coord = CoordinateComponent_get(container);
     WidgetComponent* widget = WidgetComponent_get(container);
     ColliderComponent* collider = ColliderComponent_get(container);
 
     int columns = collider->width / BUTTON_WIDTH;
     int rows = coord->children->size / columns;
     Vector2 pos = vec2(0.0f, 0.5f * collider->height - rows * BUTTON_HEIGHT - 0.5f * BUTTON_HEIGHT);
-    CoordinateComponent* coord_child = CoordinateComponent_get(entity);
+    TransformComponent* coord_child = CoordinateComponent_get(entity);
     coord_child->position = pos;
     add_child(container, entity);
 
@@ -168,11 +168,11 @@ int add_button_to_container(int container, ButtonText string, OnClick on_click) 
 
 void add_row_to_container(int container, int left, int right) {
     add_widget_to_container(container, left);
-    CoordinateComponent* coord_left = CoordinateComponent_get(left);
+    TransformComponent* coord_left = CoordinateComponent_get(left);
     coord_left->position.x -= 0.5f * BUTTON_WIDTH;
 
     add_child(container, right);
-    CoordinateComponent* coord_right = CoordinateComponent_get(right);
+    TransformComponent* coord_right = CoordinateComponent_get(right);
     Vector2 pos = sum(coord_left->position, vec2(BUTTON_WIDTH, 0.0f));
     float height = ColliderComponent_get(container)->height;
     coord_right->position = pos;
@@ -208,7 +208,7 @@ void add_files_to_container(int container, Filename directory, OnClick on_click)
 
 
 void close_dropdown(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     ListNode* node;
     FOREACH (node, coord->children) {
         int i = node->value;
@@ -219,7 +219,7 @@ void close_dropdown(int entity) {
 
 
 void set_dropdown(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     int dropdown = CoordinateComponent_get(coord->parent)->parent;
     WidgetComponent* widget = WidgetComponent_get(entity);
     WidgetComponent* widget_dropdown = WidgetComponent_get(dropdown);
@@ -235,7 +235,7 @@ void set_dropdown(int entity) {
 
 void update_scrollbar(int entity, int delta) {
     UNUSED(delta);
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     coord = CoordinateComponent_get(coord->parent);
     int value = WidgetComponent_get(entity)->value;
     for (ListNode* node = coord->children->head; node; node = node->next) {
@@ -249,7 +249,7 @@ void update_scrollbar(int entity, int delta) {
 
 
 void add_scrollbar_to_container(int container) {
-    CoordinateComponent* coord = CoordinateComponent_get(container);
+    TransformComponent* coord = CoordinateComponent_get(container);
     WidgetComponent* widget = WidgetComponent_get(container);
     ColliderComponent* collider = ColliderComponent_get(container);
 
@@ -258,7 +258,7 @@ void add_scrollbar_to_container(int container) {
     for (ListNode* node = coord->children->head; node; node = node->next) {
         int i = node->value;
         ColliderComponent_get(i)->width = BUTTON_WIDTH - SCROLLBAR_WIDTH;
-        CoordinateComponent* coord_child = CoordinateComponent_get(i);
+        TransformComponent* coord_child = CoordinateComponent_get(i);
         coord_child->position = diff(coord_child->position, vec2(0.5f * SCROLLBAR_WIDTH, 0.0f));
     }
 
@@ -272,7 +272,7 @@ void add_scrollbar_to_container(int container) {
 
 
 void toggle_dropdown(int entity) {
-    CoordinateComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = CoordinateComponent_get(entity);
     WidgetComponent* widget = WidgetComponent_get(entity);
     if (coord->children->size > 0) {
         close_dropdown(entity);
@@ -309,7 +309,7 @@ int create_dropdown(Vector2 position, ButtonText* strings, int size) {
 void set_slider(int entity, Vector2 mouse_position) {
     WidgetComponent* widget = WidgetComponent_get(entity);
     ColliderComponent* collider = ColliderComponent_get(entity);
-    float x = mouse_position.x - get_position(entity).x + 0.5f * collider->width;
+    float x = mouse_position.x - get_xy(entity).x + 0.5f * collider->width;
     int n = widget->max_value - widget->min_value;
     int value = clamp(x  / collider->width, 0.0f, 1.0f) * n;
     widget->value = value;
@@ -337,7 +337,7 @@ int create_slider(Vector2 position, int min_value, int max_value, int value,
 void set_scrollbar(int entity, Vector2 mouse_position) {
     WidgetComponent* widget = WidgetComponent_get(entity);
     ColliderComponent* collider = ColliderComponent_get(entity);
-    float y = mouse_position.y - get_position(entity).y + 0.5f * collider->height;
+    float y = mouse_position.y - get_xy(entity).y + 0.5f * collider->height;
     int n = widget->max_value - widget->min_value;
     int value = clamp(1.0f - y  / collider->height, 0.0f, 0.99f) * (n + 1);
     int delta = value - widget->value;
@@ -446,8 +446,8 @@ void draw_widgets(int camera) {
         WidgetComponent* widget = WidgetComponent_get(i);
         if (!widget->enabled) continue;
 
-        Vector2 pos = get_position(i);
-        CoordinateComponent* coord = CoordinateComponent_get(i);
+        Vector2 pos = get_xy(i);
+        TransformComponent* coord = CoordinateComponent_get(i);
         ColliderComponent* collider = ColliderComponent_get(i);
 
         float w = collider->width;
@@ -549,7 +549,7 @@ bool input_widgets(int camera, SDL_Event event) {
         }
         if (!widget->selected) continue;
 
-        CoordinateComponent* coord = CoordinateComponent_get(i);
+        TransformComponent* coord = CoordinateComponent_get(i);
 
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             if (widget->type == WIDGET_WINDOW) {

@@ -52,14 +52,14 @@ Hit ray_intersection(int i, Vector2 start, Vector2 velocity, float range) {
         // https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
 
         float radius = col->radius;
-        Vector2 oc = diff(start, get_position(i));
+        Vector2 oc = diff(start, get_xy(i));
         float delta = powf(dot2(velocity, oc), 2) - normsqr2(oc) + powf(radius, 2);
         float t = -dot2(velocity, oc) - sqrtf(delta);
 
         if (delta >= 0.0 && t >= 0.0 && t < hit.time) {
             hit.time = t;
             Vector2 p = sum(start, mult(t, velocity));
-            hit.normal = diff(p, get_position(i));
+            hit.normal = diff(p, get_xy(i));
         }
     }
 
