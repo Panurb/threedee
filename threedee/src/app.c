@@ -7,12 +7,17 @@
 #include <SDL3/SDL.h>
 
 #include "app.h"
-#include "game.h"
+
+#include <camera.h>
+#include <SDL_mixer.h>
+#include <sound.h>
+#include <SDL3_ttf/SDL_ttf.h>
+
 #include "settings.h"
 #include "interface.h"
-#include "menu.h"
 #include "linalg.h"
 #include "render.h"
+#include "scene.h"
 
 
 App app;
@@ -21,15 +26,8 @@ static String version = "0.0";
 
 static int debug_level = 0;
 
-// static SDL_GPUGraphicsPipeline* pipeline = NULL;
-// static SDL_GPUBuffer* vertex_buffer = NULL;
-// static int num_vertices = 0;
-// static SDL_GPUBuffer* index_buffer = NULL;
-// static int num_indices = 0;
-// static SDL_GPUBuffer* instance_buffer = NULL;
-// static int num_instances = 10;
-// static SDL_GPUTransferBuffer* instance_transfer_buffer = NULL;
 RenderMode render_quad;
+Entity menu_camera = NULL_ENTITY;
 
 
 void create_game_window() {
@@ -112,6 +110,9 @@ void init() {
     app.base_path = SDL_GetBasePath();
 
     create_game_window();
+    create_scene();
+    menu_camera = create_menu_camera();
+    LOG_INFO("Camera created");
 }
 
 
@@ -211,7 +212,7 @@ void draw() {
 
     if (swapchain_texture) {
         // PUSH UNIFORM DATA
-        Matrix4 projection_matrix = CameraComponent_get(game_data->menu_camera)->projection_matrix;
+        Matrix4 projection_matrix = CameraComponent_get(menu_camera)->projection_matrix;
         SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &projection_matrix, sizeof(Matrix4));
 
         Matrix4* instances = SDL_MapGPUTransferBuffer(app.gpu_device, render_quad.instance_transfer_buffer, false);
@@ -251,22 +252,22 @@ void play_audio() {
             break;
     }
 
-    if (game_data->music != current_music) {
-        music_fade = fmaxf(0.0f, music_fade - 0.01f);
-
-        if (music_fade == 0.0f) {
-            current_music = game_data->music;
-
-            Mix_HaltMusic();
-            if (game_data->music != -1) {
-                Mix_PlayMusic(resources.music[game_data->music], -1);
-            }
-        }
-    } else {
-        music_fade = fminf(1.0f, music_fade + 0.01f);
-    }
-
-    play_sounds(game_data->camera);
+    // if (game_data->music != current_music) {
+    //     music_fade = fmaxf(0.0f, music_fade - 0.01f);
+    //
+    //     if (music_fade == 0.0f) {
+    //         current_music = game_data->music;
+    //
+    //         Mix_HaltMusic();
+    //         if (game_data->music != -1) {
+    //             Mix_PlayMusic(resources.music[game_data->music], -1);
+    //         }
+    //     }
+    // } else {
+    //     music_fade = fminf(1.0f, music_fade + 0.01f);
+    // }
+    //
+    // play_sounds(game_data->camera);
 
     Mix_VolumeMusic(0.5f * game_settings.music * music_fade);
 }

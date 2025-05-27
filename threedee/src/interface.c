@@ -3,7 +3,7 @@
 
 #include "interface.h"
 #include "camera.h"
-#include "game.h"
+#include "scene.h"
 
 
 FpsCounter* FpsCounter_create() {

@@ -20,33 +20,22 @@ endif()
 
 set(SOURCES
     cJSON/src/cJSON.c
-    threedee/src/animation.c
     threedee/src/app.c
     threedee/src/camera.c
-    threedee/src/collider.c
     threedee/src/component.c
-    threedee/src/game.c
-    threedee/src/grid.c
     threedee/src/heap.c
-    threedee/src/image.c
     threedee/src/input.c
     threedee/src/interface.c
     threedee/src/linalg.c
     threedee/src/list.c
-    threedee/src/menu.c
-    threedee/src/navigation.c
-    threedee/src/particle.c
     threedee/src/perlin.c
-    threedee/src/physics.c
-    threedee/src/player.c
-    threedee/src/raycast.c
+#    threedee/src/resources.c
+    threedee/src/scene.c
     threedee/src/settings.c
     threedee/src/sound.c
     threedee/src/util.c
     threedee/src/threedee.c
-    threedee/src/widget.c
-        threedee/src/render.c
-        threedee/include/render.h
+    threedee/src/render.c
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  

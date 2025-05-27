@@ -11,7 +11,8 @@
 #include "util.h"
 #include "component.h"
 #include "settings.h"
-#include "game.h"
+#include "resources.h"
+#include "scene.h"
 
 
 void load_sounds() {
@@ -100,15 +101,6 @@ void play_sounds(int camera) {
             int chan = event->channel;
 
             float vol = event->volume;
-            CameraComponent* cam = CameraComponent_get(camera);
-            float radius = 0.5f * cam->resolution.w / cam->zoom;
-            if (dist > radius) {
-                vol = expf(-(dist - radius)) * event->volume;
-            }
-
-            if (event->loop) {
-                vol = fmaxf(0.0f, (radius - dist) / radius) * event->volume;
-            }
 
             if (chan != -1) {
                 if (!event->loop) {

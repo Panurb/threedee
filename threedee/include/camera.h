@@ -16,9 +16,9 @@ int create_menu_camera();
 
 Vector2 camera_size(int camera);
 
-Vector2 world_to_screen(int camera, Vector2 a);
+Vector3 world_to_screen(int camera, Vector3 a);
 
-Vector2 screen_to_world(int camera, Vector2 a);
+Vector3 screen_to_world(int camera, Vector3 a);
 
 void draw_triangle_fan(int camera, SDL_Vertex* vertices, int verts_size);
 
@@ -57,10 +57,6 @@ void draw_text(int camera, Vector2 position, char string[100], int size, Color c
 
 void draw_spline(int camera, int texture_index, Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float width, bool flip, Color color);
 
-void update_camera(int camera, float time_step, bool follow_players);
+void update_camera(Entity camera, float time_step);
 
 bool on_screen(int camera, Vector2 position, float width, float height);
-
-void shake_camera(float speed);
-
-void draw_overlay(int camera, float alpha);

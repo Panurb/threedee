@@ -28,9 +28,9 @@ void swap(Heap* heap, int i, int j) {
 
 
 bool compare(int i, int j) {
-    WaypointComponent* wi = WaypointComponent_get(i);
-    WaypointComponent* wj = WaypointComponent_get(j);
-    return wi->f_score < wj->f_score;
+    // WaypointComponent* wi = WaypointComponent_get(i);
+    // WaypointComponent* wj = WaypointComponent_get(j);
+    // return wi->f_score < wj->f_score;
 }
 
 

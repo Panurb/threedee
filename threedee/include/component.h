@@ -391,14 +391,9 @@ typedef struct {
 } HealthComponent;
 
 typedef struct {
+    float fov;
     Resolution resolution;
     Matrix4 projection_matrix;
-    float zoom;
-    float zoom_target;
-    struct {
-        Vector2 position;
-        Vector2 velocity;
-    } shake;
 } CameraComponent;
 
 typedef struct {
@@ -511,27 +506,8 @@ struct ComponentData {
     int entities;
     List* added_entities;
     TransformComponent* coordinate[MAX_ENTITIES];
-    OrderedArray image;
-    PhysicsComponent* physics[MAX_ENTITIES];
-    ColliderComponent* collider[MAX_ENTITIES];
-    OrderedArray player;
-    LightComponent* light[MAX_ENTITIES];
-    EnemyComponent* enemy[MAX_ENTITIES];
-    ParticleComponent* particle[MAX_ENTITIES];
-    VehicleComponent* vehicle[MAX_ENTITIES];
-    WeaponComponent* weapon[MAX_ENTITIES];
-    ItemComponent* item[MAX_ENTITIES];
-    WaypointComponent* waypoint[MAX_ENTITIES];
-    HealthComponent* health[MAX_ENTITIES];
     CameraComponent* camera[MAX_ENTITIES];
-    PathComponent* path[MAX_ENTITIES];
     SoundComponent* sound[MAX_ENTITIES];
-    AmmoComponent* ammo[MAX_ENTITIES];
-    AnimationComponent* animation[MAX_ENTITIES];
-    DoorComponent* door[MAX_ENTITIES];
-    JointComponent* joint[MAX_ENTITIES];
-    OrderedArray widget;
-    TextComponent* text[MAX_ENTITIES];
 };
 
 ComponentData* ComponentData_create();
@@ -540,90 +516,13 @@ TransformComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle
 TransformComponent* CoordinateComponent_get(int entity);
 void CoordinateComponent_remove(int entity);
 
-ImageComponent* ImageComponent_add(int entity, Filename filename, float width, float height, Layer layer);
-ImageComponent* ImageComponent_get(int entity);
-void ImageComponent_remove(int entity);
-
-PhysicsComponent* PhysicsComponent_add(int entity, float mass);
-PhysicsComponent* PhysicsComponent_get(int entity);
-void PhysicsComponent_remove(int entity);
-
-ColliderComponent* ColliderComponent_add_circle(int entity, float radius, ColliderGroup group);
-ColliderComponent* ColliderComponent_add_rectangle(int entity, float width, float height, ColliderGroup group);
-ColliderComponent* ColliderComponent_get(int entity);
-void ColliderComponent_remove(int entity);
-
-PlayerComponent* PlayerComponent_add(int entity);
-PlayerComponent* PlayerComponent_get(int entity);
-void PlayerComponent_remove(int entity);
-
-LightComponent* LightComponent_add(int entity, float range, float angle, Color color, float brightness, float speed);
-LightComponent* LightComponent_get(int entity);
-void LightComponent_remove(int entity);
-
-EnemyComponent* EnemyComponent_add(int entity);
-EnemyComponent* EnemyComponent_get(int entity);
-void EnemyComponent_remove(int entity);
-
-ParticleComponent* ParticleComponent_add(int entity, float angle, float spread, float start_size, float end_size, float speed, float rate, Color outer_color, Color inner_color);
-ParticleComponent* ParticleComponent_get(int entity);
-void ParticleComponent_remove(int entity);
-
-VehicleComponent* VehicleComponent_add(int entity, float max_fuel);
-VehicleComponent* VehicleComponent_get(int entity);
-void VehicleComponent_remove(int entity);
-
-WeaponComponent* WeaponComponent_add(int entity, float fire_rate, int damage, int shots, float spread, int magazine, float recoil, float range, float reload_time, AmmoType ammo_type, Filename sound);
-WeaponComponent* WeaponComponent_get(int entity);
-void WeaponComponent_remove(int entity);
-
-ItemComponent* ItemComponent_add(int entity, int size, int price, ButtonText name);
-ItemComponent* ItemComponent_get(int entity);
-void ItemComponent_remove(int entity);
-
-WaypointComponent* WaypointComponent_add(int entity);
-WaypointComponent* WaypointComponent_get(int entity);
-void WaypointComponent_remove(int entity);
-
-HealthComponent* HealthComponent_add(int entity, int health, Filename dead_image, Filename decal, Filename die_sound);
-HealthComponent* HealthComponent_get(int entity);
-void HealthComponent_remove(int entity);
-
-CameraComponent* CameraComponent_add(int entity, Resolution resolution, float zoom);
+CameraComponent* CameraComponent_add(int entity, Resolution resolution, float fov);
 CameraComponent* CameraComponent_get(int entity);
 void CameraComponent_remove(int entity);
-
-PathComponent* PathComponent_add(int entity);
-PathComponent* PathComponent_get(int entity);
-void PathComponent_remove(int entity);
 
 SoundComponent* SoundComponent_add(int entity, Filename hit_sound);
 SoundComponent* SoundComponent_get(int entity);
 void SoundComponent_remove(int entity);
-
-AmmoComponent* AmmoComponent_add(int entity, AmmoType type);
-AmmoComponent* AmmoComponent_get(int entity);
-void AmmoComponent_remove(int entity);
-
-AnimationComponent* AnimationComponent_add(int entity, int frames);
-AnimationComponent* AnimationComponent_get(int entity);
-void AnimationComponent_remove(int entity);
-
-DoorComponent* DoorComponent_add(int entity, int price);
-DoorComponent* DoorComponent_get(int entity);
-void DoorComponent_remove(int entity);
-
-JointComponent* JointComponent_add(int entity, int parent, float min_length, float max_length, float strength);
-JointComponent* JointComponent_get(int entity);
-void JointComponent_remove(int entity);
-
-WidgetComponent* WidgetComponent_add(int entity, ButtonText text, WidgetType type);
-WidgetComponent* WidgetComponent_get(int entity);
-void WidgetComponent_remove(int entity);
-
-TextComponent* TextComponent_add(int entity, String string, int size, Color color);
-TextComponent* TextComponent_get(int entity);
-void TextComponent_remove(int entity);
 
 int create_entity();
 void destroy_entity(int i);
