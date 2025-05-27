@@ -36,4 +36,4 @@ RenderMode create_render_mode_quad();
 
 void render(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, RenderMode* render_mode);
 
-void add_render_instance(RenderMode* render_mode, Matrix4 transform);
+void add_render_instance(SDL_GPUCommandBuffer* command_buffer, RenderMode* render_mode, Matrix4 transform);

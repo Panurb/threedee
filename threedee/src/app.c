@@ -196,7 +196,7 @@ void update(float time_step) {
 
 
 void draw() {
-    LOG_INFO("Start draw");
+    LOG_DEBUG("Start draw");
 
     static float angle = 0.0f;
     angle += 0.01f;
@@ -211,9 +211,9 @@ void draw() {
     SDL_WaitAndAcquireGPUSwapchainTexture(gpu_command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
     if (swapchain_texture) {
-        for (int i = 0; i < 10; i++) {
-            Matrix4 transform = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / 10) }, ones3());
-            add_render_instance(&render_quad, transform);
+        for (int i = 0; i < 20; i++) {
+            Matrix4 transform = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / 20) }, ones3());
+            add_render_instance(gpu_command_buffer, &render_quad, transform);
         }
 
         SDL_UnmapGPUTransferBuffer(app.gpu_device, render_quad.instance_transfer_buffer);
@@ -236,7 +236,7 @@ void draw() {
 
     SDL_SubmitGPUCommandBuffer(gpu_command_buffer);
 
-    LOG_INFO("End draw");
+    LOG_DEBUG("End draw");
 }
 
 

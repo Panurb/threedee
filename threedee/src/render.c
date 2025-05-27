@@ -283,10 +283,38 @@ void render(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_
 }
 
 
-void add_render_instance(RenderMode* render_mode, Matrix4 transform) {
+void add_render_instance(SDL_GPUCommandBuffer* command_buffer, RenderMode* render_mode, Matrix4 transform) {
 	if (render_mode->num_instances >= render_mode->max_instances) {
-		LOG_ERROR("Maximum number of instances reached: %d", render_mode->max_instances);
-		return;
+		LOG_INFO("Buffer full, resizing...");
+		SDL_GPUBuffer* old_buffer = render_mode->instance_buffer;
+
+		render_mode->instance_buffer = SDL_CreateGPUBuffer(
+			app.gpu_device,
+			&(SDL_GPUBufferCreateInfo){
+				.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+				.size = sizeof(Matrix4) * 2 * render_mode->max_instances,
+			}
+		);
+
+		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+		SDL_CopyGPUBufferToBuffer(
+			copy_pass,
+			&(SDL_GPUBufferLocation) {
+				.buffer = render_mode->instance_buffer,
+				.offset = 0
+			},
+			&(SDL_GPUBufferLocation) {
+				.buffer = render_mode->instance_buffer,
+				.offset = 0
+			},
+			sizeof(Matrix4) * render_mode->max_instances,
+			false
+		);
+		SDL_EndGPUCopyPass(copy_pass);
+
+		SDL_ReleaseGPUBuffer(app.gpu_device, old_buffer);
+		render_mode->max_instances *= 2;
+		LOG_INFO("New buffer size: %d", render_mode->max_instances);
 	}
 
 	// TODO: Map the transfer buffer only once per frame
@@ -294,7 +322,6 @@ void add_render_instance(RenderMode* render_mode, Matrix4 transform) {
 
 	transforms[render_mode->num_instances] = transform;
 	render_mode->num_instances = render_mode->num_instances + 1;
-	LOG_INFO("Instances added to render mode: %d", render_mode->num_instances);
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, render_mode->instance_transfer_buffer);
 }
