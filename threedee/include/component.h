@@ -392,10 +392,9 @@ typedef struct {
 
 typedef struct {
     Resolution resolution;
+    Matrix4 projection_matrix;
     float zoom;
     float zoom_target;
-    Matrix2 matrix;
-    Matrix2 inv_matrix;
     struct {
         Vector2 position;
         Vector2 velocity;

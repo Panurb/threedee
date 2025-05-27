@@ -634,8 +634,7 @@ CameraComponent* CameraComponent_add(int entity, Resolution resolution, float zo
     camera->zoom_target = zoom;
     camera->zoom = camera->zoom_target * camera->resolution.h / 720.0;
 
-    camera->matrix = (Matrix2) { 0.0f, 0.0f, 0.0f, 0.0f };
-    camera->inv_matrix = (Matrix2) { 0.0f, 0.0f, 0.0f, 0.0f };
+    camera->projection_matrix = matrix4_id();
 
     camera->shake.position = zeros2();
     camera->shake.velocity = rand_vector();

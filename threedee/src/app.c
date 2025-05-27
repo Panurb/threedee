@@ -210,28 +210,17 @@ void draw() {
     SDL_WaitAndAcquireGPUSwapchainTexture(gpu_command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
     if (swapchain_texture) {
-        Matrix4* matrices = SDL_MapGPUTransferBuffer(app.gpu_device, render_quad.instance_transfer_buffer, false);
+        // PUSH UNIFORM DATA
+        Matrix4 projection_matrix = CameraComponent_get(game_data->menu_camera)->projection_matrix;
+        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &projection_matrix, sizeof(Matrix4));
+
+        Matrix4* instances = SDL_MapGPUTransferBuffer(app.gpu_device, render_quad.instance_transfer_buffer, false);
 
         for (int i = 0; i < render_quad.num_instances; i++) {
-            matrices[i] = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / render_quad.num_instances) }, ones3());
+            instances[i] = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / render_quad.num_instances) }, ones3());
         }
 
-        // COPY PASS
-        SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
-        SDL_UploadToGPUBuffer(
-            copy_pass,
-            &(SDL_GPUTransferBufferLocation) {
-                .transfer_buffer = render_quad.instance_transfer_buffer,
-                .offset = 0
-            },
-            &(SDL_GPUBufferRegion) {
-                .buffer = render_quad.instance_buffer,
-                .offset = 0,
-                .size = sizeof(Matrix4) * render_quad.num_instances
-            },
-            true
-        );
-        SDL_EndGPUCopyPass(copy_pass);
+        SDL_UnmapGPUTransferBuffer(app.gpu_device, render_quad.instance_transfer_buffer);
 
         // RENDER PASS
         SDL_GPUColorTargetInfo color_target_info = {
@@ -242,21 +231,7 @@ void draw() {
         };
         SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(gpu_command_buffer, &color_target_info, 1, NULL);
 
-        SDL_BindGPUGraphicsPipeline(render_pass, render_quad.pipeline);
-        SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = render_quad.vertex_buffer, .offset = 0 }, 1);
-        SDL_BindGPUIndexBuffer(
-            render_pass, &(SDL_GPUBufferBinding) { .buffer = render_quad.index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
-        );
-        SDL_BindGPUVertexStorageBuffers(render_pass, 0, &render_quad.instance_buffer, 1);
-
-        // PUSH UNIFORM DATA
-        float aspect_ratio = (float)game_settings.width / (float)game_settings.height;
-        Matrix4 projection_matrix = orthographic_projection_matrix(
-            -aspect_ratio, aspect_ratio, -1.0f, 1.0f, -1.0f, 1.0f
-        );
-        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &projection_matrix, sizeof(Matrix4));
-
-        SDL_DrawGPUIndexedPrimitives(render_pass, render_quad.num_indices, render_quad.num_instances,  0, 0, 0);
+        render(gpu_command_buffer, render_pass, render_quad);
 
         SDL_EndGPURenderPass(render_pass);
     }

@@ -15,6 +15,7 @@ typedef struct RenderMode {
 	SDL_GPUBuffer* instance_buffer;
 	int num_instances;
 	SDL_GPUTransferBuffer* instance_transfer_buffer;
+	Matrix4* transforms;
 } RenderMode;
 
 
@@ -31,3 +32,4 @@ typedef struct Vertex {
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_triangle();
 RenderMode create_render_mode_quad();
+void render();
