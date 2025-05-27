@@ -152,19 +152,11 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_triangle() {
 
 
 RenderMode create_render_mode_quad() {
-	RenderMode mode;
-
-	mode.pipeline = create_render_pipeline_triangle();
-
-	mode.vertex_buffer = NULL;
-	mode.index_buffer = NULL;
-	mode.instance_buffer = NULL;
-	mode.instance_transfer_buffer = NULL;
-
-	// Create buffers for the quad
-	mode.num_vertices = 0;
-	mode.num_indices = 0;
-	mode.num_instances = 0;
+	RenderMode mode = {
+		.pipeline = create_render_pipeline_triangle(),
+		.max_instances = 10,
+		.num_instances = 0
+	};
 
 	mode.num_vertices = 4;
     mode.vertex_buffer = SDL_CreateGPUBuffer(
@@ -192,12 +184,11 @@ RenderMode create_render_mode_quad() {
         }
     );
 
-	mode.num_instances = 10;
     mode.instance_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(Matrix4) * mode.num_instances,
+            .size = sizeof(Matrix4) * mode.max_instances,
         }
     );
 
@@ -205,7 +196,7 @@ RenderMode create_render_mode_quad() {
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Matrix4) * mode.num_instances,
+            .size = sizeof(Matrix4),
         }
     );
 
@@ -262,30 +253,48 @@ RenderMode create_render_mode_quad() {
 
 
 void render(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
-				  RenderMode render_quad) {
-	// COPY PASS
+			RenderMode* render_mode) {
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 	SDL_UploadToGPUBuffer(
 		copy_pass,
 		&(SDL_GPUTransferBufferLocation) {
-			.transfer_buffer = render_quad.instance_transfer_buffer,
+			.transfer_buffer = render_mode->instance_transfer_buffer,
 			.offset = 0
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = render_quad.instance_buffer,
+			.buffer = render_mode->instance_buffer,
 			.offset = 0,
-			.size = sizeof(Matrix4) * render_quad.num_instances
+			.size = sizeof(Matrix4) * render_mode->num_instances
 		},
 		true
 	);
 	SDL_EndGPUCopyPass(copy_pass);
 
-	SDL_BindGPUGraphicsPipeline(render_pass, render_quad.pipeline);
-	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = render_quad.vertex_buffer, .offset = 0 }, 1);
+	SDL_BindGPUGraphicsPipeline(render_pass, render_mode->pipeline);
+	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = render_mode->vertex_buffer, .offset = 0 }, 1);
 	SDL_BindGPUIndexBuffer(
-		render_pass, &(SDL_GPUBufferBinding) { .buffer = render_quad.index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
+		render_pass, &(SDL_GPUBufferBinding) { .buffer = render_mode->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
 	);
-	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &render_quad.instance_buffer, 1);
+	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &render_mode->instance_buffer, 1);
 
-	SDL_DrawGPUIndexedPrimitives(render_pass, render_quad.num_indices, render_quad.num_instances,  0, 0, 0);
+	SDL_DrawGPUIndexedPrimitives(render_pass, render_mode->num_indices, render_mode->num_instances,  0, 0, 0);
+
+	render_mode->num_instances = 0;
+}
+
+
+void add_render_instance(RenderMode* render_mode, Matrix4 transform) {
+	if (render_mode->num_instances >= render_mode->max_instances) {
+		LOG_ERROR("Maximum number of instances reached: %d", render_mode->max_instances);
+		return;
+	}
+
+	// TODO: Map the transfer buffer only once per frame
+	Matrix4* transforms = SDL_MapGPUTransferBuffer(app.gpu_device, render_mode->instance_transfer_buffer, false);
+
+	transforms[render_mode->num_instances] = transform;
+	render_mode->num_instances = render_mode->num_instances + 1;
+	LOG_INFO("Instances added to render mode: %d", render_mode->num_instances);
+
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, render_mode->instance_transfer_buffer);
 }

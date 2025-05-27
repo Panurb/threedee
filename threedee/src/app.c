@@ -211,19 +211,13 @@ void draw() {
     SDL_WaitAndAcquireGPUSwapchainTexture(gpu_command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
     if (swapchain_texture) {
-        // PUSH UNIFORM DATA
-        Matrix4 projection_matrix = CameraComponent_get(menu_camera)->projection_matrix;
-        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &projection_matrix, sizeof(Matrix4));
-
-        Matrix4* instances = SDL_MapGPUTransferBuffer(app.gpu_device, render_quad.instance_transfer_buffer, false);
-
-        for (int i = 0; i < render_quad.num_instances; i++) {
-            instances[i] = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / render_quad.num_instances) }, ones3());
+        for (int i = 0; i < 10; i++) {
+            Matrix4 transform = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / 10) }, ones3());
+            add_render_instance(&render_quad, transform);
         }
 
         SDL_UnmapGPUTransferBuffer(app.gpu_device, render_quad.instance_transfer_buffer);
 
-        // RENDER PASS
         SDL_GPUColorTargetInfo color_target_info = {
             .texture = swapchain_texture,
             .load_op = SDL_GPU_LOADOP_CLEAR,
@@ -232,7 +226,10 @@ void draw() {
         };
         SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(gpu_command_buffer, &color_target_info, 1, NULL);
 
-        render(gpu_command_buffer, render_pass, render_quad);
+        Matrix4 projection_matrix = CameraComponent_get(menu_camera)->projection_matrix;
+        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &projection_matrix, sizeof(Matrix4));
+
+        render(gpu_command_buffer, render_pass, &render_quad);
 
         SDL_EndGPURenderPass(render_pass);
     }

@@ -14,8 +14,8 @@ typedef struct RenderMode {
 	int num_indices;
 	SDL_GPUBuffer* instance_buffer;
 	int num_instances;
+	int max_instances;
 	SDL_GPUTransferBuffer* instance_transfer_buffer;
-	Matrix4* transforms;
 } RenderMode;
 
 
@@ -31,5 +31,9 @@ typedef struct Vertex {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_triangle();
+
 RenderMode create_render_mode_quad();
-void render();
+
+void render(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, RenderMode* render_mode);
+
+void add_render_instance(RenderMode* render_mode, Matrix4 transform);
