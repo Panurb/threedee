@@ -45,6 +45,8 @@ set(SOURCES
     threedee/src/util.c
     threedee/src/threedee.c
     threedee/src/widget.c
+        threedee/src/render.c
+        threedee/include/render.h
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
