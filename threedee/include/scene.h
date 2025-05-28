@@ -4,6 +4,7 @@
 
 
 typedef struct Scene {
+    Entity camera;
     Entity menu_camera;
     ComponentData* components;
 } Scene;

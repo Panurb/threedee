@@ -19,9 +19,13 @@ SDL_FColor color_to_fcolor(Color color) {
 
 
 int create_camera() {
+    LOG_INFO("Creating camera");
     int i = create_entity();
+    LOG_INFO("Entity: %d", i);
     CoordinateComponent_add(i, zeros2(), 0.0f);
+    LOG_INFO("Transform");
     CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, M_PI_2);
+    LOG_INFO("Created camera");
     return i;
 }
 

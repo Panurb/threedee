@@ -26,9 +26,6 @@ static String version = "0.0";
 
 static int debug_level = 0;
 
-RenderMode render_quad;
-Entity menu_camera = NULL_ENTITY;
-
 
 void create_game_window() {
     LOG_INFO("Creating game window");
@@ -38,8 +35,6 @@ void create_game_window() {
 
     app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
     SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
-
-    render_quad = create_render_mode_quad();
 
     LOG_INFO("Game window created");
 }
@@ -110,9 +105,8 @@ void init() {
     app.base_path = SDL_GetBasePath();
 
     create_game_window();
+    init_render();
     create_scene();
-    menu_camera = create_menu_camera();
-    LOG_INFO("Camera created");
 }
 
 
@@ -211,12 +205,11 @@ void draw() {
     SDL_WaitAndAcquireGPUSwapchainTexture(gpu_command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
     if (swapchain_texture) {
-        for (int i = 0; i < 20; i++) {
-            Matrix4 transform = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / 20) }, ones3());
-            add_render_instance(gpu_command_buffer, &render_quad, transform);
-        }
-
-        SDL_UnmapGPUTransferBuffer(app.gpu_device, render_quad.instance_transfer_buffer);
+        // for (int i = 0; i < 20; i++) {
+        //     Matrix4 transform = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / 20) }, ones3());
+        //     add_render_instance(gpu_command_buffer, &render_modes.quad, transform);
+        // }
+        add_render_instance(gpu_command_buffer, &render_modes.cube, transform_matrix(zeros3(), (Rotation) { 0.0f, angle, angle }, ones3()));
 
         SDL_GPUColorTargetInfo color_target_info = {
             .texture = swapchain_texture,
@@ -226,10 +219,13 @@ void draw() {
         };
         SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(gpu_command_buffer, &color_target_info, 1, NULL);
 
-        Matrix4 projection_matrix = CameraComponent_get(menu_camera)->projection_matrix;
+        Matrix4 projection_matrix = CameraComponent_get(game_data->menu_camera)->projection_matrix;
         SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &projection_matrix, sizeof(Matrix4));
+        render(gpu_command_buffer, render_pass, &render_modes.quad);
 
-        render(gpu_command_buffer, render_pass, &render_quad);
+        projection_matrix = CameraComponent_get(game_data->camera)->projection_matrix;
+        SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &projection_matrix, sizeof(Matrix4));
+        render(gpu_command_buffer, render_pass, &render_modes.cube);
 
         SDL_EndGPURenderPass(render_pass);
     }

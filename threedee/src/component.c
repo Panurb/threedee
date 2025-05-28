@@ -4,6 +4,9 @@
 #include <stdlib.h>
 
 #include "component.h"
+
+#include <stdio.h>
+
 #include "util.h"
 #include "input.h"
 #include "scene.h"
@@ -17,6 +20,7 @@ ComponentData* ComponentData_create() {
     for (int i = 0; i < MAX_ENTITIES; i++) {
         components->coordinate[i] = NULL;
         components->camera[i] = NULL;
+        components->sound[i] = NULL;
     }
     return components;
 }
@@ -72,8 +76,9 @@ CameraComponent* CameraComponent_add(int entity, Resolution resolution, float fo
     camera->resolution = resolution;
     camera->fov = fov;
 
+    float aspect_ratio = (float)camera->resolution.w / (float)camera->resolution.h;
     camera->projection_matrix = perspective_projection_matrix(
-        camera->fov, (float)camera->resolution.w / (float)camera->resolution.h, 0.1f, 1000.0f
+        camera->fov, aspect_ratio, 0.1f, 1000.0f
     );
 
     game_data->components->camera[entity] = camera;

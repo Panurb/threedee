@@ -9,9 +9,7 @@
 #include "util.h"
 
 
-static RenderData render_data = {
-	.pipeline_triangle = NULL,
-};
+static SDL_GPUGraphicsPipeline* pipeline_solid = NULL;
 
 
 SDL_GPUShader* load_shader(
@@ -92,7 +90,7 @@ SDL_GPUShader* load_shader(
 }
 
 
-SDL_GPUGraphicsPipeline* create_render_pipeline_triangle() {
+SDL_GPUGraphicsPipeline* create_render_pipeline_solid() {
 	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "triangle.vert", 0, 1, 1, 0);
 	if (!vertex_shader) {
 		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
@@ -152,27 +150,27 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_triangle() {
 
 
 RenderMode create_render_mode_quad() {
-	RenderMode mode = {
-		.pipeline = create_render_pipeline_triangle(),
-		.max_instances = 10,
+	RenderMode render_mode = {
+		.pipeline = pipeline_solid,
+		.max_instances = 256,
 		.num_instances = 0
 	};
 
-	mode.num_vertices = 4;
-    mode.vertex_buffer = SDL_CreateGPUBuffer(
+	render_mode.num_vertices = 4;
+    render_mode.vertex_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(Vertex) * mode.num_vertices,
+            .size = sizeof(Vertex) * render_mode.num_vertices,
         }
     );
 
-    mode.num_indices = 6;
-    mode.index_buffer = SDL_CreateGPUBuffer(
+    render_mode.num_indices = 6;
+    render_mode.index_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-            .size = sizeof(Uint16) * mode.num_indices,
+            .size = sizeof(Uint16) * render_mode.num_indices,
         }
     );
 
@@ -180,19 +178,19 @@ RenderMode create_render_mode_quad() {
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Vertex) * mode.num_vertices + sizeof(Uint16) * mode.num_indices,
+            .size = sizeof(Vertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
         }
     );
 
-    mode.instance_buffer = SDL_CreateGPUBuffer(
+    render_mode.instance_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(Matrix4) * mode.max_instances,
+            .size = sizeof(Matrix4) * render_mode.max_instances,
         }
     );
 
-    mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
+    render_mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
@@ -207,7 +205,7 @@ RenderMode create_render_mode_quad() {
     transfer_data[2] = (Vertex) { {0.5f, 0.5f, 0.0f}, {0, 255, 0, 255}};
     transfer_data[3] = (Vertex) { {-0.5f, 0.5f, 0.0f}, {0, 0, 255, 255} };
 
-    Uint16* index_data = (Uint16*) &transfer_data[mode.num_vertices];
+    Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
     const Uint16 indices[6] = { 0, 1, 2, 0, 2, 3 };
     SDL_memcpy(index_data, indices, sizeof(indices));
 
@@ -223,9 +221,9 @@ RenderMode create_render_mode_quad() {
             .offset = 0
         },
         &(SDL_GPUBufferRegion) {
-            .buffer = mode.vertex_buffer,
+            .buffer = render_mode.vertex_buffer,
             .offset = 0,
-            .size = sizeof(Vertex) * mode.num_vertices
+            .size = sizeof(Vertex) * render_mode.num_vertices
         },
         false
     );
@@ -234,12 +232,12 @@ RenderMode create_render_mode_quad() {
         copy_pass,
         &(SDL_GPUTransferBufferLocation) {
             .transfer_buffer = transfer_buffer,
-            .offset = sizeof(Vertex) * mode.num_vertices
+            .offset = sizeof(Vertex) * render_mode.num_vertices
         },
         &(SDL_GPUBufferRegion) {
-            .buffer = mode.index_buffer,
+            .buffer = render_mode.index_buffer,
             .offset = 0,
-            .size = sizeof(Uint16) * mode.num_indices
+            .size = sizeof(Uint16) * render_mode.num_indices
         },
         false
     );
@@ -248,7 +246,126 @@ RenderMode create_render_mode_quad() {
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
     SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
-	return mode;
+	return render_mode;
+}
+
+
+RenderMode create_render_mode_cube() {
+	RenderMode render_mode = {
+		.pipeline = pipeline_solid,
+		.max_instances = 256,
+		.num_instances = 0
+	};
+
+	render_mode.num_vertices = 8;
+    render_mode.vertex_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+            .size = sizeof(Vertex) * render_mode.num_vertices,
+        }
+    );
+
+    render_mode.num_indices = 36;
+    render_mode.index_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+            .size = sizeof(Uint16) * render_mode.num_indices,
+        }
+    );
+
+    SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
+        app.gpu_device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(Vertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
+        }
+    );
+
+    render_mode.instance_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+            .size = sizeof(Matrix4) * render_mode.max_instances,
+        }
+    );
+
+    render_mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
+        app.gpu_device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(Matrix4),
+        }
+    );
+
+    Vertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+
+    transfer_data[0] = (Vertex) { {-0.5f, -0.5f, -0.5f}, {255, 0, 0, 255}};
+	transfer_data[1] = (Vertex) { {0.5f, -0.5f, -0.5f}, {255, 255, 0, 255}};
+	transfer_data[2] = (Vertex) { {0.5f, 0.5f, -0.5f}, {0, 255, 0, 255}};
+	transfer_data[3] = (Vertex) { {-0.5f, 0.5f, -0.5f}, {0, 255, 255, 255}};
+	transfer_data[4] = (Vertex) { {-0.5f, -0.5f, 0.5f}, {255, 0, 255, 255}};
+	transfer_data[5] = (Vertex) { {0.5f, -0.5f, 0.5f}, {255, 255, 255, 255}};
+	transfer_data[6] = (Vertex) { {0.5f, 0.5f, 0.5f}, {128, 128, 128, 255}};
+	transfer_data[7] = (Vertex) { {-0.5f, 0.5f, 0.5f}, {64, 64, 64, 255} };
+
+    Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
+    const Uint16 indices[36] = {
+		0, 1, 2, 0, 2, 3, // Back face
+		4, 5, 6, 4, 6, 7, // Front face
+		0, 1, 5, 0, 5, 4, // Bottom face
+		2, 3, 7, 2, 7, 6, // Top face
+		0, 3, 7, 0, 7, 4, // Left face
+		1, 2, 6, 1, 6, 5 // Right face
+	};
+    SDL_memcpy(index_data, indices, sizeof(indices));
+
+    SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+    SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
+
+    SDL_UploadToGPUBuffer(
+        copy_pass,
+        &(SDL_GPUTransferBufferLocation) {
+            .transfer_buffer = transfer_buffer,
+            .offset = 0
+        },
+        &(SDL_GPUBufferRegion) {
+            .buffer = render_mode.vertex_buffer,
+            .offset = 0,
+            .size = sizeof(Vertex) * render_mode.num_vertices
+        },
+        false
+    );
+
+    SDL_UploadToGPUBuffer(
+        copy_pass,
+        &(SDL_GPUTransferBufferLocation) {
+            .transfer_buffer = transfer_buffer,
+            .offset = sizeof(Vertex) * render_mode.num_vertices
+        },
+        &(SDL_GPUBufferRegion) {
+            .buffer = render_mode.index_buffer,
+            .offset = 0,
+            .size = sizeof(Uint16) * render_mode.num_indices
+        },
+        false
+    );
+
+    SDL_EndGPUCopyPass(copy_pass);
+    SDL_SubmitGPUCommandBuffer(upload_command_buffer);
+    SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+	return render_mode;
+}
+
+
+void init_render() {
+	pipeline_solid = create_render_pipeline_solid();
+	render_modes.quad = create_render_mode_quad();
+	render_modes.cube = create_render_mode_cube();
 }
 
 

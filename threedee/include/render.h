@@ -19,9 +19,10 @@ typedef struct RenderMode {
 } RenderMode;
 
 
-typedef struct RenderData {
-	SDL_GPUGraphicsPipeline* pipeline_triangle;
-} RenderData;
+typedef struct RenderModes {
+	RenderMode quad;
+	RenderMode cube;
+} RenderModes;
 
 
 typedef struct Vertex {
@@ -30,9 +31,9 @@ typedef struct Vertex {
 } Vertex;
 
 
-SDL_GPUGraphicsPipeline* create_render_pipeline_triangle();
+RenderModes render_modes;
 
-RenderMode create_render_mode_quad();
+void init_render();
 
 void render(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, RenderMode* render_mode);
 
