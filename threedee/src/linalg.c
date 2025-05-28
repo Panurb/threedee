@@ -243,10 +243,10 @@ Matrix4 perspective_projection_matrix(float fov, float aspect_ratio, float near,
     float f = 1.0f / tanf(fov / 2.0f);
     Matrix4 m = matrix4_id();
     m._11 = f / aspect_ratio;
-    m._21 = f;
-    m._31 = (far + near) / (near - far);
-    m._32 = (2.0f * far * near) / (near - far);
-    m._33 = -1.0f;
+    m._22 = f;
+    m._33 = (far + near) / (near - far);
+    m._34 = (2.0f * far * near) / (near - far);
+    m._43 = -1.0f;
     return m;
 }
 
