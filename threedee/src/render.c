@@ -6,15 +6,22 @@
 
 #include "render.h"
 
+#include <component.h>
+#include <scene.h>
 #include <settings.h>
 
 #include "app.h"
 #include "util.h"
 
 
-static SDL_GPUGraphicsPipeline* pipeline_solid = NULL;
-static SDL_GPUGraphicsPipeline* pipeline_depth = NULL;
-SDL_GPUTexture* depth_stencil_texture = NULL;
+static SDL_GPUGraphicsPipeline* pipeline_2d = NULL;
+static SDL_GPUGraphicsPipeline* pipeline_3d = NULL;
+
+static SDL_GPUDevice* device = NULL;
+static SDL_GPUCommandBuffer* command_buffer = NULL;
+static SDL_GPUTexture* depth_stencil_texture = NULL;
+
+static RenderData render_datas[2];
 
 
 SDL_GPUShader* load_shader(
@@ -95,14 +102,14 @@ SDL_GPUShader* load_shader(
 }
 
 
-SDL_GPUGraphicsPipeline* create_render_pipeline_solid() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "triangle.vert", 0, 1, 1, 0);
+SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
+	SDL_GPUShader* vertex_shader = load_shader(device, "triangle.vert", 0, 1, 1, 0);
 	if (!vertex_shader) {
 		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "SolidColor.frag", 0, 0, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(device, "SolidColor.frag", 0, 0, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -112,7 +119,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_solid() {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
-				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+				.format = SDL_GetGPUSwapchainTextureFormat(device, app.window),
 			}},
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
@@ -141,10 +148,10 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_solid() {
 		.fragment_shader = fragment_shader,
 	};
 
-	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipeline_info);
 
-	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
-	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
+	SDL_ReleaseGPUShader(device, vertex_shader);
+	SDL_ReleaseGPUShader(device, fragment_shader);
 
 	if (!pipeline) {
 		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
@@ -154,14 +161,14 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_solid() {
 }
 
 
-SDL_GPUGraphicsPipeline* create_render_pipeline_depth() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "triangle.vert", 0, 1, 1, 0);
+SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
+	SDL_GPUShader* vertex_shader = load_shader(device, "triangle.vert", 0, 1, 1, 0);
 	if (!vertex_shader) {
 		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "SolidColorDepth.frag", 0, 1, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(device, "SolidColorDepth.frag", 0, 1, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -171,7 +178,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_depth() {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
-				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+				.format = SDL_GetGPUSwapchainTextureFormat(device, app.window),
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
@@ -212,10 +219,10 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_depth() {
 		.fragment_shader = fragment_shader,
 	};
 
-	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipeline_info);
 
-	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
-	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
+	SDL_ReleaseGPUShader(device, vertex_shader);
+	SDL_ReleaseGPUShader(device, fragment_shader);
 
 	if (!pipeline) {
 		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
@@ -225,16 +232,16 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_depth() {
 }
 
 
-RenderMode create_render_mode_quad() {
-	RenderMode render_mode = {
-		.pipeline = pipeline_solid,
+RenderData create_render_mode_quad() {
+	RenderData render_mode = {
+		.pipeline = pipeline_2d,
 		.max_instances = 256,
 		.num_instances = 0
 	};
 
 	render_mode.num_vertices = 4;
     render_mode.vertex_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
             .size = sizeof(Vertex) * render_mode.num_vertices,
@@ -243,7 +250,7 @@ RenderMode create_render_mode_quad() {
 
     render_mode.num_indices = 6;
     render_mode.index_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_INDEX,
             .size = sizeof(Uint16) * render_mode.num_indices,
@@ -251,7 +258,7 @@ RenderMode create_render_mode_quad() {
     );
 
     SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
             .size = sizeof(Vertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
@@ -259,7 +266,7 @@ RenderMode create_render_mode_quad() {
     );
 
     render_mode.instance_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
             .size = sizeof(Matrix4) * render_mode.max_instances,
@@ -267,14 +274,14 @@ RenderMode create_render_mode_quad() {
     );
 
     render_mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
             .size = sizeof(Matrix4),
         }
     );
 
-    Vertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+    Vertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
 
     transfer_data[0] = (Vertex) { {-0.5f, -0.5f, 0.0f}, {255, 0, 0, 255}};
     transfer_data[1] = (Vertex) { {0.5f, -0.5f, 0.0f}, {0, 255, 0, 255}};
@@ -285,9 +292,9 @@ RenderMode create_render_mode_quad() {
     const Uint16 indices[6] = { 0, 1, 2, 0, 2, 3 };
     SDL_memcpy(index_data, indices, sizeof(indices));
 
-    SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+    SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
 
-    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(device);
     SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
 
     SDL_UploadToGPUBuffer(
@@ -320,22 +327,22 @@ RenderMode create_render_mode_quad() {
 
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
-    SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+    SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
 
 	return render_mode;
 }
 
 
-RenderMode create_render_mode_cube() {
-	RenderMode render_mode = {
-		.pipeline = pipeline_depth,
+RenderData create_render_mode_cube() {
+	RenderData render_mode = {
+		.pipeline = pipeline_3d,
 		.max_instances = 256,
 		.num_instances = 0
 	};
 
 	render_mode.num_vertices = 8;
     render_mode.vertex_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
             .size = sizeof(Vertex) * render_mode.num_vertices,
@@ -344,7 +351,7 @@ RenderMode create_render_mode_cube() {
 
     render_mode.num_indices = 36;
     render_mode.index_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_INDEX,
             .size = sizeof(Uint16) * render_mode.num_indices,
@@ -352,7 +359,7 @@ RenderMode create_render_mode_cube() {
     );
 
     SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
             .size = sizeof(Vertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
@@ -360,7 +367,7 @@ RenderMode create_render_mode_cube() {
     );
 
     render_mode.instance_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
             .size = sizeof(Matrix4) * render_mode.max_instances,
@@ -368,14 +375,14 @@ RenderMode create_render_mode_cube() {
     );
 
     render_mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
+        device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
             .size = sizeof(Matrix4),
         }
     );
 
-    Vertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+    Vertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
 
     transfer_data[0] = (Vertex) { {-0.5f, -0.5f, -0.5f}, {255, 0, 0, 255}};
 	transfer_data[1] = (Vertex) { {0.5f, -0.5f, -0.5f}, {255, 255, 0, 255}};
@@ -404,9 +411,9 @@ RenderMode create_render_mode_cube() {
 	};
     SDL_memcpy(index_data, indices, sizeof(indices));
 
-    SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+    SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
 
-    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(device);
     SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
 
     SDL_UploadToGPUBuffer(
@@ -439,17 +446,20 @@ RenderMode create_render_mode_cube() {
 
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
-    SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+    SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
 
 	return render_mode;
 }
 
 
 void init_render() {
-	pipeline_solid = create_render_pipeline_solid();
-	pipeline_depth = create_render_pipeline_depth();
-	render_modes.quad = create_render_mode_quad();
-	render_modes.cube = create_render_mode_cube();
+	device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
+	SDL_ClaimWindowForGPUDevice(device, app.window);
+
+	pipeline_2d = create_render_pipeline_2d();
+	pipeline_3d = create_render_pipeline_3d();
+	render_datas[RENDER_QUAD] = create_render_mode_quad();
+	render_datas[RENDER_CUBE] = create_render_mode_cube();
 
 	SDL_GPUTextureCreateInfo depth_stencil_texture_info = {
 		.width = game_settings.width,
@@ -459,15 +469,15 @@ void init_render() {
 		.layer_count_or_depth = 1,
 		.num_levels = 1
 	};
-	depth_stencil_texture = SDL_CreateGPUTexture(app.gpu_device, &depth_stencil_texture_info);
+	depth_stencil_texture = SDL_CreateGPUTexture(device, &depth_stencil_texture_info);
 	if (!depth_stencil_texture) {
 		LOG_ERROR("Failed to create depth stencil texture: %s", SDL_GetError());
 	}
 }
 
 
-void render(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
-			RenderMode* render_mode) {
+void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
+			RenderData* render_mode) {
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 	SDL_UploadToGPUBuffer(
 		copy_pass,
@@ -497,16 +507,67 @@ void render(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_
 }
 
 
-void add_render_instance(SDL_GPUCommandBuffer* command_buffer, RenderMode* render_mode, Matrix4 transform) {
-	if (render_mode->num_instances >= render_mode->max_instances) {
-		LOG_INFO("Buffer full, resizing...");
-		SDL_GPUBuffer* old_buffer = render_mode->instance_buffer;
+void render() {
+	command_buffer = SDL_AcquireGPUCommandBuffer(device);
+	if (!command_buffer) {
+		LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
+		return;
+	}
 
-		render_mode->instance_buffer = SDL_CreateGPUBuffer(
-			app.gpu_device,
+	SDL_GPUTexture* swapchain_texture;
+	SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, app.window, &swapchain_texture, NULL, NULL);
+
+	if (swapchain_texture) {
+		add_render_instance(RENDER_CUBE, transform_matrix(vec3(0.0f, 0.0f, -1.0f), (Rotation) { 0.0f, 0.0f, 0.0f }, ones3()));
+
+		Matrix4 projection_matrix = transpose4(CameraComponent_get(game_data->camera)->projection_matrix);
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_matrix, sizeof(Matrix4));
+		SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { 0.1f, 1000.0f }, 8);
+
+		SDL_GPUColorTargetInfo color_target_info = {
+			.texture = swapchain_texture,
+			.load_op = SDL_GPU_LOADOP_CLEAR,
+			.store_op = SDL_GPU_STOREOP_STORE,
+			.clear_color = { 0.0f, 0.0f, 0.0f, 1.0f }
+		};
+		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
+			command_buffer,
+			&color_target_info,
+			1,
+			&(SDL_GPUDepthStencilTargetInfo){
+				.clear_depth = 1.0f,
+				.load_op = SDL_GPU_LOADOP_CLEAR,
+				.texture = depth_stencil_texture,
+				.cycle = true,
+				.load_op = SDL_GPU_LOADOP_CLEAR,
+				.store_op = SDL_GPU_STOREOP_STORE,
+				.stencil_load_op = SDL_GPU_LOADOP_CLEAR,
+				.stencil_store_op = SDL_GPU_STOREOP_STORE,
+			}
+		);
+
+		render_instances(command_buffer, render_pass, &render_datas[RENDER_CUBE]);
+
+		SDL_EndGPURenderPass(render_pass);
+	}
+
+	SDL_SubmitGPUCommandBuffer(command_buffer);
+	command_buffer = NULL;
+}
+
+
+void add_render_instance(RenderMode render_mode, Matrix4 transform) {
+	RenderData* render_data = &render_datas[render_mode];
+
+	if (render_data->num_instances >= render_data->max_instances) {
+		LOG_INFO("Buffer full, resizing...");
+		SDL_GPUBuffer* old_buffer = render_data->instance_buffer;
+
+		render_data->instance_buffer = SDL_CreateGPUBuffer(
+			device,
 			&(SDL_GPUBufferCreateInfo){
 				.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-				.size = sizeof(Matrix4) * 2 * render_mode->max_instances,
+				.size = sizeof(Matrix4) * 2 * render_data->max_instances,
 			}
 		);
 
@@ -514,28 +575,28 @@ void add_render_instance(SDL_GPUCommandBuffer* command_buffer, RenderMode* rende
 		SDL_CopyGPUBufferToBuffer(
 			copy_pass,
 			&(SDL_GPUBufferLocation) {
-				.buffer = render_mode->instance_buffer,
+				.buffer = render_data->instance_buffer,
 				.offset = 0
 			},
 			&(SDL_GPUBufferLocation) {
-				.buffer = render_mode->instance_buffer,
+				.buffer = render_data->instance_buffer,
 				.offset = 0
 			},
-			sizeof(Matrix4) * render_mode->max_instances,
+			sizeof(Matrix4) * render_data->max_instances,
 			false
 		);
 		SDL_EndGPUCopyPass(copy_pass);
 
-		SDL_ReleaseGPUBuffer(app.gpu_device, old_buffer);
-		render_mode->max_instances *= 2;
-		LOG_INFO("New buffer size: %d", render_mode->max_instances);
+		SDL_ReleaseGPUBuffer(device, old_buffer);
+		render_data->max_instances *= 2;
+		LOG_INFO("New buffer size: %d", render_data->max_instances);
 	}
 
 	// TODO: Map the transfer buffer only once per frame
-	Matrix4* transforms = SDL_MapGPUTransferBuffer(app.gpu_device, render_mode->instance_transfer_buffer, false);
+	Matrix4* transforms = SDL_MapGPUTransferBuffer(device, render_data->instance_transfer_buffer, false);
 
-	transforms[render_mode->num_instances] = transpose4(transform);
-	render_mode->num_instances = render_mode->num_instances + 1;
+	transforms[render_data->num_instances] = transpose4(transform);
+	render_data->num_instances = render_data->num_instances + 1;
 
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, render_mode->instance_transfer_buffer);
+	SDL_UnmapGPUTransferBuffer(device, render_data->instance_transfer_buffer);
 }

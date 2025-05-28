@@ -8,6 +8,9 @@
 
 #include "app.h"
 #include "camera.h"
+
+#include <render.h>
+
 #include "component.h"
 #include "util.h"
 #include "settings.h"
@@ -56,6 +59,13 @@ Vector3 world_to_screen(int camera, Vector3 a) {
 
 Vector3 screen_to_world(int camera, Vector3 a) {
     return a;
+}
+
+
+void draw_cube(Entity camera, Vector3 position, float size, Color color) {
+    CameraComponent* cam = CameraComponent_get(camera);
+
+    // add_render_instance()
 }
 
 

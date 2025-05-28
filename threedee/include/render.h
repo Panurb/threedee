@@ -6,7 +6,7 @@
 #include "util.h"
 
 
-typedef struct RenderMode {
+typedef struct RenderData {
 	SDL_GPUGraphicsPipeline* pipeline;
 	SDL_GPUBuffer* vertex_buffer;
 	int num_vertices;
@@ -16,16 +16,13 @@ typedef struct RenderMode {
 	int num_instances;
 	int max_instances;
 	SDL_GPUTransferBuffer* instance_transfer_buffer;
+} RenderData;
+
+
+typedef enum RenderMode {
+	RENDER_QUAD,
+	RENDER_CUBE,
 } RenderMode;
-
-
-typedef struct RenderModes {
-	RenderMode quad;
-	RenderMode cube;
-} RenderModes;
-
-
-extern SDL_GPUTexture* depth_stencil_texture;
 
 
 typedef struct Vertex {
@@ -34,10 +31,8 @@ typedef struct Vertex {
 } Vertex;
 
 
-RenderModes render_modes;
-
 void init_render();
 
-void render(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, RenderMode* render_mode);
+void render();
 
-void add_render_instance(SDL_GPUCommandBuffer* command_buffer, RenderMode* render_mode, Matrix4 transform);
+void add_render_instance(RenderMode render_mode, Matrix4 transform);

@@ -33,9 +33,6 @@ void create_game_window() {
     app.window = SDL_CreateWindow("ThreeDee", game_settings.width, game_settings.height, 0);
     SDL_SetWindowFullscreen(app.window, game_settings.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
 
-    app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
-    SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
-
     LOG_INFO("Game window created");
 }
 
@@ -48,9 +45,6 @@ void destroy_game_window() {
     // pipeline = NULL;
     // SDL_ReleaseGPUBuffer(app.gpu_device, vertex_buffer);
     // vertex_buffer = NULL;
-
-    SDL_DestroyGPUDevice(app.gpu_device);
-    app.gpu_device = NULL;
 }
 
 
@@ -195,58 +189,7 @@ void draw() {
     static float angle = 0.0f;
     angle += 0.01f;
 
-    SDL_GPUCommandBuffer* command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
-    if (!command_buffer) {
-        LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
-        return;
-    }
-
-    SDL_GPUTexture* swapchain_texture;
-    SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, app.window, &swapchain_texture, NULL, NULL);
-
-    if (swapchain_texture) {
-        // for (int i = 0; i < 20; i++) {
-        //     Matrix4 transform = transform_matrix(zeros3(), (Rotation) { 0.0f, 0.0f, angle + i * (2.0f * M_PI / 20) }, ones3());
-        //     add_render_instance(gpu_command_buffer, &render_modes.quad, transform);
-        // }
-        add_render_instance(command_buffer, &render_modes.cube, transform_matrix(vec3(0.0f, 0.0f, -1.0f), (Rotation) { 0.0f, angle, 0.0f }, ones3()));
-
-        // Matrix4 projection_matrix = CameraComponent_get(game_data->menu_camera)->projection_matrix;
-        // SDL_PushGPUVertexUniformData(gpu_command_buffer, 1, &projection_matrix, sizeof(Matrix4));
-        // render(gpu_command_buffer, render_pass, &render_modes.quad);
-
-        Matrix4 projection_matrix = transpose4(CameraComponent_get(game_data->camera)->projection_matrix);
-        SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_matrix, sizeof(Matrix4));
-        SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { 0.1f, 1000.0f }, 8);
-
-        SDL_GPUColorTargetInfo color_target_info = {
-            .texture = swapchain_texture,
-            .load_op = SDL_GPU_LOADOP_CLEAR,
-            .store_op = SDL_GPU_STOREOP_STORE,
-            .clear_color = { 0.0f, 0.0f, 0.0f, 1.0f }
-        };
-        SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
-            command_buffer,
-            &color_target_info,
-            1,
-            &(SDL_GPUDepthStencilTargetInfo){
-                .clear_depth = 1.0f,
-                .load_op = SDL_GPU_LOADOP_CLEAR,
-                .texture = depth_stencil_texture,
-                .cycle = true,
-                .load_op = SDL_GPU_LOADOP_CLEAR,
-                .store_op = SDL_GPU_STOREOP_STORE,
-                .stencil_load_op = SDL_GPU_LOADOP_CLEAR,
-                .stencil_store_op = SDL_GPU_STOREOP_STORE,
-            }
-        );
-
-        render(command_buffer, render_pass, &render_modes.cube);
-
-        SDL_EndGPURenderPass(render_pass);
-    }
-
-    SDL_SubmitGPUCommandBuffer(command_buffer);
+    render();
 
     LOG_DEBUG("End draw");
 }
