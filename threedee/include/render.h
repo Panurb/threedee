@@ -25,6 +25,9 @@ typedef struct RenderModes {
 } RenderModes;
 
 
+extern SDL_GPUTexture* depth_stencil_texture;
+
+
 typedef struct Vertex {
     Vector3 position;
     Color color;

@@ -1,6 +1,6 @@
 cbuffer TransformBlock : register(b0, space1)
 {
-    row_major float4x4 projection_matrix : packoffset(c0);
+    float4x4 projection_matrix : packoffset(c0);
 };
 
 StructuredBuffer<float4x4> TransformMatrices : register(t0, space0);

@@ -8,7 +8,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
 endif()
 
-include_directories(cJSON/include)
+#include_directories(cJSON/include)
 include_directories(threedee/include)
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
@@ -19,7 +19,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 endif()
 
 set(SOURCES
-    cJSON/src/cJSON.c
+#    cJSON/src/cJSON.c
     threedee/src/app.c
     threedee/src/camera.c
     threedee/src/component.c

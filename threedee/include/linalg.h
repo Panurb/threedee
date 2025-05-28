@@ -99,6 +99,8 @@ Vector2 matrix_mult(Matrix2 m, Vector2 v);
 
 Matrix2 transpose(Matrix2 m);
 
+Matrix4 transpose4(Matrix4 m);
+
 Matrix2 matrix_inverse(Matrix2 m);
 
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n);

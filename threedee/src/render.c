@@ -5,11 +5,16 @@
 #include <stdio.h>
 
 #include "render.h"
+
+#include <settings.h>
+
 #include "app.h"
 #include "util.h"
 
 
 static SDL_GPUGraphicsPipeline* pipeline_solid = NULL;
+static SDL_GPUGraphicsPipeline* pipeline_depth = NULL;
+SDL_GPUTexture* depth_stencil_texture = NULL;
 
 
 SDL_GPUShader* load_shader(
@@ -149,6 +154,77 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_solid() {
 }
 
 
+SDL_GPUGraphicsPipeline* create_render_pipeline_depth() {
+	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "triangle.vert", 0, 1, 1, 0);
+	if (!vertex_shader) {
+		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "SolidColorDepth.frag", 0, 1, 0, 0);
+	if (!fragment_shader) {
+		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+			}},
+			.has_depth_stencil_target = true,
+			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
+		},
+		.vertex_input_state = (SDL_GPUVertexInputState){
+			.num_vertex_buffers = 1,
+			.vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+				.slot = 0,
+				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+				.instance_step_rate = 0,
+				.pitch = sizeof(Vertex)
+			}},
+			.num_vertex_attributes = 2,
+			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.location = 0,
+				.offset = 0
+			}, {
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+				.location = 1,
+				.offset = sizeof(float) * 3
+			}}
+		},
+		.rasterizer_state = (SDL_GPURasterizerState){
+			.cull_mode = SDL_GPU_CULLMODE_BACK,
+			.fill_mode = SDL_GPU_FILLMODE_FILL,
+			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
+		},
+		.depth_stencil_state = (SDL_GPUDepthStencilState){
+			.enable_depth_test = true,
+			.enable_depth_write = true,
+			.compare_op = SDL_GPU_COMPAREOP_LESS
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+		.vertex_shader = vertex_shader,
+		.fragment_shader = fragment_shader,
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
+	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
 RenderMode create_render_mode_quad() {
 	RenderMode render_mode = {
 		.pipeline = pipeline_solid,
@@ -252,7 +328,7 @@ RenderMode create_render_mode_quad() {
 
 RenderMode create_render_mode_cube() {
 	RenderMode render_mode = {
-		.pipeline = pipeline_solid,
+		.pipeline = pipeline_depth,
 		.max_instances = 256,
 		.num_instances = 0
 	};
@@ -310,14 +386,21 @@ RenderMode create_render_mode_cube() {
 	transfer_data[6] = (Vertex) { {0.5f, 0.5f, 0.5f}, {128, 128, 128, 255}};
 	transfer_data[7] = (Vertex) { {-0.5f, 0.5f, 0.5f}, {64, 64, 64, 255} };
 
+	// Front-facing triangle should go clockwise
     Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
     const Uint16 indices[36] = {
-		0, 1, 2, 0, 2, 3, // Back face
-		4, 5, 6, 4, 6, 7, // Front face
-		0, 1, 5, 0, 5, 4, // Bottom face
-		2, 3, 7, 2, 7, 6, // Top face
-		0, 3, 7, 0, 7, 4, // Left face
-		1, 2, 6, 1, 6, 5 // Right face
+    	// Back face (z = -0.5)
+    	0, 2, 1, 0, 3, 2,
+		// Front face (z = +0.5)
+		4, 5, 6, 4, 6, 7,
+		// Bottom face (y = -0.5)
+		0, 1, 5, 0, 5, 4,
+		// Top face (y = +0.5)
+		3, 7, 6, 3, 6, 2,
+		// Left face (x = -0.5)
+		0, 4, 7, 0, 7, 3,
+		// Right face (x = +0.5)
+		1, 2, 6, 1, 6, 5
 	};
     SDL_memcpy(index_data, indices, sizeof(indices));
 
@@ -364,8 +447,22 @@ RenderMode create_render_mode_cube() {
 
 void init_render() {
 	pipeline_solid = create_render_pipeline_solid();
+	pipeline_depth = create_render_pipeline_depth();
 	render_modes.quad = create_render_mode_quad();
 	render_modes.cube = create_render_mode_cube();
+
+	SDL_GPUTextureCreateInfo depth_stencil_texture_info = {
+		.width = game_settings.width,
+		.height = game_settings.height,
+		.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+		.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+		.layer_count_or_depth = 1,
+		.num_levels = 1
+	};
+	depth_stencil_texture = SDL_CreateGPUTexture(app.gpu_device, &depth_stencil_texture_info);
+	if (!depth_stencil_texture) {
+		LOG_ERROR("Failed to create depth stencil texture: %s", SDL_GetError());
+	}
 }
 
 
@@ -437,7 +534,7 @@ void add_render_instance(SDL_GPUCommandBuffer* command_buffer, RenderMode* rende
 	// TODO: Map the transfer buffer only once per frame
 	Matrix4* transforms = SDL_MapGPUTransferBuffer(app.gpu_device, render_mode->instance_transfer_buffer, false);
 
-	transforms[render_mode->num_instances] = transform;
+	transforms[render_mode->num_instances] = transpose4(transform);
 	render_mode->num_instances = render_mode->num_instances + 1;
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, render_mode->instance_transfer_buffer);

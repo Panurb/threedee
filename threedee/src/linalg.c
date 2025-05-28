@@ -129,6 +129,15 @@ Matrix2 transpose(Matrix2 m) {
     return (Matrix2) { m.a, m.c, m.b, m.d };
 }
 
+Matrix4 transpose4(Matrix4 m) {
+    return (Matrix4) {
+        m._11, m._21, m._31, m._41,
+        m._12, m._22, m._32, m._42,
+        m._13, m._23, m._33, m._43,
+        m._14, m._24, m._34, m._44
+    };
+}
+
 Matrix2 matrix_inverse(Matrix2 m) {
     float det = m.a * m.d - m.b * m.c;
     return (Matrix2) { m.d / det, -m.b / det, -m.c / det, m.a / det };
