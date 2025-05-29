@@ -155,6 +155,31 @@ Matrix2 matrix_inverse(Matrix2 m) {
     return (Matrix2) { m.d / det, -m.b / det, -m.c / det, m.a / det };
 }
 
+Matrix4 transform_inverse(Matrix4 m) {
+    Matrix3 r = {
+        m._11, m._21, m._31,
+        m._12, m._22, m._32,
+        m._13, m._23, m._33
+    };
+
+    Vector3 d = {
+        m._14,
+        m._24,
+        m._34
+    };
+
+    Vector3 rd = matrix3_map(r, d);
+
+    Matrix4 m_inv = {
+        r.a, r.b, r.c, -rd.x,
+        r.d, r.e, r.f, -rd.y,
+        r.g, r.h, r.i, -rd.z,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+
+    return m_inv;
+}
+
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n) {
     Matrix3 mn;
     mn.a = m.a * n.a + m.b * n.d + m.c * n.g;
@@ -202,6 +227,7 @@ Matrix4 matrix4_id() {
 }
 
 Matrix4 transform_matrix(Vector3 position, Vector3 rotation, Vector3 scale) {
+    // Euler angles are applied in the order of X, Y, Z
     Matrix4 m;
     float c = cosf(rotation.x);
     float s = sinf(rotation.x);
@@ -231,6 +257,14 @@ Matrix4 transform_matrix(Vector3 position, Vector3 rotation, Vector3 scale) {
     m._44 = 1.0f; // Homogeneous coordinate
 
     return m;
+}
+
+Vector3 matrix3_map(Matrix3 m, Vector3 v) {
+    Vector3 result;
+    result.x = m.a * v.x + m.b * v.y + m.c * v.z;
+    result.y = m.d * v.x + m.e * v.y + m.f * v.z;
+    result.z = m.g * v.x + m.h * v.y + m.i * v.z;
+    return result;
 }
 
 Vector4 matrix4_map(Matrix4 m, Vector4 v) {
@@ -295,4 +329,12 @@ void matrix4_print(Matrix4 m) {
     printf("[%.2f, %.2f, %.2f, %.2f]\n", m._21, m._22, m._23, m._24);
     printf("[%.2f, %.2f, %.2f, %.2f]\n", m._31, m._32, m._33, m._34);
     printf("[%.2f, %.2f, %.2f, %.2f]]\n", m._41, m._42, m._43, m._44);
+}
+
+Vector3 direction_from_rotation(Rotation rotation) {
+    return (Vector3) {
+        cosf(rotation.y) * cosf(rotation.x),
+        sinf(rotation.x),
+        sinf(rotation.y) * cosf(rotation.x)
+    };
 }

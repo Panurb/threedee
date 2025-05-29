@@ -32,6 +32,7 @@ void create_game_window() {
 
     app.window = SDL_CreateWindow("ThreeDee", game_settings.width, game_settings.height, 0);
     SDL_SetWindowFullscreen(app.window, game_settings.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
+    SDL_SetWindowRelativeMouseMode(app.window, true);
 
     LOG_INFO("Game window created");
 }
@@ -65,7 +66,6 @@ void init() {
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO);
     // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-    SDL_HideCursor();
 
     TTF_Init();
     Mix_OpenAudio(0, NULL);
@@ -115,6 +115,12 @@ void quit() {
 
 
 void input_game(SDL_Event sdl_event) {
+    LOG_INFO("Input game");
+
+    if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.key == SDLK_ESCAPE) {
+        app.quit = true;
+    }
+
     switch (app.state) {
         case STATE_GAME:
             if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.repeat == 0) {
@@ -128,16 +134,22 @@ void input_game(SDL_Event sdl_event) {
             break;
     }
 
+
     TransformComponent* trans = TransformComponent_get(scene->camera);
-    if (SDL_GetKeyboardState(NULL)[SDLK_W]) {
-        trans->position = sum3(trans->position, (Vector3) {.y = 0.1f });
-    } else if (SDL_GetKeyboardState(NULL)[SDLK_S]) {
-        trans->position = sum3(trans->position, (Vector3) {.y = -0.1f });
-    } else if (SDL_GetKeyboardState(NULL)[SDLK_A]) {
-        trans->position = sum3(trans->position, (Vector3) {.x = 0.1f });
-    } else if (SDL_GetKeyboardState(NULL)[SDLK_D]) {
-        trans->position = sum3(trans->position, (Vector3) {.x = -0.1f });
+    Vector3 direction = direction_from_rotation(trans->rotation);
+    float pitch = atan2f(direction.z, direction.y);
+    float yaw = atan2f(direction.y, direction.x);
+
+    if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
+        LOG_INFO("Mouse movement");
+        pitch = fmaxf(-M_PI_2, fminf(M_PI_2, pitch + sdl_event.motion.yrel / 1000.0f));
+        yaw = yaw - sdl_event.motion.xrel / 1000.0f;
+
+        trans->rotation.x = trans->rotation.x - sdl_event.motion.yrel / 1000.0f;
+        trans->rotation.y = trans->rotation.y - sdl_event.motion.xrel / 1000.0f;
     }
+
+    LOG_INFO("Camera rotation: %f, %f", trans->rotation.x, trans->rotation.y);
 }
 
 
@@ -176,6 +188,33 @@ void input() {
                 break;
         }
     }
+
+
+    TransformComponent* trans = TransformComponent_get(scene->camera);
+    Vector2 velocity = zeros2();
+
+    const bool* keyboard_state = SDL_GetKeyboardState(NULL);
+
+    if (keyboard_state[SDL_SCANCODE_W]) {
+        velocity.x = 0.01f;
+    }
+    if (keyboard_state[SDL_SCANCODE_S]) {
+        velocity.x = -0.01f;
+    }
+    if (keyboard_state[SDL_SCANCODE_A]) {
+        velocity.y = -0.01f;
+    }
+    if (keyboard_state[SDL_SCANCODE_D]) {
+        velocity.y = 0.01f;
+    }
+
+    // Vector3 direction = direction_from_rotation(trans->rotation);
+    // // Project to the XZ plane
+    // velocity.x = velocity.x * direction.x + velocity.y * direction.z;
+    // velocity.y = velocity.x * direction.z - velocity.y * direction.x;
+    trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, 0.0f, velocity.y });
+
+    // LOG_INFO("Camera position: %f, %f", trans->position.x, trans->position.y);
 }
 
 

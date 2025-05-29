@@ -39,11 +39,7 @@ typedef struct {
     float _41, _42, _43, _44;
 } Matrix4;
 
-typedef struct {
-    float x;
-    float y;
-    float z;
-} Rotation;
+typedef Vector3 Rotation;
 
 Vector2 zeros2();
 
@@ -109,6 +105,8 @@ Matrix4 transpose4(Matrix4 m);
 
 Matrix2 matrix_inverse(Matrix2 m);
 
+Matrix4 transform_inverse(Matrix4 m);
+
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n);
 
 Matrix4 matrix4_mult(Matrix4 m, Matrix4 n);
@@ -116,6 +114,8 @@ Matrix4 matrix4_mult(Matrix4 m, Matrix4 n);
 Matrix4 matrix4_id();
 
 Matrix4 transform_matrix(Vector3 position, Vector3 rotation, Vector3 scale);
+
+Vector3 matrix3_map(Matrix3 m, Vector3 v);
 
 Vector4 matrix4_map(Matrix4 m, Vector4 v);
 
@@ -132,3 +132,5 @@ Matrix4 perspective_projection_matrix(float fov, float aspect, float near, float
 Matrix4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far);
 
 void matrix4_print(Matrix4 m);
+
+Vector3 direction_from_rotation(Rotation rotation);
