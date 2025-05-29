@@ -82,7 +82,7 @@ void stop_loop(int entity) {
 
 
 void play_sounds(int camera) {
-    for (int i = 0; i < game_data->components->entities; i++) {
+    for (int i = 0; i < scene->components->entities; i++) {
         SoundComponent* scomp = SoundComponent_get(i);
         if (!scomp) continue;
 

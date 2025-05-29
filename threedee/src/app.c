@@ -127,6 +127,17 @@ void input_game(SDL_Event sdl_event) {
         default:
             break;
     }
+
+    TransformComponent* trans = TransformComponent_get(scene->camera);
+    if (SDL_GetKeyboardState(NULL)[SDLK_W]) {
+        trans->position = sum3(trans->position, (Vector3) {.y = 0.1f });
+    } else if (SDL_GetKeyboardState(NULL)[SDLK_S]) {
+        trans->position = sum3(trans->position, (Vector3) {.y = -0.1f });
+    } else if (SDL_GetKeyboardState(NULL)[SDLK_A]) {
+        trans->position = sum3(trans->position, (Vector3) {.x = 0.1f });
+    } else if (SDL_GetKeyboardState(NULL)[SDLK_D]) {
+        trans->position = sum3(trans->position, (Vector3) {.x = -0.1f });
+    }
 }
 
 
@@ -161,6 +172,7 @@ void input() {
                 }
                 break;
             default:
+                input_game(sdl_event);
                 break;
         }
     }

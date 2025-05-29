@@ -14,18 +14,17 @@ typedef int Entity;
 
 
 typedef struct {
-    Matrix4 transform;
-    Vector2 position;
-    float angle;
-    int parent;
+    Vector3 position;
+    Vector3 rotation;
+    Vector3 scale;
+    Entity parent;
     List* children;
     float lifetime;
     Filename prefab;
-    Vector2 scale;
     struct {
-        Vector2 position;
-        float angle;
-        Vector2 scale;
+        Vector3 position;
+        Vector3 rotation;
+        Vector3 scale;
     } previous;
 } TransformComponent;
 
@@ -512,9 +511,9 @@ struct ComponentData {
 
 ComponentData* ComponentData_create();
 
-TransformComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle);
-TransformComponent* CoordinateComponent_get(int entity);
-void CoordinateComponent_remove(int entity);
+TransformComponent* TransformComponent_add(Entity entity, Vector3 pos, Vector3 rotation);
+TransformComponent* TransformComponent_get(Entity entity);
+void TransformComponent_remove(Entity entity);
 
 CameraComponent* CameraComponent_add(int entity, Resolution resolution, float fov);
 CameraComponent* CameraComponent_get(int entity);
@@ -536,9 +535,11 @@ void remove_prefab(int entity);
 
 void ComponentData_clear();
 
-Vector2 get_xy(int i);
-float get_angle(int i);
-Vector2 get_scale(int entity);
+Matrix4 get_transform(Entity entity);
+Vector3 get_position(Entity entity);
+Vector2 get_xy(Entity entity);
+Vector3 get_rotation(Entity entity);
+Vector3 get_scale(Entity entity);
 
 Vector2 get_position_interpolated(int entity, float delta);
 float get_angle_interpolated(int entity, float delta);
@@ -550,4 +551,4 @@ int get_parent(int entity);
 
 List* get_children(int entity);
 
-Vector2 get_entities_center(List* entities);
+Vector3 get_entities_center(List* entities);

@@ -53,6 +53,8 @@ Vector2 ones2();
 
 Vector3 ones3();
 
+Vector3 diag3(float value);
+
 Vector2 vec2(float x, float y);
 
 Vector3 vec3(float x, float y, float z);
@@ -79,9 +81,13 @@ Vector2 perp(Vector2 v);
 
 Vector2 sum(Vector2 v, Vector2 u);
 
+Vector3 sum3(Vector3 v, Vector3 u);
+
 Vector2 diff(Vector2 v, Vector2 u);
 
 Vector2 mult(float c, Vector2 v);
+
+Vector3 mult3(float c, Vector3 v);
 
 Vector2 proj(Vector2 a, Vector2 b);
 
@@ -109,15 +115,15 @@ Matrix4 matrix4_mult(Matrix4 m, Matrix4 n);
 
 Matrix4 matrix4_id();
 
-Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale);
+Matrix4 transform_matrix(Vector3 position, Vector3 rotation, Vector3 scale);
 
 Vector4 matrix4_map(Matrix4 m, Vector4 v);
 
-Vector2 position_from_transform(Matrix3 m);
+Vector3 position_from_transform(Matrix4 m);
 
-Vector2 scale_from_transform(Matrix3 m);
+Vector3 scale_from_transform(Matrix4 m);
 
-float angle_from_transform(Matrix3 m);
+Vector3 rotation_from_transform(Matrix4 m);
 
 bool non_zero(Vector2 v);
 

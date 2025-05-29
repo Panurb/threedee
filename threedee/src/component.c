@@ -26,51 +26,51 @@ ComponentData* ComponentData_create() {
 }
 
 
-TransformComponent* CoordinateComponent_add(int entity, Vector2 pos, float angle) {
+TransformComponent* TransformComponent_add(Entity entity, Vector3 pos, Vector3 rotation) {
     TransformComponent* coord = malloc(sizeof(TransformComponent));
     coord->position = pos;
-    coord->angle = angle;
-    coord->parent = -1;
+    coord->rotation = rotation;
+    coord->parent = NULL_ENTITY;
     coord->children = List_create();
     coord->lifetime = -1.0f;
     coord->prefab[0] = '\0';
-    coord->scale = ones2();
+    coord->scale = ones3();
     coord->previous.position = pos;
-    coord->previous.angle = coord->angle;
-    coord->previous.scale = ones2();
+    coord->previous.rotation = rotation;
+    coord->previous.scale = ones3();
 
-    game_data->components->coordinate[entity] = coord;
+    scene->components->coordinate[entity] = coord;
 
     return coord;
 }
 
 
-TransformComponent* CoordinateComponent_get(int entity) {
+TransformComponent* TransformComponent_get(Entity entity) {
     if (entity == -1) return NULL;
-    return game_data->components->coordinate[entity];
+    return scene->components->coordinate[entity];
 }
 
 
-void CoordinateComponent_remove(int entity) {
-    TransformComponent* coord = CoordinateComponent_get(entity);
+void TransformComponent_remove(int entity) {
+    TransformComponent* coord = TransformComponent_get(entity);
     if (coord) {
         // if (coord->parent != -1) {
         //     List_remove(CoordinateComponent_get(coord->parent)->children, entity);
         // }
         for (ListNode* node = coord->children->head; node; node = node->next) {
-            TransformComponent* child = CoordinateComponent_get(node->value);
+            TransformComponent* child = TransformComponent_get(node->value);
             if (child) {
                 child->parent = -1;
             }
         }
         List_delete(coord->children);
         free(coord);
-        game_data->components->coordinate[entity] = NULL;
+        scene->components->coordinate[entity] = NULL;
     }
 }
 
 
-CameraComponent* CameraComponent_add(int entity, Resolution resolution, float fov) {
+CameraComponent* CameraComponent_add(Entity entity, Resolution resolution, float fov) {
     CameraComponent* camera = malloc(sizeof(CameraComponent));
 
     camera->resolution = resolution;
@@ -81,14 +81,14 @@ CameraComponent* CameraComponent_add(int entity, Resolution resolution, float fo
         camera->fov, aspect_ratio, 0.1f, 1000.0f
     );
 
-    game_data->components->camera[entity] = camera;
+    scene->components->camera[entity] = camera;
     return camera;
 }
 
 
 CameraComponent* CameraComponent_get(int entity) {
     if (entity == -1) return NULL;
-    return game_data->components->camera[entity];
+    return scene->components->camera[entity];
 }
 
 
@@ -96,7 +96,7 @@ void CameraComponent_remove(int entity) {
     CameraComponent* camera = CameraComponent_get(entity);
     if (camera) {
         free(camera);
-        game_data->components->camera[entity] = NULL;
+        scene->components->camera[entity] = NULL;
     }
 }
 
@@ -109,14 +109,14 @@ SoundComponent* SoundComponent_add(int entity, Filename hit_sound) {
     }
     strcpy(sound->hit_sound, hit_sound);
     strcpy(sound->loop_sound, "");
-    game_data->components->sound[entity] = sound;
+    scene->components->sound[entity] = sound;
     return sound;
 }
 
 
 SoundComponent* SoundComponent_get(int entity) {
     if (entity == -1) return NULL;
-    return game_data->components->sound[entity];
+    return scene->components->sound[entity];
 }
 
 
@@ -124,31 +124,31 @@ void SoundComponent_remove(int entity) {
     SoundComponent* sound = SoundComponent_get(entity);
     if (sound) {
         free(sound);
-        game_data->components->sound[entity] = NULL;
+        scene->components->sound[entity] = NULL;
     }
 }
 
 
 int create_entity() {
-    for (int i = 0; i < game_data->components->entities; i++) {
-        if (!game_data->components->coordinate[i]) {
-            if (game_data->components->added_entities) {
-                List_add(game_data->components->added_entities, i);
+    for (int i = 0; i < scene->components->entities; i++) {
+        if (!scene->components->coordinate[i]) {
+            if (scene->components->added_entities) {
+                List_add(scene->components->added_entities, i);
             }
             return i;
         }
     }
 
-    game_data->components->entities++;
-    if (game_data->components->added_entities) {
-        List_add(game_data->components->added_entities, game_data->components->entities - 1);
+    scene->components->entities++;
+    if (scene->components->added_entities) {
+        List_add(scene->components->added_entities, scene->components->entities - 1);
     }
-    return game_data->components->entities - 1;
+    return scene->components->entities - 1;
 }
 
 
 int get_root(int entity) {
-    TransformComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = TransformComponent_get(entity);
     if (coord->parent != -1) {
         return get_root(coord->parent);
     }
@@ -157,31 +157,31 @@ int get_root(int entity) {
 
 
 void add_child(int parent, int child) {
-    CoordinateComponent_get(child)->parent = parent;
-    List_append(CoordinateComponent_get(parent)->children, child);
+    TransformComponent_get(child)->parent = parent;
+    List_append(TransformComponent_get(parent)->children, child);
 }
 
 
 void remove_children(int parent) {
-    TransformComponent* coord = CoordinateComponent_get(parent);
+    TransformComponent* coord = TransformComponent_get(parent);
     for (ListNode* node = coord->children->head; node; node = node->next) {
-        CoordinateComponent_get(node->value)->parent = -1;
+        TransformComponent_get(node->value)->parent = -1;
     }
     List_clear(coord->children);
 }
 
 
 void remove_parent(int child) {
-    TransformComponent* coord = CoordinateComponent_get(child);
+    TransformComponent* coord = TransformComponent_get(child);
     if (coord->parent != NULL_ENTITY) {
-        List_remove(CoordinateComponent_get(coord->parent)->children, child);
+        List_remove(TransformComponent_get(coord->parent)->children, child);
         coord->parent = NULL_ENTITY;
     }
 }
 
 
 void remove_prefab(int entity) {
-    TransformComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = TransformComponent_get(entity);
     coord->prefab[0] = '\0';
 }
 
@@ -191,11 +191,11 @@ void destroy_entity(int entity) {
 
     // TODO: remove parent
 
-    CoordinateComponent_remove(entity);
+    TransformComponent_remove(entity);
     CameraComponent_remove(entity);
 
-    if (entity == game_data->components->entities - 1) {
-        game_data->components->entities--;
+    if (entity == scene->components->entities - 1) {
+        scene->components->entities--;
     }
 }
 
@@ -209,7 +209,7 @@ void destroy_entities(List* entities) {
 
 
 void do_destroy_entity_recursive(int entity) {
-    TransformComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = TransformComponent_get(entity);
     for (ListNode* node = coord->children->head; node; node = node->next) {
         do_destroy_entity_recursive(node->value);
     }
@@ -225,77 +225,79 @@ void destroy_entity_recursive(int entity) {
 
 
 void ComponentData_clear() {
-    for (int i = 0; i < game_data->components->entities; i++) {
+    for (int i = 0; i < scene->components->entities; i++) {
         destroy_entity(i);
     }
-    game_data->components->entities = 0;
+    scene->components->entities = 0;
 }
 
 
-Matrix3 get_transform(int entity) {
-    // CoordinateComponent* coord = CoordinateComponent_get(entity);
-    // Matrix3 transform = transform_matrix(coord->position, coord->angle, coord->scale);
-    // if (coord->parent != -1) {
-    //     return matrix3_mult(get_transform(coord->parent), transform);
-    // }
-    return (Matrix3) { 1.0f, 0.0f, 0.0f,
-                     0.0f, 1.0f, 0.0f,
-                     CoordinateComponent_get(entity)->position.x,
-                     CoordinateComponent_get(entity)->position.y,
-                     1.0f };
+Matrix4 get_transform(Entity entity) {
+    TransformComponent* trans = TransformComponent_get(entity);
+    Matrix4 transform = transform_matrix(trans->position, trans->rotation, trans->scale);
+    if (trans->parent != NULL_ENTITY) {
+        return matrix4_mult(get_transform(trans->parent), transform);
+    }
+    return transform;
 }
 
 
-Vector2 get_xy(int entity) {
-    Matrix3 transform = get_transform(entity);
+Vector3 get_position(Entity entity) {
+    Matrix4 transform = get_transform(entity);
     return position_from_transform(transform);
 }
 
 
-float get_angle(int entity) {
-    Matrix3 transform = get_transform(entity);
-    return angle_from_transform(transform);
+Vector2 get_xy(Entity entity) {
+    Vector3 pos = get_position(entity);
+    return (Vector2) { pos.x, pos.y };
 }
 
 
-Vector2 get_scale(int entity) {
-    Matrix3 transform = get_transform(entity);
+Vector3 get_rotation(Entity entity) {
+    Matrix4 transform = get_transform(entity);
+    return rotation_from_transform(transform);
+}
+
+
+Vector3 get_scale(Entity entity) {
+    Matrix4 transform = get_transform(entity);
     return scale_from_transform(transform);
 }
 
 
-Vector2 get_position_interpolated(int entity, float delta) {
-    Vector2 previous_position = CoordinateComponent_get(entity)->previous.position;
-    Vector2 current_position = get_xy(entity);
-
-    float x = lerp(previous_position.x, current_position.x, delta);
-    float y = lerp(previous_position.y, current_position.y, delta);
-
-    return (Vector2) { x, y };
-}
-
-
-float get_angle_interpolated(int entity, float delta) {
-    float previous_angle = CoordinateComponent_get(entity)->previous.angle;
-    float current_angle = get_angle(entity);
-
-    return lerp_angle(previous_angle, current_angle, delta);
-}
-
-
-Vector2 get_scale_interpolated(int entity, float delta) {
-    Vector2 previous_scale = CoordinateComponent_get(entity)->previous.scale;
-    Vector2 current_scale = get_scale(entity);
-
-    float x = lerp(previous_scale.x, current_scale.x, delta);
-    float y = lerp(previous_scale.y, current_scale.y, delta);
-
-    return (Vector2) { x, y };
-}
+// Vector2 get_position_interpolated(int entity, float delta) {
+//     Vector2 previous_position = TransformComponent_get(entity)->previous.position;
+//     Vector2 current_position = get_xy(entity);
+//
+//     float x = lerp(previous_position.x, current_position.x, delta);
+//     float y = lerp(previous_position.y, current_position.y, delta);
+//
+//     return (Vector2) { x, y };
+// }
+//
+//
+// float get_angle_interpolated(int entity, float delta) {
+//     float previous_angle = TransformComponent_get(entity)->previous.angle;
+//     float current_angle = get_angle(entity);
+//
+//     return lerp_angle(previous_angle, current_angle, delta);
+// }
+//
+//
+// Vector2 get_scale_interpolated(int entity, float delta) {
+//     Vector2 previous_scale = TransformComponent_get(entity)->previous.scale;
+//     Vector2 current_scale = get_scale(entity);
+//
+//     float x = lerp(previous_scale.x, current_scale.x, delta);
+//     float y = lerp(previous_scale.y, current_scale.y, delta);
+//
+//     return (Vector2) { x, y };
+// }
 
 
 bool entity_exists(int entity) {
-    TransformComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = TransformComponent_get(entity);
     if (coord) {
         return true;
     }
@@ -304,28 +306,28 @@ bool entity_exists(int entity) {
 
 
 int get_parent(int entity) {
-    TransformComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = TransformComponent_get(entity);
     return coord->parent;
 }
 
 
 List* get_children(int entity) {
-    TransformComponent* coord = CoordinateComponent_get(entity);
+    TransformComponent* coord = TransformComponent_get(entity);
     return coord->children;
 }
 
 
-Vector2 get_entities_center(List* entities) {
-    Vector2 center = zeros2();
+Vector3 get_entities_center(List* entities) {
+    Vector3 center = zeros3();
     ListNode* node;
     FOREACH(node, entities) {
         int i = node->value;
-        if (CoordinateComponent_get(i)->parent == -1) {
-            center = sum(center, get_xy(i));
+        if (TransformComponent_get(i)->parent == -1) {
+            center = sum3(center, get_position(i));
         }
     }
     if (entities->size != 0) {
-        center = mult(1.0f / entities->size, center);
+        center = mult3(1.0f / entities->size, center);
     }
 
     return center;

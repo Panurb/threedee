@@ -10,7 +10,7 @@ typedef struct Scene {
 } Scene;
 
 
-Scene* game_data;
+Scene* scene;
 
 
 void create_scene();

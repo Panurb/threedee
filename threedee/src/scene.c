@@ -11,10 +11,10 @@
 void create_scene() {
     LOG_INFO("Creating scene");
 
-    game_data = malloc(sizeof(Scene));
-    game_data->components = ComponentData_create();
-    game_data->camera = create_camera();
-    game_data->menu_camera = create_menu_camera();
+    scene = malloc(sizeof(Scene));
+    scene->components = ComponentData_create();
+    scene->camera = create_camera();
+    scene->menu_camera = create_menu_camera();
 
     LOG_INFO("Scene created");
 }

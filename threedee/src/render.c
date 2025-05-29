@@ -518,9 +518,9 @@ void render() {
 	SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
 	if (swapchain_texture) {
-		add_render_instance(RENDER_CUBE, transform_matrix(vec3(0.0f, 0.0f, -1.0f), (Rotation) { 0.0f, 0.0f, 0.0f }, ones3()));
+		add_render_instance(RENDER_CUBE, transform_matrix(vec3(0.0f, 0.0f, -1.0f), zeros3(), ones3()));
 
-		Matrix4 projection_matrix = transpose4(CameraComponent_get(game_data->camera)->projection_matrix);
+		Matrix4 projection_matrix = transpose4(CameraComponent_get(scene->camera)->projection_matrix);
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_matrix, sizeof(Matrix4));
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { 0.1f, 1000.0f }, 8);
 

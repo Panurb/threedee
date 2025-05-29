@@ -24,6 +24,10 @@ Vector3 ones3() {
     return (Vector3) { 1.0f, 1.0f, 1.0f };
 }
 
+Vector3 diag3(float value) {
+    return (Vector3) { value, value, value };
+}
+
 Vector2 vec2(float x, float y) {
     return (Vector2) { x, y };
 }
@@ -84,12 +88,20 @@ Vector2 sum(Vector2 v, Vector2 u) {
     return (Vector2) { v.x + u.x, v.y + u.y };
 }
 
+Vector3 sum3(Vector3 v, Vector3 u) {
+    return (Vector3) { v.x + u.x, v.y + u.y, v.z + u.z };
+}
+
 Vector2 diff(Vector2 v, Vector2 u) {
     return (Vector2) { v.x - u.x, v.y - u.y };
 }
 
 Vector2 mult(float c, Vector2 v) {
     return (Vector2) { c * v.x, c * v.y };
+}
+
+Vector3 mult3(float c, Vector3 v) {
+    return (Vector3) { c * v.x, c * v.y, c * v.z };
 }
 
 Vector2 proj(Vector2 a, Vector2 b) {
@@ -189,7 +201,7 @@ Matrix4 matrix4_id() {
     };
 }
 
-Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale) {
+Matrix4 transform_matrix(Vector3 position, Vector3 rotation, Vector3 scale) {
     Matrix4 m;
     float c = cosf(rotation.x);
     float s = sinf(rotation.x);
@@ -230,18 +242,26 @@ Vector4 matrix4_map(Matrix4 m, Vector4 v) {
     return result;
 }
 
-Vector2 position_from_transform(Matrix3 m) {
-    return (Vector2) { m.c, m.f };
+Vector3 position_from_transform(Matrix4 m) {
+    return (Vector3) { m._14, m._24, m._34 };
 }
 
 
-Vector2 scale_from_transform(Matrix3 m) {
-    return (Vector2) { norm2((Vector2) { m.a, m.d }), norm2((Vector2) { m.b, m.e }) };
+Vector3 scale_from_transform(Matrix3 m) {
+    return (Vector3) {
+        sqrtf(m.a * m.a + m.b * m.b + m.c * m.c),
+        sqrtf(m.d * m.d + m.e * m.e + m.f * m.f),
+        sqrtf(m.g * m.g + m.h * m.h + m.i * m.i)
+    };
 }
 
 
-float angle_from_transform(Matrix3 m) {
-    return atan2f(m.d, m.a);
+Vector3 rotation_from_transform(Matrix4 m) {
+    return (Vector3) {
+        atan2f(m._32, m._33), // Rotation around Z-axis
+        atan2f(-m._31, sqrtf(m._32 * m._32 + m._33 * m._33)), // Rotation around Y-axis
+        atan2f(m._21, m._11) // Rotation around X-axis
+    };
 }
 
 bool non_zero(Vector2 v) {

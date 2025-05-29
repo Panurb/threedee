@@ -22,20 +22,16 @@ SDL_FColor color_to_fcolor(Color color) {
 
 
 int create_camera() {
-    LOG_INFO("Creating camera");
     int i = create_entity();
-    LOG_INFO("Entity: %d", i);
-    CoordinateComponent_add(i, zeros2(), 0.0f);
-    LOG_INFO("Transform");
+    TransformComponent_add(i, zeros3(), zeros3());
     CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, M_PI_2);
-    LOG_INFO("Created camera");
     return i;
 }
 
 
 int create_menu_camera() {
     int i = create_entity();
-    CoordinateComponent_add(i, zeros2(), 0.0);
+    TransformComponent_add(i, zeros3(), zeros3());
     CameraComponent* cam = CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, 25.0f);
     float aspect_ratio = (float) cam->resolution.w / (float) cam->resolution.h;
     cam->projection_matrix = orthographic_projection_matrix(-aspect_ratio, aspect_ratio, -1.0f, 1.0f, -1.0f, 1.0f);
@@ -51,7 +47,7 @@ Vector2 camera_size(int camera) {
 
 
 Vector3 world_to_screen(int camera, Vector3 a) {
-    Matrix4 transform = CoordinateComponent_get(camera)->transform;
+    // Matrix4 transform = TransformComponent_get(camera)->transform;
 
     return a;
 }
@@ -65,7 +61,9 @@ Vector3 screen_to_world(int camera, Vector3 a) {
 void draw_cube(Entity camera, Vector3 position, float size, Color color) {
     CameraComponent* cam = CameraComponent_get(camera);
 
-    // add_render_instance()
+    Matrix4 object_transform = transform_matrix(position, zeros3(), diag3(size));
+
+    add_render_instance(RENDER_CUBE, object_transform);
 }
 
 
