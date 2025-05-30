@@ -26,17 +26,17 @@ ComponentData* ComponentData_create() {
 }
 
 
-TransformComponent* TransformComponent_add(Entity entity, Vector3 pos, Vector3 rotation) {
+TransformComponent* TransformComponent_add(Entity entity, Vector3 pos) {
     TransformComponent* trans = malloc(sizeof(TransformComponent));
     trans->position = pos;
-    trans->rotation = rotation;
+    trans->rotation = (Rotation) { 0.0f, 0.0f, 0.0f };
     trans->parent = NULL_ENTITY;
     trans->children = List_create();
     trans->lifetime = -1.0f;
     trans->prefab[0] = '\0';
     trans->scale = ones3();
     trans->previous.position = pos;
-    trans->previous.rotation = rotation;
+    trans->previous.rotation = trans->rotation;
     trans->previous.scale = ones3();
 
     scene->components->coordinate[entity] = trans;

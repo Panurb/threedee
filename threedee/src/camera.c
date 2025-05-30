@@ -23,7 +23,7 @@ SDL_FColor color_to_fcolor(Color color) {
 
 int create_camera() {
     int i = create_entity();
-    TransformComponent_add(i, zeros3(), zeros3());
+    TransformComponent_add(i, vec3(0.0f, 0.0f, 0.0f));
     CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, M_PI_2);
     return i;
 }
@@ -31,7 +31,7 @@ int create_camera() {
 
 int create_menu_camera() {
     int i = create_entity();
-    TransformComponent_add(i, zeros3(), zeros3());
+    TransformComponent_add(i, zeros3());
     CameraComponent* cam = CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, 25.0f);
     float aspect_ratio = (float) cam->resolution.w / (float) cam->resolution.h;
     cam->projection_matrix = orthographic_projection_matrix(-aspect_ratio, aspect_ratio, -1.0f, 1.0f, -1.0f, 1.0f);
@@ -61,7 +61,7 @@ Vector3 screen_to_world(int camera, Vector3 a) {
 void draw_cube(Entity camera, Vector3 position, float size, Color color) {
     CameraComponent* cam = CameraComponent_get(camera);
 
-    Matrix4 object_transform = transform_matrix(position, zeros3(), diag3(size));
+    Matrix4 object_transform = transform_matrix(position, (Rotation) { 0 }, diag3(size));
 
     add_render_instance(RENDER_CUBE, object_transform);
 }

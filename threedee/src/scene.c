@@ -15,6 +15,9 @@ void create_scene() {
     scene->components = ComponentData_create();
     scene->camera = create_camera();
     scene->menu_camera = create_menu_camera();
+    scene->player = create_entity();
+    TransformComponent_add(scene->player, zeros3());
+    // add_child(scene->player, scene->camera);
 
     LOG_INFO("Scene created");
 }

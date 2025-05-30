@@ -39,7 +39,18 @@ typedef struct {
     float _41, _42, _43, _44;
 } Matrix4;
 
-typedef Vector3 Rotation;
+typedef struct Rotation {
+    float yaw;
+    float pitch;
+    float roll;
+} Rotation;
+
+typedef struct Quaternion {
+    float x;
+    float y;
+    float z;
+    float w;
+} Quaternion;
 
 Vector2 zeros2();
 
@@ -81,6 +92,8 @@ Vector3 sum3(Vector3 v, Vector3 u);
 
 Vector2 diff(Vector2 v, Vector2 u);
 
+Vector3 diff3(Vector3 v, Vector3 u);
+
 Vector2 mult(float c, Vector2 v);
 
 Vector3 mult3(float c, Vector3 v);
@@ -113,7 +126,7 @@ Matrix4 matrix4_mult(Matrix4 m, Matrix4 n);
 
 Matrix4 matrix4_id();
 
-Matrix4 transform_matrix(Vector3 position, Vector3 rotation, Vector3 scale);
+Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale);
 
 Vector3 matrix3_map(Matrix3 m, Vector3 v);
 
@@ -132,5 +145,7 @@ Matrix4 perspective_projection_matrix(float fov, float aspect, float near, float
 Matrix4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far);
 
 void matrix4_print(Matrix4 m);
+
+Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up);
 
 Vector3 direction_from_rotation(Rotation rotation);

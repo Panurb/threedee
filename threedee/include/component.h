@@ -15,7 +15,7 @@ typedef int Entity;
 
 typedef struct {
     Vector3 position;
-    Vector3 rotation;
+    Rotation rotation;
     Vector3 scale;
     Entity parent;
     List* children;
@@ -23,7 +23,7 @@ typedef struct {
     Filename prefab;
     struct {
         Vector3 position;
-        Vector3 rotation;
+        Rotation rotation;
         Vector3 scale;
     } previous;
 } TransformComponent;
@@ -511,7 +511,7 @@ struct ComponentData {
 
 ComponentData* ComponentData_create();
 
-TransformComponent* TransformComponent_add(Entity entity, Vector3 pos, Vector3 rotation);
+TransformComponent* TransformComponent_add(Entity entity, Vector3 pos);
 TransformComponent* TransformComponent_get(Entity entity);
 void TransformComponent_remove(Entity entity);
 

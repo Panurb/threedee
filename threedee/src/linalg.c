@@ -6,6 +6,7 @@
 #include "linalg.h"
 
 #include <stdio.h>
+#include <util.h>
 
 
 Vector2 zeros2() {
@@ -40,6 +41,10 @@ float norm2(Vector2 v) {
     return sqrtf(v.x * v.x + v.y * v.y);
 }
 
+float norm3(Vector3 v) {
+    return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
 float normsqr2(Vector2 v) {
     return v.x * v.x + v.y * v.y;
 }
@@ -58,8 +63,20 @@ Vector2 normalized2(Vector2 v) {
     return (Vector2) { v.x / n, v.y / n };
 }
 
+Vector3 normalized3(Vector3 v) {
+    float n = norm3(v);
+    if (n == 0.0f) {
+        return v;
+    }
+    return (Vector3) { v.x / n, v.y / n, v.z / n };
+}
+
 float dot2(Vector2 a, Vector2 b) {
     return a.x * b.x + a.y * b.y;
+}
+
+float dot3(Vector3 a, Vector3 b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 float dot4(Vector4 a, Vector4 b) {
@@ -96,6 +113,10 @@ Vector2 diff(Vector2 v, Vector2 u) {
     return (Vector2) { v.x - u.x, v.y - u.y };
 }
 
+Vector3 diff3(Vector3 v, Vector3 u) {
+    return (Vector3) { v.x - u.x, v.y - u.y, v.z - u.z };
+}
+
 Vector2 mult(float c, Vector2 v) {
     return (Vector2) { c * v.x, c * v.y };
 }
@@ -115,6 +136,14 @@ Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u) {
 
 float cross(Vector2 v, Vector2 u) {
     return v.x * u.y - v.y * u.x;
+}
+
+Vector3 cross3(Vector3 v, Vector3 u) {
+    return (Vector3) {
+        v.y * u.z - v.z * u.y,
+        v.z * u.x - v.x * u.z,
+        v.x * u.y - v.y * u.x
+    };
 }
 
 Vector2 rotate(Vector2 v, float angle) {
@@ -226,37 +255,37 @@ Matrix4 matrix4_id() {
     };
 }
 
-Matrix4 transform_matrix(Vector3 position, Vector3 rotation, Vector3 scale) {
-    // Euler angles are applied in the order of X, Y, Z
-    Matrix4 m;
-    float c = cosf(rotation.x);
-    float s = sinf(rotation.x);
-    float c2 = cosf(rotation.y);
-    float s2 = sinf(rotation.y);
-    float c3 = cosf(rotation.z);
-    float s3 = sinf(rotation.z);
+Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale) {
+    float cy = cosf(rotation.yaw),   sy = sinf(rotation.yaw);
+    float cp = cosf(rotation.pitch), sp = sinf(rotation.pitch);
+    float cr = cosf(rotation.roll),  sr = sinf(rotation.roll);
 
-    m._11 = c2 * c3 * scale.x;
-    m._12 = -c2 * s3 * scale.x;
-    m._13 = s2 * scale.x;
-    m._14 = position.x;
+    // Rotation matrix (Yaw-Pitch-Roll, extrinsic YXZ)
+    Matrix4 rot = {
+        cy*cp, cy*sp*sr - sy*cr, cy*sp*cr + sy*sr, 0.0f,
+        sy*cp, sy*sp*sr + cy*cr, sy*sp*cr - cy*sr, 0.0f,
+        -sp,   cp*sr,            cp*cr,            0.0f,
+        0.0f,  0.0f,             0.0f,             1.0f
+    };
 
-    m._21 = (s * s2 * c3 + c * s3) * scale.y;
-    m._22 = (-s * s2 * s3 + c * c3) * scale.y;
-    m._23 = -s * c2 * scale.y;
-    m._24 = position.y;
+    // Scale matrix
+    Matrix4 scl = {
+        scale.x, 0.0f,    0.0f,    0.0f,
+        0.0f,    scale.y, 0.0f,    0.0f,
+        0.0f,    0.0f,    scale.z, 0.0f,
+        0.0f,    0.0f,    0.0f,    1.0f
+    };
 
-    m._31 = (-c * s2 * c3 + s * s3) * scale.z;
-    m._32 = (c * s2 * s3 + s * c3) * scale.z;
-    m._33 = c * c2 * scale.z;
-    m._34 = position.z;
+    // Translation matrix
+    Matrix4 trans = {
+        1.0f, 0.0f, 0.0f, position.x,
+        0.0f, 1.0f, 0.0f, position.y,
+        0.0f, 0.0f, 1.0f, position.z,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
 
-    m._41 = 0.0f; // Homogeneous coordinate
-    m._42 = 0.0f; // Homogeneous coordinate
-    m._43 = 0.0f; // Homogeneous coordinate
-    m._44 = 1.0f; // Homogeneous coordinate
-
-    return m;
+    // Combine: T * R * S
+    return matrix4_mult(trans, matrix4_mult(rot, scl));
 }
 
 Vector3 matrix3_map(Matrix3 m, Vector3 v) {
@@ -331,10 +360,28 @@ void matrix4_print(Matrix4 m) {
     printf("[%.2f, %.2f, %.2f, %.2f]]\n", m._41, m._42, m._43, m._44);
 }
 
+Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up) {
+    Vector3 right = normalized3(cross3(forward, up));
+    up = normalized3(cross3(right, forward));
+    LOG_INFO("up: %f, %f, %f", up.x, up.y, up.z);
+    LOG_INFO("right: %f, %f, %f", right.x, right.y, right.z);
+    Matrix4 m = {
+        right.x, up.x, -forward.x, 0.0f,
+        right.y, up.y, -forward.y, 0.0f,
+        right.z, up.z, -forward.z, 0.0f,
+        -dot3(right, position), -dot3(up, position), dot3(forward, position), 1.0f
+    };
+    return transpose4(m);
+}
+
 Vector3 direction_from_rotation(Rotation rotation) {
+    float cy = cosf(rotation.yaw);
+    float sy = sinf(rotation.yaw);
+    float cp = cosf(rotation.pitch);
+    float sp = sinf(rotation.pitch);
     return (Vector3) {
-        cosf(rotation.y) * cosf(rotation.x),
-        sinf(rotation.x),
-        sinf(rotation.y) * cosf(rotation.x)
+        cy * cp,
+        sp,
+        sy * cp
     };
 }

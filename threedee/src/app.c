@@ -136,20 +136,17 @@ void input_game(SDL_Event sdl_event) {
 
 
     TransformComponent* trans = TransformComponent_get(scene->camera);
-    Vector3 direction = direction_from_rotation(trans->rotation);
-    float pitch = atan2f(direction.z, direction.y);
-    float yaw = atan2f(direction.y, direction.x);
 
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
         LOG_INFO("Mouse movement");
-        pitch = fmaxf(-M_PI_2, fminf(M_PI_2, pitch + sdl_event.motion.yrel / 1000.0f));
-        yaw = yaw - sdl_event.motion.xrel / 1000.0f;
+        trans->rotation.roll = fmaxf(-M_PI_2, fminf(M_PI_2, trans->rotation.roll - sdl_event.motion.yrel / 1000.0f));
+        trans->rotation.pitch = trans->rotation.pitch - sdl_event.motion.xrel / 1000.0f;
 
-        trans->rotation.x = trans->rotation.x - sdl_event.motion.yrel / 1000.0f;
-        trans->rotation.y = trans->rotation.y - sdl_event.motion.xrel / 1000.0f;
+        // trans->rotation.x = trans->rotation.x - sdl_event.motion.yrel / 1000.0f;
+        // trans->rotation.y = trans->rotation.y - sdl_event.motion.xrel / 1000.0f;
     }
 
-    LOG_INFO("Camera rotation: %f, %f", trans->rotation.x, trans->rotation.y);
+    LOG_INFO("Camera rotation: %f, %f", trans->rotation.yaw, trans->rotation.pitch);
 }
 
 
