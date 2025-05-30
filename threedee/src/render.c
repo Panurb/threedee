@@ -103,13 +103,13 @@ SDL_GPUShader* load_shader(
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
-	SDL_GPUShader* vertex_shader = load_shader(device, "triangle.vert", 0, 1, 1, 0);
+	SDL_GPUShader* vertex_shader = load_shader(device, "position_color.vert", 0, 1, 1, 0);
 	if (!vertex_shader) {
 		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(device, "SolidColor.frag", 0, 0, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(device, "solid_color.frag", 0, 0, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -162,13 +162,13 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
-	SDL_GPUShader* vertex_shader = load_shader(device, "triangle.vert", 0, 1, 1, 0);
+	SDL_GPUShader* vertex_shader = load_shader(device, "position_color.vert", 0, 1, 1, 0);
 	if (!vertex_shader) {
 		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(device, "SolidColorDepth.frag", 0, 1, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(device, "solid_color_depth.frag", 0, 1, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
