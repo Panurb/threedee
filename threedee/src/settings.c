@@ -33,7 +33,8 @@ Settings game_settings = {
         { DEVICE_KEYBOARD, SDL_SCANCODE_SPACE },
         { DEVICE_KEYBOARD, SDL_SCANCODE_LSHIFT }
     },
-    .mouse_sensitivity = 1.0f
+    .mouse_sensitivity = 1.0f,
+    .fov = 90.0f
 };
 
 

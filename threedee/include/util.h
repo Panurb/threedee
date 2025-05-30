@@ -69,7 +69,9 @@ void fill(int* array, int value, int size);
 
 bool close_enough(float a, float b, float epsilon);
 
-double to_degrees(double radians);
+float to_degrees(float radians);
+
+float to_radians(float degrees);
 
 int abs_argmin(float* a, int n);
 

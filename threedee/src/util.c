@@ -25,8 +25,12 @@ bool close_enough(float a, float b, float epsilon) {
     return fabs(a - b) < epsilon;
 }
 
-double to_degrees(double radians) {
-    return radians * (180.0 / M_PI);
+float to_degrees(float radians) {
+    return radians * (180.0f / M_PI);
+}
+
+float to_radians(float degrees) {
+    return degrees * (M_PI / 180.0f);
 }
 
 int abs_argmin(float* a, int n) {

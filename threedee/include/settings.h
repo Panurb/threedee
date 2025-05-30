@@ -31,6 +31,7 @@ typedef struct {
     bool debug;
     Keybind keybinds[16];
     float mouse_sensitivity;
+    float fov;
 } Settings;
 
 typedef struct {
