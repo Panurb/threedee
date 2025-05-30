@@ -30,6 +30,7 @@ typedef struct {
     Quality particles;
     bool debug;
     Keybind keybinds[16];
+    float mouse_sensitivity;
 } Settings;
 
 typedef struct {

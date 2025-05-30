@@ -391,6 +391,8 @@ typedef struct {
 
 typedef struct {
     float fov;
+    float near_plane;
+    float far_plane;
     Resolution resolution;
     Matrix4 projection_matrix;
 } CameraComponent;

@@ -521,20 +521,16 @@ void render() {
 		add_render_instance(RENDER_CUBE, transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0 }, ones3()));
 		add_render_instance(RENDER_CUBE, transform_matrix(vec3(2.0f, 0.0f, 2.0f), (Rotation) { 0 }, ones3()));
 
+		CameraComponent* camera = CameraComponent_get(scene->camera);
 		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
 		// Need to shift so rotation happens around the center of the camera
 		// Otherwise the camera "orbits"
 		view_matrix._34 += 1.0f;
-		LOG_INFO("Camera view matrix:");
-		matrix4_print(view_matrix);
-		Matrix4 projection_matrix = CameraComponent_get(scene->camera)->projection_matrix;
-		LOG_INFO("Camera projection matrix:");
-		matrix4_print(projection_matrix);
+		Matrix4 projection_matrix = camera->projection_matrix;
 		Matrix4 projection_view_matrix = transpose4(matrix4_mult(projection_matrix, view_matrix));
-		LOG_INFO("Camera projection view matrix:");
-		matrix4_print(transpose4(projection_view_matrix));
+
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view_matrix, sizeof(Matrix4));
-		SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { 0.1f, 1000.0f }, 8);
+		SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { camera->near_plane, camera->far_plane }, 8);
 
 		SDL_GPUColorTargetInfo color_target_info = {
 			.texture = swapchain_texture,

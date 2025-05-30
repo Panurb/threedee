@@ -102,7 +102,7 @@ Vector2 proj(Vector2 a, Vector2 b);
 
 Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u);
 
-float cross(Vector2 v, Vector2 u);
+Vector3 cross(Vector3 v, Vector3 u);
 
 Vector2 rotate(Vector2 v, float angle);
 

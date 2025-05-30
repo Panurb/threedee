@@ -134,11 +134,7 @@ Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u) {
     return sum(mult(a, v), mult(b, u));
 }
 
-float cross(Vector2 v, Vector2 u) {
-    return v.x * u.y - v.y * u.x;
-}
-
-Vector3 cross3(Vector3 v, Vector3 u) {
+Vector3 cross(Vector3 v, Vector3 u) {
     return (Vector3) {
         v.y * u.z - v.z * u.y,
         v.z * u.x - v.x * u.z,
@@ -361,8 +357,8 @@ void matrix4_print(Matrix4 m) {
 }
 
 Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up) {
-    Vector3 right = normalized3(cross3(forward, up));
-    up = normalized3(cross3(right, forward));
+    Vector3 right = normalized3(cross(forward, up));
+    up = normalized3(cross(right, forward));
     LOG_INFO("up: %f, %f, %f", up.x, up.y, up.z);
     LOG_INFO("right: %f, %f, %f", right.x, right.y, right.z);
     Matrix4 m = {

@@ -115,8 +115,6 @@ void quit() {
 
 
 void input_game(SDL_Event sdl_event) {
-    LOG_INFO("Input game");
-
     if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.key == SDLK_ESCAPE) {
         app.quit = true;
     }
@@ -136,17 +134,12 @@ void input_game(SDL_Event sdl_event) {
 
 
     TransformComponent* trans = TransformComponent_get(scene->camera);
+    float sens = game_settings.mouse_sensitivity / 1000.0f;
 
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
-        LOG_INFO("Mouse movement");
-        trans->rotation.roll = fmaxf(-M_PI_2, fminf(M_PI_2, trans->rotation.roll - sdl_event.motion.yrel / 1000.0f));
-        trans->rotation.pitch = trans->rotation.pitch - sdl_event.motion.xrel / 1000.0f;
-
-        // trans->rotation.x = trans->rotation.x - sdl_event.motion.yrel / 1000.0f;
-        // trans->rotation.y = trans->rotation.y - sdl_event.motion.xrel / 1000.0f;
+        trans->rotation.roll = clamp(trans->rotation.roll - sdl_event.motion.yrel * sens, -M_PI_2, M_PI_2);
+        trans->rotation.pitch = trans->rotation.pitch - sdl_event.motion.xrel * sens;
     }
-
-    LOG_INFO("Camera rotation: %f, %f", trans->rotation.yaw, trans->rotation.pitch);
 }
 
 
@@ -193,25 +186,21 @@ void input() {
     const bool* keyboard_state = SDL_GetKeyboardState(NULL);
 
     if (keyboard_state[SDL_SCANCODE_W]) {
-        velocity.x = 0.01f;
+        velocity.y = -1.0f;
     }
     if (keyboard_state[SDL_SCANCODE_S]) {
-        velocity.x = -0.01f;
+        velocity.y = 1.0f;
     }
     if (keyboard_state[SDL_SCANCODE_A]) {
-        velocity.y = -0.01f;
+        velocity.x = -1.0f;
     }
     if (keyboard_state[SDL_SCANCODE_D]) {
-        velocity.y = 0.01f;
+        velocity.x = 1.0f;
     }
 
-    // Vector3 direction = direction_from_rotation(trans->rotation);
-    // // Project to the XZ plane
-    // velocity.x = velocity.x * direction.x + velocity.y * direction.z;
-    // velocity.y = velocity.x * direction.z - velocity.y * direction.x;
+    velocity = mult(0.01f, normalized2(velocity));
+    velocity = rotate(velocity, -trans->rotation.pitch);
     trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, 0.0f, velocity.y });
-
-    // LOG_INFO("Camera position: %f, %f", trans->position.x, trans->position.y);
 }
 
 
