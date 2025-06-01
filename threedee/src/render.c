@@ -7,8 +7,10 @@
 #include "render.h"
 
 #include <component.h>
+#include <resources.h>
 #include <scene.h>
 #include <settings.h>
+#include <SDL3_image/SDL_image.h>
 
 #include "app.h"
 #include "util.h"
@@ -16,12 +18,14 @@
 
 static SDL_GPUGraphicsPipeline* pipeline_2d = NULL;
 static SDL_GPUGraphicsPipeline* pipeline_3d = NULL;
+static SDL_GPUGraphicsPipeline* pipeline_3d_textured = NULL;
 
 static SDL_GPUDevice* device = NULL;
 static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
+static SDL_GPUTexture* texture = NULL;
 
-static RenderData render_datas[2];
+static RenderData render_datas[3];
 
 
 SDL_GPUShader* load_shader(
@@ -128,7 +132,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 				.slot = 0,
 				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
 				.instance_step_rate = 0,
-				.pitch = sizeof(Vertex)
+				.pitch = sizeof(PositionColorVertex)
 			}},
 			.num_vertex_attributes = 2,
 			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
@@ -189,7 +193,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 				.slot = 0,
 				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
 				.instance_step_rate = 0,
-				.pitch = sizeof(Vertex)
+				.pitch = sizeof(PositionColorVertex)
 			}},
 			.num_vertex_attributes = 2,
 			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
@@ -200,6 +204,77 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 			}, {
 				.buffer_slot = 0,
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_UBYTE4_NORM,
+				.location = 1,
+				.offset = sizeof(float) * 3
+			}}
+		},
+		.rasterizer_state = (SDL_GPURasterizerState){
+			.cull_mode = SDL_GPU_CULLMODE_BACK,
+			.fill_mode = SDL_GPU_FILLMODE_FILL,
+			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
+		},
+		.depth_stencil_state = (SDL_GPUDepthStencilState){
+			.enable_depth_test = true,
+			.enable_depth_write = true,
+			.compare_op = SDL_GPU_COMPAREOP_LESS
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+		.vertex_shader = vertex_shader,
+		.fragment_shader = fragment_shader,
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(device, &pipeline_info);
+
+	SDL_ReleaseGPUShader(device, vertex_shader);
+	SDL_ReleaseGPUShader(device, fragment_shader);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
+SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
+	SDL_GPUShader* vertex_shader = load_shader(device, "position_texture.vert", 0, 1, 1, 0);
+	if (!vertex_shader) {
+		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUShader* fragment_shader = load_shader(device, "texture_depth.frag", 1, 1, 0, 0);
+	if (!fragment_shader) {
+		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(device, app.window),
+			}},
+			.has_depth_stencil_target = true,
+			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
+		},
+		.vertex_input_state = (SDL_GPUVertexInputState){
+			.num_vertex_buffers = 1,
+			.vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+				.slot = 0,
+				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+				.instance_step_rate = 0,
+				.pitch = sizeof(PositionTextureVertex)
+			}},
+			.num_vertex_attributes = 2,
+			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.location = 0,
+				.offset = 0
+			}, {
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
 				.location = 1,
 				.offset = sizeof(float) * 3
 			}}
@@ -244,7 +319,7 @@ RenderData create_render_mode_quad() {
         device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(Vertex) * render_mode.num_vertices,
+            .size = sizeof(PositionColorVertex) * render_mode.num_vertices,
         }
     );
 
@@ -261,7 +336,7 @@ RenderData create_render_mode_quad() {
         device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Vertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
+            .size = sizeof(PositionColorVertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
         }
     );
 
@@ -281,12 +356,12 @@ RenderData create_render_mode_quad() {
         }
     );
 
-    Vertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
+    PositionColorVertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
 
-    transfer_data[0] = (Vertex) { {-0.5f, -0.5f, 0.0f}, {255, 0, 0, 255}};
-    transfer_data[1] = (Vertex) { {0.5f, -0.5f, 0.0f}, {0, 255, 0, 255}};
-    transfer_data[2] = (Vertex) { {0.5f, 0.5f, 0.0f}, {0, 255, 0, 255}};
-    transfer_data[3] = (Vertex) { {-0.5f, 0.5f, 0.0f}, {0, 0, 255, 255} };
+    transfer_data[0] = (PositionColorVertex) { {-0.5f, -0.5f, 0.0f}, {255, 0, 0, 255}};
+    transfer_data[1] = (PositionColorVertex) { {0.5f, -0.5f, 0.0f}, {0, 255, 0, 255}};
+    transfer_data[2] = (PositionColorVertex) { {0.5f, 0.5f, 0.0f}, {0, 255, 0, 255}};
+    transfer_data[3] = (PositionColorVertex) { {-0.5f, 0.5f, 0.0f}, {0, 0, 255, 255} };
 
     Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
     const Uint16 indices[6] = { 0, 1, 2, 0, 2, 3 };
@@ -306,7 +381,7 @@ RenderData create_render_mode_quad() {
         &(SDL_GPUBufferRegion) {
             .buffer = render_mode.vertex_buffer,
             .offset = 0,
-            .size = sizeof(Vertex) * render_mode.num_vertices
+            .size = sizeof(PositionColorVertex) * render_mode.num_vertices
         },
         false
     );
@@ -315,7 +390,7 @@ RenderData create_render_mode_quad() {
         copy_pass,
         &(SDL_GPUTransferBufferLocation) {
             .transfer_buffer = transfer_buffer,
-            .offset = sizeof(Vertex) * render_mode.num_vertices
+            .offset = sizeof(PositionColorVertex) * render_mode.num_vertices
         },
         &(SDL_GPUBufferRegion) {
             .buffer = render_mode.index_buffer,
@@ -345,7 +420,7 @@ RenderData create_render_mode_cube() {
         device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(Vertex) * render_mode.num_vertices,
+            .size = sizeof(PositionColorVertex) * render_mode.num_vertices,
         }
     );
 
@@ -362,7 +437,7 @@ RenderData create_render_mode_cube() {
         device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Vertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
+            .size = sizeof(PositionColorVertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
         }
     );
 
@@ -382,16 +457,16 @@ RenderData create_render_mode_cube() {
         }
     );
 
-    Vertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
+    PositionColorVertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
 
-    transfer_data[0] = (Vertex) { {-0.5f, -0.5f, -0.5f}, {255, 0, 0, 255}};
-	transfer_data[1] = (Vertex) { {0.5f, -0.5f, -0.5f}, {255, 255, 0, 255}};
-	transfer_data[2] = (Vertex) { {0.5f, 0.5f, -0.5f}, {0, 255, 0, 255}};
-	transfer_data[3] = (Vertex) { {-0.5f, 0.5f, -0.5f}, {0, 255, 255, 255}};
-	transfer_data[4] = (Vertex) { {-0.5f, -0.5f, 0.5f}, {255, 0, 255, 255}};
-	transfer_data[5] = (Vertex) { {0.5f, -0.5f, 0.5f}, {255, 255, 255, 255}};
-	transfer_data[6] = (Vertex) { {0.5f, 0.5f, 0.5f}, {128, 128, 128, 255}};
-	transfer_data[7] = (Vertex) { {-0.5f, 0.5f, 0.5f}, {64, 64, 64, 255} };
+    transfer_data[0] = (PositionColorVertex) { {-0.5f, -0.5f, -0.5f}, {255, 0, 0, 255}};
+	transfer_data[1] = (PositionColorVertex) { {0.5f, -0.5f, -0.5f}, {255, 255, 0, 255}};
+	transfer_data[2] = (PositionColorVertex) { {0.5f, 0.5f, -0.5f}, {0, 255, 0, 255}};
+	transfer_data[3] = (PositionColorVertex) { {-0.5f, 0.5f, -0.5f}, {0, 255, 255, 255}};
+	transfer_data[4] = (PositionColorVertex) { {-0.5f, -0.5f, 0.5f}, {255, 0, 255, 255}};
+	transfer_data[5] = (PositionColorVertex) { {0.5f, -0.5f, 0.5f}, {255, 255, 255, 255}};
+	transfer_data[6] = (PositionColorVertex) { {0.5f, 0.5f, 0.5f}, {128, 128, 128, 255}};
+	transfer_data[7] = (PositionColorVertex) { {-0.5f, 0.5f, 0.5f}, {64, 64, 64, 255} };
 
 	// Front-facing triangle should go clockwise
     Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
@@ -425,7 +500,7 @@ RenderData create_render_mode_cube() {
         &(SDL_GPUBufferRegion) {
             .buffer = render_mode.vertex_buffer,
             .offset = 0,
-            .size = sizeof(Vertex) * render_mode.num_vertices
+            .size = sizeof(PositionColorVertex) * render_mode.num_vertices
         },
         false
     );
@@ -434,7 +509,7 @@ RenderData create_render_mode_cube() {
         copy_pass,
         &(SDL_GPUTransferBufferLocation) {
             .transfer_buffer = transfer_buffer,
-            .offset = sizeof(Vertex) * render_mode.num_vertices
+            .offset = sizeof(PositionColorVertex) * render_mode.num_vertices
         },
         &(SDL_GPUBufferRegion) {
             .buffer = render_mode.index_buffer,
@@ -452,14 +527,195 @@ RenderData create_render_mode_cube() {
 }
 
 
+RenderData create_render_mode_cube_textured() {
+	RenderData render_mode = {
+		.pipeline = pipeline_3d_textured,
+		.max_instances = 256,
+		.num_instances = 0
+	};
+
+	render_mode.num_vertices = 8;
+    render_mode.vertex_buffer = SDL_CreateGPUBuffer(
+        device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+            .size = sizeof(PositionTextureVertex) * render_mode.num_vertices,
+        }
+    );
+
+    render_mode.num_indices = 36;
+    render_mode.index_buffer = SDL_CreateGPUBuffer(
+        device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+            .size = sizeof(Uint16) * render_mode.num_indices,
+        }
+    );
+
+    SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
+        device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(PositionTextureVertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
+        }
+    );
+
+    render_mode.instance_buffer = SDL_CreateGPUBuffer(
+        device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+            .size = sizeof(Matrix4) * render_mode.max_instances,
+        }
+    );
+
+    render_mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
+        device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(Matrix4),
+        }
+    );
+
+    PositionTextureVertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
+
+	transfer_data[0] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f} };
+	transfer_data[1] = (PositionTextureVertex) { {0.5f, -0.5f, -0.5f}, {1.0f, 0.0f} };
+	transfer_data[2] = (PositionTextureVertex) { {0.5f, 0.5f, -0.5f}, {1.0f, 1.0f} };
+	transfer_data[3] = (PositionTextureVertex) { {-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f} };
+	transfer_data[4] = (PositionTextureVertex) { {-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f} };
+	transfer_data[5] = (PositionTextureVertex) { {0.5f, -0.5f, 0.5f}, {1.0f, 0.0f} };
+	transfer_data[6] = (PositionTextureVertex) { {0.5f, 0.5f, 0.5f}, {1.0f, 1.0f} };
+	transfer_data[7] = (PositionTextureVertex) { {-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f} };
+
+    Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
+    const Uint16 indices[36] = {
+    	0, 2, 1, 0, 3, 2,
+		4, 5, 6, 4, 6, 7,
+		0, 1, 5, 0, 5, 4,
+		3, 7, 6, 3, 6, 2,
+		0, 4, 7, 0, 7, 3,
+		1, 2, 6, 1, 6, 5
+	};
+    SDL_memcpy(index_data, indices, sizeof(indices));
+
+    SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
+
+	// LOAD TEXTURE
+	SDL_Surface* image_data = IMG_Load("data/images/brick_tile.png");
+	if (!image_data) {
+		LOG_ERROR("Failed to load texture image: %s", SDL_GetError());
+	}
+
+	texture = SDL_CreateGPUTexture(
+		device,
+		&(SDL_GPUTextureCreateInfo){
+			.type = SDL_GPU_TEXTURETYPE_2D,
+			.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+			.width = image_data->w,
+			.height = image_data->h,
+			.layer_count_or_depth = 1,
+			.num_levels = 1,
+			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+		}
+	);
+	if (!texture) {
+		LOG_ERROR("Failed to create texture: %s", SDL_GetError());
+	}
+
+	SDL_GPUTransferBuffer* texture_transfer_buffer = SDL_CreateGPUTransferBuffer(
+		device,
+		&(SDL_GPUTransferBufferCreateInfo) {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = image_data->w * image_data->h * 4
+		}
+	);
+
+	Uint8* texture_transfer_ptr = SDL_MapGPUTransferBuffer(
+		device,
+		texture_transfer_buffer,
+		false
+	);
+		SDL_memcpy(texture_transfer_ptr, image_data->pixels, image_data->w * image_data->h * 4);
+		SDL_UnmapGPUTransferBuffer(device, texture_transfer_buffer);
+
+    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(device);
+    SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
+
+    SDL_UploadToGPUBuffer(
+        copy_pass,
+        &(SDL_GPUTransferBufferLocation) {
+            .transfer_buffer = transfer_buffer,
+            .offset = 0
+        },
+        &(SDL_GPUBufferRegion) {
+            .buffer = render_mode.vertex_buffer,
+            .offset = 0,
+            .size = sizeof(PositionTextureVertex) * render_mode.num_vertices
+        },
+        false
+    );
+
+    SDL_UploadToGPUBuffer(
+        copy_pass,
+        &(SDL_GPUTransferBufferLocation) {
+            .transfer_buffer = transfer_buffer,
+            .offset = sizeof(PositionTextureVertex) * render_mode.num_vertices
+        },
+        &(SDL_GPUBufferRegion) {
+            .buffer = render_mode.index_buffer,
+            .offset = 0,
+            .size = sizeof(Uint16) * render_mode.num_indices
+        },
+        false
+    );
+
+	SDL_UploadToGPUTexture(
+		copy_pass,
+		&(SDL_GPUTextureTransferInfo) {
+			.transfer_buffer = texture_transfer_buffer,
+			.offset = 0, /* Zeros out the rest */
+		},
+		&(SDL_GPUTextureRegion){
+			.texture = texture,
+			.w = image_data->w,
+			.h = image_data->h,
+			.d = 1
+		},
+		false
+	);
+
+    SDL_EndGPUCopyPass(copy_pass);
+    SDL_SubmitGPUCommandBuffer(upload_command_buffer);
+    SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
+	SDL_DestroySurface(image_data);
+
+	render_mode.sampler = SDL_CreateGPUSampler(
+		device,
+		&(SDL_GPUSamplerCreateInfo){
+			.min_filter = SDL_GPU_FILTER_NEAREST,
+			.mag_filter = SDL_GPU_FILTER_NEAREST,
+			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+		}
+	);
+
+	return render_mode;
+}
+
+
 void init_render() {
 	device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
 	SDL_ClaimWindowForGPUDevice(device, app.window);
 
 	pipeline_2d = create_render_pipeline_2d();
 	pipeline_3d = create_render_pipeline_3d();
+	pipeline_3d_textured = create_render_pipeline_3d_textured();
+
 	render_datas[RENDER_QUAD] = create_render_mode_quad();
 	render_datas[RENDER_CUBE] = create_render_mode_cube();
+	render_datas[RENDER_CUBE_TEXTURED] = create_render_mode_cube_textured();
 
 	SDL_GPUTextureCreateInfo depth_stencil_texture_info = {
 		.width = game_settings.width,
@@ -500,8 +756,18 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 		render_pass, &(SDL_GPUBufferBinding) { .buffer = render_mode->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
 	);
 	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &render_mode->instance_buffer, 1);
+	if (render_mode->sampler) {
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			0,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = texture,
+				.sampler = render_mode->sampler,
+			},
+			1);
+	}
 
-	SDL_DrawGPUIndexedPrimitives(render_pass, render_mode->num_indices, render_mode->num_instances,  0, 0, 0);
+	SDL_DrawGPUIndexedPrimitives(render_pass, render_mode->num_indices, render_mode->num_instances, 0, 0, 0);
 
 	render_mode->num_instances = 0;
 }
@@ -520,6 +786,7 @@ void render() {
 	if (swapchain_texture) {
 		add_render_instance(RENDER_CUBE, transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0 }, ones3()));
 		add_render_instance(RENDER_CUBE, transform_matrix(vec3(2.0f, 0.0f, 2.0f), (Rotation) { 0 }, ones3()));
+		add_render_instance(RENDER_CUBE_TEXTURED, transform_matrix(vec3(0.0f, 0.0f, 2.0f), (Rotation) { 0 }, ones3()));
 
 		CameraComponent* camera = CameraComponent_get(scene->camera);
 		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
@@ -555,6 +822,7 @@ void render() {
 		);
 
 		render_instances(command_buffer, render_pass, &render_datas[RENDER_CUBE]);
+		render_instances(command_buffer, render_pass, &render_datas[RENDER_CUBE_TEXTURED]);
 
 		SDL_EndGPURenderPass(render_pass);
 	}

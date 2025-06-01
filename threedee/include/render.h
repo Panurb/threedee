@@ -16,19 +16,27 @@ typedef struct RenderData {
 	int num_instances;
 	int max_instances;
 	SDL_GPUTransferBuffer* instance_transfer_buffer;
+	SDL_GPUSampler* sampler;
 } RenderData;
 
 
 typedef enum RenderMode {
 	RENDER_QUAD,
 	RENDER_CUBE,
+	RENDER_CUBE_TEXTURED
 } RenderMode;
 
 
-typedef struct Vertex {
+typedef struct PositionColorVertex {
     Vector3 position;
     Color color;
-} Vertex;
+} PositionColorVertex;
+
+
+typedef struct PositionTextureVertex {
+	Vector3 position;
+	Vector2 uv;
+} PositionTextureVertex;
 
 
 void init_render();

@@ -1,5 +1,11 @@
 #include "resources.h"
 
+#include <stdio.h>
+#include <SDL3_image/SDL_image.h>
+
+#include "util.h"
+#include "app.h"
+
 
 void load_resources() {
     LOG_INFO("Loading resources");
@@ -8,7 +14,7 @@ void load_resources() {
     for (int i = 0; i < resources.textures_size; i++) {
         String path;
         snprintf(path, sizeof(path), "%s%s%s", "data/textures/", resources.texture_names[i], ".png");
-        resources.textures[i] = SDL_GPU_LoadTexture(app.gpu_device, path);
+        SDL_Surface* surface = IMG_Load(path);
         if (!resources.textures[i]) {
             LOG_ERROR("Failed to load texture: %s", path);
         }

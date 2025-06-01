@@ -9,7 +9,7 @@
 #include "app.h"
 
 #include <camera.h>
-#include <SDL_mixer.h>
+// #include <SDL_mixer.h>
 #include <sound.h>
 #include <SDL3_ttf/SDL_ttf.h>
 

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3_mixer/SDL_mixer.h>
+
+#include "util.h"
 
 
 #define MAX_TEXTURES 100
