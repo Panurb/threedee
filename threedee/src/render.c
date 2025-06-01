@@ -534,7 +534,7 @@ RenderData create_render_mode_cube_textured() {
 		.num_instances = 0
 	};
 
-	render_mode.num_vertices = 8;
+	render_mode.num_vertices = 24;
     render_mode.vertex_buffer = SDL_CreateGPUBuffer(
         device,
         &(SDL_GPUBufferCreateInfo){
@@ -578,23 +578,57 @@ RenderData create_render_mode_cube_textured() {
 
     PositionTextureVertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
 
-	transfer_data[0] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f} };
-	transfer_data[1] = (PositionTextureVertex) { {0.5f, -0.5f, -0.5f}, {1.0f, 0.0f} };
-	transfer_data[2] = (PositionTextureVertex) { {0.5f, 0.5f, -0.5f}, {1.0f, 1.0f} };
-	transfer_data[3] = (PositionTextureVertex) { {-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f} };
-	transfer_data[4] = (PositionTextureVertex) { {-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f} };
-	transfer_data[5] = (PositionTextureVertex) { {0.5f, -0.5f, 0.5f}, {1.0f, 0.0f} };
-	transfer_data[6] = (PositionTextureVertex) { {0.5f, 0.5f, 0.5f}, {1.0f, 1.0f} };
-	transfer_data[7] = (PositionTextureVertex) { {-0.5f, 0.5f, 0.5f}, {0.0f, 1.0f} };
+	// Front face
+	transfer_data[0] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f} };
+	transfer_data[1] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f} };
+	transfer_data[2] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f} };
+	transfer_data[3] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f} };
+
+	// Back face
+	transfer_data[4] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f} };
+	transfer_data[5] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f} };
+	transfer_data[6] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f} };
+	transfer_data[7] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {1.0f, 1.0f} };
+
+	// Left face
+	transfer_data[8] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f} };
+	transfer_data[9] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f} };
+	transfer_data[10] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f} };
+	transfer_data[11] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f} };
+
+	// Right face
+	transfer_data[12] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f} };
+	transfer_data[13] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f} };
+	transfer_data[14] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f} };
+	transfer_data[15] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f} };
+
+	// Top face
+	transfer_data[16] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f} };
+	transfer_data[17] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f} };
+	transfer_data[18] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f} };
+	transfer_data[19] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f} };
+
+	// Bottom face
+	transfer_data[20] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f} };
+	transfer_data[21] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f} };
+	transfer_data[22] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f} };
+	transfer_data[23] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f} };
 
     Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
-    const Uint16 indices[36] = {
-    	0, 2, 1, 0, 3, 2,
-		4, 5, 6, 4, 6, 7,
-		0, 1, 5, 0, 5, 4,
-		3, 7, 6, 3, 6, 2,
-		0, 4, 7, 0, 7, 3,
-		1, 2, 6, 1, 6, 5
+	// Indices for 6 faces, 2 triangles per face, counter-clockwise winding
+	const Uint16 indices[36] = {
+		// Front face
+		0, 1, 2, 0, 2, 3,
+		// Back face
+		4, 6, 5, 4, 7, 6,
+		// Left face
+		8, 9, 10, 8, 10, 11,
+		// Right face
+		12, 14, 13, 12, 15, 14,
+		// Top face
+		16, 18, 17, 16, 19, 18,
+		// Bottom face
+		20, 21, 22, 20, 22, 23
 	};
     SDL_memcpy(index_data, indices, sizeof(indices));
 
