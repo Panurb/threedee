@@ -16,6 +16,7 @@ struct Output
 {
     float2 tex_coord : TEXCOORD0;
     float4 position : SV_Position;
+    float3 normal : NORMAL0;
 };
 
 float3 scale_from_transform(float4x4 transform)
@@ -44,5 +45,6 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     Output output;
     output.tex_coord = input.tex_coord * tiling;
     output.position = mul(mul(projection_matrix, transform), float4(input.position, 1.0f));
+    output.normal = normalize(mul((float3x3)transform, input.normal));
     return output;
 }

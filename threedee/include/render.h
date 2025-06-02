@@ -40,6 +40,14 @@ typedef struct PositionTextureVertex {
 } PositionTextureVertex;
 
 
+typedef struct UniformData {
+	float near_plane;
+	float far_plane;
+	float _pad[2];
+	Vector3 light_direction;
+} UniformData;
+
+
 void init_render();
 
 void render();

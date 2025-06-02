@@ -821,6 +821,9 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 
 
 void render() {
+	static float angle = 0.0f;
+	angle += 0.01f;
+
 	command_buffer = SDL_AcquireGPUCommandBuffer(device);
 	if (!command_buffer) {
 		LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
@@ -833,7 +836,7 @@ void render() {
 	if (swapchain_texture) {
 		add_render_instance(RENDER_CUBE, transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0 }, ones3()));
 		add_render_instance(RENDER_CUBE, transform_matrix(vec3(2.0f, 0.0f, 2.0f), (Rotation) { 0 }, ones3()));
-		add_render_instance(RENDER_CUBE_TEXTURED, transform_matrix(vec3(0.0f, 0.0f, 2.0f), (Rotation) { 0 }, vec3(2.0f, 1.0f, 1.0f)));
+		add_render_instance(RENDER_CUBE_TEXTURED, transform_matrix(vec3(0.0f, 0.0f, 2.0f), (Rotation) { angle }, vec3(2.0f, 1.0f, 1.0f)));
 
 		CameraComponent* camera = CameraComponent_get(scene->camera);
 		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
@@ -869,6 +872,13 @@ void render() {
 		);
 
 		render_instances(command_buffer, render_pass, &render_datas[RENDER_CUBE]);
+
+		UniformData uniform_data = {
+			.near_plane = camera->near_plane,
+			.far_plane = camera->far_plane,
+			.light_direction = { 0.0f, -1.0f, -1.0f }
+		};
+		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
 		render_instances(command_buffer, render_pass, &render_datas[RENDER_CUBE_TEXTURED]);
 
 		SDL_EndGPURenderPass(render_pass);
