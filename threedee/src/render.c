@@ -23,7 +23,7 @@ static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUTexture* texture = NULL;
 
-static RenderData render_datas[3];
+static MeshData meshes[3];
 
 
 SDL_GPUShader* load_shader(
@@ -310,8 +310,8 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 }
 
 
-RenderData create_render_mode_quad() {
-	RenderData render_mode = {
+MeshData create_mesh_quad() {
+	MeshData render_mode = {
 		.pipeline = pipeline_2d,
 		.max_instances = 256,
 		.num_instances = 0
@@ -411,8 +411,8 @@ RenderData create_render_mode_quad() {
 }
 
 
-RenderData create_render_mode_cube() {
-	RenderData render_mode = {
+MeshData create_mesh_cube() {
+	MeshData render_mode = {
 		.pipeline = pipeline_3d,
 		.max_instances = 256,
 		.num_instances = 0
@@ -530,8 +530,8 @@ RenderData create_render_mode_cube() {
 }
 
 
-RenderData create_render_mode_cube_textured() {
-	RenderData render_mode = {
+MeshData create_mesh_cube_textured() {
+	MeshData render_mode = {
 		.pipeline = pipeline_3d_textured,
 		.max_instances = 256,
 		.num_instances = 0
@@ -758,9 +758,9 @@ void init_render() {
 	pipeline_3d = create_render_pipeline_3d();
 	pipeline_3d_textured = create_render_pipeline_3d_textured();
 
-	render_datas[RENDER_QUAD] = create_render_mode_quad();
-	render_datas[RENDER_CUBE] = create_render_mode_cube();
-	render_datas[RENDER_CUBE_TEXTURED] = create_render_mode_cube_textured();
+	meshes[MESH_QUAD] = create_mesh_quad();
+	meshes[MESH_CUBE] = create_mesh_cube();
+	meshes[MESH_CUBE_TEXTURED] = create_mesh_cube_textured();
 
 	SDL_GPUTextureCreateInfo depth_stencil_texture_info = {
 		.width = game_settings.width,
@@ -778,7 +778,7 @@ void init_render() {
 
 
 void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
-			RenderData* render_mode) {
+			MeshData* render_mode) {
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 	SDL_UploadToGPUBuffer(
 		copy_pass,
@@ -832,9 +832,12 @@ void render() {
 	SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
 	if (swapchain_texture) {
-		add_render_instance(RENDER_CUBE, transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0 }, ones3()));
-		add_render_instance(RENDER_CUBE, transform_matrix(vec3(2.0f, 0.0f, 2.0f), (Rotation) { 0 }, ones3()));
-		add_render_instance(RENDER_CUBE_TEXTURED, transform_matrix(vec3(0.0f, 0.0f, 2.0f), (Rotation) { angle }, vec3(2.0f, 1.0f, 1.0f)));
+		for (Entity entity = 0; entity < scene->components->entities; entity++) {
+			MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
+			if (!mesh_component) continue;
+
+			add_render_instance(mesh_component->mesh_index, get_transform(entity));
+		}
 
 		CameraComponent* camera = CameraComponent_get(scene->camera);
 		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
@@ -869,7 +872,7 @@ void render() {
 			}
 		);
 
-		render_instances(command_buffer, render_pass, &render_datas[RENDER_CUBE]);
+		render_instances(command_buffer, render_pass, &meshes[MESH_CUBE]);
 
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,
@@ -877,7 +880,7 @@ void render() {
 			.light_direction = { 0.0f, -1.0f, -1.0f }
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
-		render_instances(command_buffer, render_pass, &render_datas[RENDER_CUBE_TEXTURED]);
+		render_instances(command_buffer, render_pass, &meshes[MESH_CUBE_TEXTURED]);
 
 		SDL_EndGPURenderPass(render_pass);
 	}
@@ -887,8 +890,8 @@ void render() {
 }
 
 
-void add_render_instance(RenderMode render_mode, Matrix4 transform) {
-	RenderData* render_data = &render_datas[render_mode];
+void add_render_instance(Mesh render_mode, Matrix4 transform) {
+	MeshData* render_data = &meshes[render_mode];
 
 	if (render_data->num_instances >= render_data->max_instances) {
 		LOG_INFO("Buffer full, resizing...");

@@ -149,6 +149,48 @@ Entity create_entity() {
 }
 
 
+void* get_component(Entity entity, ComponentType component_type) {
+    if (entity == NULL_ENTITY) {
+        return NULL;
+    }
+
+    switch (component_type) {
+        case COMPONENT_TRANSFORM:
+            return TransformComponent_get(entity);
+        case COMPONENT_CAMERA:
+            return CameraComponent_get(entity);
+        case COMPONENT_SOUND:
+            return SoundComponent_get(entity);
+        case COMPONENT_MESH:
+            return scene->components->mesh[entity];
+        default:
+            LOG_ERROR("Unknown component type: %d", component_type);
+            return NULL;
+    }
+}
+
+
+void remove_component(Entity entity, ComponentType component_type) {
+    switch (component_type) {
+        case COMPONENT_TRANSFORM:
+            TransformComponent_remove(entity);
+            break;
+        case COMPONENT_CAMERA:
+            CameraComponent_remove(entity);
+            break;
+        case COMPONENT_SOUND:
+            SoundComponent_remove(entity);
+            break;
+        case COMPONENT_MESH:
+            MeshComponent_remove(entity);
+            break;
+        default:
+            LOG_ERROR("Unknown component type: %d", component_type);
+            break;
+    }
+}
+
+
 Entity get_root(Entity entity) {
     TransformComponent* coord = TransformComponent_get(entity);
     if (coord->parent != -1) {

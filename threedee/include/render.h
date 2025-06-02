@@ -6,7 +6,7 @@
 #include "util.h"
 
 
-typedef struct RenderData {
+typedef struct MeshData{
 	SDL_GPUGraphicsPipeline* pipeline;
 	SDL_GPUBuffer* vertex_buffer;
 	int num_vertices;
@@ -17,14 +17,14 @@ typedef struct RenderData {
 	int max_instances;
 	SDL_GPUTransferBuffer* instance_transfer_buffer;
 	SDL_GPUSampler* sampler;
-} RenderData;
+} MeshData;
 
 
-typedef enum RenderMode {
-	RENDER_QUAD,
-	RENDER_CUBE,
-	RENDER_CUBE_TEXTURED
-} RenderMode;
+typedef enum Mesh {
+	MESH_QUAD,
+	MESH_CUBE,
+	MESH_CUBE_TEXTURED
+} Mesh;
 
 
 typedef struct PositionColorVertex {
@@ -52,4 +52,4 @@ void init_render();
 
 void render();
 
-void add_render_instance(RenderMode render_mode, Matrix4 transform);
+void add_render_instance(Mesh render_mode, Matrix4 transform);

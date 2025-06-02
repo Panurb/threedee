@@ -5,6 +5,7 @@
 #include "util.h"
 #include "list.h"
 #include "linalg.h"
+#include "components/mesh.h"
 
 #define MAX_ENTITIES 2000
 
@@ -59,7 +60,15 @@ struct ComponentData {
     TransformComponent* coordinate[MAX_ENTITIES];
     CameraComponent* camera[MAX_ENTITIES];
     SoundComponent* sound[MAX_ENTITIES];
+    MeshComponent* mesh[MAX_ENTITIES];
 };
+
+typedef enum ComponentType {
+    COMPONENT_TRANSFORM,
+    COMPONENT_CAMERA,
+    COMPONENT_SOUND,
+    COMPONENT_MESH,
+} ComponentType;
 
 ComponentData* ComponentData_create();
 
@@ -74,6 +83,10 @@ void CameraComponent_remove(Entity entity);
 SoundComponent* SoundComponent_add(Entity entity, Filename hit_sound);
 SoundComponent* SoundComponent_get(Entity entity);
 void SoundComponent_remove(Entity entity);
+
+void* add_component(Entity entity, ComponentType component_type);
+void* get_component(Entity entity, ComponentType component_type);
+void remove_component(Entity entity, ComponentType component_type);
 
 Entity create_entity();
 void destroy_entity(Entity i);

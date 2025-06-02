@@ -23,6 +23,7 @@ set(SOURCES
     threedee/src/app.c
     threedee/src/camera.c
     threedee/src/component.c
+    threedee/src/components/mesh.c
     threedee/src/heap.c
     threedee/src/input.c
     threedee/src/interface.c
