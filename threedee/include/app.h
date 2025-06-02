@@ -40,6 +40,7 @@ typedef struct {
     float delta;
     AppState state;
     const char* base_path;
+    SDL_GPUDevice* gpu_device;
 } App;
 
 

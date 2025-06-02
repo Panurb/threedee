@@ -10,6 +10,7 @@
 
 #include <camera.h>
 // #include <SDL_mixer.h>
+#include <resources.h>
 #include <sound.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
@@ -100,6 +101,7 @@ void init() {
 
     create_game_window();
     init_render();
+    load_resources();
     create_scene();
 }
 

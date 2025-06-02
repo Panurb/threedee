@@ -12,7 +12,7 @@
 typedef struct {
     String texture_names[MAX_TEXTURES];
     int textures_size;
-    SDL_Texture* textures[MAX_TEXTURES];
+    SDL_GPUTexture* textures[MAX_TEXTURES];
     Resolution texture_sizes[MAX_TEXTURES];
     TTF_Font* fonts[301];
     String sound_names[MAX_SOUNDS];
@@ -23,3 +23,6 @@ typedef struct {
 
 
 Resources resources;
+
+
+void load_resources();
