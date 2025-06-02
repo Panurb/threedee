@@ -266,7 +266,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 				.instance_step_rate = 0,
 				.pitch = sizeof(PositionTextureVertex)
 			}},
-			.num_vertex_attributes = 2,
+			.num_vertex_attributes = 3,
 			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
 				.buffer_slot = 0,
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
@@ -277,6 +277,11 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
 				.location = 1,
 				.offset = sizeof(float) * 3
+			}, {
+				.buffer_slot = 0,
+					.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+					.location = 2,
+					.offset = sizeof(float) * 5
 			}}
 		},
 		.rasterizer_state = (SDL_GPURasterizerState){
@@ -579,40 +584,46 @@ RenderData create_render_mode_cube_textured() {
     PositionTextureVertex* transfer_data = SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
 
 	// Front face
-	transfer_data[0] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f} };
-	transfer_data[1] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f} };
-	transfer_data[2] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f} };
-	transfer_data[3] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f} };
+	Vector3 n = {0.0f, 0.0f, 1.0f};
+	transfer_data[0] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, n };
+	transfer_data[1] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, n };
+	transfer_data[2] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, n };
+	transfer_data[3] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}, n };
 
 	// Back face
-	transfer_data[4] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f} };
-	transfer_data[5] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f} };
-	transfer_data[6] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f} };
-	transfer_data[7] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {1.0f, 1.0f} };
+	n = (Vector3) {0.0f, 0.0f, -1.0f};
+	transfer_data[4] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}, n };
+	transfer_data[5] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, n };
+	transfer_data[6] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, n };
+	transfer_data[7] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, n };
 
 	// Left face
-	transfer_data[8] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f} };
-	transfer_data[9] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f} };
-	transfer_data[10] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f} };
-	transfer_data[11] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f} };
+	n = (Vector3) {-1.0f, 0.0f, 0.0f};
+	transfer_data[8] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, n };
+	transfer_data[9] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, n };
+	transfer_data[10] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, n };
+	transfer_data[11] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, n };
 
 	// Right face
-	transfer_data[12] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f} };
-	transfer_data[13] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f} };
-	transfer_data[14] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f} };
-	transfer_data[15] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f} };
+	n = (Vector3) {1.0f, 0.0f, 0.0f};
+	transfer_data[12] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}, n };
+	transfer_data[13] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, n };
+	transfer_data[14] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}, n };
+	transfer_data[15] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, n };
 
 	// Top face
-	transfer_data[16] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f} };
-	transfer_data[17] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f} };
-	transfer_data[18] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f} };
-	transfer_data[19] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f} };
+	n = (Vector3) {0.0f, 1.0f, 0.0f};
+	transfer_data[16] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, n };
+	transfer_data[17] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, n };
+	transfer_data[18] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f}, n };
+	transfer_data[19] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f}, n };
 
 	// Bottom face
-	transfer_data[20] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f} };
-	transfer_data[21] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f} };
-	transfer_data[22] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f} };
-	transfer_data[23] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f} };
+	n = (Vector3) {0.0f, -1.0f, 0.0f};
+	transfer_data[20] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f}, n };
+	transfer_data[21] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f}, n };
+	transfer_data[22] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, n };
+	transfer_data[23] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, n };
 
     Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
 	// Indices for 6 faces, 2 triangles per face, counter-clockwise winding
@@ -726,12 +737,14 @@ RenderData create_render_mode_cube_textured() {
 	render_mode.sampler = SDL_CreateGPUSampler(
 		device,
 		&(SDL_GPUSamplerCreateInfo){
-			.min_filter = SDL_GPU_FILTER_NEAREST,
-			.mag_filter = SDL_GPU_FILTER_NEAREST,
-			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+			.min_filter = SDL_GPU_FILTER_LINEAR,
+			.mag_filter = SDL_GPU_FILTER_LINEAR,
+			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
 			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.enable_anisotropy = true,
+			.max_anisotropy = 16
 		}
 	);
 
@@ -820,7 +833,7 @@ void render() {
 	if (swapchain_texture) {
 		add_render_instance(RENDER_CUBE, transform_matrix(vec3(0.0f, 0.0f, 0.0f), (Rotation) { 0 }, ones3()));
 		add_render_instance(RENDER_CUBE, transform_matrix(vec3(2.0f, 0.0f, 2.0f), (Rotation) { 0 }, ones3()));
-		add_render_instance(RENDER_CUBE_TEXTURED, transform_matrix(vec3(0.0f, 0.0f, 2.0f), (Rotation) { 0 }, ones3()));
+		add_render_instance(RENDER_CUBE_TEXTURED, transform_matrix(vec3(0.0f, 0.0f, 2.0f), (Rotation) { 0 }, vec3(2.0f, 1.0f, 1.0f)));
 
 		CameraComponent* camera = CameraComponent_get(scene->camera);
 		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
