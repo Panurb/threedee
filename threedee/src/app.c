@@ -200,7 +200,7 @@ void input() {
         velocity.x = 1.0f;
     }
 
-    velocity = mult(0.01f, normalized2(velocity));
+    velocity = mult(0.03f, normalized2(velocity));
     velocity = rotate(velocity, -trans->rotation.pitch);
     trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, 0.0f, velocity.y });
 }

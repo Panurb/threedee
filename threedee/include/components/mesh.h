@@ -7,6 +7,6 @@ typedef struct MeshComponent {
 } MeshComponent;
 
 
-MeshComponent* MeshComponent_add(int entity, String mesh_filename);
+MeshComponent* MeshComponent_add(int entity, String mesh_filename, String texture_filename);
 
 void MeshComponent_remove(int entity);

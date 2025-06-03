@@ -21,6 +21,7 @@ ComponentData* ComponentData_create() {
         components->coordinate[i] = NULL;
         components->camera[i] = NULL;
         components->sound[i] = NULL;
+        components->mesh[i] = NULL;
     }
     return components;
 }

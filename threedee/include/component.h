@@ -52,16 +52,14 @@ typedef struct {
     Filename loop_sound;
 } SoundComponent;
 
-typedef struct ComponentData ComponentData;
-
-struct ComponentData {
+typedef struct ComponentData {
     int entities;
     List* added_entities;
     TransformComponent* coordinate[MAX_ENTITIES];
     CameraComponent* camera[MAX_ENTITIES];
     SoundComponent* sound[MAX_ENTITIES];
     MeshComponent* mesh[MAX_ENTITIES];
-};
+} ComponentData;
 
 typedef enum ComponentType {
     COMPONENT_TRANSFORM,

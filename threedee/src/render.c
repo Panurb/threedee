@@ -778,50 +778,47 @@ void init_render() {
 
 
 void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
-			MeshData* render_mode) {
+			MeshData* mesh_data) {
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 	SDL_UploadToGPUBuffer(
 		copy_pass,
 		&(SDL_GPUTransferBufferLocation) {
-			.transfer_buffer = render_mode->instance_transfer_buffer,
+			.transfer_buffer = mesh_data->instance_transfer_buffer,
 			.offset = 0
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = render_mode->instance_buffer,
+			.buffer = mesh_data->instance_buffer,
 			.offset = 0,
-			.size = sizeof(Matrix4) * render_mode->num_instances
+			.size = sizeof(Matrix4) * mesh_data->num_instances
 		},
 		true
 	);
 	SDL_EndGPUCopyPass(copy_pass);
 
-	SDL_BindGPUGraphicsPipeline(render_pass, render_mode->pipeline);
-	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = render_mode->vertex_buffer, .offset = 0 }, 1);
+	SDL_BindGPUGraphicsPipeline(render_pass, mesh_data->pipeline);
+	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = mesh_data->vertex_buffer, .offset = 0 }, 1);
 	SDL_BindGPUIndexBuffer(
-		render_pass, &(SDL_GPUBufferBinding) { .buffer = render_mode->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
+		render_pass, &(SDL_GPUBufferBinding) { .buffer = mesh_data->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
 	);
-	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &render_mode->instance_buffer, 1);
-	if (render_mode->sampler) {
+	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh_data->instance_buffer, 1);
+	if (mesh_data->sampler) {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			0,
 			&(SDL_GPUTextureSamplerBinding){
-				.texture = resources.textures[0],
-				.sampler = render_mode->sampler,
+				.texture = resources.textures[1],
+				.sampler = mesh_data->sampler,
 			},
 			1);
 	}
 
-	SDL_DrawGPUIndexedPrimitives(render_pass, render_mode->num_indices, render_mode->num_instances, 0, 0, 0);
+	SDL_DrawGPUIndexedPrimitives(render_pass, mesh_data->num_indices, mesh_data->num_instances, 0, 0, 0);
 
-	render_mode->num_instances = 0;
+	mesh_data->num_instances = 0;
 }
 
 
 void render() {
-	static float angle = 0.0f;
-	angle += 0.01f;
-
 	command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
 	if (!command_buffer) {
 		LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
