@@ -53,5 +53,9 @@ void create_scene() {
     trans->scale.x = 10.0f;
     MeshComponent_add(i, "cube_textured", "brick_tile");
 
+    i = create_entity();
+    TransformComponent_add(i, (Vector3){-3.0f, 0.0f, 0.0f});
+    MeshComponent_add(i, "sphere", "gravel");
+
     LOG_INFO("Scene created");
 }

@@ -528,171 +528,6 @@ MeshData create_mesh_cube() {
 }
 
 
-MeshData create_mesh_cube_textured() {
-	MeshData render_mode = {
-		.max_instances = 256,
-		.num_instances = 0
-	};
-
-	render_mode.num_vertices = 24;
-    render_mode.vertex_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(PositionTextureVertex) * render_mode.num_vertices,
-        }
-    );
-
-    render_mode.num_indices = 36;
-    render_mode.index_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-            .size = sizeof(Uint16) * render_mode.num_indices,
-        }
-    );
-
-    SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(PositionTextureVertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
-        }
-    );
-
-    render_mode.instance_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(Matrix4) * render_mode.max_instances,
-        }
-    );
-
-    render_mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Matrix4),
-        }
-    );
-
-    PositionTextureVertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
-
-	// Front face
-	Vector3 n = {0.0f, 0.0f, 1.0f};
-	transfer_data[0] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, n };
-	transfer_data[1] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, n };
-	transfer_data[2] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, n };
-	transfer_data[3] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}, n };
-
-	// Back face
-	n = (Vector3) {0.0f, 0.0f, -1.0f};
-	transfer_data[4] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}, n };
-	transfer_data[5] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, n };
-	transfer_data[6] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, n };
-	transfer_data[7] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, n };
-
-	// Left face
-	n = (Vector3) {-1.0f, 0.0f, 0.0f};
-	transfer_data[8] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, n };
-	transfer_data[9] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, n };
-	transfer_data[10] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, n };
-	transfer_data[11] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, n };
-
-	// Right face
-	n = (Vector3) {1.0f, 0.0f, 0.0f};
-	transfer_data[12] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}, n };
-	transfer_data[13] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, n };
-	transfer_data[14] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}, n };
-	transfer_data[15] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, n };
-
-	// Top face
-	n = (Vector3) {0.0f, 1.0f, 0.0f};
-	transfer_data[16] = (PositionTextureVertex) { {-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, n };
-	transfer_data[17] = (PositionTextureVertex) { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, n };
-	transfer_data[18] = (PositionTextureVertex) { { 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f}, n };
-	transfer_data[19] = (PositionTextureVertex) { {-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f}, n };
-
-	// Bottom face
-	n = (Vector3) {0.0f, -1.0f, 0.0f};
-	transfer_data[20] = (PositionTextureVertex) { {-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f}, n };
-	transfer_data[21] = (PositionTextureVertex) { { 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f}, n };
-	transfer_data[22] = (PositionTextureVertex) { { 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, n };
-	transfer_data[23] = (PositionTextureVertex) { {-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, n };
-
-    Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
-	// Indices for 6 faces, 2 triangles per face, counter-clockwise winding
-	const Uint16 indices[36] = {
-		// Front face
-		0, 1, 2, 0, 2, 3,
-		// Back face
-		4, 6, 5, 4, 7, 6,
-		// Left face
-		8, 9, 10, 8, 10, 11,
-		// Right face
-		12, 14, 13, 12, 15, 14,
-		// Top face
-		16, 18, 17, 16, 19, 18,
-		// Bottom face
-		20, 21, 22, 20, 22, 23
-	};
-    SDL_memcpy(index_data, indices, sizeof(indices));
-
-    SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
-
-    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
-    SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
-
-    SDL_UploadToGPUBuffer(
-        copy_pass,
-        &(SDL_GPUTransferBufferLocation) {
-            .transfer_buffer = transfer_buffer,
-            .offset = 0
-        },
-        &(SDL_GPUBufferRegion) {
-            .buffer = render_mode.vertex_buffer,
-            .offset = 0,
-            .size = sizeof(PositionTextureVertex) * render_mode.num_vertices
-        },
-        false
-    );
-
-    SDL_UploadToGPUBuffer(
-        copy_pass,
-        &(SDL_GPUTransferBufferLocation) {
-            .transfer_buffer = transfer_buffer,
-            .offset = sizeof(PositionTextureVertex) * render_mode.num_vertices
-        },
-        &(SDL_GPUBufferRegion) {
-            .buffer = render_mode.index_buffer,
-            .offset = 0,
-            .size = sizeof(Uint16) * render_mode.num_indices
-        },
-        false
-    );
-
-    SDL_EndGPUCopyPass(copy_pass);
-    SDL_SubmitGPUCommandBuffer(upload_command_buffer);
-    SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
-
-	render_mode.sampler = SDL_CreateGPUSampler(
-		app.gpu_device,
-		&(SDL_GPUSamplerCreateInfo){
-			.min_filter = SDL_GPU_FILTER_LINEAR,
-			.mag_filter = SDL_GPU_FILTER_LINEAR,
-			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.enable_anisotropy = true,
-			.max_anisotropy = 16
-		}
-	);
-
-	return render_mode;
-}
-
-
 void init_render() {
 	app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
 	SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
@@ -703,7 +538,6 @@ void init_render() {
 
 	meshes[MESH_QUAD] = create_mesh_quad();
 	meshes[MESH_CUBE] = create_mesh_cube();
-	meshes[MESH_CUBE_TEXTURED] = create_mesh_cube_textured();
 
 	SDL_GPUTextureCreateInfo depth_stencil_texture_info = {
 		.width = game_settings.width,
@@ -820,7 +654,9 @@ void render() {
 			.light_direction = { 0.0f, -1.0f, -1.0f }
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
-		render_instances(command_buffer, render_pass, &resources.meshes[0], pipeline_3d_textured);
+		for (int i = 0; i < resources.meshes_size; i++) {
+			render_instances(command_buffer, render_pass, &resources.meshes[i], pipeline_3d_textured);
+		}
 
 		SDL_EndGPURenderPass(render_pass);
 	}

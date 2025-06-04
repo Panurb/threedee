@@ -91,8 +91,6 @@ MeshData load_mesh(String path) {
 	ArrayList* normals = ArrayList_create(sizeof(Vector3));
 	ArrayList* uvs = ArrayList_create(sizeof(Vector2));
 
-	LOG_INFO("Loading vertex data from: %s", path);
-
 	String line;
 	while (fgets(line, sizeof(line), file) != NULL) {
 		if (line[0] == '#') continue;
@@ -108,7 +106,6 @@ MeshData load_mesh(String path) {
 		} else if (strncmp(line, "vt", 2) == 0) {
 			Vector2 uv;
 			int matches = sscanf(line, "vt %f %f", &uv.x, &uv.y);
-			LOG_INFO("Adding UV: %f, %f", uv.x, uv.y);
 			if (matches != 2) {
 				LOG_ERROR("Invalid UV format in line: %s", line);
 				continue;
@@ -206,21 +203,6 @@ MeshData load_mesh(String path) {
 			index_data[3 * triangle_index + 2] = v[2] - 1;
 			triangle_index++;
 		}
-	}
-
-	// print transfer data
-	for (int i = 0; i < mesh_data.num_vertices; i++) {
-		PositionTextureVertex* vertex = &transfer_data[i];
-		LOG_DEBUG("Vertex %d: Position: (%f, %f, %f), UV: (%f, %f), Normal: (%f, %f, %f)",
-			i,
-			vertex->position.x, vertex->position.y, vertex->position.z,
-			vertex->uv.x, vertex->uv.y,
-			vertex->normal.x, vertex->normal.y, vertex->normal.z
-		);
-	}
-
-	for (int i = 0; i < mesh_data.num_indices; i++) {
-		LOG_DEBUG("Index %d: %d", i, index_data[i]);
 	}
 
 	ArrayList_destroy(vertices);

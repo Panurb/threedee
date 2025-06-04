@@ -20,7 +20,6 @@ typedef struct MeshData{
 
 
 typedef enum Mesh {
-	MESH_CUBE_TEXTURED,
 	MESH_QUAD,
 	MESH_CUBE,
 } Mesh;
