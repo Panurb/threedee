@@ -144,8 +144,12 @@ Matrix4 perspective_projection_matrix(float fov, float aspect, float near, float
 
 Matrix4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far);
 
-void matrix4_print(Matrix4 m);
-
 Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up);
 
 Vector3 direction_from_rotation(Rotation rotation);
+
+void vector2_print(void* ptr);
+
+void vector3_print(void* ptr);
+
+void matrix4_print(Matrix4 m);

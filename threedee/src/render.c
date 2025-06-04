@@ -312,7 +312,6 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 
 MeshData create_mesh_quad() {
 	MeshData render_mode = {
-		.pipeline = pipeline_2d,
 		.max_instances = 256,
 		.num_instances = 0
 	};
@@ -413,7 +412,6 @@ MeshData create_mesh_quad() {
 
 MeshData create_mesh_cube() {
 	MeshData mesh_data = {
-		.pipeline = pipeline_3d,
 		.max_instances = 256,
 		.num_instances = 0
 	};
@@ -532,7 +530,6 @@ MeshData create_mesh_cube() {
 
 MeshData create_mesh_cube_textured() {
 	MeshData render_mode = {
-		.pipeline = pipeline_3d_textured,
 		.max_instances = 256,
 		.num_instances = 0
 	};
@@ -724,7 +721,7 @@ void init_render() {
 
 
 void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
-			MeshData* mesh_data) {
+			MeshData* mesh_data, SDL_GPUGraphicsPipeline* pipeline) {
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 	SDL_UploadToGPUBuffer(
 		copy_pass,
@@ -741,7 +738,7 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 	);
 	SDL_EndGPUCopyPass(copy_pass);
 
-	SDL_BindGPUGraphicsPipeline(render_pass, mesh_data->pipeline);
+	SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
 	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = mesh_data->vertex_buffer, .offset = 0 }, 1);
 	SDL_BindGPUIndexBuffer(
 		render_pass, &(SDL_GPUBufferBinding) { .buffer = mesh_data->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
@@ -815,7 +812,7 @@ void render() {
 			}
 		);
 
-		render_instances(command_buffer, render_pass, &meshes[MESH_CUBE]);
+		// render_instances(command_buffer, render_pass, &meshes[0], pipeline_3d);
 
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,
@@ -823,7 +820,7 @@ void render() {
 			.light_direction = { 0.0f, -1.0f, -1.0f }
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
-		render_instances(command_buffer, render_pass, &meshes[MESH_CUBE_TEXTURED]);
+		render_instances(command_buffer, render_pass, &resources.meshes[0], pipeline_3d_textured);
 
 		SDL_EndGPURenderPass(render_pass);
 	}
@@ -833,8 +830,8 @@ void render() {
 }
 
 
-void add_render_instance(Mesh render_mode, Matrix4 transform) {
-	MeshData* render_data = &meshes[render_mode];
+void add_render_instance(Mesh mesh_index, Matrix4 transform) {
+	MeshData* render_data = &resources.meshes[mesh_index];
 
 	if (render_data->num_instances >= render_data->max_instances) {
 		LOG_INFO("Buffer full, resizing...");

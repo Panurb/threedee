@@ -4,15 +4,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "util.h"
 
 
 ArrayList* ArrayList_create(int element_size) {
     ArrayList* list = malloc(sizeof(ArrayList));
-    list->data = malloc(element_size * 128);
+    list->capacity = 128;
+    list->data = malloc(element_size * list->capacity);
     list->size = 0;
-    list->capacity = 10;
     list->element_size = element_size;
     return list;
 }

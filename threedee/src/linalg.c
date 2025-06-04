@@ -349,13 +349,6 @@ Matrix4 orthographic_projection_matrix(float left, float right, float bottom, fl
     return m;
 }
 
-void matrix4_print(Matrix4 m) {
-    printf("[[%.2f, %.2f, %.2f, %.2f]\n", m._11, m._12, m._13, m._14);
-    printf("[%.2f, %.2f, %.2f, %.2f]\n", m._21, m._22, m._23, m._24);
-    printf("[%.2f, %.2f, %.2f, %.2f]\n", m._31, m._32, m._33, m._34);
-    printf("[%.2f, %.2f, %.2f, %.2f]]\n", m._41, m._42, m._43, m._44);
-}
-
 Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up) {
     Vector3 right = normalized3(cross(forward, up));
     up = normalized3(cross(right, forward));
@@ -380,4 +373,21 @@ Vector3 direction_from_rotation(Rotation rotation) {
         sp,
         sy * cp
     };
+}
+
+void vector2_print(void* ptr) {
+    Vector2* v = ptr;
+    printf("Vector2(%.2f, %.2f)\n", v->x, v->y);
+}
+
+void vector3_print(void* ptr) {
+    Vector3* v = ptr;
+    printf("Vector3(%.2f, %.2f, %.2f)\n", v->x, v->y, v->z);
+}
+
+void matrix4_print(Matrix4 m) {
+    printf("[[%.2f, %.2f, %.2f, %.2f]\n", m._11, m._12, m._13, m._14);
+    printf("[%.2f, %.2f, %.2f, %.2f]\n", m._21, m._22, m._23, m._24);
+    printf("[%.2f, %.2f, %.2f, %.2f]\n", m._31, m._32, m._33, m._34);
+    printf("[%.2f, %.2f, %.2f, %.2f]]\n", m._41, m._42, m._43, m._44);
 }

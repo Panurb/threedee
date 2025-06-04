@@ -83,7 +83,6 @@ MeshData load_mesh(String path) {
 	}
 
 	MeshData mesh_data = {
-		.pipeline = NULL,
 		.max_instances = 256,
 		.num_instances = 0
 	};
@@ -95,15 +94,10 @@ MeshData load_mesh(String path) {
 	LOG_INFO("Loading vertex data from: %s", path);
 
 	String line;
-	while (true) {
-		fgets(line, sizeof(line), file);
-		if (feof(file)) {
-			break;
-		}
-
+	while (fgets(line, sizeof(line), file) != NULL) {
 		if (line[0] == '#') continue;
 
-		if (strstr(line, "vn")) {
+		if (strncmp(line, "vn", 2) == 0) {
 			Vector3 normal;
 			int matches = sscanf(line, "vn %f %f %f", &normal.x, &normal.y, &normal.z);
 			if (matches != 3) {
@@ -111,9 +105,10 @@ MeshData load_mesh(String path) {
 				continue;
 			}
 			ArrayList_add(normals, &normal);
-		} else if (strstr(line, "vt")) {
+		} else if (strncmp(line, "vt", 2) == 0) {
 			Vector2 uv;
 			int matches = sscanf(line, "vt %f %f", &uv.x, &uv.y);
+			LOG_INFO("Adding UV: %f, %f", uv.x, uv.y);
 			if (matches != 2) {
 				LOG_ERROR("Invalid UV format in line: %s", line);
 				continue;
@@ -132,12 +127,17 @@ MeshData load_mesh(String path) {
 		}
 	}
 
+	// print normals
+	ArrayList_print(normals, vector3_print);
+	ArrayList_print(uvs, vector2_print);
+	ArrayList_print(vertices, vector3_print);
+
 	mesh_data.num_vertices = vertices->size;
 	mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-			.size = sizeof(PositionColorVertex) * mesh_data.num_vertices,
+			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices,
 		}
 	);
 
@@ -169,7 +169,7 @@ MeshData load_mesh(String path) {
 		app.gpu_device,
 		&(SDL_GPUTransferBufferCreateInfo){
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = sizeof(PositionColorVertex) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
 		}
 	);
 
@@ -178,13 +178,8 @@ MeshData load_mesh(String path) {
 
 	rewind(file);
 
-	int index_index = 0;
-	while (true) {
-		fgets(line, sizeof(line), file);
-		if (feof(file)) {
-			break;
-		}
-
+	int triangle_index = 0;
+	while (fgets(line, sizeof(line), file) != NULL) {
 		if (line[0] == 'f') {
 			int v[3], vt[3], vn[3];
 			int matches = sscanf(
@@ -200,17 +195,32 @@ MeshData load_mesh(String path) {
 			}
 
 			for (int i = 0; i < 3; i++) {
-				transfer_data[i] = (PositionTextureVertex) {
+				transfer_data[v[i] - 1] = (PositionTextureVertex) {
 					.position = *(Vector3*)ArrayList_get(vertices, v[i] - 1),
 					.uv = *(Vector2*)ArrayList_get(uvs, vt[i] - 1),
 					.normal = *(Vector3*)ArrayList_get(normals, vn[i] - 1)
 				};
 			}
-			index_data[index_index] = v[0];
-			index_data[index_index + 1] = v[1];
-			index_data[index_index + 2] = v[2];
-			index_index++;
+			index_data[3 * triangle_index] = v[0] - 1;
+			index_data[3 * triangle_index + 1] = v[1] - 1;
+			index_data[3 * triangle_index + 2] = v[2] - 1;
+			triangle_index++;
 		}
+	}
+
+	// print transfer data
+	for (int i = 0; i < mesh_data.num_vertices; i++) {
+		PositionTextureVertex* vertex = &transfer_data[i];
+		LOG_DEBUG("Vertex %d: Position: (%f, %f, %f), UV: (%f, %f), Normal: (%f, %f, %f)",
+			i,
+			vertex->position.x, vertex->position.y, vertex->position.z,
+			vertex->uv.x, vertex->uv.y,
+			vertex->normal.x, vertex->normal.y, vertex->normal.z
+		);
+	}
+
+	for (int i = 0; i < mesh_data.num_indices; i++) {
+		LOG_DEBUG("Index %d: %d", i, index_data[i]);
 	}
 
 	ArrayList_destroy(vertices);

@@ -5,7 +5,7 @@
 #include "linalg.h"
 
 
-#define LOGGING_LEVEL 3
+#define LOGGING_LEVEL 4
 
 #if LOGGING_LEVEL > 3
     #define LOG_DEBUG(...) printf("DEBUG: "); printf(__VA_ARGS__); printf("\n");

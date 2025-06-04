@@ -223,14 +223,14 @@ void update(float time_step) {
 
 
 void draw() {
-    LOG_DEBUG("Start draw");
+    // LOG_DEBUG("Start draw");
 
     static float angle = 0.0f;
     angle += 0.01f;
 
     render();
 
-    LOG_DEBUG("End draw");
+    // LOG_DEBUG("End draw");
 }
 
 

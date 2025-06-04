@@ -14,17 +14,28 @@ MeshComponent* MeshComponent_add(Entity entity, String mesh_filename, String tex
     mesh->mesh_index = -1;
     mesh->texture_index = -1;
 
-    if (strcmp(mesh_filename, "cube") == 0) {
-        mesh->mesh_index = MESH_CUBE;
-    } else if (strcmp(mesh_filename, "quad") == 0) {
-        mesh->mesh_index = MESH_QUAD;
-    } else if (strcmp(mesh_filename, "cube_textured") == 0) {
-        mesh->mesh_index = MESH_CUBE_TEXTURED;
-    } else {
-        LOG_ERROR("Unknown mesh filename: %s", mesh_filename);
-        free(mesh);
-        return NULL;
+    // if (strcmp(mesh_filename, "cube") == 0) {
+    //     mesh->mesh_index = MESH_CUBE;
+    // } else if (strcmp(mesh_filename, "quad") == 0) {
+    //     mesh->mesh_index = MESH_QUAD;
+    // } else if (strcmp(mesh_filename, "cube_textured") == 0) {
+    //     mesh->mesh_index = MESH_CUBE_TEXTURED;
+    // } else {
+    //     LOG_ERROR("Unknown mesh filename: %s", mesh_filename);
+    //     free(mesh);
+    //     return NULL;
+    // }
+
+    if (mesh_filename[0] != '\0') {
+        mesh->mesh_index = binary_search_filename(mesh_filename, resources.mesh_names, resources.meshes_size);
+        if (mesh->mesh_index == -1) {
+            LOG_ERROR("Mesh not found: %s", mesh_filename);
+            free(mesh);
+            return NULL;
+        }
     }
+
+    LOG_INFO("Mesh index: %d", mesh->mesh_index);
 
     if (texture_filename[0] != '\0') {
         mesh->texture_index = binary_search_filename(texture_filename, resources.texture_names, resources.textures_size);

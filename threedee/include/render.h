@@ -7,7 +7,6 @@
 
 
 typedef struct MeshData{
-	SDL_GPUGraphicsPipeline* pipeline;
 	SDL_GPUBuffer* vertex_buffer;
 	int num_vertices;
 	SDL_GPUBuffer* index_buffer;
@@ -21,9 +20,9 @@ typedef struct MeshData{
 
 
 typedef enum Mesh {
+	MESH_CUBE_TEXTURED,
 	MESH_QUAD,
 	MESH_CUBE,
-	MESH_CUBE_TEXTURED
 } Mesh;
 
 
@@ -52,4 +51,4 @@ void init_render();
 
 void render();
 
-void add_render_instance(Mesh render_mode, Matrix4 transform);
+void add_render_instance(Mesh mesh_index, Matrix4 transform);
