@@ -4,10 +4,12 @@
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include "util.h"
+#include "render.h"
 
 
-#define MAX_TEXTURES 100
-#define MAX_SOUNDS 100
+#define MAX_TEXTURES 128
+#define MAX_SOUNDS 128
+#define MAX_MESHES 128
 
 typedef struct {
     String texture_names[MAX_TEXTURES];
@@ -19,6 +21,9 @@ typedef struct {
     int sounds_size;
     Mix_Chunk* sounds[100];
     Mix_Music* music[10];
+    MeshData meshes[MAX_MESHES];
+    String mesh_names[MAX_MESHES];
+    int meshes_size;
 } Resources;
 
 

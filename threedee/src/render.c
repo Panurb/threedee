@@ -412,27 +412,27 @@ MeshData create_mesh_quad() {
 
 
 MeshData create_mesh_cube() {
-	MeshData render_mode = {
+	MeshData mesh_data = {
 		.pipeline = pipeline_3d,
 		.max_instances = 256,
 		.num_instances = 0
 	};
 
-	render_mode.num_vertices = 8;
-    render_mode.vertex_buffer = SDL_CreateGPUBuffer(
+	mesh_data.num_vertices = 8;
+    mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(PositionColorVertex) * render_mode.num_vertices,
+            .size = sizeof(PositionColorVertex) * mesh_data.num_vertices,
         }
     );
 
-    render_mode.num_indices = 36;
-    render_mode.index_buffer = SDL_CreateGPUBuffer(
+    mesh_data.num_indices = 36;
+    mesh_data.index_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-            .size = sizeof(Uint16) * render_mode.num_indices,
+            .size = sizeof(Uint16) * mesh_data.num_indices,
         }
     );
 
@@ -440,19 +440,19 @@ MeshData create_mesh_cube() {
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(PositionColorVertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
+            .size = sizeof(PositionColorVertex) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
         }
     );
 
-    render_mode.instance_buffer = SDL_CreateGPUBuffer(
+    mesh_data.instance_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(Matrix4) * render_mode.max_instances,
+            .size = sizeof(Matrix4) * mesh_data.max_instances,
         }
     );
 
-    render_mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
+    mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
@@ -472,7 +472,7 @@ MeshData create_mesh_cube() {
 	transfer_data[7] = (PositionColorVertex) { {-0.5f, 0.5f, 0.5f}, {64, 64, 64, 255} };
 
 	// Front-facing triangle should go clockwise
-    Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
+    Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
     const Uint16 indices[36] = {
     	// Back face (z = -0.5)
     	0, 2, 1, 0, 3, 2,
@@ -501,9 +501,9 @@ MeshData create_mesh_cube() {
             .offset = 0
         },
         &(SDL_GPUBufferRegion) {
-            .buffer = render_mode.vertex_buffer,
+            .buffer = mesh_data.vertex_buffer,
             .offset = 0,
-            .size = sizeof(PositionColorVertex) * render_mode.num_vertices
+            .size = sizeof(PositionColorVertex) * mesh_data.num_vertices
         },
         false
     );
@@ -512,12 +512,12 @@ MeshData create_mesh_cube() {
         copy_pass,
         &(SDL_GPUTransferBufferLocation) {
             .transfer_buffer = transfer_buffer,
-            .offset = sizeof(PositionColorVertex) * render_mode.num_vertices
+            .offset = sizeof(PositionColorVertex) * mesh_data.num_vertices
         },
         &(SDL_GPUBufferRegion) {
-            .buffer = render_mode.index_buffer,
+            .buffer = mesh_data.index_buffer,
             .offset = 0,
-            .size = sizeof(Uint16) * render_mode.num_indices
+            .size = sizeof(Uint16) * mesh_data.num_indices
         },
         false
     );
@@ -526,7 +526,7 @@ MeshData create_mesh_cube() {
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
     SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
-	return render_mode;
+	return mesh_data;
 }
 
 
@@ -643,44 +643,6 @@ MeshData create_mesh_cube_textured() {
 
     SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
-	// LOAD TEXTURE
-	SDL_Surface* image_data = IMG_Load("data/images/brick_tile.png");
-	if (!image_data) {
-		LOG_ERROR("Failed to load texture image: %s", SDL_GetError());
-	}
-
-	texture = SDL_CreateGPUTexture(
-		app.gpu_device,
-		&(SDL_GPUTextureCreateInfo){
-			.type = SDL_GPU_TEXTURETYPE_2D,
-			.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
-			.width = image_data->w,
-			.height = image_data->h,
-			.layer_count_or_depth = 1,
-			.num_levels = 1,
-			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
-		}
-	);
-	if (!texture) {
-		LOG_ERROR("Failed to create texture: %s", SDL_GetError());
-	}
-
-	SDL_GPUTransferBuffer* texture_transfer_buffer = SDL_CreateGPUTransferBuffer(
-		app.gpu_device,
-		&(SDL_GPUTransferBufferCreateInfo) {
-			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = image_data->w * image_data->h * 4
-		}
-	);
-
-	Uint8* texture_transfer_ptr = SDL_MapGPUTransferBuffer(
-		app.gpu_device,
-		texture_transfer_buffer,
-		false
-	);
-		SDL_memcpy(texture_transfer_ptr, image_data->pixels, image_data->w * image_data->h * 4);
-		SDL_UnmapGPUTransferBuffer(app.gpu_device, texture_transfer_buffer);
-
     SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
     SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
 
@@ -712,25 +674,9 @@ MeshData create_mesh_cube_textured() {
         false
     );
 
-	SDL_UploadToGPUTexture(
-		copy_pass,
-		&(SDL_GPUTextureTransferInfo) {
-			.transfer_buffer = texture_transfer_buffer,
-			.offset = 0, /* Zeros out the rest */
-		},
-		&(SDL_GPUTextureRegion){
-			.texture = texture,
-			.w = image_data->w,
-			.h = image_data->h,
-			.d = 1
-		},
-		false
-	);
-
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
     SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
-	SDL_DestroySurface(image_data);
 
 	render_mode.sampler = SDL_CreateGPUSampler(
 		app.gpu_device,

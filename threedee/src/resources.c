@@ -1,10 +1,11 @@
-#include "resources.h"
-
+#include <render.h>
 #include <stdio.h>
 #include <SDL3_image/SDL_image.h>
 
 #include "util.h"
 #include "app.h"
+#include "resources.h"
+#include "arraylist.h"
 
 
 SDL_GPUTexture* load_texture(String path) {
@@ -72,8 +73,210 @@ SDL_GPUTexture* load_texture(String path) {
 }
 
 
+MeshData load_mesh(String path) {
+	LOG_INFO("Loading mesh: %s", path);
+
+	FILE* file = fopen(path, "rb");
+	if (!file) {
+		LOG_ERROR("Failed to open mesh file: %s", path);
+		return (MeshData){0};
+	}
+
+	MeshData mesh_data = {
+		.pipeline = NULL,
+		.max_instances = 256,
+		.num_instances = 0
+	};
+
+	ArrayList* vertices = ArrayList_create(sizeof(Vector3));
+	ArrayList* normals = ArrayList_create(sizeof(Vector3));
+	ArrayList* uvs = ArrayList_create(sizeof(Vector2));
+
+	LOG_INFO("Loading vertex data from: %s", path);
+
+	String line;
+	while (true) {
+		fgets(line, sizeof(line), file);
+		if (feof(file)) {
+			break;
+		}
+
+		if (line[0] == '#') continue;
+
+		if (strstr(line, "vn")) {
+			Vector3 normal;
+			int matches = sscanf(line, "vn %f %f %f", &normal.x, &normal.y, &normal.z);
+			if (matches != 3) {
+				LOG_ERROR("Invalid normal format in line: %s", line);
+				continue;
+			}
+			ArrayList_add(normals, &normal);
+		} else if (strstr(line, "vt")) {
+			Vector2 uv;
+			int matches = sscanf(line, "vt %f %f", &uv.x, &uv.y);
+			if (matches != 2) {
+				LOG_ERROR("Invalid UV format in line: %s", line);
+				continue;
+			}
+			ArrayList_add(uvs, &uv);
+		} else if (line[0] == 'v') {
+			Vector3 position;
+			int matches = sscanf(line, "v %f %f %f", &position.x, &position.y, &position.z);
+			if (matches != 3) {
+				LOG_ERROR("Invalid vertex format in line: %s", line);
+				continue;
+			}
+			ArrayList_add(vertices, &position);
+		} else if (line[0] == 'f') {
+			mesh_data.num_indices += 3;
+		}
+	}
+
+	mesh_data.num_vertices = vertices->size;
+	mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+			.size = sizeof(PositionColorVertex) * mesh_data.num_vertices,
+		}
+	);
+
+	mesh_data.index_buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
+			.size = sizeof(Uint16) * mesh_data.num_indices,
+		}
+	);
+
+	mesh_data.instance_buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+			.size = sizeof(Matrix4) * mesh_data.max_instances,
+		}
+	);
+
+	mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
+		app.gpu_device,
+		&(SDL_GPUTransferBufferCreateInfo){
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = sizeof(Matrix4),
+		}
+	);
+
+	SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
+		app.gpu_device,
+		&(SDL_GPUTransferBufferCreateInfo){
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = sizeof(PositionColorVertex) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+		}
+	);
+
+	PositionTextureVertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
+
+	rewind(file);
+
+	int index_index = 0;
+	while (true) {
+		fgets(line, sizeof(line), file);
+		if (feof(file)) {
+			break;
+		}
+
+		if (line[0] == 'f') {
+			int v[3], vt[3], vn[3];
+			int matches = sscanf(
+				line,
+				"f %d/%d/%d %d/%d/%d %d/%d/%d",
+				&v[0], &vt[0], &vn[0],
+				&v[1], &vt[1], &vn[1],
+				&v[2], &vt[2], &vn[2]
+			);
+			if (matches != 9) {
+				LOG_ERROR("Invalid face format in line: %s", line);
+				continue;
+			}
+
+			for (int i = 0; i < 3; i++) {
+				transfer_data[i] = (PositionTextureVertex) {
+					.position = *(Vector3*)ArrayList_get(vertices, v[i] - 1),
+					.uv = *(Vector2*)ArrayList_get(uvs, vt[i] - 1),
+					.normal = *(Vector3*)ArrayList_get(normals, vn[i] - 1)
+				};
+			}
+			index_data[index_index] = v[0];
+			index_data[index_index + 1] = v[1];
+			index_data[index_index + 2] = v[2];
+			index_index++;
+		}
+	}
+
+	ArrayList_destroy(vertices);
+	ArrayList_destroy(normals);
+	ArrayList_destroy(uvs);
+	fclose(file);
+
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+	SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = transfer_buffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = mesh_data.vertex_buffer,
+			.offset = 0,
+			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices
+		},
+		false
+	);
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = transfer_buffer,
+			.offset = sizeof(PositionTextureVertex) * mesh_data.num_vertices
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = mesh_data.index_buffer,
+			.offset = 0,
+			.size = sizeof(Uint16) * mesh_data.num_indices
+		},
+		false
+	);
+
+	SDL_EndGPUCopyPass(copy_pass);
+	SDL_SubmitGPUCommandBuffer(upload_command_buffer);
+	SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+	mesh_data.sampler = SDL_CreateGPUSampler(
+		app.gpu_device,
+		&(SDL_GPUSamplerCreateInfo){
+			.min_filter = SDL_GPU_FILTER_LINEAR,
+			.mag_filter = SDL_GPU_FILTER_LINEAR,
+			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.enable_anisotropy = true,
+			.max_anisotropy = 16
+		}
+	);
+
+	return mesh_data;
+}
+
+
 void load_resources() {
     LOG_INFO("Loading resources");
+
+	resources = (Resources) { 0 };
 
     resources.textures_size = list_files_alphabetically("data/images/*.png", resources.texture_names);
     for (int i = 0; i < resources.textures_size; i++) {
@@ -94,6 +297,16 @@ void load_resources() {
             LOG_ERROR("Failed to load sound: %s", path);
         }
     }
+
+	resources.meshes_size = list_files_alphabetically("data/meshes/*.obj", resources.mesh_names);
+	for (int i = 0; i < resources.meshes_size; i++) {
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/meshes/", resources.mesh_names[i], ".obj");
+		resources.meshes[i] = load_mesh(path);
+		if (!resources.meshes[i].vertex_buffer) {
+			LOG_ERROR("Failed to load mesh: %s", path);
+		}
+	}
 
     LOG_INFO("Resources loaded");
 }

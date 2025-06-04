@@ -21,6 +21,7 @@ endif()
 set(SOURCES
 #    cJSON/src/cJSON.c
     threedee/src/app.c
+    threedee/src/arraylist.c
     threedee/src/camera.c
     threedee/src/component.c
     threedee/src/components/mesh.c
@@ -111,6 +112,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
             PATTERN "*.wav"
             PATTERN "*.json"
             PATTERN "*.ogg"
+            PATTERN "*.obj"
     )
 
     install(FILES ${EXTERNAL_DLLS}
