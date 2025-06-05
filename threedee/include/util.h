@@ -40,6 +40,13 @@ typedef struct {
 } Resolution;
 
 typedef struct {
+    float x;
+    float y;
+    float w;
+    float h;
+} Rect;
+
+typedef struct {
     unsigned char r;
     unsigned char g;
     unsigned char b;

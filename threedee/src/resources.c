@@ -8,13 +8,7 @@
 #include "arraylist.h"
 
 
-SDL_GPUTexture* load_texture(String path) {
-	LOG_INFO("Loading texture: %s", path);
-    SDL_Surface* image_data = IMG_Load(path);
-	if (!image_data) {
-		LOG_ERROR("Failed to load image data: %s", SDL_GetError());
-	}
-
+SDL_GPUTexture* create_texture(SDL_Surface* image_data) {
 	SDL_GPUTexture* texture = SDL_CreateGPUTexture(
 		app.gpu_device,
 		&(SDL_GPUTextureCreateInfo){
@@ -44,8 +38,9 @@ SDL_GPUTexture* load_texture(String path) {
 		texture_transfer_buffer,
 		false
 	);
-		SDL_memcpy(texture_transfer_ptr, image_data->pixels, image_data->w * image_data->h * 4);
-		SDL_UnmapGPUTransferBuffer(app.gpu_device, texture_transfer_buffer);
+
+	SDL_memcpy(texture_transfer_ptr, image_data->pixels, image_data->w * image_data->h * 4);
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, texture_transfer_buffer);
 
     SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
     SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
@@ -67,7 +62,6 @@ SDL_GPUTexture* load_texture(String path) {
 
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
-	SDL_DestroySurface(image_data);
 
 	return texture;
 }
@@ -123,11 +117,6 @@ MeshData load_mesh(String path) {
 			mesh_data.num_indices += 3;
 		}
 	}
-
-	// print normals
-	ArrayList_print(normals, vector3_print);
-	ArrayList_print(uvs, vector2_print);
-	ArrayList_print(vertices, vector3_print);
 
 	mesh_data.num_vertices = vertices->size;
 	mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
@@ -271,14 +260,51 @@ void load_resources() {
 	resources = (Resources) { 0 };
 
     resources.textures_size = list_files_alphabetically("data/images/*.png", resources.texture_names);
+    ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
+	int atlas_width = 0;
+	int atlas_height = 0;
     for (int i = 0; i < resources.textures_size; i++) {
         String path;
         snprintf(path, STRING_SIZE, "%s%s%s", "data/images/", resources.texture_names[i], ".png");
-        resources.textures[i] = load_texture(path);
-        if (!resources.textures[i]) {
-            LOG_ERROR("Failed to load texture: %s", path);
-        }
+		SDL_Surface* surface = IMG_Load(path);
+    	if (!surface) {
+			LOG_ERROR("Failed to load image: %s", path);
+			continue;
+		}
+    	ArrayList_add(surfaces, &surface);
+
+    	atlas_width += surface->w;
+    	if (surface->h > atlas_height) {
+    		atlas_height = surface->h;
+    	}
+
+        resources.textures[i] = create_texture(surface);
     }
+
+	SDL_Surface* atlas = SDL_CreateSurface(atlas_width, atlas_height, SDL_PIXELFORMAT_RGBA32);
+	int offset_x = 0;
+	for (int i = 0; i < resources.textures_size; i++) {
+		SDL_Surface* surface = *(SDL_Surface**)ArrayList_get(surfaces, i);
+		SDL_BlitSurface(
+			surface,
+			NULL,
+			atlas,
+			&(SDL_Rect){ offset_x, 0, surface->w, surface->h }
+		);
+		resources.texture_rects[i] = (Rect) {
+			.x = offset_x / (float)atlas->w,
+			.y = 0.0f,
+			.w = surface->w / (float)atlas->w,
+			.h = surface->h / (float)atlas->h
+		};
+		offset_x += surface->w;
+	}
+
+	ArrayList_for_each(surfaces, SDL_DestroySurface);
+	ArrayList_destroy(surfaces);
+
+	resources.texture_atlas = create_texture(atlas);
+	SDL_DestroySurface(atlas);
 
     resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
     for (int i = 0; i < resources.sounds_size; i++) {

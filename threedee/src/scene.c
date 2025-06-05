@@ -33,25 +33,25 @@ void create_scene() {
     trans = TransformComponent_add(i, (Vector3){5.5f, 0.0f, 0.0f});
     trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube_textured", "brick_tile");
+    MeshComponent_add(i, "cube_textured", "gravel");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){0.0f, 0.0f, 5.5f});
     trans->scale.y = 3.0f;
     trans->scale.x = 10.0f;
-    MeshComponent_add(i, "cube_textured", "brick_tile");
+    MeshComponent_add(i, "cube_textured", "gravel");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){-5.5f, 0.0f, 0.0f});
     trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube_textured", "brick_tile");
+    MeshComponent_add(i, "cube_textured", "gravel");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){0.0f, 0.0f, -5.5f});
     trans->scale.y = 3.0f;
     trans->scale.x = 10.0f;
-    MeshComponent_add(i, "cube_textured", "brick_tile");
+    MeshComponent_add(i, "cube_textured", "gravel");
 
     i = create_entity();
     TransformComponent_add(i, (Vector3){-3.0f, 0.0f, 0.0f});

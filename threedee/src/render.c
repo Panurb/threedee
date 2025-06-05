@@ -583,7 +583,7 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 			render_pass,
 			0,
 			&(SDL_GPUTextureSamplerBinding){
-				.texture = resources.textures[1],
+				.texture = resources.texture_atlas,
 				.sampler = mesh_data->sampler,
 			},
 			1);
