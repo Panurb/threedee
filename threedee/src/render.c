@@ -566,7 +566,7 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 		&(SDL_GPUBufferRegion) {
 			.buffer = mesh_data->instance_buffer,
 			.offset = 0,
-			.size = sizeof(Matrix4) * mesh_data->num_instances
+			.size = sizeof(InstanceData) * mesh_data->num_instances
 		},
 		true
 	);
@@ -610,7 +610,7 @@ void render() {
 			MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
 			if (!mesh_component) continue;
 
-			add_render_instance(mesh_component->mesh_index, get_transform(entity));
+			add_render_instance(mesh_component->mesh_index, get_transform(entity), mesh_component->texture_index);
 		}
 
 		CameraComponent* camera = CameraComponent_get(scene->camera);
@@ -666,7 +666,7 @@ void render() {
 }
 
 
-void add_render_instance(Mesh mesh_index, Matrix4 transform) {
+void add_render_instance(int mesh_index, Matrix4 transform, int texture_index) {
 	MeshData* render_data = &resources.meshes[mesh_index];
 
 	if (render_data->num_instances >= render_data->max_instances) {
@@ -677,7 +677,7 @@ void add_render_instance(Mesh mesh_index, Matrix4 transform) {
 			app.gpu_device,
 			&(SDL_GPUBufferCreateInfo){
 				.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-				.size = sizeof(Matrix4) * 2 * render_data->max_instances,
+				.size = sizeof(InstanceData) * 2 * render_data->max_instances,
 			}
 		);
 
@@ -692,7 +692,7 @@ void add_render_instance(Mesh mesh_index, Matrix4 transform) {
 				.buffer = render_data->instance_buffer,
 				.offset = 0
 			},
-			sizeof(Matrix4) * render_data->max_instances,
+			sizeof(InstanceData) * render_data->max_instances,
 			false
 		);
 		SDL_EndGPUCopyPass(copy_pass);
@@ -700,12 +700,18 @@ void add_render_instance(Mesh mesh_index, Matrix4 transform) {
 		SDL_ReleaseGPUBuffer(app.gpu_device, old_buffer);
 		render_data->max_instances *= 2;
 		LOG_INFO("New buffer size: %d", render_data->max_instances);
+
+		// TODO: Resize the transfer buffer as well
 	}
 
 	// TODO: Map the transfer buffer only once per frame
-	Matrix4* transforms = SDL_MapGPUTransferBuffer(app.gpu_device, render_data->instance_transfer_buffer, false);
+	InstanceData* transforms = SDL_MapGPUTransferBuffer(app.gpu_device, render_data->instance_transfer_buffer, false);
 
-	transforms[render_data->num_instances] = transpose4(transform);
+	InstanceData instance_data = {
+		.transform = transpose4(transform),
+		.texture_rect = resources.texture_rects[texture_index],
+	};
+	transforms[render_data->num_instances] = instance_data;
 	render_data->num_instances = render_data->num_instances + 1;
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, render_data->instance_transfer_buffer);

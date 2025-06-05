@@ -139,7 +139,7 @@ MeshData load_mesh(String path) {
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = sizeof(Matrix4) * mesh_data.max_instances,
+			.size = sizeof(InstanceData) * mesh_data.max_instances,
 		}
 	);
 

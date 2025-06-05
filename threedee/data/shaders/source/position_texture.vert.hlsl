@@ -3,7 +3,13 @@ cbuffer TransformBlock : register(b0, space1)
     float4x4 projection_matrix : packoffset(c0);
 };
 
-StructuredBuffer<float4x4> transform_matrices : register(t0, space0);
+struct InstanceData
+{
+    float4x4 transform_matrix;
+	float4 tex_rect;
+};
+
+StructuredBuffer<InstanceData> instance_data : register(t0, space0);
 
 struct Input
 {
@@ -17,6 +23,7 @@ struct Output
     float2 tex_coord : TEXCOORD0;
     float4 position : SV_Position;
     float3 normal : NORMAL0;
+	float4 tex_rect : TEXCOORD1;
 };
 
 float3 scale_from_transform(float4x4 transform)
@@ -30,7 +37,7 @@ float3 scale_from_transform(float4x4 transform)
 
 Output main(Input input, uint instance_id : SV_InstanceID)
 {
-    float4x4 transform = transform_matrices[instance_id];
+    float4x4 transform = instance_data[instance_id].transform_matrix;
     float3 scale = scale_from_transform(transform);
 
     // Determine tiling axes based on face normal
@@ -44,6 +51,7 @@ Output main(Input input, uint instance_id : SV_InstanceID)
 
     Output output;
     output.tex_coord = input.tex_coord * tiling;
+	output.tex_rect = instance_data[instance_id].tex_rect;
     output.position = mul(mul(projection_matrix, transform), float4(input.position, 1.0f));
     output.normal = normalize(mul((float3x3)transform, input.normal));
     return output;

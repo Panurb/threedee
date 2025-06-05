@@ -46,8 +46,14 @@ typedef struct UniformData {
 } UniformData;
 
 
+typedef struct {
+	Matrix4 transform;
+	Rect texture_rect;
+} InstanceData;
+
+
 void init_render();
 
 void render();
 
-void add_render_instance(Mesh mesh_index, Matrix4 transform);
+void add_render_instance(int mesh_index, Matrix4 transform, int texture_index);

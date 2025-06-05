@@ -63,7 +63,7 @@ void draw_cube(Entity camera, Vector3 position, float size, Color color) {
 
     Matrix4 object_transform = transform_matrix(position, (Rotation) { 0 }, diag3(size));
 
-    add_render_instance(MESH_CUBE, object_transform);
+    // add_render_instance(MESH_CUBE, object_transform);
 }
 
 

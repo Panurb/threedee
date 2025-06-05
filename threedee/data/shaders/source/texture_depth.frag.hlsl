@@ -20,9 +20,17 @@ float linearize_depth(float depth, float near, float far)
     return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
 }
 
-Output main(float2 tex_coord : TEXCOORD0, float4 position : SV_Position, float3 normal : NORMAL0)
+Output main(float2 tex_coord : TEXCOORD0, float4 position : SV_Position, float3 normal : NORMAL0, float4 tex_rect : TEXCOORD1)
 {
     float ambient_light = 0.2;
+
+	float uv_x = tex_rect.x;
+	float uv_y = tex_rect.y;
+	float uv_w = tex_rect.z;
+	float uv_h = tex_rect.w;
+
+	tex_coord.x = uv_x + frac(tex_coord.x) * uv_w;
+	tex_coord.y = uv_y + frac(tex_coord.y) * uv_h;
 
     Output result;
     float3 n = normalize(normal);
