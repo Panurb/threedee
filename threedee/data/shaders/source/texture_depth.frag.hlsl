@@ -24,20 +24,14 @@ Output main(float2 tex_coord : TEXCOORD0, float4 position : SV_Position, float3 
 {
     float ambient_light = 0.2;
 
-	float uv_x = tex_rect.x;
-	float uv_y = tex_rect.y;
-	float uv_w = tex_rect.z;
-	float uv_h = tex_rect.w;
-
-	tex_coord.x = uv_x + frac(tex_coord.x) * uv_w;
-	tex_coord.y = uv_y + frac(tex_coord.y) * uv_h;
+	float2 atlas_uv = tex_rect.xy + frac(tex_coord) * tex_rect.zw;
 
     Output result;
     float3 n = normalize(normal);
     float3 l = normalize(-light_direction);
     float diff = max(dot(n, l), 0.0);
 
-    float3 base_color = tex.Sample(sampler_tex, tex_coord).rgb;
+    float3 base_color = tex.Sample(sampler_tex, atlas_uv).rgb;
     float3 lit_color = base_color * diff + ambient_light * base_color;
 
     result.color = float4(lit_color, 1.0);

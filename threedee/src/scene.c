@@ -55,7 +55,7 @@ void create_scene() {
 
     i = create_entity();
     TransformComponent_add(i, (Vector3){-3.0f, 0.0f, 0.0f});
-    MeshComponent_add(i, "sphere", "gravel");
+    MeshComponent_add(i, "sphere", "tiles");
 
     LOG_INFO("Scene created");
 }

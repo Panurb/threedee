@@ -254,32 +254,26 @@ MeshData load_mesh(String path) {
 }
 
 
-void load_resources() {
-    LOG_INFO("Loading resources");
-
-	resources = (Resources) { 0 };
-
-    resources.textures_size = list_files_alphabetically("data/images/*.png", resources.texture_names);
-    ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
+void load_textures() {
+	resources.textures_size = list_files_alphabetically("data/images/*.png", resources.texture_names);
+	ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
 	int atlas_width = 0;
 	int atlas_height = 0;
-    for (int i = 0; i < resources.textures_size; i++) {
-        String path;
-        snprintf(path, STRING_SIZE, "%s%s%s", "data/images/", resources.texture_names[i], ".png");
+	for (int i = 0; i < resources.textures_size; i++) {
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/images/", resources.texture_names[i], ".png");
 		SDL_Surface* surface = IMG_Load(path);
-    	if (!surface) {
+		if (!surface) {
 			LOG_ERROR("Failed to load image: %s", path);
 			continue;
 		}
-    	ArrayList_add(surfaces, &surface);
+		ArrayList_add(surfaces, &surface);
 
-    	atlas_width += surface->w;
-    	if (surface->h > atlas_height) {
-    		atlas_height = surface->h;
-    	}
-
-        resources.textures[i] = create_texture(surface);
-    }
+		atlas_width += surface->w;
+		if (surface->h > atlas_height) {
+			atlas_height = surface->h;
+		}
+	}
 
 	SDL_Surface* atlas = SDL_CreateSurface(atlas_width, atlas_height, SDL_PIXELFORMAT_RGBA32);
 	int offset_x = 0;
@@ -305,6 +299,15 @@ void load_resources() {
 
 	resources.texture_atlas = create_texture(atlas);
 	SDL_DestroySurface(atlas);
+}
+
+
+void load_resources() {
+    LOG_INFO("Loading resources");
+
+	resources = (Resources) { 0 };
+
+	load_textures();
 
     resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
     for (int i = 0; i < resources.sounds_size; i++) {
