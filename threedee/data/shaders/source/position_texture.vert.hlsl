@@ -24,6 +24,7 @@ struct Output
     float4 position : SV_Position;
     float3 normal : NORMAL0;
 	float4 tex_rect : TEXCOORD1;
+    float3 world_position : TEXCOORD2;
 };
 
 float3 scale_from_transform(float4x4 transform)
@@ -54,5 +55,6 @@ Output main(Input input, uint instance_id : SV_InstanceID)
 	output.tex_rect = instance_data[instance_id].tex_rect;
     output.position = mul(mul(projection_matrix, transform), float4(input.position, 1.0f));
     output.normal = normalize(mul((float3x3)transform, input.normal));
+    output.world_position = mul(transform, float4(input.position, 1.0f)).xyz;
     return output;
 }

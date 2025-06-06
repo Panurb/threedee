@@ -42,7 +42,9 @@ typedef struct UniformData {
 	float near_plane;
 	float far_plane;
 	float _pad[2];
-	Vector3 light_direction;
+	Vector3 camera_position;
+	float _pad2;
+	Vector3 light_position;
 } UniformData;
 
 

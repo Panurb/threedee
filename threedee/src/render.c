@@ -241,7 +241,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "texture_depth.frag", 1, 1, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "phong.frag", 1, 1, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -622,7 +622,7 @@ void render() {
 		Matrix4 projection_view_matrix = transpose4(matrix4_mult(projection_matrix, view_matrix));
 
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view_matrix, sizeof(Matrix4));
-		SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { camera->near_plane, camera->far_plane }, 8);
+		// SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { camera->near_plane, camera->far_plane }, 8);
 
 		SDL_GPUColorTargetInfo color_target_info = {
 			.texture = swapchain_texture,
@@ -651,9 +651,11 @@ void render() {
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,
 			.far_plane = camera->far_plane,
-			.light_direction = { 0.0f, -1.0f, -1.0f }
+			.camera_position = get_position(scene->camera),
+			.light_position = { 5.0f, 10.0f, 5.0f }, // TODO: Get light position from scene
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
+
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_instances(command_buffer, render_pass, &resources.meshes[i], pipeline_3d_textured);
 		}
