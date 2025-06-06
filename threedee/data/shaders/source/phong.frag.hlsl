@@ -5,8 +5,18 @@ cbuffer UBO : register(b0, space3)
 {
     float near_plane : packoffset(c0);
     float far_plane : packoffset(c0.y);
+    float ambient_light : packoffset(c0.z);
     float3 camera_position : packoffset(c1);
     float3 light_position : packoffset(c2);
+};
+
+struct Input
+{
+    float2 tex_coord : TEXCOORD0;
+    float4 position : SV_Position;
+    float3 normal : NORMAL0;
+    float4 tex_rect : TEXCOORD1;
+    float3 world_position : TEXCOORD2;
 };
 
 struct Output
@@ -21,15 +31,13 @@ float linearize_depth(float depth, float near, float far)
     return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
 }
 
-Output main(
-    float2 tex_coord : TEXCOORD0,
-    float4 position : SV_Position,
-    float3 normal : NORMAL0,
-    float4 tex_rect : TEXCOORD1,
-    float3 world_position : TEXCOORD2
-)
+Output main(Input input)
 {
-    float ambient_light = 0.2;
+    float2 tex_coord = input.tex_coord;
+    float4 position = input.position;
+    float3 normal = input.normal;
+    float4 tex_rect = input.tex_rect;
+    float3 world_position = input.world_position;
 
     float2 atlas_uv = tex_rect.xy + frac(tex_coord) * tex_rect.zw;
 

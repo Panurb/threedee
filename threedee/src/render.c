@@ -651,6 +651,7 @@ void render() {
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,
 			.far_plane = camera->far_plane,
+			.ambient_light = scene->ambient_light,
 			.camera_position = get_position(scene->camera),
 			.light_position = { 5.0f, 10.0f, 5.0f }, // TODO: Get light position from scene
 		};
@@ -712,6 +713,7 @@ void add_render_instance(int mesh_index, Matrix4 transform, int texture_index) {
 	InstanceData instance_data = {
 		.transform = transpose4(transform),
 		.texture_rect = resources.texture_rects[texture_index],
+		.material = resources.materials[0],
 	};
 	transforms[render_data->num_instances] = instance_data;
 	render_data->num_instances = render_data->num_instances + 1;

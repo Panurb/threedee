@@ -7,6 +7,10 @@ struct InstanceData
 {
     float4x4 transform_matrix;
 	float4 tex_rect;
+    float specular;
+    float diffuse;
+    float ambient;
+    float shininess;
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);

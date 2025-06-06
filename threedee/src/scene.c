@@ -18,6 +18,7 @@ void create_scene() {
     scene->components = ComponentData_create();
     scene->camera = create_camera();
     scene->menu_camera = create_menu_camera();
+    scene->ambient_light = 0.2f;
 
     scene->player = create_entity();
     TransformComponent_add(scene->player, zeros3());
@@ -27,35 +28,35 @@ void create_scene() {
     TransformComponent* trans = TransformComponent_add(i, (Vector3){0.0f, -2.0f, 0.0f});
     trans->scale.x = 10.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube_textured", "gravel");
+    MeshComponent_add(i, "cube_textured", "gravel", "default");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){5.5f, 0.0f, 0.0f});
     trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube_textured", "tiles");
+    MeshComponent_add(i, "cube_textured", "tiles", "default");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){0.0f, 0.0f, 5.5f});
     trans->scale.y = 3.0f;
     trans->scale.x = 10.0f;
-    MeshComponent_add(i, "cube_textured", "tiles");
+    MeshComponent_add(i, "cube_textured", "tiles", "default");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){-5.5f, 0.0f, 0.0f});
     trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube_textured", "tiles");
+    MeshComponent_add(i, "cube_textured", "tiles", "default");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){0.0f, 0.0f, -5.5f});
     trans->scale.y = 3.0f;
     trans->scale.x = 10.0f;
-    MeshComponent_add(i, "cube_textured", "tiles");
+    MeshComponent_add(i, "cube_textured", "tiles", "default");
 
     i = create_entity();
     TransformComponent_add(i, (Vector3){-3.0f, 0.0f, 0.0f});
-    MeshComponent_add(i, "sphere", "tiles");
+    MeshComponent_add(i, "sphere", "tiles", "default");
 
     LOG_INFO("Scene created");
 }

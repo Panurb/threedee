@@ -8,6 +8,7 @@ typedef struct Scene {
     Entity menu_camera;
     Entity player;
     ComponentData* components;
+    float ambient_light;
 } Scene;
 
 

@@ -6,13 +6,13 @@
 #include <resources.h>
 
 #include "scene.h"
-#include "render.h"
 
 
-MeshComponent* MeshComponent_add(Entity entity, String mesh_filename, String texture_filename) {
+MeshComponent* MeshComponent_add(Entity entity, String mesh_filename, String texture_filename, String material_filename) {
     MeshComponent* mesh = malloc(sizeof(MeshComponent));
     mesh->mesh_index = -1;
     mesh->texture_index = -1;
+    mesh->material_index = -1;
 
     if (mesh_filename[0] != '\0') {
         mesh->mesh_index = binary_search_filename(mesh_filename, resources.mesh_names, resources.meshes_size);
@@ -27,6 +27,13 @@ MeshComponent* MeshComponent_add(Entity entity, String mesh_filename, String tex
         mesh->texture_index = binary_search_filename(texture_filename, resources.texture_names, resources.textures_size);
         if (mesh->texture_index == -1) {
             LOG_ERROR("Texture not found: %s", texture_filename);
+        }
+    }
+
+    if (material_filename[0] != '\0') {
+        mesh->material_index = binary_search_filename(material_filename, resources.material_names, resources.materials_size);
+        if (mesh->material_index == -1) {
+            LOG_ERROR("Material not found: %s", material_filename);
         }
     }
 
