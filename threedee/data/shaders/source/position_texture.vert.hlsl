@@ -28,7 +28,11 @@ struct Output
     float4 position : SV_Position;
     float3 normal : NORMAL0;
 	float4 tex_rect : TEXCOORD1;
-    float3 world_position : TEXCOORD2;
+    float3 world_position : POSITION0;
+    float specular;
+    float diffuse;
+    float ambient;
+    float shininess;
 };
 
 float3 scale_from_transform(float4x4 transform)
@@ -60,5 +64,11 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     output.position = mul(mul(projection_matrix, transform), float4(input.position, 1.0f));
     output.normal = normalize(mul((float3x3)transform, input.normal));
     output.world_position = mul(transform, float4(input.position, 1.0f)).xyz;
+
+    output.specular = instance_data[instance_id].specular;
+    output.diffuse = instance_data[instance_id].diffuse;
+    output.ambient = instance_data[instance_id].ambient;
+    output.shininess = instance_data[instance_id].shininess;
+
     return output;
 }

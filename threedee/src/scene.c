@@ -28,31 +28,31 @@ void create_scene() {
     TransformComponent* trans = TransformComponent_add(i, (Vector3){0.0f, -2.0f, 0.0f});
     trans->scale.x = 10.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube_textured", "gravel", "default");
+    MeshComponent_add(i, "cube_textured", "gravel", "concrete");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){5.5f, 0.0f, 0.0f});
     trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube_textured", "tiles", "default");
+    MeshComponent_add(i, "cube_textured", "tiles", "glass");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){0.0f, 0.0f, 5.5f});
     trans->scale.y = 3.0f;
     trans->scale.x = 10.0f;
-    MeshComponent_add(i, "cube_textured", "tiles", "default");
+    MeshComponent_add(i, "cube_textured", "tiles", "glass");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){-5.5f, 0.0f, 0.0f});
     trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube_textured", "tiles", "default");
+    MeshComponent_add(i, "cube_textured", "tiles", "glass");
 
     i = create_entity();
     trans = TransformComponent_add(i, (Vector3){0.0f, 0.0f, -5.5f});
     trans->scale.y = 3.0f;
     trans->scale.x = 10.0f;
-    MeshComponent_add(i, "cube_textured", "tiles", "default");
+    MeshComponent_add(i, "cube_textured", "tiles", "glass");
 
     i = create_entity();
     TransformComponent_add(i, (Vector3){-3.0f, 0.0f, 0.0f});

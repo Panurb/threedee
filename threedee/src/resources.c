@@ -155,7 +155,7 @@ MeshData load_mesh(String path) {
 		app.gpu_device,
 		&(SDL_GPUTransferBufferCreateInfo){
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = sizeof(Matrix4),
+			.size = sizeof(InstanceData) * mesh_data.max_instances,
 		}
 	);
 
@@ -247,12 +247,12 @@ MeshData load_mesh(String path) {
 	mesh_data.sampler = SDL_CreateGPUSampler(
 		app.gpu_device,
 		&(SDL_GPUSamplerCreateInfo){
-			.min_filter = SDL_GPU_FILTER_LINEAR,
-			.mag_filter = SDL_GPU_FILTER_LINEAR,
-			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.min_filter = SDL_GPU_FILTER_NEAREST,
+			.mag_filter = SDL_GPU_FILTER_NEAREST,
+			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 			.enable_anisotropy = true,
 			.max_anisotropy = 16,
 		}
@@ -354,9 +354,15 @@ void load_resources() {
 		}
 	}
 
-	resources.materials[0] = (Material){0.5f, 0.5f, 0.5f, 32.0f};
-	resources.materials_size = 1;
-	strcpy(resources.material_names[0], "default");
+	resources.materials[0] = (Material) {0.3f, 0.3f, 0.3f, 8.0f};
+	strcpy(resources.material_names[0], "concrete");
+	resources.materials[1] = (Material) {0.5f, 0.5f, 0.5f, 32.0f};
+	strcpy(resources.material_names[1], "default");
+	resources.materials[2] = (Material) {0.9f, 0.9f, 0.9f, 64.0f};
+	strcpy(resources.material_names[2], "glass");
+	resources.materials[3] = (Material) {0.1f, 0.1f, 0.1f, 16.0f};
+	strcpy(resources.material_names[3], "plastic");
+	resources.materials_size = 4;
 
     LOG_INFO("Resources loaded");
 }

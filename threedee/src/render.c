@@ -610,7 +610,12 @@ void render() {
 			MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
 			if (!mesh_component) continue;
 
-			add_render_instance(mesh_component->mesh_index, get_transform(entity), mesh_component->texture_index);
+			add_render_instance(
+				mesh_component->mesh_index,
+				get_transform(entity),
+				mesh_component->texture_index,
+				mesh_component->material_index
+			);
 		}
 
 		CameraComponent* camera = CameraComponent_get(scene->camera);
@@ -669,7 +674,7 @@ void render() {
 }
 
 
-void add_render_instance(int mesh_index, Matrix4 transform, int texture_index) {
+void add_render_instance(int mesh_index, Matrix4 transform, int texture_index, int material_index) {
 	MeshData* render_data = &resources.meshes[mesh_index];
 
 	if (render_data->num_instances >= render_data->max_instances) {
@@ -713,7 +718,7 @@ void add_render_instance(int mesh_index, Matrix4 transform, int texture_index) {
 	InstanceData instance_data = {
 		.transform = transpose4(transform),
 		.texture_rect = resources.texture_rects[texture_index],
-		.material = resources.materials[0],
+		.material = resources.materials[material_index],
 	};
 	transforms[render_data->num_instances] = instance_data;
 	render_data->num_instances = render_data->num_instances + 1;

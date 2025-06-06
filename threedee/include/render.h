@@ -48,4 +48,4 @@ void init_render();
 
 void render();
 
-void add_render_instance(int mesh_index, Matrix4 transform, int texture_index);
+void add_render_instance(int mesh_index, Matrix4 transform, int texture_index, int material_index);
