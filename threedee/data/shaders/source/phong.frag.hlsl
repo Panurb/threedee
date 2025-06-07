@@ -6,15 +6,15 @@ cbuffer UBO : register(b0, space3)
     float near_plane : packoffset(c0);
     float far_plane : packoffset(c0.y);
     float ambient_light : packoffset(c0.z);
+    int num_lights : packoffset(c0.w);
     float3 camera_position : packoffset(c1);
-    float3 light_position : packoffset(c2);
 };
 
 struct LightData
 {
-    float3 position;
-    float3 diffuse_color;
-    float3 specular_color;
+    float3 position : packoffset(c0);
+    float3 diffuse_color : packoffset(c1);
+    float3 specular_color : packoffset(c2);
 };
 
 StructuredBuffer<LightData> light_data : register(t1, space2);
@@ -46,8 +46,6 @@ float linearize_depth(float depth, float near, float far)
 
 Output main(Input input)
 {
-	float3 dummy = light_data[0].position;
-
     float2 tex_coord = input.tex_coord;
     float4 position = input.position;
     float3 normal = input.normal;
@@ -56,25 +54,30 @@ Output main(Input input)
 
     float2 atlas_uv = tex_rect.xy + frac(tex_coord) * tex_rect.zw;
 
-    float3 light_direction = dummy - world_position;
     float3 view_direction = camera_position - world_position;
-
-    Output result;
     float3 n = normalize(normal);
-    float3 l = normalize(light_direction);
     float3 v = normalize(view_direction);
-    float3 r = reflect(-l, n);
-
-    float diff = max(dot(n, l), 0.0);
-    float spec = pow(max(dot(r, v), 0.0), input.shininess);
 
     float3 base_color = tex.Sample(sampler_tex, atlas_uv).rgb;
     float3 ambient = input.ambient * ambient_light * base_color;
-    float3 diffuse = base_color * diff;
-    float3 specular = input.specular * spec * float3(1.0, 1.0, 1.0);
+    float3 diffuse = float3(0.0, 0.0, 0.0);
+    float3 specular = float3(0.0, 0.0, 0.0);
+
+	for (int i = 0; i < num_lights; ++i)
+    {
+        float3 l = normalize(light_data[i].position - world_position);
+        float3 r = reflect(-l, n);
+
+        float diff = max(dot(n, l), 0.0);
+        float spec = pow(max(dot(r, v), 0.0), input.shininess);
+
+        diffuse += base_color * diff * light_data[i].diffuse_color;
+        specular += input.specular * spec * light_data[i].specular_color;
+    }
 
     float3 lit_color = ambient + diffuse + specular;
 
+    Output result;
     result.color = float4(lit_color, 1.0);
     result.depth = linearize_depth(position.z, near_plane, far_plane);
     return result;

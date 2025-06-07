@@ -30,10 +30,8 @@ typedef struct UniformData {
 	float near_plane;
 	float far_plane;
 	float ambient_light;
-	float _pad;
+	int num_lights;
 	Vector3 camera_position;
-	float _pad2;
-	Vector3 light_position;
 } UniformData;
 
 
@@ -46,8 +44,11 @@ typedef struct {
 
 typedef struct {
 	Vector3 position;
+	float _pad;
 	Vector3 diffuse_color;
+	float _pad2;
 	Vector3 specular_color;
+	float _pad3;
 } LightData;
 
 

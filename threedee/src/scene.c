@@ -59,8 +59,12 @@ void create_scene() {
     MeshComponent_add(i, "sphere", "tiles", "default");
 
     i = create_entity();
-    TransformComponent_add(i, (Vector3){0.0f, 0.0f, 0.0f});
-    LightComponent_add(i, COLOR_WHITE);
+    TransformComponent_add(i, (Vector3){5.0f, 10.0f, 0.0f});
+    LightComponent_add(i, COLOR_BLUE);
+
+    i = create_entity();
+    TransformComponent_add(i, (Vector3){-5.0f, 10.0f, 0.0f});
+    LightComponent_add(i, COLOR_RED);
 
     LOG_INFO("Scene created");
 }

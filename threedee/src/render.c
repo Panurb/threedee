@@ -600,7 +600,6 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 	);
 	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh_data->instance_buffer, 1);
 
-	LOG_INFO("Bound light buffer with %d lights", num_lights);
 	if (mesh_data->sampler) {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
@@ -612,12 +611,7 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 			1);
 	}
 
-	LOG_INFO("Drawing...");
 	SDL_DrawGPUIndexedPrimitives(render_pass, mesh_data->num_indices, mesh_data->num_instances, 0, 0, 0);
-	LOG_INFO("Drew %d instances of mesh with %d indices", mesh_data->num_instances, mesh_data->num_indices);
-
-	mesh_data->num_instances = 0;
-	num_lights = 0;
 }
 
 
@@ -638,8 +632,6 @@ void add_light(Vector3 position, Color diffuse_color, Color specular_color) {
 
 
 void render() {
-	LOG_INFO("Rendering...");
-
 	command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
 	if (!command_buffer) {
 		LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
@@ -653,7 +645,6 @@ void render() {
 		for (Entity entity = 0; entity < scene->components->entities; entity++) {
 			LightComponent* light_component = get_component(entity, COMPONENT_LIGHT);
 			if (light_component) {
-				LOG_INFO("Adding light for entity %d", entity);
 				add_light(get_position(entity), light_component->diffuse_color, light_component->specular_color);
 			}
 
@@ -723,18 +714,19 @@ void render() {
 			.near_plane = camera->near_plane,
 			.far_plane = camera->far_plane,
 			.ambient_light = scene->ambient_light,
-			.camera_position = get_position(scene->camera),
-			.light_position = { 5.0f, 10.0f, 5.0f }, // TODO: Get light position from scene
+			.num_lights = num_lights,
+			.camera_position = get_position(scene->camera)
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
 		SDL_BindGPUFragmentStorageBuffers(render_pass, 0, &light_buffer, 1);
 
 		for (int i = 0; i < resources.meshes_size; i++) {
-			LOG_INFO("Rendering mesh %d with %d instances", i, resources.meshes[i].num_instances);
 			render_instances(command_buffer, render_pass, &resources.meshes[i], pipeline_3d_textured);
+			resources.meshes[i].num_instances = 0;
 		}
 
 		SDL_EndGPURenderPass(render_pass);
+		num_lights = 0;
 	}
 
 	SDL_SubmitGPUCommandBuffer(command_buffer);
@@ -789,7 +781,7 @@ void add_render_instance(int mesh_index, Matrix4 transform, int texture_index, i
 		.material = resources.materials[material_index],
 	};
 	transforms[render_data->num_instances] = instance_data;
-	render_data->num_instances = render_data->num_instances + 1;
+	render_data->num_instances++;
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, render_data->instance_transfer_buffer);
 }
