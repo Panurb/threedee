@@ -13,12 +13,14 @@
 #include <resources.h>
 #include <sound.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <systems/collision.h>
 
 #include "settings.h"
 #include "interface.h"
 #include "linalg.h"
 #include "render.h"
 #include "scene.h"
+#include "systems/physics.h"
 
 
 App app;
@@ -94,7 +96,7 @@ void init() {
 
     app.quit = false;
     app.focus = true;
-    app.time_step = 1.0f / 60.0f;
+    app.time_step = 1.0f / 100.0f;
     app.delta = 0.0f;
     app.state = STATE_GAME;
     app.base_path = SDL_GetBasePath();
@@ -211,10 +213,8 @@ void update(float time_step) {
 
     AppState state = app.state;
 
-    switch (app.state) {
-        case STATE_GAME:
-            break;
-    }
+    update_collisions();
+    update_physics(time_step);
 
     if (state != app.state) {
         previous_state = state;

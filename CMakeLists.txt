@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.18)
 project(threedee C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
-    set(USE_FLAGS "-s USE_SDL=3 -s USE_SDL_IMAGE=3 -s SDL3_IMAGE_FORMATS=\"[\"\"png\"\"]\" -s USE_SDL_TTF=3 -s USE_SDL_MIXER=3")
+    set(USE_FLAGS "-s USE_SDL=3 -s USE_SDL_IMAGE=3 -s USE_SDL_TTF=3 -s USE_SDL_MIXER=3")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
 endif()
@@ -24,8 +24,10 @@ set(SOURCES
     threedee/src/arraylist.c
     threedee/src/camera.c
     threedee/src/component.c
+    threedee/src/components/collider.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
+    threedee/src/components/physics.c
     threedee/src/heap.c
     threedee/src/input.c
     threedee/src/interface.c
@@ -36,6 +38,8 @@ set(SOURCES
     threedee/src/scene.c
     threedee/src/settings.c
     threedee/src/sound.c
+    threedee/src/systems/collision.c
+    threedee/src/systems/physics.c
     threedee/src/util.c
     threedee/src/threedee.c
     threedee/src/render.c
@@ -53,6 +57,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
             PATTERN "*.wav"
             PATTERN "*.json"
             PATTERN "*.ogg"
+            PATTERN "*.obj"
     )   
 else()
     # Enable console by removing WIN32 flag

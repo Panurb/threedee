@@ -22,48 +22,53 @@ void create_scene() {
 
     scene->player = create_entity();
     TransformComponent_add(scene->player, zeros3());
+    ColliderComponent_add(scene->camera, COLLIDER_SPHERE, 0.5f);
     // add_child(scene->player, scene->camera);
 
     Entity i = create_entity();
-    TransformComponent* trans = TransformComponent_add(i, (Vector3){0.0f, -2.0f, 0.0f});
+    TransformComponent* trans = TransformComponent_add(i, vec3(0.0f, -2.0f, 0.0f));
     trans->scale.x = 10.0f;
     trans->scale.z = 10.0f;
     MeshComponent_add(i, "cube_textured", "gravel", "concrete");
+    ColliderComponent_add(i, COLLIDER_PLANE, 0.5f);
 
     i = create_entity();
-    trans = TransformComponent_add(i, (Vector3){5.5f, 0.0f, 0.0f});
+    trans = TransformComponent_add(i, vec3(5.5f, 0.0f, 0.0f));
     trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
 
     i = create_entity();
-    trans = TransformComponent_add(i, (Vector3){0.0f, 0.0f, 5.5f});
+    trans = TransformComponent_add(i, vec3(0.0f, 0.0f, 5.5f));
     trans->scale.y = 3.0f;
     trans->scale.x = 10.0f;
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
 
     i = create_entity();
-    trans = TransformComponent_add(i, (Vector3){-5.5f, 0.0f, 0.0f});
+    trans = TransformComponent_add(i, vec3(-5.5f, 0.0f, 0.0f));
     trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
 
     i = create_entity();
-    trans = TransformComponent_add(i, (Vector3){0.0f, 0.0f, -5.5f});
+    trans = TransformComponent_add(i, vec3(0.0f, 0.0f, -5.5f));
     trans->scale.y = 3.0f;
     trans->scale.x = 10.0f;
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
 
     i = create_entity();
-    TransformComponent_add(i, (Vector3){-3.0f, 0.0f, 0.0f});
+    TransformComponent* transform = TransformComponent_add(i, vec3(-3.0f, 0.0f, 0.0f));
+    transform->scale = vec3(0.5f, 0.5f, 0.5f);
     MeshComponent_add(i, "sphere", "tiles", "default");
+    PhysicsComponent_add(i, 1.0f);
+    ColliderComponent_add(i, COLLIDER_SPHERE, 1.0f);
 
     i = create_entity();
-    TransformComponent_add(i, (Vector3){5.0f, 10.0f, 0.0f});
+    TransformComponent_add(i, vec3(5.0f, 10.0f, 0.0f));
     LightComponent_add(i, COLOR_BLUE);
 
     i = create_entity();
-    TransformComponent_add(i, (Vector3){-5.0f, 10.0f, 0.0f});
+    TransformComponent_add(i, vec3(-5.0f, 10.0f, 0.0f));
     LightComponent_add(i, COLOR_RED);
 
     LOG_INFO("Scene created");

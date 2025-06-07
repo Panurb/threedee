@@ -2,9 +2,7 @@
 
 #include "component.h"
 #include "components/mesh.h"
-
-#include <resources.h>
-
+#include "resources.h"
 #include "scene.h"
 
 

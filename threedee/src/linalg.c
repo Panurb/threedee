@@ -306,11 +306,11 @@ Vector3 position_from_transform(Matrix4 m) {
 }
 
 
-Vector3 scale_from_transform(Matrix3 m) {
+Vector3 scale_from_transform(Matrix4 m) {
     return (Vector3) {
-        sqrtf(m.a * m.a + m.b * m.b + m.c * m.c),
-        sqrtf(m.d * m.d + m.e * m.e + m.f * m.f),
-        sqrtf(m.g * m.g + m.h * m.h + m.i * m.i)
+        sqrtf(m._11 * m._11 + m._12 * m._12 + m._13 * m._13),
+        sqrtf(m._21 * m._21 + m._22 * m._22 + m._23 * m._23),
+        sqrtf(m._31 * m._31 + m._32 * m._32 + m._33 * m._33)
     };
 }
 
@@ -325,6 +325,10 @@ Vector3 rotation_from_transform(Matrix4 m) {
 
 bool non_zero(Vector2 v) {
     return (v.x != 0.0f || v.y != 0.0f);
+}
+
+bool non_zero3(Vector3 v) {
+    return (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f);
 }
 
 Matrix4 perspective_projection_matrix(float fov, float aspect_ratio, float near, float far) {

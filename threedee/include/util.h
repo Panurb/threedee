@@ -34,6 +34,9 @@
 
 #define LENGTH(x) (int)(sizeof(x)/sizeof(x[0]))
 
+typedef int Entity;
+#define NULL_ENTITY -1
+
 typedef struct {
     int w;
     int h;

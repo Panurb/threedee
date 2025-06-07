@@ -9,6 +9,7 @@
 #include "scene.h"
 #include "component.h"
 #include "components/light.h"
+#include "components/physics.h"
 
 
 ComponentData* ComponentData_create() {
@@ -22,6 +23,8 @@ ComponentData* ComponentData_create() {
         components->sound[i] = NULL;
         components->mesh[i] = NULL;
         components->light[i] = NULL;
+        components->physics[i] = NULL;
+        components->collider[i] = NULL;
     }
     return components;
 }
@@ -31,11 +34,11 @@ TransformComponent* TransformComponent_add(Entity entity, Vector3 pos) {
     TransformComponent* trans = malloc(sizeof(TransformComponent));
     trans->position = pos;
     trans->rotation = (Rotation) { 0.0f, 0.0f, 0.0f };
+    trans->scale = ones3();
     trans->parent = NULL_ENTITY;
     trans->children = List_create();
     trans->lifetime = -1.0f;
     trans->prefab[0] = '\0';
-    trans->scale = ones3();
     trans->previous.position = pos;
     trans->previous.rotation = trans->rotation;
     trans->previous.scale = ones3();
@@ -166,6 +169,10 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->mesh[entity];
         case COMPONENT_LIGHT:
             return scene->components->light[entity];
+        case COMPONENT_PHYSICS:
+            return scene->components->physics[entity];
+        case COMPONENT_COLLIDER:
+            return scene->components->collider[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;
@@ -189,6 +196,11 @@ void remove_component(Entity entity, ComponentType component_type) {
             break;
         case COMPONENT_LIGHT:
             LightComponent_remove(entity);
+            break;
+        case COMPONENT_PHYSICS:
+            PhysicsComponent_remove(entity);
+        case COMPONENT_COLLIDER:
+            ColliderComponent_remove(entity);
             break;
         default:
             LOG_ERROR("Unknown component type: %d", component_type);

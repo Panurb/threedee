@@ -68,6 +68,8 @@ Vector3 vec3(float x, float y, float z);
 
 float norm2(Vector2 v);
 
+float norm3(Vector3 v);
+
 float normsqr2(Vector2 v);
 
 float dist2(Vector2 a, Vector2 b);
@@ -75,6 +77,8 @@ float dist2(Vector2 a, Vector2 b);
 Vector2 normalized2(Vector2 v);
 
 float dot2(Vector2 a, Vector2 b);
+
+float dot3(Vector3 a, Vector3 b);
 
 float dot4(Vector4 a, Vector4 b);
 
@@ -139,6 +143,8 @@ Vector3 scale_from_transform(Matrix4 m);
 Vector3 rotation_from_transform(Matrix4 m);
 
 bool non_zero(Vector2 v);
+
+bool non_zero3(Vector3 v);
 
 Matrix4 perspective_projection_matrix(float fov, float aspect, float near, float far);
 
