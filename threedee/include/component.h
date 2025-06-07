@@ -5,6 +5,7 @@
 #include "util.h"
 #include "list.h"
 #include "linalg.h"
+#include "components/light.h"
 #include "components/mesh.h"
 
 #define MAX_ENTITIES 2000
@@ -59,6 +60,7 @@ typedef struct ComponentData {
     CameraComponent* camera[MAX_ENTITIES];
     SoundComponent* sound[MAX_ENTITIES];
     MeshComponent* mesh[MAX_ENTITIES];
+    LightComponent* light[MAX_ENTITIES];
 } ComponentData;
 
 typedef enum ComponentType {
@@ -66,6 +68,7 @@ typedef enum ComponentType {
     COMPONENT_CAMERA,
     COMPONENT_SOUND,
     COMPONENT_MESH,
+    COMPONENT_LIGHT,
 } ComponentType;
 
 ComponentData* ComponentData_create();

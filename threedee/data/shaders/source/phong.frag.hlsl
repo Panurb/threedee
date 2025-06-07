@@ -10,6 +10,15 @@ cbuffer UBO : register(b0, space3)
     float3 light_position : packoffset(c2);
 };
 
+struct LightData
+{
+    float3 position;
+    float3 diffuse_color;
+    float3 specular_color;
+};
+
+StructuredBuffer<LightData> light_data : register(t1, space2);
+
 struct Input
 {
     float2 tex_coord : TEXCOORD0;
@@ -37,6 +46,8 @@ float linearize_depth(float depth, float near, float far)
 
 Output main(Input input)
 {
+	float3 dummy = light_data[0].position;
+
     float2 tex_coord = input.tex_coord;
     float4 position = input.position;
     float3 normal = input.normal;
@@ -45,7 +56,7 @@ Output main(Input input)
 
     float2 atlas_uv = tex_rect.xy + frac(tex_coord) * tex_rect.zw;
 
-    float3 light_direction = light_position - world_position;
+    float3 light_direction = dummy - world_position;
     float3 view_direction = camera_position - world_position;
 
     Output result;

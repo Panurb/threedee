@@ -44,6 +44,13 @@ typedef struct {
 } InstanceData;
 
 
+typedef struct {
+	Vector3 position;
+	Vector3 diffuse_color;
+	Vector3 specular_color;
+} LightData;
+
+
 void init_render();
 
 void render();

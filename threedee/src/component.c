@@ -2,14 +2,13 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-
-#include "component.h"
-
 #include <stdio.h>
 
 #include "util.h"
 #include "input.h"
 #include "scene.h"
+#include "component.h"
+#include "components/light.h"
 
 
 ComponentData* ComponentData_create() {
@@ -22,6 +21,7 @@ ComponentData* ComponentData_create() {
         components->camera[i] = NULL;
         components->sound[i] = NULL;
         components->mesh[i] = NULL;
+        components->light[i] = NULL;
     }
     return components;
 }
@@ -164,6 +164,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return SoundComponent_get(entity);
         case COMPONENT_MESH:
             return scene->components->mesh[entity];
+        case COMPONENT_LIGHT:
+            return scene->components->light[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;
@@ -184,6 +186,9 @@ void remove_component(Entity entity, ComponentType component_type) {
             break;
         case COMPONENT_MESH:
             MeshComponent_remove(entity);
+            break;
+        case COMPONENT_LIGHT:
+            LightComponent_remove(entity);
             break;
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
