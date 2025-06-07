@@ -21,6 +21,7 @@ static SDL_GPUGraphicsPipeline* pipeline_3d = NULL;
 static SDL_GPUGraphicsPipeline* pipeline_3d_textured = NULL;
 static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
+
 static SDL_GPUBuffer* light_buffer = NULL;
 static SDL_GPUTransferBuffer* light_transfer_buffer = NULL;
 static int max_lights = 128;
@@ -616,6 +617,12 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 
 
 void add_light(Vector3 position, Color diffuse_color, Color specular_color) {
+	if (num_lights >= max_lights) {
+		light_buffer = double_buffer_size(light_buffer, sizeof(LightData) * max_lights);
+		light_transfer_buffer = double_transfer_buffer_size(light_transfer_buffer, sizeof(LightData) * max_lights);
+		max_lights *= 2;
+	}
+
 	LightData* lights = SDL_MapGPUTransferBuffer(app.gpu_device, light_transfer_buffer, false);
 
 	LightData light_data = {
@@ -734,42 +741,77 @@ void render() {
 }
 
 
+SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size) {
+	SDL_GPUBuffer* new_buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+			.size = 2 * size,
+		}
+	);
+
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+	SDL_CopyGPUBufferToBuffer(
+		copy_pass,
+		&(SDL_GPUBufferLocation) {
+			.buffer = buffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferLocation) {
+			.buffer = new_buffer,
+			.offset = 0
+		},
+		size,
+		false
+	);
+	SDL_EndGPUCopyPass(copy_pass);
+
+	SDL_ReleaseGPUBuffer(app.gpu_device, buffer);
+
+	return new_buffer;
+}
+
+
+SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transfer_buffer, int size) {
+	SDL_GPUTransferBuffer* new_transfer_buffer = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = 2 * size,
+			}
+		);
+
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+
+	void* data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+	void* new_data = SDL_MapGPUTransferBuffer(app.gpu_device, new_transfer_buffer, false);
+	SDL_memcpy(new_data, data, size);
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, new_transfer_buffer);
+
+	SDL_EndGPUCopyPass(copy_pass);
+
+	SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+	return new_transfer_buffer;
+}
+
+
 void add_render_instance(int mesh_index, Matrix4 transform, int texture_index, int material_index) {
 	MeshData* render_data = &resources.meshes[mesh_index];
 
 	if (render_data->num_instances >= render_data->max_instances) {
 		LOG_INFO("Buffer full, resizing...");
-		SDL_GPUBuffer* old_buffer = render_data->instance_buffer;
-
-		render_data->instance_buffer = SDL_CreateGPUBuffer(
-			app.gpu_device,
-			&(SDL_GPUBufferCreateInfo){
-				.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-				.size = sizeof(InstanceData) * 2 * render_data->max_instances,
-			}
+		render_data->instance_buffer = double_buffer_size(
+			render_data->instance_buffer,
+			sizeof(InstanceData) * render_data->max_instances
 		);
-
-		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
-		SDL_CopyGPUBufferToBuffer(
-			copy_pass,
-			&(SDL_GPUBufferLocation) {
-				.buffer = render_data->instance_buffer,
-				.offset = 0
-			},
-			&(SDL_GPUBufferLocation) {
-				.buffer = render_data->instance_buffer,
-				.offset = 0
-			},
-			sizeof(InstanceData) * render_data->max_instances,
-			false
+		render_data->instance_transfer_buffer = double_transfer_buffer_size(
+			render_data->instance_transfer_buffer,
+			sizeof(InstanceData) * render_data->max_instances
 		);
-		SDL_EndGPUCopyPass(copy_pass);
-
-		SDL_ReleaseGPUBuffer(app.gpu_device, old_buffer);
 		render_data->max_instances *= 2;
 		LOG_INFO("New buffer size: %d", render_data->max_instances);
-
-		// TODO: Resize the transfer buffer as well
 	}
 
 	// TODO: Map the transfer buffer only once per frame

@@ -20,7 +20,7 @@ typedef struct {
 } Material;
 
 
-typedef struct MeshData{
+typedef struct MeshData {
     SDL_GPUBuffer* vertex_buffer;
     int num_vertices;
     SDL_GPUBuffer* index_buffer;

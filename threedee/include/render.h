@@ -57,3 +57,7 @@ void init_render();
 void render();
 
 void add_render_instance(int mesh_index, Matrix4 transform, int texture_index, int material_index);
+
+SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size);
+
+SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transfer_buffer, int size);

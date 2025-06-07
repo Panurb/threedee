@@ -85,7 +85,7 @@ MeshData load_mesh(String path) {
 	}
 
 	MeshData mesh_data = {
-		.max_instances = 256,
+		.max_instances = 128,
 		.num_instances = 0
 	};
 
