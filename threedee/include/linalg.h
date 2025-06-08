@@ -39,12 +39,6 @@ typedef struct {
     float _41, _42, _43, _44;
 } Matrix4;
 
-typedef struct Rotation {
-    float yaw;
-    float pitch;
-    float roll;
-} Rotation;
-
 typedef struct Quaternion {
     float x;
     float y;
@@ -52,9 +46,18 @@ typedef struct Quaternion {
     float w;
 } Quaternion;
 
+typedef struct {
+    float yaw;
+    float pitch;
+    float roll;
+} EulerAngles;
+
+
 Vector2 zeros2();
 
 Vector3 zeros3();
+
+Vector4 zeros4();
 
 Vector2 ones2();
 
@@ -75,6 +78,10 @@ float normsqr2(Vector2 v);
 float dist2(Vector2 a, Vector2 b);
 
 Vector2 normalized2(Vector2 v);
+
+Vector3 normalized3(Vector3 v);
+
+Vector4 normalized4(Vector4 v);
 
 float dot2(Vector2 a, Vector2 b);
 
@@ -101,6 +108,8 @@ Vector3 diff3(Vector3 v, Vector3 u);
 Vector2 mult(float c, Vector2 v);
 
 Vector3 mult3(float c, Vector3 v);
+
+Vector4 mult4(float c, Vector4 v);
 
 Vector2 proj(Vector2 a, Vector2 b);
 
@@ -130,7 +139,7 @@ Matrix4 matrix4_mult(Matrix4 m, Matrix4 n);
 
 Matrix4 matrix4_id();
 
-Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale);
+Matrix4 transform_matrix(Vector3 position, Quaternion rotation, Vector3 scale);
 
 Vector3 matrix3_map(Matrix3 m, Vector3 v);
 
@@ -152,10 +161,24 @@ Matrix4 orthographic_projection_matrix(float left, float right, float bottom, fl
 
 Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up);
 
-Vector3 direction_from_rotation(Rotation rotation);
-
 void vector2_print(void* ptr);
 
 void vector3_print(void* ptr);
 
 void matrix4_print(Matrix4 m);
+
+Quaternion quaternion_id();
+
+Quaternion quaternion_normalize(Quaternion q);
+
+bool quaternion_equals(Quaternion a, Quaternion b);
+
+Matrix4 quaternion_to_rotation_matrix(Quaternion q);
+
+Quaternion rotation_matrix_to_quaternion(Matrix4 m);
+
+EulerAngles quaternion_to_euler(Quaternion q);
+
+Quaternion euler_to_quaternion(EulerAngles euler);
+
+Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up);

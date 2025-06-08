@@ -17,6 +17,10 @@ Vector3 zeros3() {
     return (Vector3) { 0.0f, 0.0f, 0.0f };
 }
 
+Vector4 zeros4() {
+    return (Vector4) { 0.0f, 0.0f, 0.0f, 0.0f };
+}
+
 Vector2 ones2() {
     return (Vector2) { 1.0f, 1.0f };
 }
@@ -71,6 +75,14 @@ Vector3 normalized3(Vector3 v) {
     return (Vector3) { v.x / n, v.y / n, v.z / n };
 }
 
+Vector4 normalized4(Vector4 v) {
+    float n = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+    if (n == 0.0f) {
+        return v;
+    }
+    return (Vector4) { v.x / n, v.y / n, v.z / n, v.w / n };
+}
+
 float dot2(Vector2 a, Vector2 b) {
     return a.x * b.x + a.y * b.y;
 }
@@ -123,6 +135,10 @@ Vector2 mult(float c, Vector2 v) {
 
 Vector3 mult3(float c, Vector3 v) {
     return (Vector3) { c * v.x, c * v.y, c * v.z };
+}
+
+Vector4 mult4(float c, Vector4 v) {
+    return (Vector4) { c * v.x, c * v.y, c * v.z, c * v.w };
 }
 
 Vector2 proj(Vector2 a, Vector2 b) {
@@ -251,18 +267,15 @@ Matrix4 matrix4_id() {
     };
 }
 
-Matrix4 transform_matrix(Vector3 position, Rotation rotation, Vector3 scale) {
-    float cy = cosf(rotation.yaw),   sy = sinf(rotation.yaw);
-    float cp = cosf(rotation.pitch), sp = sinf(rotation.pitch);
-    float cr = cosf(rotation.roll),  sr = sinf(rotation.roll);
+Matrix4 transform_matrix(Vector3 position, Quaternion rotation, Vector3 scale) {
+    Matrix4 rot = quaternion_to_rotation_matrix(rotation);
+    Quaternion q = rotation_matrix_to_quaternion(rot);
 
-    // Rotation matrix (Yaw-Pitch-Roll, extrinsic YXZ)
-    Matrix4 rot = {
-        cy*cp, cy*sp*sr - sy*cr, cy*sp*cr + sy*sr, 0.0f,
-        sy*cp, sy*sp*sr + cy*cr, sy*sp*cr - cy*sr, 0.0f,
-        -sp,   cp*sr,            cp*cr,            0.0f,
-        0.0f,  0.0f,             0.0f,             1.0f
-    };
+    if (!quaternion_equals(rotation, q)) {
+        LOG_ERROR("Quaternion and rotation matrix do not match!");
+        LOG_ERROR("Quaternion: %f, %f, %f, %f", rotation.x, rotation.y, rotation.z, rotation.w);
+        LOG_ERROR("Quaternion2: %f, %f, %f, %f", q.x, q.y, q.z, q.w);
+    }
 
     // Scale matrix
     Matrix4 scl = {
@@ -367,18 +380,6 @@ Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up) {
     return transpose4(m);
 }
 
-Vector3 direction_from_rotation(Rotation rotation) {
-    float cy = cosf(rotation.yaw);
-    float sy = sinf(rotation.yaw);
-    float cp = cosf(rotation.pitch);
-    float sp = sinf(rotation.pitch);
-    return (Vector3) {
-        cy * cp,
-        sp,
-        sy * cp
-    };
-}
-
 void vector2_print(void* ptr) {
     Vector2* v = ptr;
     printf("Vector2(%.2f, %.2f)\n", v->x, v->y);
@@ -394,4 +395,156 @@ void matrix4_print(Matrix4 m) {
     printf("[%.2f, %.2f, %.2f, %.2f]\n", m._21, m._22, m._23, m._24);
     printf("[%.2f, %.2f, %.2f, %.2f]\n", m._31, m._32, m._33, m._34);
     printf("[%.2f, %.2f, %.2f, %.2f]]\n", m._41, m._42, m._43, m._44);
+}
+
+Quaternion quaternion_id() {
+    return (Quaternion) { 0.0f, 0.0f, 0.0f, 1.0f };
+}
+
+Quaternion quaternion_normalize(Quaternion q) {
+    float norm = sqrtf(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+    if (norm == 0.0f) {
+        return quaternion_id();
+    }
+    return (Quaternion) { q.x / norm, q.y / norm, q.z / norm, q.w / norm };
+}
+
+Quaternion quaternion_conjugate(Quaternion q) {
+    return (Quaternion) { -q.x, -q.y, -q.z, q.w };
+}
+
+bool quaternion_equals(Quaternion a, Quaternion b) {
+    float epsilon = 1e-6f;
+    bool equal = false;
+
+    equal = fabsf(a.x - b.x) < epsilon &&
+            fabsf(a.y - b.y) < epsilon &&
+            fabsf(a.z - b.z) < epsilon &&
+            fabsf(a.w - b.w) < epsilon;
+
+    if (!equal) {
+        equal = fabsf(a.x + b.x) < epsilon &&
+                fabsf(a.y + b.y) < epsilon &&
+                fabsf(a.z + b.z) < epsilon &&
+                fabsf(a.w + b.w) < epsilon;
+    }
+
+    return equal;
+}
+
+Matrix4 quaternion_to_rotation_matrix(Quaternion q) {
+    // Convert quaternion to rotation matrix
+    float x = q.x;
+    float y = q.y;
+    float z = q.z;
+    float w = q.w;
+
+    Matrix4 rot = {
+        1.0f - 2.0f * (y * y + z * z), 2.0f * (x * y - w * z), 2.0f * (x * z + w * y), 0.0f,
+        2.0f * (x * y + w * z), 1.0f - 2.0f * (x * x + z * z), 2.0f * (y * z - w * x), 0.0f,
+        2.0f * (x * z - w * y), 2.0f * (y * z + w * x), 1.0f - 2.0f * (x * x + y * y), 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+
+    return rot;
+}
+
+Quaternion rotation_matrix_to_quaternion(Matrix4 m) {
+    // Convert rotation matrix to quaternion
+    Quaternion q;
+    float trace = m._11 + m._22 + m._33;
+
+    if (trace > 0.0f) {
+        float s = sqrtf(trace + 1.0f) * 2.0f; // S=4*q.w
+        q.w = 0.25f * s;
+        q.x = (m._32 - m._23) / s;
+        q.y = (m._13 - m._31) / s;
+        q.z = (m._21 - m._12) / s;
+    } else if ((m._11 > m._22) && (m._11 > m._33)) {
+        float s = sqrtf(1.0f + m._11 - m._22 - m._33) * 2.0f; // S=4*q.x
+        q.w = (m._32 - m._23) / s;
+        q.x = 0.25f * s;
+        q.y = (m._12 + m._21) / s;
+        q.z = (m._13 + m._31) / s;
+    } else if (m._22 > m._33) {
+        float s = sqrtf(1.0f + m._22 - m._11 - m._33) * 2.0f; // S=4*q.y
+        q.w = (m._13 - m._31) / s;
+        q.x = (m._12 + m._21) / s;
+        q.y = 0.25f * s;
+        q.z = (m._23 + m._32) / s;
+    } else {
+        float s = sqrtf(1.0f + m._33 - m._11 - m._22) * 2.0f; // S=4*q.z
+        q.w = (m._21 - m._12) / s;
+        q.x = (m._13 + m._31) / s;
+        q.y = (m._23 + m._32) / s;
+        q.z = 0.25f * s;
+    }
+
+    return q;
+}
+
+EulerAngles quaternion_to_euler(Quaternion q) {
+    // Extrinsic yaw-pitch-roll (XYZ) convention
+    EulerAngles angles;
+
+    float sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
+    float cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
+    angles.roll = atan2f(sinr_cosp, cosr_cosp);
+
+    float sinp = sqrtf(1.0f + 2.0f * (q.w * q.y + q.x * q.z));
+    float cosp = sqrtf(1.0f - 2.0f * (q.w * q.y + q.x * q.z));
+    angles.pitch = 2.0f * atan2f(sinp, cosp) - M_PI_2;
+
+    float siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
+    float cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+    angles.yaw = atan2f(siny_cosp, cosy_cosp);
+
+    return angles;
+}
+
+Quaternion euler_to_quaternion(EulerAngles euler) {
+    // Extrinsic yaw-pitch-roll (XYZ) convention
+    float cr = cosf(euler.roll * 0.5f);
+    float sr = sinf(euler.roll * 0.5f);
+    float cp = cosf(euler.pitch * 0.5f);
+    float sp = sinf(euler.pitch * 0.5f);
+    float cy = cosf(euler.yaw * 0.5f);
+    float sy = sinf(euler.yaw * 0.5f);
+
+    Quaternion q;
+    q.x = sr * cp * cy - cr * sp * sy;
+    q.y = cr * sp * cy + sr * cp * sy;
+    q.z = cr * cp * sy - sr * sp * cy;
+    q.w = cr * cp * cy + sr * sp * sy;
+    return q;
+}
+
+
+Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up) {
+    LOG_INFO("Forward: %f, %f, %f", fwd.x, fwd.y, fwd.z);
+    Vector3 right = cross(up, fwd);
+    float right_norm = norm3(right);
+    if (right_norm < 1e-6f) {
+        if (dot3(up, fwd) > 0.0f) {
+            // Up and forward are aligned, return identity quaternion
+            return quaternion_id();
+        } else {
+            // Up and forward are opposite, return 180-degree rotation around right axis
+            return (Quaternion) { 0.0f, 1.0f, 0.0f, 0.0f };
+        }
+    }
+
+    Vector3 new_up = cross(fwd, right);
+
+    Matrix4 rot_matrix = {
+        right.x, new_up.x, fwd.x, 0.0f,
+        right.y, new_up.y, fwd.y, 0.0f,
+        right.z, new_up.z, fwd.z, 0.0f,
+        0.0f,    0.0f,    0.0f,    1.0f
+    };
+
+    Quaternion q = rotation_matrix_to_quaternion(rot_matrix);
+    q = quaternion_normalize(q);
+
+    return q;
 }

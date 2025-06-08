@@ -119,6 +119,9 @@ void quit() {
 
 
 void input_game(SDL_Event sdl_event) {
+    static float yaw = 0.0f;
+    static float pitch = 0.0f;
+
     if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.key == SDLK_ESCAPE) {
         app.quit = true;
     }
@@ -141,9 +144,13 @@ void input_game(SDL_Event sdl_event) {
     float sens = game_settings.mouse_sensitivity / 1000.0f;
 
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
-        trans->rotation.roll = clamp(trans->rotation.roll - sdl_event.motion.yrel * sens, -M_PI_2, M_PI_2);
-        trans->rotation.pitch = trans->rotation.pitch - sdl_event.motion.xrel * sens;
+        yaw -= sdl_event.motion.xrel * sens;
+        pitch -= sdl_event.motion.yrel * sens;
+        pitch = clamp(pitch, -M_PI_2 + 0.1f, M_PI_2 - 0.1f);
     }
+
+    // TODO: Fix axis order
+    trans->rotation = euler_to_quaternion((EulerAngles) { 0.0f, yaw, pitch });
 }
 
 
@@ -185,15 +192,15 @@ void input() {
 
 
     TransformComponent* trans = TransformComponent_get(scene->camera);
-    Vector2 velocity = zeros2();
+    Vector4 velocity = zeros4();
 
     const bool* keyboard_state = SDL_GetKeyboardState(NULL);
 
     if (keyboard_state[SDL_SCANCODE_W]) {
-        velocity.y = -1.0f;
+        velocity.z = -1.0f;
     }
     if (keyboard_state[SDL_SCANCODE_S]) {
-        velocity.y = 1.0f;
+        velocity.z = 1.0f;
     }
     if (keyboard_state[SDL_SCANCODE_A]) {
         velocity.x = -1.0f;
@@ -202,9 +209,14 @@ void input() {
         velocity.x = 1.0f;
     }
 
-    velocity = mult(0.03f, normalized2(velocity));
-    velocity = rotate(velocity, -trans->rotation.pitch);
-    trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, 0.0f, velocity.y });
+    velocity = mult4(0.03f, normalized4(velocity));
+
+    Matrix4 rot = quaternion_to_rotation_matrix(trans->rotation);
+    velocity = matrix4_map(rot, velocity);
+
+    // EulerAngles euler = quaternion_to_euler(trans->rotation);
+    // velocity = rotate(velocity, -euler.pitch);
+    trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, velocity.y, velocity.z });
 }
 
 

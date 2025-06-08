@@ -61,7 +61,7 @@ Vector3 screen_to_world(int camera, Vector3 a) {
 void draw_cube(Entity camera, Vector3 position, float size, Color color) {
     CameraComponent* cam = CameraComponent_get(camera);
 
-    Matrix4 object_transform = transform_matrix(position, (Rotation) { 0 }, diag3(size));
+    // Matrix4 object_transform = transform_matrix(position, (Rotation) { 0 }, diag3(size));
 
     // add_render_instance(MESH_CUBE, object_transform);
 }

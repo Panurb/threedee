@@ -33,7 +33,7 @@ ComponentData* ComponentData_create() {
 TransformComponent* TransformComponent_add(Entity entity, Vector3 pos) {
     TransformComponent* trans = malloc(sizeof(TransformComponent));
     trans->position = pos;
-    trans->rotation = (Rotation) { 0.0f, 0.0f, 0.0f };
+    trans->rotation = (Quaternion) { 0.0f, 0.0f, 0.0f, 1.0f };
     trans->scale = ones3();
     trans->parent = NULL_ENTITY;
     trans->children = List_create();

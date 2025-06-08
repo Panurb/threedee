@@ -21,7 +21,7 @@ void fill(int* array, int value, int size) {
     }
 }
 
-bool close_enough(float a, float b, float epsilon) {
+bool fequal(float a, float b, float epsilon) {
     return fabs(a - b) < epsilon;
 }
 

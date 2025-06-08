@@ -15,7 +15,7 @@
 
 typedef struct {
     Vector3 position;
-    Rotation rotation;
+    Quaternion rotation;
     Vector3 scale;
     Entity parent;
     List* children;
@@ -23,7 +23,7 @@ typedef struct {
     Filename prefab;
     struct {
         Vector3 position;
-        Rotation rotation;
+        Quaternion rotation;
         Vector3 scale;
     } previous;
 } TransformComponent;

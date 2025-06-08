@@ -77,7 +77,7 @@ typedef char ButtonText[BUTTON_TEXT_SIZE];
 
 void fill(int* array, int value, int size);
 
-bool close_enough(float a, float b, float epsilon);
+bool fequal(float a, float b, float epsilon);
 
 float to_degrees(float radians);
 
