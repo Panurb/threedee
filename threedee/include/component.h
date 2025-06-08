@@ -7,7 +7,7 @@
 #include "linalg.h"
 #include "components/light.h"
 #include "components/mesh.h"
-#include "components/physics.h"
+#include "components/rigidbody.h"
 #include "components/collider.h"
 
 #define MAX_ENTITIES 2000
@@ -59,7 +59,7 @@ typedef struct ComponentData {
     SoundComponent* sound[MAX_ENTITIES];
     MeshComponent* mesh[MAX_ENTITIES];
     LightComponent* light[MAX_ENTITIES];
-    PhysicsComponent* physics[MAX_ENTITIES];
+    RigidBodyComponent* rigid_body[MAX_ENTITIES];
     ColliderComponent* collider[MAX_ENTITIES];
 } ComponentData;
 
@@ -69,7 +69,7 @@ typedef enum ComponentType {
     COMPONENT_SOUND,
     COMPONENT_MESH,
     COMPONENT_LIGHT,
-    COMPONENT_PHYSICS,
+    COMPONENT_RIGIDBODY,
     COMPONENT_COLLIDER,
 } ComponentType;
 

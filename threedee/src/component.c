@@ -9,7 +9,7 @@
 #include "scene.h"
 #include "component.h"
 #include "components/light.h"
-#include "components/physics.h"
+#include "components/rigidbody.h"
 
 
 ComponentData* ComponentData_create() {
@@ -23,7 +23,7 @@ ComponentData* ComponentData_create() {
         components->sound[i] = NULL;
         components->mesh[i] = NULL;
         components->light[i] = NULL;
-        components->physics[i] = NULL;
+        components->rigid_body[i] = NULL;
         components->collider[i] = NULL;
     }
     return components;
@@ -169,8 +169,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->mesh[entity];
         case COMPONENT_LIGHT:
             return scene->components->light[entity];
-        case COMPONENT_PHYSICS:
-            return scene->components->physics[entity];
+        case COMPONENT_RIGIDBODY:
+            return scene->components->rigid_body[entity];
         case COMPONENT_COLLIDER:
             return scene->components->collider[entity];
         default:
@@ -197,8 +197,8 @@ void remove_component(Entity entity, ComponentType component_type) {
         case COMPONENT_LIGHT:
             LightComponent_remove(entity);
             break;
-        case COMPONENT_PHYSICS:
-            PhysicsComponent_remove(entity);
+        case COMPONENT_RIGIDBODY:
+            RigidBodyComponent_remove(entity);
         case COMPONENT_COLLIDER:
             ColliderComponent_remove(entity);
             break;

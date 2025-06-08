@@ -28,7 +28,7 @@ set(SOURCES
     threedee/src/components/collider.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
-    threedee/src/components/physics.c
+    threedee/src/components/rigidbody.c
     threedee/src/heap.c
     threedee/src/input.c
     threedee/src/interface.c

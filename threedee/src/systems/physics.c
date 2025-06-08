@@ -1,6 +1,6 @@
+#include "scene.h"
 #include "systems/physics.h"
-
-#include <scene.h>
+#include "components/rigidbody.h"
 
 
 static Vector3 gravity = { 0.0f, -9.81f, 0.0f };
@@ -8,7 +8,7 @@ static Vector3 gravity = { 0.0f, -9.81f, 0.0f };
 
 void update_physics(float time_step) {
     for (int i = 0; i < scene->components->entities; i++) {
-        PhysicsComponent* physics = scene->components->physics[i];
+        RigidBodyComponent* physics = scene->components->rigid_body[i];
         if (!physics) continue;
 
         TransformComponent* trans = TransformComponent_get(i);

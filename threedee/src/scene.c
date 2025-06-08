@@ -60,7 +60,7 @@ void create_scene() {
     TransformComponent* transform = TransformComponent_add(i, vec3(-3.0f, 0.0f, 0.0f));
     transform->scale = vec3(0.5f, 0.5f, 0.5f);
     MeshComponent_add(i, "sphere", "tiles", "default");
-    PhysicsComponent_add(i, 1.0f);
+    RigidBodyComponent_add(i, 1.0f);
     ColliderComponent_add(i, COLLIDER_SPHERE, 1.0f);
 
     i = create_entity();

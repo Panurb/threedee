@@ -11,9 +11,9 @@ typedef struct {
     float friction;
     float bounce;
     bool asleep;
-} PhysicsComponent;
+} RigidBodyComponent;
 
 
-PhysicsComponent* PhysicsComponent_add(Entity entity, float mass);
+RigidBodyComponent* RigidBodyComponent_add(Entity entity, float mass);
 
-void PhysicsComponent_remove(Entity entity);
+void RigidBodyComponent_remove(Entity entity);
