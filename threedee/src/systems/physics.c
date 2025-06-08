@@ -8,8 +8,8 @@ static Vector3 gravity = { 0.0f, -9.81f, 0.0f };
 
 void update_physics(float time_step) {
     for (int i = 0; i < scene->components->entities; i++) {
-        RigidBodyComponent* physics = scene->components->rigid_body[i];
-        if (!physics) continue;
+        RigidBodyComponent* rigid_body = scene->components->rigid_body[i];
+        if (!rigid_body) continue;
 
         TransformComponent* trans = TransformComponent_get(i);
         ColliderComponent* collider = scene->components->collider[i];
@@ -18,27 +18,31 @@ void update_physics(float time_step) {
             for (int j = 0; j < collider->collisions->size; j++) {
                 Collision collision = *(Collision*)ArrayList_get(collider->collisions, j);
                 trans->position = sum3(trans->position, collision.overlap);
-                physics->velocity = mult3(-physics->bounce, physics->velocity);
-                physics->asleep = false;
+                rigid_body->velocity = mult3(-rigid_body->bounce, rigid_body->velocity);
+                rigid_body->asleep = false;
             }
         }
 
-        if (physics->asleep) {
+        if (rigid_body->asleep) {
             continue;
         }
 
-        physics->acceleration = sum3(physics->acceleration, gravity);
+        rigid_body->acceleration = sum3(rigid_body->acceleration, gravity);
+        rigid_body->velocity = sum3(rigid_body->velocity, mult3(time_step, rigid_body->acceleration));
+        trans->position = sum3(trans->position, mult3(time_step, rigid_body->velocity));
 
-        physics->velocity = sum3(physics->velocity, mult3(time_step, physics->acceleration));
-        physics->velocity = mult3(1.0f - physics->friction * time_step, physics->velocity);
+        rigid_body->angular_velocity = sum3(rigid_body->angular_velocity, mult3(time_step, rigid_body->angular_acceleration));
+        float angle = norm3(rigid_body->angular_velocity) * time_step;
+        Vector3 axis = normalized3(rigid_body->angular_velocity);
+        Quaternion delta_rotation = axis_angle_to_quaternion(axis, angle);
+        trans->rotation = quaternion_mult(delta_rotation, trans->rotation);
 
-        trans->position = sum3(trans->position, mult3(time_step, physics->velocity));
-
-        if (norm3(physics->velocity) < 0.0001f) {
-            physics->velocity = zeros3();
-            physics->asleep = true;
+        if (norm3(rigid_body->velocity) < 1e-6f) {
+            rigid_body->velocity = zeros3();
+            rigid_body->asleep = true;
         }
 
-        physics->acceleration = zeros3();
+        rigid_body->acceleration = zeros3();
+        rigid_body->angular_acceleration = zeros3();
     }
 }

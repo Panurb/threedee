@@ -2,6 +2,8 @@
 
 #include <stdbool.h>
 
+#include "quaternion.h"
+
 
 typedef struct {
     float x;
@@ -38,19 +40,6 @@ typedef struct {
     float _31, _32, _33, _34;
     float _41, _42, _43, _44;
 } Matrix4;
-
-typedef struct Quaternion {
-    float x;
-    float y;
-    float z;
-    float w;
-} Quaternion;
-
-typedef struct {
-    float yaw;
-    float pitch;
-    float roll;
-} EulerAngles;
 
 
 Vector2 zeros2();
@@ -167,18 +156,10 @@ void vector3_print(void* ptr);
 
 void matrix4_print(Matrix4 m);
 
-Quaternion quaternion_id();
-
-Quaternion quaternion_normalize(Quaternion q);
-
-bool quaternion_equals(Quaternion a, Quaternion b);
+Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up);
 
 Matrix4 quaternion_to_rotation_matrix(Quaternion q);
 
 Quaternion rotation_matrix_to_quaternion(Matrix4 m);
 
-EulerAngles quaternion_to_euler(Quaternion q);
-
-Quaternion euler_to_quaternion(EulerAngles euler);
-
-Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up);
+Quaternion axis_angle_to_quaternion(Vector3 axis, float angle);

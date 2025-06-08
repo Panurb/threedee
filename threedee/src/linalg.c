@@ -397,40 +397,36 @@ void matrix4_print(Matrix4 m) {
     printf("[%.2f, %.2f, %.2f, %.2f]]\n", m._41, m._42, m._43, m._44);
 }
 
-Quaternion quaternion_id() {
-    return (Quaternion) { 0.0f, 0.0f, 0.0f, 1.0f };
-}
 
-Quaternion quaternion_normalize(Quaternion q) {
-    float norm = sqrtf(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
-    if (norm == 0.0f) {
-        return quaternion_id();
-    }
-    return (Quaternion) { q.x / norm, q.y / norm, q.z / norm, q.w / norm };
-}
-
-Quaternion quaternion_conjugate(Quaternion q) {
-    return (Quaternion) { -q.x, -q.y, -q.z, q.w };
-}
-
-bool quaternion_equals(Quaternion a, Quaternion b) {
-    float epsilon = 1e-6f;
-    bool equal = false;
-
-    equal = fabsf(a.x - b.x) < epsilon &&
-            fabsf(a.y - b.y) < epsilon &&
-            fabsf(a.z - b.z) < epsilon &&
-            fabsf(a.w - b.w) < epsilon;
-
-    if (!equal) {
-        equal = fabsf(a.x + b.x) < epsilon &&
-                fabsf(a.y + b.y) < epsilon &&
-                fabsf(a.z + b.z) < epsilon &&
-                fabsf(a.w + b.w) < epsilon;
+Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up) {
+    LOG_INFO("Forward: %f, %f, %f", fwd.x, fwd.y, fwd.z);
+    Vector3 right = cross(up, fwd);
+    float right_norm = norm3(right);
+    if (right_norm < 1e-6f) {
+        if (dot3(up, fwd) > 0.0f) {
+            // Up and forward are aligned, return identity quaternion
+            return quaternion_id();
+        } else {
+            // Up and forward are opposite, return 180-degree rotation around right axis
+            return (Quaternion) { 0.0f, 1.0f, 0.0f, 0.0f };
+        }
     }
 
-    return equal;
+    Vector3 new_up = cross(fwd, right);
+
+    Matrix4 rot_matrix = {
+        right.x, new_up.x, fwd.x, 0.0f,
+        right.y, new_up.y, fwd.y, 0.0f,
+        right.z, new_up.z, fwd.z, 0.0f,
+        0.0f,    0.0f,    0.0f,    1.0f
+    };
+
+    Quaternion q = rotation_matrix_to_quaternion(rot_matrix);
+    q = quaternion_normalize(q);
+
+    return q;
 }
+
 
 Matrix4 quaternion_to_rotation_matrix(Quaternion q) {
     // Convert quaternion to rotation matrix
@@ -448,6 +444,7 @@ Matrix4 quaternion_to_rotation_matrix(Quaternion q) {
 
     return rot;
 }
+
 
 Quaternion rotation_matrix_to_quaternion(Matrix4 m) {
     // Convert rotation matrix to quaternion
@@ -483,68 +480,9 @@ Quaternion rotation_matrix_to_quaternion(Matrix4 m) {
     return q;
 }
 
-EulerAngles quaternion_to_euler(Quaternion q) {
-    // Extrinsic yaw-pitch-roll (XYZ) convention
-    EulerAngles angles;
-
-    float sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
-    float cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
-    angles.roll = atan2f(sinr_cosp, cosr_cosp);
-
-    float sinp = sqrtf(1.0f + 2.0f * (q.w * q.y + q.x * q.z));
-    float cosp = sqrtf(1.0f - 2.0f * (q.w * q.y + q.x * q.z));
-    angles.pitch = 2.0f * atan2f(sinp, cosp) - M_PI_2;
-
-    float siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
-    float cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
-    angles.yaw = atan2f(siny_cosp, cosy_cosp);
-
-    return angles;
-}
-
-Quaternion euler_to_quaternion(EulerAngles euler) {
-    // Extrinsic yaw-pitch-roll (XYZ) convention
-    float cr = cosf(euler.roll * 0.5f);
-    float sr = sinf(euler.roll * 0.5f);
-    float cp = cosf(euler.pitch * 0.5f);
-    float sp = sinf(euler.pitch * 0.5f);
-    float cy = cosf(euler.yaw * 0.5f);
-    float sy = sinf(euler.yaw * 0.5f);
-
-    Quaternion q;
-    q.x = sr * cp * cy - cr * sp * sy;
-    q.y = cr * sp * cy + sr * cp * sy;
-    q.z = cr * cp * sy - sr * sp * cy;
-    q.w = cr * cp * cy + sr * sp * sy;
-    return q;
-}
-
-
-Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up) {
-    LOG_INFO("Forward: %f, %f, %f", fwd.x, fwd.y, fwd.z);
-    Vector3 right = cross(up, fwd);
-    float right_norm = norm3(right);
-    if (right_norm < 1e-6f) {
-        if (dot3(up, fwd) > 0.0f) {
-            // Up and forward are aligned, return identity quaternion
-            return quaternion_id();
-        } else {
-            // Up and forward are opposite, return 180-degree rotation around right axis
-            return (Quaternion) { 0.0f, 1.0f, 0.0f, 0.0f };
-        }
-    }
-
-    Vector3 new_up = cross(fwd, right);
-
-    Matrix4 rot_matrix = {
-        right.x, new_up.x, fwd.x, 0.0f,
-        right.y, new_up.y, fwd.y, 0.0f,
-        right.z, new_up.z, fwd.z, 0.0f,
-        0.0f,    0.0f,    0.0f,    1.0f
-    };
-
-    Quaternion q = rotation_matrix_to_quaternion(rot_matrix);
-    q = quaternion_normalize(q);
-
-    return q;
+Quaternion axis_angle_to_quaternion(Vector3 axis, float angle) {
+    Vector3 norm_axis = normalized3(axis);
+    float half_angle = angle / 2.0f;
+    float s = sinf(half_angle);
+    return (Quaternion) { norm_axis.x * s, norm_axis.y * s, norm_axis.z * s, cosf(half_angle) };
 }

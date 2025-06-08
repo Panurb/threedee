@@ -7,6 +7,7 @@ typedef struct {
     Vector3 velocity;
     Vector3 acceleration;
     Vector3 angular_velocity;
+    Vector3 angular_acceleration;
     float mass;
     float friction;
     float bounce;
