@@ -8,7 +8,7 @@
 
 
 float get_radius(Entity entity) {
-    // Use y component since this work nicely with plane offset.
+    // Use y component since this works nicely with plane offset.
     float scale = get_scale(entity).y;
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
     if (collider) {
@@ -64,9 +64,8 @@ Vector3 get_overlap(Entity i, Entity j) {
         up = matrix4_map(transform, up);
         Vector3 plane_normal = (Vector3) { up.x, up.y, up.z };
         float plane_offset = dot3(other_position, plane_normal);
-        plane_offset -= sign(plane_offset) * get_radius(j);
 
-        return overlap_sphere_plane(position, get_radius(i), plane_normal, plane_offset);
+        return overlap_sphere_plane(position, get_radius(i) + get_radius(j), plane_normal, plane_offset);
     }
 
     if (collider->type == COLLIDER_PLANE && other_collider->type == COLLIDER_SPHERE) {

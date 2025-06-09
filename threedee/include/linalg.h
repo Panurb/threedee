@@ -64,6 +64,8 @@ float norm3(Vector3 v);
 
 float normsqr2(Vector2 v);
 
+float normsqr3(Vector3 v);
+
 float dist2(Vector2 a, Vector2 b);
 
 Vector2 normalized2(Vector2 v);
@@ -101,6 +103,8 @@ Vector3 mult3(float c, Vector3 v);
 Vector4 mult4(float c, Vector4 v);
 
 Vector2 proj(Vector2 a, Vector2 b);
+
+Vector3 proj3(Vector3 a, Vector3 b);
 
 Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u);
 

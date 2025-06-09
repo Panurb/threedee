@@ -53,6 +53,10 @@ float normsqr2(Vector2 v) {
     return v.x * v.x + v.y * v.y;
 }
 
+float normsqr3(Vector3 v) {
+    return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
 float dist2(Vector2 a, Vector2 b) {
     float x = a.x - b.x;
     float y = a.y - b.y;
@@ -144,6 +148,11 @@ Vector4 mult4(float c, Vector4 v) {
 Vector2 proj(Vector2 a, Vector2 b) {
     Vector2 b_norm = normalized2(b);
     return mult(dot2(a, b_norm), b_norm);
+}
+
+Vector3 proj3(Vector3 a, Vector3 b) {
+    Vector3 b_norm = normalized3(b);
+    return mult3(dot3(a, b_norm), b_norm);
 }
 
 Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u) {
@@ -321,9 +330,9 @@ Vector3 position_from_transform(Matrix4 m) {
 
 Vector3 scale_from_transform(Matrix4 m) {
     return (Vector3) {
-        sqrtf(m._11 * m._11 + m._12 * m._12 + m._13 * m._13),
-        sqrtf(m._21 * m._21 + m._22 * m._22 + m._23 * m._23),
-        sqrtf(m._31 * m._31 + m._32 * m._32 + m._33 * m._33)
+        sqrtf(m._11 * m._11 + m._21 * m._21 + m._31 * m._31),
+        sqrtf(m._12 * m._12 + m._22 * m._22 + m._32 * m._32),
+        sqrtf(m._13 * m._13 + m._23 * m._23 + m._33 * m._33)
     };
 }
 
