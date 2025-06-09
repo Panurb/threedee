@@ -30,6 +30,25 @@ float moment_of_inertia(Entity entity) {
 }
 
 
+void apply_impulse(Entity entity, Vector3 point, Vector3 impulse) {
+    RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+    if (!rb) return;
+
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+
+    // Offset from center of mass to contact point
+    Vector3 r = diff3(point, trans->position);
+
+    // Linear velocity update
+    rb->velocity = sum3(rb->velocity, mult3(1.0f / rb->mass, impulse));
+
+    // Angular velocity update
+    float inertia = moment_of_inertia(entity);
+    Vector3 torque = cross(r, impulse);
+    rb->angular_velocity = sum3(rb->angular_velocity, mult3(1.0f / inertia, torque));
+}
+
+
 void update_physics(float time_step) {
     for (int i = 0; i < scene->components->entities; i++) {
         RigidBodyComponent* rigid_body = scene->components->rigid_body[i];
@@ -50,17 +69,21 @@ void update_physics(float time_step) {
                 Vector3 v_t = diff3(v_rel, v_n);
                 Vector3 tangent = normalized3(v_t);
 
+                // TODO: Use inertia tensor
                 float inertia = moment_of_inertia(i);
 
                 // Normal impulse
-                float j_n = -(1.0f + rigid_body->bounce) * dot3(v_rel, normal);
-                j_n /= (1.0f / rigid_body->mass + normsqr3(cross(r, normal)) / inertia);
+                float j_n = 0.0f;
+                if (dot3(v_n, normal) < 0.0f) {
+                    j_n = -(1.0f + rigid_body->bounce) * dot3(v_rel, normal);
+                    j_n /= (1.0f / rigid_body->mass + normsqr3(cross(r, normal)) / inertia);
+                }
 
                 // Tangential impulse
                 float j_t = -dot3(v_t, tangent);
                 j_t /= (1.0f / rigid_body->mass + normsqr3(cross(r, tangent)) / inertia);
 
-                // Clamp according to Coulomb's law
+                // Clamp according to Coulomb's law of friction
                 float j_t_max = rigid_body->friction * fabsf(j_n);
                 if (fabsf(j_t) > j_t_max) {
                     j_t = -j_t_max * sign(j_t);
@@ -92,8 +115,9 @@ void update_physics(float time_step) {
         Quaternion delta_rotation = axis_angle_to_quaternion(axis, angle);
         trans->rotation = quaternion_mult(delta_rotation, trans->rotation);
 
-        if (norm3(rigid_body->velocity) < 1e-6f) {
+        if (norm3(rigid_body->velocity) < 1e-6f && norm3(rigid_body->angular_velocity) < 1e-6f) {
             rigid_body->velocity = zeros3();
+            rigid_body->angular_velocity = zeros3();
             rigid_body->asleep = true;
         }
 

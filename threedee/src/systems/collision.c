@@ -72,7 +72,7 @@ Vector3 get_overlap(Entity i, Entity j) {
         return get_overlap(j, i);
     }
 
-    LOG_ERROR("Invalid collision: %d vs %d", collider->type, other_collider->type);
+    // LOG_ERROR("Invalid collision: %d vs %d", collider->type, other_collider->type);
 
     return zeros3();
 }

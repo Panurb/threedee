@@ -58,6 +58,8 @@ Vector2 vec2(float x, float y);
 
 Vector3 vec3(float x, float y, float z);
 
+Vector4 vec4(float x, float y, float z, float w);
+
 float norm2(Vector2 v);
 
 float norm3(Vector3 v);

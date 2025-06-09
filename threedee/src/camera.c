@@ -46,6 +46,14 @@ Vector2 camera_size(int camera) {
 }
 
 
+Vector3 look_direction(Entity camera) {
+    Matrix4 transform = get_transform(camera);
+    Vector4 forward = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+    forward = matrix4_map(transform, forward);
+    return vec3(forward.x, forward.y, forward.z);
+}
+
+
 Vector3 world_to_screen(int camera, Vector3 a) {
     // Matrix4 transform = TransformComponent_get(camera)->transform;
 

@@ -41,6 +41,10 @@ Vector3 vec3(float x, float y, float z) {
     return (Vector3) { x, y, z };
 }
 
+Vector4 vec4(float x, float y, float z, float w) {
+    return (Vector4) { x, y, z, w };
+}
+
 float norm2(Vector2 v) {
     return sqrtf(v.x * v.x + v.y * v.y);
 }

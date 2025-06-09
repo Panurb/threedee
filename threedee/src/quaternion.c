@@ -3,6 +3,7 @@
 #include "quaternion.h"
 
 #include <math.h>
+#include <util.h>
 
 
 Quaternion quaternion_id() {
@@ -56,32 +57,39 @@ Quaternion quaternion_mult(Quaternion a, Quaternion b) {
 
 EulerAngles quaternion_to_euler(Quaternion q) {
     // Extrinsic yaw-pitch-roll (XYZ) convention
-    EulerAngles angles;
+    EulerAngles euler;
 
     float sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
     float cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
-    angles.roll = atan2f(sinr_cosp, cosr_cosp);
+    euler.roll = atan2f(sinr_cosp, cosr_cosp);
 
     float sinp = sqrtf(1.0f + 2.0f * (q.w * q.y + q.x * q.z));
     float cosp = sqrtf(1.0f - 2.0f * (q.w * q.y + q.x * q.z));
-    angles.pitch = 2.0f * atan2f(sinp, cosp) - M_PI_2;
+    euler.pitch = 2.0f * atan2f(sinp, cosp) - M_PI_2;
 
     float siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
     float cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
-    angles.yaw = atan2f(siny_cosp, cosy_cosp);
+    euler.yaw = atan2f(siny_cosp, cosy_cosp);
 
-    return angles;
+    euler.roll = to_degrees(euler.roll);
+    euler.pitch = to_degrees(euler.pitch);
+    euler.yaw = to_degrees(euler.yaw);
+    return euler;
 }
 
 
 Quaternion euler_to_quaternion(EulerAngles euler) {
+    float roll = to_radians(euler.roll);
+    float pitch = to_radians(euler.pitch);
+    float yaw = to_radians(euler.yaw);
+
     // Extrinsic yaw-pitch-roll (XYZ) convention
-    float cr = cosf(euler.roll * 0.5f);
-    float sr = sinf(euler.roll * 0.5f);
-    float cp = cosf(euler.pitch * 0.5f);
-    float sp = sinf(euler.pitch * 0.5f);
-    float cy = cosf(euler.yaw * 0.5f);
-    float sy = sinf(euler.yaw * 0.5f);
+    float cr = cosf(roll * 0.5f);
+    float sr = sinf(roll * 0.5f);
+    float cp = cosf(pitch * 0.5f);
+    float sp = sinf(pitch * 0.5f);
+    float cy = cosf(yaw * 0.5f);
+    float sy = sinf(yaw * 0.5f);
 
     Quaternion q;
     q.x = sr * cp * cy - cr * sp * sy;

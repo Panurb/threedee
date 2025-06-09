@@ -12,7 +12,7 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, float mass) {
     rigid_body->angular_velocity = zeros3();
     rigid_body->angular_acceleration = zeros3();
     rigid_body->mass = mass;
-    rigid_body->friction = 0.5f;
+    rigid_body->friction = 1.0f;
     rigid_body->bounce = 0.5f;
     rigid_body->asleep = false;
 

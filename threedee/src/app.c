@@ -5,15 +5,14 @@
 #include <stdlib.h>
 
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
+// #include <SDL_mixer.h>
 
 #include "app.h"
 
-#include <camera.h>
-// #include <SDL_mixer.h>
-#include <resources.h>
-#include <sound.h>
-#include <SDL3_ttf/SDL_ttf.h>
-#include <systems/collision.h>
+#include "resources.h"
+#include "sound.h"
+#include "systems/collision.h"
 
 #include "settings.h"
 #include "interface.h"
@@ -21,6 +20,8 @@
 #include "render.h"
 #include "scene.h"
 #include "systems/physics.h"
+#include "raycast.h"
+#include "camera.h"
 
 
 App app;
@@ -141,12 +142,18 @@ void input_game(SDL_Event sdl_event) {
 
 
     TransformComponent* trans = TransformComponent_get(scene->camera);
-    float sens = game_settings.mouse_sensitivity / 1000.0f;
+    float sens = game_settings.mouse_sensitivity / 10.0f;
 
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
         yaw -= sdl_event.motion.xrel * sens;
         pitch -= sdl_event.motion.yrel * sens;
-        pitch = clamp(pitch, -M_PI_2 + 0.1f, M_PI_2 - 0.1f);
+        pitch = clamp(pitch, -89.0f, 89.0f);
+    } else if (sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        Ray ray = { get_position(scene->camera), look_direction(scene->camera) };
+        Hit hit = raycast(ray);
+        if (hit.entity != NULL_ENTITY && get_component(hit.entity, COMPONENT_RIGIDBODY)) {
+            apply_impulse(hit.entity, hit.point, mult3(10.0f, hit.normal));
+        }
     }
 
     // TODO: Fix axis order
@@ -214,8 +221,6 @@ void input() {
     Matrix4 rot = quaternion_to_rotation_matrix(trans->rotation);
     velocity = matrix4_map(rot, velocity);
 
-    // EulerAngles euler = quaternion_to_euler(trans->rotation);
-    // velocity = rotate(velocity, -euler.pitch);
     trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, velocity.y, velocity.z });
 }
 

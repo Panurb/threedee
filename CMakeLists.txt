@@ -36,6 +36,7 @@ set(SOURCES
     threedee/src/list.c
     threedee/src/perlin.c
     threedee/src/quaternion.c
+    threedee/src/raycast.c
     threedee/src/resources.c
     threedee/src/scene.c
     threedee/src/settings.c
