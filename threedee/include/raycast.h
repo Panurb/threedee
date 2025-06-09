@@ -8,11 +8,6 @@ typedef struct {
 } Ray;
 
 typedef struct {
-    Vector3 center;
-    float radius;
-} Sphere;
-
-typedef struct {
     Entity entity;
     float distance;
     Vector3 point;

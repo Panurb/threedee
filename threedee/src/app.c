@@ -201,7 +201,7 @@ void input() {
 
 
     TransformComponent* trans = TransformComponent_get(scene->camera);
-    Vector4 velocity = zeros4();
+    Vector3 velocity = zeros3();
 
     const bool* keyboard_state = SDL_GetKeyboardState(NULL);
 
@@ -218,10 +218,10 @@ void input() {
         velocity.x = 1.0f;
     }
 
-    velocity = mult4(0.03f, normalized4(velocity));
+    velocity = mult3(0.03f, normalized3(velocity));
 
-    Matrix4 rot = quaternion_to_rotation_matrix(trans->rotation);
-    velocity = matrix4_map(rot, velocity);
+    Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
+    velocity = matrix3_map(rot, velocity);
 
     trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, velocity.y, velocity.z });
 }

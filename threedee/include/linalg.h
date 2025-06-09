@@ -29,9 +29,9 @@ typedef struct {
 } Matrix2;
 
 typedef struct {
-    float a, b, c;
-    float d, e, f;
-    float g, h, i;
+    float _11, _12, _13;
+    float _21, _22, _23;
+    float _31, _32, _33;
 } Matrix3;
 
 typedef struct {
@@ -148,8 +148,6 @@ Vector3 position_from_transform(Matrix4 m);
 
 Vector3 scale_from_transform(Matrix4 m);
 
-Vector3 rotation_from_transform(Matrix4 m);
-
 bool non_zero(Vector2 v);
 
 bool non_zero3(Vector3 v);
@@ -170,8 +168,8 @@ void matrix4_print(Matrix4 m);
 
 Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up);
 
-Matrix4 quaternion_to_rotation_matrix(Quaternion q);
+Matrix3 quaternion_to_rotation_matrix(Quaternion q);
 
-Quaternion rotation_matrix_to_quaternion(Matrix4 m);
+Quaternion rotation_matrix_to_quaternion(Matrix3 m);
 
 Quaternion axis_angle_to_quaternion(Vector3 axis, float angle);

@@ -106,7 +106,7 @@ void ComponentData_clear();
 Matrix4 get_transform(Entity entity);
 Vector3 get_position(Entity entity);
 Vector2 get_xy(Entity entity);
-Vector3 get_rotation(Entity entity);
+Quaternion get_rotation(Entity entity);
 Vector3 get_scale(Entity entity);
 
 Vector2 get_position_interpolated(int entity, float delta);

@@ -56,6 +56,28 @@ typedef struct {
     unsigned char a;
 } Color;
 
+typedef struct {
+    Vector3 normal;
+    float offset; // Distance from the origin to the plane along the normal
+} Plane;
+
+typedef struct {
+    Vector3 center;
+    float radius;
+} Sphere;
+
+typedef struct {
+    Vector3 center;
+    Vector3 size; // Half extents
+    Quaternion rotation;
+} Cuboid;
+
+typedef union {
+    Plane plane;
+    Sphere sphere;
+    Cuboid cuboid;
+} Shape;
+
 #define COLOR_NONE get_color(0.0f, 0.0f, 0.0f, 0.0f)
 #define COLOR_WHITE get_color(1.0f, 1.0f, 1.0f, 1.0f)
 #define COLOR_YELLOW get_color(1.0f, 1.0f, 0.0f, 1.0f)

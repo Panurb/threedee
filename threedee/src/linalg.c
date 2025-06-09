@@ -209,9 +209,9 @@ float matrix2_determinant(Matrix2 m) {
 }
 
 float matrix3_determinant(Matrix3 m) {
-    return m.a * (m.e * m.i - m.f * m.h) -
-           m.b * (m.d * m.i - m.f * m.g) +
-           m.c * (m.d * m.h - m.e * m.g);
+    return m._11 * (m._22 * m._33 - m._23 * m._32) -
+           m._12 * (m._21 * m._33 - m._23 * m._31) +
+           m._13 * (m._21 * m._32 - m._22 * m._31);
 }
 
 Matrix2 matrix2_inverse(Matrix2 m) {
@@ -230,15 +230,15 @@ Matrix3 matrix3_inverse(Matrix3 m) {
     float inv_det = 1.0f / det;
 
     Matrix3 inv;
-    inv.a =  (m.e * m.i - m.f * m.h) * inv_det;
-    inv.b = -(m.b * m.i - m.c * m.h) * inv_det;
-    inv.c =  (m.b * m.f - m.c * m.e) * inv_det;
-    inv.d = -(m.d * m.i - m.f * m.g) * inv_det;
-    inv.e =  (m.a * m.i - m.c * m.g) * inv_det;
-    inv.f = -(m.a * m.f - m.c * m.d) * inv_det;
-    inv.g =  (m.d * m.h - m.e * m.g) * inv_det;
-    inv.h = -(m.a * m.h - m.b * m.g) * inv_det;
-    inv.i =  (m.a * m.e - m.b * m.d) * inv_det;
+    inv._11 =  (m._22 * m._33 - m._23 * m._32) * inv_det;
+    inv._12 = -(m._12 * m._33 - m._13 * m._32) * inv_det;
+    inv._13 =  (m._12 * m._23 - m._13 * m._22) * inv_det;
+    inv._21 = -(m._21 * m._33 - m._23 * m._31) * inv_det;
+    inv._22 =  (m._11 * m._33 - m._13 * m._31) * inv_det;
+    inv._23 = -(m._11 * m._23 - m._13 * m._21) * inv_det;
+    inv._31 =  (m._21 * m._32 - m._22 * m._31) * inv_det;
+    inv._32 = -(m._11 * m._32 - m._12 * m._31) * inv_det;
+    inv._33 =  (m._11 * m._22 - m._12 * m._21) * inv_det;
 
     return inv;
 }
@@ -259,9 +259,9 @@ Matrix4 transform_inverse(Matrix4 m) {
     Vector3 rd = matrix3_map(r, d);
 
     Matrix4 m_inv = {
-        r.a, r.b, r.c, -rd.x,
-        r.d, r.e, r.f, -rd.y,
-        r.g, r.h, r.i, -rd.z,
+        r._11, r._12, r._13, -rd.x,
+        r._21, r._22, r._23, -rd.y,
+        r._31, r._32, r._33, -rd.z,
         0.0f, 0.0f, 0.0f, 1.0f
     };
 
@@ -270,15 +270,15 @@ Matrix4 transform_inverse(Matrix4 m) {
 
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n) {
     Matrix3 mn;
-    mn.a = m.a * n.a + m.b * n.d + m.c * n.g;
-    mn.b = m.a * n.b + m.b * n.e + m.c * n.h;
-    mn.c = m.a * n.c + m.b * n.f + m.c * n.i;
-    mn.d = m.d * n.a + m.e * n.d + m.f * n.g;
-    mn.e = m.d * n.b + m.e * n.e + m.f * n.h;
-    mn.f = m.d * n.c + m.e * n.f + m.f * n.i;
-    mn.g = m.g * n.a + m.h * n.d + m.i * n.g;
-    mn.h = m.g * n.b + m.h * n.e + m.i * n.h;
-    mn.i = m.g * n.c + m.h * n.f + m.i * n.i;
+    mn._11 = m._11 * n._11 + m._12 * n._21 + m._13 * n._31;
+    mn._12 = m._11 * n._12 + m._12 * n._22 + m._13 * n._32;
+    mn._13 = m._11 * n._13 + m._12 * n._23 + m._13 * n._33;
+    mn._21 = m._21 * n._11 + m._22 * n._21 + m._23 * n._31;
+    mn._22 = m._21 * n._12 + m._22 * n._22 + m._23 * n._32;
+    mn._23 = m._21 * n._13 + m._22 * n._23 + m._23 * n._33;
+    mn._31 = m._31 * n._11 + m._32 * n._21 + m._33 * n._31;
+    mn._32 = m._31 * n._12 + m._32 * n._22 + m._33 * n._32;
+    mn._33 = m._31 * n._13 + m._32 * n._23 + m._33 * n._33;
 
     return mn;
 }
@@ -323,14 +323,21 @@ Matrix4 matrix4_id() {
 }
 
 Matrix4 transform_matrix(Vector3 position, Quaternion rotation, Vector3 scale) {
-    Matrix4 rot = quaternion_to_rotation_matrix(rotation);
-    Quaternion q = rotation_matrix_to_quaternion(rot);
+    Matrix3 r = quaternion_to_rotation_matrix(rotation);
+    Quaternion q = rotation_matrix_to_quaternion(r);
 
     if (!quaternion_equals(rotation, q)) {
         LOG_ERROR("Quaternion and rotation matrix do not match!");
         LOG_ERROR("Quaternion: %f, %f, %f, %f", rotation.x, rotation.y, rotation.z, rotation.w);
         LOG_ERROR("Quaternion2: %f, %f, %f, %f", q.x, q.y, q.z, q.w);
     }
+
+    Matrix4 rot = {
+        r._11, r._12, r._13, 0.0f,
+        r._21, r._22, r._23, 0.0f,
+        r._31, r._32, r._33, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
 
     // Scale matrix
     Matrix4 scl = {
@@ -354,9 +361,9 @@ Matrix4 transform_matrix(Vector3 position, Quaternion rotation, Vector3 scale) {
 
 Vector3 matrix3_map(Matrix3 m, Vector3 v) {
     Vector3 result;
-    result.x = m.a * v.x + m.b * v.y + m.c * v.z;
-    result.y = m.d * v.x + m.e * v.y + m.f * v.z;
-    result.z = m.g * v.x + m.h * v.y + m.i * v.z;
+    result.x = m._11 * v.x + m._12 * v.y + m._13 * v.z;
+    result.y = m._21 * v.x + m._22 * v.y + m._23 * v.z;
+    result.z = m._31 * v.x + m._32 * v.y + m._33 * v.z;
     return result;
 }
 
@@ -379,15 +386,6 @@ Vector3 scale_from_transform(Matrix4 m) {
         sqrtf(m._11 * m._11 + m._21 * m._21 + m._31 * m._31),
         sqrtf(m._12 * m._12 + m._22 * m._22 + m._32 * m._32),
         sqrtf(m._13 * m._13 + m._23 * m._23 + m._33 * m._33)
-    };
-}
-
-
-Vector3 rotation_from_transform(Matrix4 m) {
-    return (Vector3) {
-        atan2f(m._32, m._33), // Rotation around Z-axis
-        atan2f(-m._31, sqrtf(m._32 * m._32 + m._33 * m._33)), // Rotation around Y-axis
-        atan2f(m._21, m._11) // Rotation around X-axis
     };
 }
 
@@ -446,9 +444,9 @@ void vector3_print(void* ptr) {
 }
 
 void matrix3_print(Matrix3 m) {
-    printf("[[%.2f, %.2f, %.2f]\n", m.a, m.b, m.c);
-    printf("[%.2f, %.2f, %.2f]\n", m.d, m.e, m.f);
-    printf("[%.2f, %.2f, %.2f]]\n", m.g, m.h, m.i);
+    printf("[[%.2f, %.2f, %.2f]\n", m._11, m._12, m._13);
+    printf("[%.2f, %.2f, %.2f]\n", m._21, m._22, m._23);
+    printf("[%.2f, %.2f, %.2f]]\n", m._31, m._32, m._33);
 }
 
 void matrix4_print(Matrix4 m) {
@@ -475,11 +473,10 @@ Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up) {
 
     Vector3 new_up = cross(fwd, right);
 
-    Matrix4 rot_matrix = {
-        right.x, new_up.x, fwd.x, 0.0f,
-        right.y, new_up.y, fwd.y, 0.0f,
-        right.z, new_up.z, fwd.z, 0.0f,
-        0.0f,    0.0f,    0.0f,    1.0f
+    Matrix3 rot_matrix = {
+        right.x, new_up.x, fwd.x,
+        right.y, new_up.y, fwd.y,
+        right.z, new_up.z, fwd.z,
     };
 
     Quaternion q = rotation_matrix_to_quaternion(rot_matrix);
@@ -489,25 +486,24 @@ Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up) {
 }
 
 
-Matrix4 quaternion_to_rotation_matrix(Quaternion q) {
+Matrix3 quaternion_to_rotation_matrix(Quaternion q) {
     // Convert quaternion to rotation matrix
     float x = q.x;
     float y = q.y;
     float z = q.z;
     float w = q.w;
 
-    Matrix4 rot = {
-        1.0f - 2.0f * (y * y + z * z), 2.0f * (x * y - w * z), 2.0f * (x * z + w * y), 0.0f,
-        2.0f * (x * y + w * z), 1.0f - 2.0f * (x * x + z * z), 2.0f * (y * z - w * x), 0.0f,
-        2.0f * (x * z - w * y), 2.0f * (y * z + w * x), 1.0f - 2.0f * (x * x + y * y), 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+    Matrix3 rot = {
+        1.0f - 2.0f * (y * y + z * z), 2.0f * (x * y - w * z), 2.0f * (x * z + w * y),
+        2.0f * (x * y + w * z), 1.0f - 2.0f * (x * x + z * z), 2.0f * (y * z - w * x),
+        2.0f * (x * z - w * y), 2.0f * (y * z + w * x), 1.0f - 2.0f * (x * x + y * y),
     };
 
     return rot;
 }
 
 
-Quaternion rotation_matrix_to_quaternion(Matrix4 m) {
+Quaternion rotation_matrix_to_quaternion(Matrix3 m) {
     // Convert rotation matrix to quaternion
     Quaternion q;
     float trace = m._11 + m._22 + m._33;

@@ -17,6 +17,7 @@ void ColliderComponent_add(Entity entity, ColliderType type, float radius) {
 void ColliderComponent_remove(Entity entity) {
     ColliderComponent* collider = scene->components->collider[entity];
     if (collider) {
+        ArrayList_destroy(collider->collisions);
         free(collider);
         scene->components->collider[entity] = NULL;
     }

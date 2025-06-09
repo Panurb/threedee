@@ -316,9 +316,14 @@ Vector2 get_xy(Entity entity) {
 }
 
 
-Vector3 get_rotation(Entity entity) {
+Quaternion get_rotation(Entity entity) {
     Matrix4 transform = get_transform(entity);
-    return rotation_from_transform(transform);
+    Matrix3 rot = {
+        transform._11, transform._12, transform._13,
+        transform._21, transform._22, transform._23,
+        transform._31, transform._32, transform._33
+    };
+    return rotation_matrix_to_quaternion(rot);
 }
 
 

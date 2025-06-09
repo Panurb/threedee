@@ -21,9 +21,9 @@ Matrix3 inertia_tensor(Entity entity) {
     switch (collider->type) {
         case COLLIDER_SPHERE: {
             float radius = get_radius(entity);
-            tensor.a = (2.0f / 5.0f) * radius * radius / rigid_body->inv_mass;
-            tensor.e = tensor.a;
-            tensor.i = tensor.a;
+            tensor._11 = (2.0f / 5.0f) * radius * radius / rigid_body->inv_mass;
+            tensor._22 = tensor._11;
+            tensor._33 = tensor._11;
             break;
         }
         case COLLIDER_PLANE:

@@ -43,15 +43,38 @@ Vector3 overlap_sphere_plane(Vector3 pos, float radius, Vector3 plane_normal, fl
 }
 
 
+Vector3 overlap_cube_plane(Cuboid cube, Plane plane) {
+    Matrix3 rot = quaternion_to_rotation_matrix(cube.rotation);
+
+    // TODO
+}
+
+
 Vector3 get_overlap(Entity i, Entity j) {
     ColliderComponent* collider = scene->components->collider[i];
     ColliderComponent* other_collider = scene->components->collider[j];
 
+    if (!collider || !other_collider) {
+        return zeros3();
+    }
+
     Vector3 position = get_position(i);
     Vector3 other_position = get_position(j);
 
-    if (!collider || !other_collider) {
-        return zeros3();
+    Shape shape;
+    Shape shape_other = { 0 };
+
+    if (other_collider->type == COLLIDER_PLANE) {
+        Vector4 up = { 0.0f, 1.0f, 0.0f, 0.0f };
+        Matrix4 transform = get_transform(j);
+        up = matrix4_map(transform, up);
+        Vector3 plane_normal = (Vector3) { up.x, up.y, up.z };
+        float plane_offset = dot3(other_position, plane_normal);
+
+        shape_other.plane = (Plane) {
+            .normal = plane_normal,
+            .offset = plane_offset
+        };
     }
 
     if (collider->type == COLLIDER_SPHERE && other_collider->type == COLLIDER_SPHERE) {
@@ -59,17 +82,22 @@ Vector3 get_overlap(Entity i, Entity j) {
     }
 
     if (collider->type == COLLIDER_SPHERE && other_collider->type == COLLIDER_PLANE) {
-        Vector4 up = { 0.0f, 1.0f, 0.0f, 0.0f };
-        Matrix4 transform = get_transform(j);
-        up = matrix4_map(transform, up);
-        Vector3 plane_normal = (Vector3) { up.x, up.y, up.z };
-        float plane_offset = dot3(other_position, plane_normal);
-
-        return overlap_sphere_plane(position, get_radius(i) + get_radius(j), plane_normal, plane_offset);
+        return overlap_sphere_plane(position, get_radius(i) + get_radius(j), shape_other.plane.normal, shape_other.plane.offset);
     }
 
     if (collider->type == COLLIDER_PLANE && other_collider->type == COLLIDER_SPHERE) {
         return get_overlap(j, i);
+    }
+
+    if (collider->type == COLLIDER_CUBE && other_collider->type == COLLIDER_PLANE) {
+        return overlap_cube_plane(
+            (Cuboid) {
+                .center = position,
+                .size = mult3(collider->radius, get_scale(i)),
+                .rotation = get_rotation(i)
+            },
+            shape_other.plane
+        );
     }
 
     // LOG_ERROR("Invalid collision: %d vs %d", collider->type, other_collider->type);
