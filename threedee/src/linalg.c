@@ -204,9 +204,43 @@ Matrix4 transpose4(Matrix4 m) {
     };
 }
 
-Matrix2 matrix_inverse(Matrix2 m) {
-    float det = m.a * m.d - m.b * m.c;
+float matrix2_determinant(Matrix2 m) {
+    return m.a * m.d - m.b * m.c;
+}
+
+float matrix3_determinant(Matrix3 m) {
+    return m.a * (m.e * m.i - m.f * m.h) -
+           m.b * (m.d * m.i - m.f * m.g) +
+           m.c * (m.d * m.h - m.e * m.g);
+}
+
+Matrix2 matrix2_inverse(Matrix2 m) {
+    float det = matrix2_determinant(m);
     return (Matrix2) { m.d / det, -m.b / det, -m.c / det, m.a / det };
+}
+
+Matrix3 matrix3_inverse(Matrix3 m) {
+    float det = matrix3_determinant(m);
+
+    if (fabsf(det) < 1e-6f) {
+        LOG_ERROR("Matrix3 is singular, cannot compute inverse");
+        return matrix3_id();
+    }
+
+    float inv_det = 1.0f / det;
+
+    Matrix3 inv;
+    inv.a =  (m.e * m.i - m.f * m.h) * inv_det;
+    inv.b = -(m.b * m.i - m.c * m.h) * inv_det;
+    inv.c =  (m.b * m.f - m.c * m.e) * inv_det;
+    inv.d = -(m.d * m.i - m.f * m.g) * inv_det;
+    inv.e =  (m.a * m.i - m.c * m.g) * inv_det;
+    inv.f = -(m.a * m.f - m.c * m.d) * inv_det;
+    inv.g =  (m.d * m.h - m.e * m.g) * inv_det;
+    inv.h = -(m.a * m.h - m.b * m.g) * inv_det;
+    inv.i =  (m.a * m.e - m.b * m.d) * inv_det;
+
+    return inv;
 }
 
 Matrix4 transform_inverse(Matrix4 m) {
@@ -269,6 +303,14 @@ Matrix4 matrix4_mult(Matrix4 m, Matrix4 n) {
     mn._43 = m._41 * n._13 + m._42 * n._23 + m._43 * n._33 + m._44 * n._43;
     mn._44 = m._41 * n._14 + m._42 * n._24 + m._43 * n._34 + m._44 * n._44;
     return mn;
+}
+
+Matrix3 matrix3_id(void) {
+    return (Matrix3) {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
 }
 
 Matrix4 matrix4_id() {
@@ -401,6 +443,12 @@ void vector2_print(void* ptr) {
 void vector3_print(void* ptr) {
     Vector3* v = ptr;
     printf("Vector3(%.2f, %.2f, %.2f)\n", v->x, v->y, v->z);
+}
+
+void matrix3_print(Matrix3 m) {
+    printf("[[%.2f, %.2f, %.2f]\n", m.a, m.b, m.c);
+    printf("[%.2f, %.2f, %.2f]\n", m.d, m.e, m.f);
+    printf("[%.2f, %.2f, %.2f]]\n", m.g, m.h, m.i);
 }
 
 void matrix4_print(Matrix4 m) {

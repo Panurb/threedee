@@ -124,13 +124,17 @@ Matrix2 transpose(Matrix2 m);
 
 Matrix4 transpose4(Matrix4 m);
 
-Matrix2 matrix_inverse(Matrix2 m);
+Matrix2 matrix2_inverse(Matrix2 m);
+
+Matrix3 matrix3_inverse(Matrix3 m);
 
 Matrix4 transform_inverse(Matrix4 m);
 
 Matrix3 matrix3_mult(Matrix3 m, Matrix3 n);
 
 Matrix4 matrix4_mult(Matrix4 m, Matrix4 n);
+
+Matrix3 matrix3_id(void);
 
 Matrix4 matrix4_id();
 
@@ -159,6 +163,8 @@ Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up);
 void vector2_print(void* ptr);
 
 void vector3_print(void* ptr);
+
+void matrix3_print(Matrix3 m);
 
 void matrix4_print(Matrix4 m);
 

@@ -90,8 +90,7 @@ void update_collisions() {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
         if (!collider) continue;
 
-        for (Entity j = 0; j < scene->components->entities; j++) {
-            if (i == j) continue;
+        for (Entity j = 0; j < i; j++) {
             ColliderComponent* other_collider = get_component(j, COMPONENT_COLLIDER);
             if (!other_collider) continue;
 
@@ -102,6 +101,11 @@ void update_collisions() {
                     .overlap = overlap
                 };
                 ArrayList_add(collider->collisions, &collision);
+                Collision other_collision = {
+                    .entity = i,
+                    .overlap = mult3(-1.0f, overlap)
+                };
+                ArrayList_add(other_collider->collisions, &other_collision);
             }
         }
     }
