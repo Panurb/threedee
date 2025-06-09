@@ -106,6 +106,8 @@ void init() {
     init_render();
     load_resources();
     create_scene();
+
+    init_physics();
 }
 
 

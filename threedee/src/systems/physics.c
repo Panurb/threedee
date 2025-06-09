@@ -21,7 +21,7 @@ Matrix3 inertia_tensor(Entity entity) {
     switch (collider->type) {
         case COLLIDER_SPHERE: {
             float radius = get_radius(entity);
-            tensor.a = (2.0f / 5.0f) * rigid_body->mass * radius * radius;
+            tensor.a = (2.0f / 5.0f) * radius * radius / rigid_body->inv_mass;
             tensor.e = tensor.a;
             tensor.i = tensor.a;
             break;
@@ -48,37 +48,42 @@ void apply_impulse(Entity entity, Vector3 point, Vector3 impulse) {
     Vector3 r = diff3(point, trans->position);
 
     // Linear velocity update
-    rb->velocity = sum3(rb->velocity, mult3(1.0f / rb->mass, impulse));
+    rb->velocity = sum3(rb->velocity, mult3(rb->inv_mass, impulse));
 
     // Angular velocity update
-    Matrix3 inertia = inertia_tensor(entity);
     Vector3 torque = cross(r, impulse);
-    rb->angular_velocity = sum3(rb->angular_velocity, matrix3_map(matrix3_inverse(inertia), torque));
+    rb->angular_velocity = sum3(rb->angular_velocity, matrix3_map(rb->inv_inertia, torque));
+
+    rb->asleep = false;
 }
 
 
 void resolve_collisions(Entity entity) {
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
-    RigidBodyComponent* rigid_body = get_component(entity, COMPONENT_RIGIDBODY);
+    RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
 
     if (collider) {
-        for (int j = 0; j < collider->collisions->size; j++) {
-            if (j == entity) break;
+        for (int i = 0; i < collider->collisions->size; i++) {
+            Collision collision = *(Collision*)ArrayList_get(collider->collisions, i);
 
-            Collision collision = *(Collision*)ArrayList_get(collider->collisions, j);
+            // Only resolve each collision once
+            if (collision.entity > entity) continue;
+
             RigidBodyComponent* rb_other = get_component(collision.entity, COMPONENT_RIGIDBODY);
 
+            // TODO: What if entity has parent?
             trans->position = sum3(trans->position, mult3(0.5f, collision.overlap));
 
             Vector3 n = normalized3(collision.overlap);
             Vector3 r = mult3(-get_radius(entity), n);
+            Vector3 v_rel = sum3(rb->velocity, cross(rb->angular_velocity, r));
 
-            Vector3 v_rel = sum3(rigid_body->velocity, cross(rigid_body->angular_velocity, r));
+            Vector3 r_other = zeros3();
             if (rb_other) {
-                Vector3 r_other = mult3(get_radius(collision.entity), n);
-                Vector3 v_rel_other = sum3(rb_other->velocity, cross(rb_other->angular_velocity, r_other));
-                v_rel = diff3(v_rel, v_rel_other);
+                r_other = mult3(get_radius(collision.entity), n);
+                Vector3 v_other = sum3(rb_other->velocity, cross(rb_other->angular_velocity, r_other));
+                v_rel = diff3(v_rel, v_other);
             }
 
             Vector3 v_n = proj3(v_rel, n);
@@ -90,35 +95,26 @@ void resolve_collisions(Entity entity) {
                 continue;
             }
 
-            Matrix3 inertia = inertia_tensor(entity);
-            Matrix3 i_inv = matrix3_inverse(inertia);
-
             // Normal impulse
-            float j_n = -(1.0f + rigid_body->bounce) * dot3(v_rel, n);
-            float denom_n = 1.0f / rigid_body->mass + dot3(n, cross(matrix3_map(i_inv, cross(r, n)), r));
+            float j_n = -(1.0f + rb->bounce) * dot3(v_rel, n);
+            float denom_n = rb->inv_mass + dot3(n, cross(matrix3_map(rb->inv_inertia, cross(r, n)), r));
 
             if (rb_other) {
-                Vector3 r_other = mult3(get_radius(collision.entity), n);
-                Matrix3 inertia_other = inertia_tensor(collision.entity);
-                Matrix3 i_inv_other = matrix3_inverse(inertia_other);
-                denom_n += 1.0f / rb_other->mass + dot3(n, cross(matrix3_map(i_inv_other, cross(r_other, n)), r_other));
+                denom_n += rb_other->inv_mass + dot3(n, cross(matrix3_map(rb_other->inv_inertia, cross(r_other, n)), r_other));
             }
             j_n /= denom_n;
 
             // Tangential impulse
             float j_t = -dot3(v_t, t);
-            float denom_t = (1.0f / rigid_body->mass + dot3(t, cross(matrix3_map(i_inv, cross(r, t)), r)));
+            float denom_t = (rb->inv_mass + dot3(t, cross(matrix3_map(rb->inv_inertia, cross(r, t)), r)));
 
             if (rb_other) {
-                Vector3 r_other = mult3(get_radius(collision.entity), n);
-                Matrix3 inertia_other = inertia_tensor(collision.entity);
-                Matrix3 i_inv_other = matrix3_inverse(inertia_other);
-                denom_t += (1.0f / rb_other->mass + dot3(t, cross(matrix3_map(i_inv_other, cross(r_other, t)), r_other)));
+                denom_t += (rb_other->inv_mass + dot3(t, cross(matrix3_map(rb_other->inv_inertia, cross(r_other, t)), r_other)));
             }
             j_t /= denom_t;
 
             // Clamp according to Coulomb's law of friction
-            float j_t_max = rigid_body->friction * fabsf(j_n);
+            float j_t_max = rb->friction * fabsf(j_n);
             if (fabsf(j_t) > j_t_max) {
                 j_t = j_t_max * sign(j_t);
             }
@@ -126,27 +122,34 @@ void resolve_collisions(Entity entity) {
             // Total impulse
             Vector3 j_total = sum3(mult3(j_n, n), mult3(j_t, t));
 
-            rigid_body->velocity = sum3(rigid_body->velocity, mult3(1.0f / rigid_body->mass, j_total));
+            rb->velocity = sum3(rb->velocity, mult3(rb->inv_mass, j_total));
 
             Vector3 torque = cross(r, j_total);
-            rigid_body->angular_velocity = sum3(rigid_body->angular_velocity, matrix3_map(i_inv, torque));
+            rb->angular_velocity = sum3(rb->angular_velocity, matrix3_map(rb->inv_inertia, torque));
 
             if (rb_other) {
-                rb_other->velocity = sum3(rb_other->velocity, mult3(1.0f / rb_other->mass, mult3(-1.0f, j_total)));
+                rb_other->velocity = sum3(rb_other->velocity, mult3(rb_other->inv_mass, mult3(-1.0f, j_total)));
 
-                Vector3 r_other = mult3(get_radius(collision.entity), n);
                 Vector3 torque_other = cross(r_other, mult3(-1.0f, j_total));
-                rb_other->angular_velocity = sum3(rb_other->angular_velocity, matrix3_map(matrix3_inverse(inertia_tensor(collision.entity)), torque_other));
+                rb_other->angular_velocity = sum3(rb_other->angular_velocity, matrix3_map(rb_other->inv_inertia, torque_other));
             }
+        }
+    }
+}
 
-            rigid_body->asleep = false;
+
+void init_physics(void) {
+    for (Entity i = 0; i < scene->components->entities; i++) {
+        RigidBodyComponent* rigid_body = get_component(i, COMPONENT_RIGIDBODY);
+        if (rigid_body) {
+            rigid_body->inv_inertia = matrix3_inverse(inertia_tensor(i));
         }
     }
 }
 
 
 void update_physics(float time_step) {
-    for (int i = 0; i < scene->components->entities; i++) {
+    for (Entity i = 0; i < scene->components->entities; i++) {
         RigidBodyComponent* rigid_body = scene->components->rigid_body[i];
         if (!rigid_body) continue;
 

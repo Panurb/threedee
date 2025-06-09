@@ -8,9 +8,10 @@ typedef struct {
     Vector3 acceleration;
     Vector3 angular_velocity;
     Vector3 angular_acceleration;
-    float mass;
     float friction;
     float bounce;
+    float inv_mass;
+    Matrix3 inv_inertia;
     bool asleep;
 } RigidBodyComponent;
 
