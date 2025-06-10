@@ -68,7 +68,7 @@ typedef struct {
 
 typedef struct {
     Vector3 center;
-    Vector3 size; // Half extents
+    Vector3 half_size;
     Quaternion rotation;
 } Cuboid;
 

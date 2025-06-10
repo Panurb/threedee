@@ -6,15 +6,17 @@
 
 
 typedef enum {
-    COLLIDER_SPHERE,
     COLLIDER_PLANE,
-    COLLIDER_CUBE
+    COLLIDER_SPHERE,
+    COLLIDER_CUBOID
 } ColliderType;
 
 
 typedef struct {
     Entity entity;
     Vector3 overlap;
+    Vector3 offset;
+    Vector3 offset_other;
 } Collision;
 
 

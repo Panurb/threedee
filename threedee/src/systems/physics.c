@@ -29,6 +29,15 @@ Matrix3 inertia_tensor(Entity entity) {
         case COLLIDER_PLANE:
             // Plane has no inertia
             break;
+        case COLLIDER_CUBOID:
+            float m = 1.0f / rigid_body->inv_mass;
+            float w = collider->radius * get_scale(entity).x;
+            float h = collider->radius * get_scale(entity).y;
+            float d = collider->radius * get_scale(entity).z;
+            tensor._11 = (m / 12.0f) * (h * h + d * d);
+            tensor._22 = (m / 12.0f) * (w * w + d * d);
+            tensor._33 = (m / 12.0f) * (w * w + h * h);
+            break;
         default:
             LOG_ERROR("Unknown collider type for inertia tensor calculation");
             break;
@@ -72,18 +81,18 @@ void resolve_collisions(Entity entity) {
 
             RigidBodyComponent* rb_other = get_component(collision.entity, COMPONENT_RIGIDBODY);
 
-            // TODO: What if entity has parent?
-            trans->position = sum3(trans->position, mult3(0.5f, collision.overlap));
+            Vector3 delta_position = collision.overlap;
 
             Vector3 n = normalized3(collision.overlap);
-            Vector3 r = mult3(-get_radius(entity), n);
+            Vector3 r = collision.offset;
             Vector3 v_rel = sum3(rb->velocity, cross(rb->angular_velocity, r));
 
             Vector3 r_other = zeros3();
             if (rb_other) {
-                r_other = mult3(get_radius(collision.entity), n);
+                r_other = collision.offset_other;
                 Vector3 v_other = sum3(rb_other->velocity, cross(rb_other->angular_velocity, r_other));
                 v_rel = diff3(v_rel, v_other);
+                delta_position = mult3(0.5f, delta_position);
             }
 
             Vector3 v_n = proj3(v_rel, n);
@@ -121,6 +130,9 @@ void resolve_collisions(Entity entity) {
 
             // Total impulse
             Vector3 j_total = sum3(mult3(j_n, n), mult3(j_t, t));
+
+            // TODO: What if entity has parent?
+            trans->position = sum3(trans->position, delta_position);
 
             rb->velocity = sum3(rb->velocity, mult3(rb->inv_mass, j_total));
 
