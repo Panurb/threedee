@@ -81,7 +81,8 @@ Penetration overlap_cuboid_plane(Cuboid cuboid, Plane plane) {
     };
 
     Penetration penetration = {
-        .valid = false
+        .valid = false,
+        .contact_point = zeros3(),
     };
 
     float min_dist = 0.0f;
@@ -147,7 +148,7 @@ Penetration get_overlap(Entity i, Entity j) {
         return get_overlap(j, i);
     }
 
-    if (collider->type == COLLIDER_CUBOID && other_collider->type == COLLIDER_PLANE) {
+    if (collider->type == COLLIDER_CUBE && other_collider->type == COLLIDER_PLANE) {
         Penetration penetration = overlap_cuboid_plane(
             (Cuboid) {
                 .center = position,

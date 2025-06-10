@@ -176,3 +176,5 @@ Matrix3 quaternion_to_rotation_matrix(Quaternion q);
 Quaternion rotation_matrix_to_quaternion(Matrix3 m);
 
 Quaternion axis_angle_to_quaternion(Vector3 axis, float angle);
+
+Vector3 vec3_clamp(Vector3 v, float min, float max);

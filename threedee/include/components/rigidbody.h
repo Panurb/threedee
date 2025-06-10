@@ -13,6 +13,11 @@ typedef struct {
     float inv_mass;
     Matrix3 inv_inertia;
     bool asleep;
+    float linear_damping;
+    float angular_damping;
+    float max_speed;
+    float max_angular_speed;
+    bool on_ground;
 } RigidBodyComponent;
 
 

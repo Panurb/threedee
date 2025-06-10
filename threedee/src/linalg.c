@@ -565,3 +565,17 @@ Quaternion axis_angle_to_quaternion(Vector3 axis, float angle) {
     float s = sinf(half_angle);
     return (Quaternion) { norm_axis.x * s, norm_axis.y * s, norm_axis.z * s, cosf(half_angle) };
 }
+
+Vector3 vec3_clamp(Vector3 v, float min, float max) {
+    float n = norm3(v);
+    if (n == 0.0f) {
+        return v;
+    }
+    if (n < min) {
+        return mult3(min / n, v);
+    }
+    if (n > max) {
+        return mult3(max / n, v);
+    }
+    return v;
+}

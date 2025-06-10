@@ -101,7 +101,7 @@ Hit raycast(Ray ray) {
                 Sphere sphere = { get_position(i), get_radius(i) };
                 intersection = intersection_sphere_ray(sphere, ray);
                 break;
-            case COLLIDER_CUBOID:
+            case COLLIDER_CUBE:
                 Cuboid cuboid = { get_position(i), get_half_extents(i), get_rotation(i) };
                 intersection = intersection_cuboid_ray(cuboid, ray);
                 break;

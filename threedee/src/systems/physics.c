@@ -5,6 +5,7 @@
 #include "systems/physics.h"
 
 #include <math.h>
+#include <render.h>
 
 #include "components/rigidbody.h"
 
@@ -29,7 +30,7 @@ Matrix3 inertia_tensor(Entity entity) {
         case COLLIDER_PLANE:
             // Plane has no inertia
             break;
-        case COLLIDER_CUBOID:
+        case COLLIDER_CUBE:
             float m = 1.0f / rigid_body->inv_mass;
             float w = collider->radius * get_scale(entity).x;
             float h = collider->radius * get_scale(entity).y;
@@ -140,6 +141,9 @@ void resolve_collisions(Entity entity) {
             rb->angular_velocity = sum3(rb->angular_velocity, matrix3_map(rb->inv_inertia, torque));
 
             if (rb_other) {
+                TransformComponent* trans_other = get_component(collision.entity, COMPONENT_TRANSFORM);
+                trans_other->position = sum3(trans_other->position, mult3(-1.0f, delta_position));
+
                 rb_other->velocity = sum3(rb_other->velocity, mult3(rb_other->inv_mass, mult3(-1.0f, j_total)));
 
                 Vector3 torque_other = cross(r_other, mult3(-1.0f, j_total));
@@ -178,15 +182,25 @@ void update_physics(float time_step) {
         trans->position = sum3(trans->position, mult3(time_step, rigid_body->velocity));
 
         rigid_body->angular_velocity = sum3(rigid_body->angular_velocity, mult3(time_step, rigid_body->angular_acceleration));
+
         float angle = norm3(rigid_body->angular_velocity) * time_step;
         Vector3 axis = normalized3(rigid_body->angular_velocity);
         Quaternion delta_rotation = axis_angle_to_quaternion(axis, angle);
         trans->rotation = quaternion_mult(delta_rotation, trans->rotation);
 
-        if (norm3(rigid_body->velocity) < 1e-6f && norm3(rigid_body->angular_velocity) < 1e-6f) {
+        // Clamp velocities
+        rigid_body->velocity = vec3_clamp(rigid_body->velocity, 0.0f, rigid_body->max_speed);
+        rigid_body->angular_velocity = vec3_clamp(rigid_body->angular_velocity, 0.0f, rigid_body->max_angular_speed);
+
+        // Apply damping
+        rigid_body->velocity = mult3(rigid_body->linear_damping, rigid_body->velocity);
+        rigid_body->angular_velocity = mult3(rigid_body->angular_damping, rigid_body->angular_velocity);
+
+        if (norm3(rigid_body->velocity) < 0.01f && norm3(rigid_body->angular_velocity) < 0.01f) {
             rigid_body->velocity = zeros3();
             rigid_body->angular_velocity = zeros3();
             rigid_body->asleep = true;
+            LOG_INFO("Rigid body %d is asleep", i);
         }
 
         rigid_body->acceleration = zeros3();

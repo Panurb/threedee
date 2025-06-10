@@ -151,10 +151,11 @@ void input_game(SDL_Event sdl_event) {
         pitch -= sdl_event.motion.yrel * sens;
         pitch = clamp(pitch, -89.0f, 89.0f);
     } else if (sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        Ray ray = { get_position(scene->camera), look_direction(scene->camera) };
+        Vector3 dir = look_direction(scene->camera);
+        Ray ray = { get_position(scene->camera), dir };
         Hit hit = raycast(ray);
         if (hit.entity != NULL_ENTITY && get_component(hit.entity, COMPONENT_RIGIDBODY)) {
-            apply_impulse(hit.entity, hit.point, mult3(10.0f, hit.normal));
+            apply_impulse(hit.entity, hit.point, mult3(10.0f, dir));
         }
     }
 
