@@ -73,7 +73,7 @@ void create_scene() {
         MeshComponent_add(i, "cube_textured", "tiles", "default");
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
         // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
-        ColliderComponent_add(i, COLLIDER_CUBE, 0.5f);
+        ColliderComponent_add(i, COLLIDER_CUBE,  0.5f);
     }
 
     i = create_entity();

@@ -10,6 +10,7 @@
 #include "components/rigidbody.h"
 
 
+static int ITERATIONS = 10;
 static Vector3 gravity = { 0.0f, -9.81f, 0.0f };
 
 
@@ -68,7 +69,7 @@ void apply_impulse(Entity entity, Vector3 point, Vector3 impulse) {
 }
 
 
-void resolve_collisions(Entity entity) {
+void resolve_collisions(Entity entity, float bias) {
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
     RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
@@ -82,7 +83,7 @@ void resolve_collisions(Entity entity) {
 
             RigidBodyComponent* rb_other = get_component(collision.entity, COMPONENT_RIGIDBODY);
 
-            Vector3 delta_position = collision.overlap;
+            Vector3 delta_position = mult3(bias, collision.overlap);
 
             Vector3 n = normalized3(collision.overlap);
             Vector3 r = collision.offset;
@@ -129,25 +130,24 @@ void resolve_collisions(Entity entity) {
                 j_t = j_t_max * sign(j_t);
             }
 
+            if (fabsf(j_n) < 0.01f && fabsf(j_t) < 0.01f) {
+                // If impulse is negligible, skip the collision resolution
+                continue;
+            }
+
             // Total impulse
             Vector3 j_total = sum3(mult3(j_n, n), mult3(j_t, t));
 
             // TODO: What if entity has parent?
             trans->position = sum3(trans->position, delta_position);
 
-            rb->velocity = sum3(rb->velocity, mult3(rb->inv_mass, j_total));
-
-            Vector3 torque = cross(r, j_total);
-            rb->angular_velocity = sum3(rb->angular_velocity, matrix3_map(rb->inv_inertia, torque));
+            apply_impulse(entity, sum3(trans->position, r), j_total);
 
             if (rb_other) {
                 TransformComponent* trans_other = get_component(collision.entity, COMPONENT_TRANSFORM);
                 trans_other->position = sum3(trans_other->position, mult3(-1.0f, delta_position));
 
-                rb_other->velocity = sum3(rb_other->velocity, mult3(rb_other->inv_mass, mult3(-1.0f, j_total)));
-
-                Vector3 torque_other = cross(r_other, mult3(-1.0f, j_total));
-                rb_other->angular_velocity = sum3(rb_other->angular_velocity, matrix3_map(rb_other->inv_inertia, torque_other));
+                apply_impulse(collision.entity, sum3(trans_other->position, r_other), mult3(-1.0f, j_total));
             }
         }
     }
@@ -171,7 +171,9 @@ void update_physics(float time_step) {
 
         TransformComponent* trans = TransformComponent_get(i);
 
-        resolve_collisions(i);
+        for (int j = 0; j < ITERATIONS; j++) {
+            resolve_collisions(i, 1.0f / (float)ITERATIONS);
+        }
 
         if (rigid_body->asleep) {
             continue;
