@@ -36,9 +36,7 @@ typedef struct MeshData {
 typedef struct {
     String texture_names[MAX_TEXTURES];
     int textures_size;
-    Resolution texture_sizes[MAX_TEXTURES];
-    SDL_GPUTexture* texture_atlas;
-    Rect texture_rects[MAX_TEXTURES];
+    SDL_GPUTexture* texture_array;
 
     String material_names[MAX_TEXTURES];
     int materials_size;

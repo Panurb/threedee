@@ -5,12 +5,12 @@ cbuffer TransformBlock : register(b0, space1)
 
 struct InstanceData
 {
-    float4x4 transform_matrix;
-	float4 tex_rect;
-    float specular;
-    float diffuse;
-    float ambient;
-    float shininess;
+    float4x4 transform_matrix : packoffset(c0);
+    float specular : packoffset(c4);
+    float diffuse : packoffset(c4.y);
+    float ambient : packoffset(c4.z);
+    float shininess : packoffset(c4.w);
+    int tex_index : packoffset(c5);
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);
@@ -27,7 +27,7 @@ struct Output
     float2 tex_coord : TEXCOORD0;
     float4 position : SV_Position;
     float3 normal : NORMAL0;
-	float4 tex_rect : TEXCOORD1;
+	int tex_index : TEXCOORD1;
     float3 world_position : POSITION0;
     float specular;
     float diffuse;
@@ -60,7 +60,7 @@ Output main(Input input, uint instance_id : SV_InstanceID)
 
     Output output;
     output.tex_coord = input.tex_coord * tiling;
-	output.tex_rect = instance_data[instance_id].tex_rect;
+	output.tex_index = instance_data[instance_id].tex_index;
     output.position = mul(mul(projection_matrix, transform), float4(input.position, 1.0f));
     output.normal = normalize(mul((float3x3)transform, input.normal));
     output.world_position = mul(transform, float4(input.position, 1.0f)).xyz;

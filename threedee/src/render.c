@@ -606,7 +606,7 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 			render_pass,
 			0,
 			&(SDL_GPUTextureSamplerBinding){
-				.texture = resources.texture_atlas,
+				.texture = resources.texture_array,
 				.sampler = mesh_data->sampler,
 			},
 			1);
@@ -819,8 +819,8 @@ void add_render_instance(int mesh_index, Matrix4 transform, int texture_index, i
 
 	InstanceData instance_data = {
 		.transform = transpose4(transform),
-		.texture_rect = resources.texture_rects[texture_index],
 		.material = resources.materials[material_index],
+		.texture_index = texture_index,
 	};
 	transforms[render_data->num_instances] = instance_data;
 	render_data->num_instances++;

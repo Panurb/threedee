@@ -82,6 +82,80 @@ SDL_GPUTexture* create_texture(SDL_Surface* image_data) {
 }
 
 
+SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
+	SDL_Surface* first_image = images[0];
+
+	int num_levels = floorf(log2f(fmaxf(first_image->w, first_image->h)) + 1);
+	LOG_INFO("Number of levels: %d", num_levels);
+	SDL_GPUTexture* texture = SDL_CreateGPUTexture(
+		app.gpu_device,
+		&(SDL_GPUTextureCreateInfo){
+			.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
+			.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+			.width = first_image->w,
+			.height = first_image->h,
+			.layer_count_or_depth = num_images,
+			.num_levels = 1,
+			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+		}
+	);
+	if (!texture) {
+		LOG_ERROR("Failed to create texture: %s", SDL_GetError());
+	}
+
+	int image_size = first_image->w * first_image->h * 4;
+	SDL_GPUTransferBuffer* texture_transfer_buffer = SDL_CreateGPUTransferBuffer(
+		app.gpu_device,
+		&(SDL_GPUTransferBufferCreateInfo) {
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = image_size * num_images
+		}
+	);
+
+	Uint8* texture_transfer_ptr = SDL_MapGPUTransferBuffer(
+		app.gpu_device,
+		texture_transfer_buffer,
+		false
+	);
+
+	SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
+
+	for (int i = 0; i < num_images; i++) {
+		SDL_Surface* image_data = images[i];
+		SDL_memcpy(texture_transfer_ptr + (i * image_size), image_data->pixels, image_size);
+
+		SDL_UploadToGPUTexture(
+			copy_pass,
+			&(SDL_GPUTextureTransferInfo) {
+				.transfer_buffer = texture_transfer_buffer,
+				.offset = i * image_size,
+			},
+			&(SDL_GPUTextureRegion){
+				.texture = texture,
+				.w = image_data->w,
+				.h = image_data->h,
+				.d = 1,
+				.layer = i
+			},
+			false
+		);
+	}
+
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, texture_transfer_buffer);
+
+	SDL_EndGPUCopyPass(copy_pass);
+	SDL_SubmitGPUCommandBuffer(upload_command_buffer);
+
+	// SDL_GenerateMipmapsForGPUTexture(upload_command_buffer, texture);
+
+	SDL_ReleaseGPUTransferBuffer(app.gpu_device, texture_transfer_buffer);
+
+	return texture;
+}
+
+
 MeshData load_mesh(String path) {
 	LOG_INFO("Loading mesh: %s", path);
 
@@ -271,8 +345,8 @@ MeshData load_mesh(String path) {
 			.min_filter = SDL_GPU_FILTER_NEAREST,
 			.mag_filter = SDL_GPU_FILTER_NEAREST,
 			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
-			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 			.enable_anisotropy = true,
 			.max_anisotropy = 16,
@@ -286,9 +360,7 @@ MeshData load_mesh(String path) {
 void load_textures() {
 	resources.textures_size = list_files_alphabetically("data/images/*.png", resources.texture_names);
 	ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
-	int atlas_width = 0;
-	int atlas_height = 0;
-	int padding = 16;
+
 	for (int i = 0; i < resources.textures_size; i++) {
 		String path;
 		snprintf(path, STRING_SIZE, "%s%s%s", "data/images/", resources.texture_names[i], ".png");
@@ -298,53 +370,15 @@ void load_textures() {
 			continue;
 		}
 		ArrayList_add(surfaces, &surface);
-
-		atlas_width += surface->w + 2 * padding;
-		if (surface->h > atlas_height) {
-			atlas_height = surface->h;
-		}
 	}
 
-	SDL_Surface* atlas = SDL_CreateSurface(atlas_width, atlas_height, SDL_PIXELFORMAT_RGBA32);
-	int offset_x = padding;
-	for (int i = 0; i < resources.textures_size; i++) {
-		SDL_Surface* surface = *(SDL_Surface**)ArrayList_get(surfaces, i);
-		for (int y = 0; y < padding; y++) {
-			SDL_BlitSurface(
-				surface,
-				&(SDL_Rect){ 0, 0, 1, surface->h },
-				atlas,
-				&(SDL_Rect){ offset_x - y - 1, 0 }
-			);
-			SDL_BlitSurface(
-				surface,
-				&(SDL_Rect){ surface->w - 1, 0, 1, surface->h },
-				atlas,
-				&(SDL_Rect){ offset_x + surface->w + y, 0 }
-			);
-		}
-		SDL_BlitSurface(
-			surface,
-			NULL,
-			atlas,
-			&(SDL_Rect){ offset_x, 0 }
-		);
-		resources.texture_rects[i] = (Rect) {
-			.x = offset_x / (float)atlas->w,
-			.y = 0.0f,
-			.w = surface->w / (float)atlas->w,
-			.h = surface->h / (float)atlas->h
-		};
-		offset_x += surface->w + 2 * padding;
-	}
-
-	// IMG_SavePNG(atlas, "data/images/atlas.png");
+	resources.texture_array = create_texture_array(
+		ArrayList_get(surfaces, 0),
+		resources.textures_size
+	);
 
 	ArrayList_for_each(surfaces, SDL_DestroySurface);
 	ArrayList_destroy(surfaces);
-
-	resources.texture_atlas = create_texture(atlas);
-	SDL_DestroySurface(atlas);
 }
 
 

@@ -37,8 +37,9 @@ typedef struct UniformData {
 
 typedef struct {
 	Matrix4 transform;
-	Rect texture_rect;
 	Material material;
+	int texture_index;
+	float _pad[3];
 } InstanceData;
 
 

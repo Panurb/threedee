@@ -1,4 +1,4 @@
-Texture2D<float4> tex : register(t0, space2);
+Texture2DArray<float4> tex : register(t0, space2);
 SamplerState sampler_tex : register(s0, space2);
 
 cbuffer UBO : register(b0, space3)
@@ -24,7 +24,7 @@ struct Input
     float2 tex_coord : TEXCOORD0;
     float4 position : SV_Position;
     float3 normal : NORMAL0;
-    float4 tex_rect : TEXCOORD1;
+    int tex_index : TEXCOORD1;
     float3 world_position : POSITION0;
     float specular;
     float diffuse;
@@ -49,16 +49,13 @@ Output main(Input input)
     float2 tex_coord = input.tex_coord;
     float4 position = input.position;
     float3 normal = input.normal;
-    float4 tex_rect = input.tex_rect;
     float3 world_position = input.world_position;
-
-    float2 atlas_uv = tex_rect.xy + frac(tex_coord) * tex_rect.zw;
 
     float3 view_direction = camera_position - world_position;
     float3 n = normalize(normal);
     float3 v = normalize(view_direction);
 
-    float3 base_color = tex.Sample(sampler_tex, atlas_uv).rgb;
+    float3 base_color = tex.Sample(sampler_tex, float3(tex_coord, input.tex_index)).rgb;
     float3 ambient = input.ambient * ambient_light * base_color;
     float3 diffuse = float3(0.0, 0.0, 0.0);
     float3 specular = float3(0.0, 0.0, 0.0);
