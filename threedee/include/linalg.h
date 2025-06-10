@@ -41,6 +41,9 @@ typedef struct {
     float _41, _42, _43, _44;
 } Matrix4;
 
+float vec3_get(Vector3 v, int i);
+
+void vec3_set(Vector3* v, int i, float x);
 
 Vector2 zeros2();
 

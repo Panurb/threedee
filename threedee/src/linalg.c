@@ -9,6 +9,28 @@
 #include <util.h>
 
 
+float vec3_get(Vector3 v, int i) {
+    switch (i) {
+        case 0: return v.x;
+        case 1: return v.y;
+        case 2: return v.z;
+        default:
+            LOG_ERROR("Invalid index %d for Vector3", i);
+            return 0.0f;
+    }
+}
+
+void vec3_set(Vector3* v, int i, float x) {
+    switch (i) {
+        case 0: v->x = x; break;
+        case 1: v->y = x; break;
+        case 2: v->z = x; break;
+        default:
+            LOG_ERROR("Invalid index %d for Vector3", i);
+            break;
+    }
+}
+
 Vector2 zeros2() {
     return (Vector2) { 0.0f, 0.0f };
 }
