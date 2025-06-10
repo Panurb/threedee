@@ -8,6 +8,13 @@
 #include "arraylist.h"
 
 
+typedef struct {
+	int position_idx;
+	int normal_idx;
+	int uv_idx;
+} VertexIndices;
+
+
 SDL_GPUTexture* create_texture(SDL_Surface* image_data) {
 	int num_levels = floorf(log2f(fmaxf(image_data->w, image_data->h)) + 1);
 	LOG_INFO("Number of levels: %d", num_levels);
@@ -89,9 +96,11 @@ MeshData load_mesh(String path) {
 		.num_instances = 0
 	};
 
-	ArrayList* vertices = ArrayList_create(sizeof(Vector3));
+	ArrayList* unique_vertices = ArrayList_create(sizeof(VertexIndices));
+	ArrayList* positions = ArrayList_create(sizeof(Vector3));
 	ArrayList* normals = ArrayList_create(sizeof(Vector3));
 	ArrayList* uvs = ArrayList_create(sizeof(Vector2));
+	ArrayList* indices = ArrayList_create(sizeof(Uint16));
 
 	String line;
 	while (fgets(line, sizeof(line), file) != NULL) {
@@ -120,13 +129,39 @@ MeshData load_mesh(String path) {
 				LOG_ERROR("Invalid vertex format in line: %s", line);
 				continue;
 			}
-			ArrayList_add(vertices, &position);
+			ArrayList_add(positions, &position);
 		} else if (line[0] == 'f') {
-			mesh_data.num_indices += 3;
+			int v[3], vt[3], vn[3];
+			int matches = sscanf(
+				line,
+				"f %d/%d/%d %d/%d/%d %d/%d/%d",
+				&v[0], &vt[0], &vn[0],
+				&v[1], &vt[1], &vn[1],
+				&v[2], &vt[2], &vn[2]
+			);
+			if (matches != 9) {
+				LOG_ERROR("Invalid face format in line: %s", line);
+				continue;
+			}
+
+			for (int i = 0; i < 3; i++) {
+				VertexIndices vi = {
+					.position_idx = v[i] - 1,
+					.normal_idx = vn[i] - 1,
+					.uv_idx = vt[i] - 1
+				};
+
+				int vertex_index = ArrayList_find(unique_vertices, &vi);
+				if (vertex_index == -1) {
+					ArrayList_add(unique_vertices, &vi);
+					vertex_index = unique_vertices->size - 1;
+				}
+				ArrayList_add(indices, &vertex_index);
+			}
 		}
 	}
 
-	mesh_data.num_vertices = vertices->size;
+	mesh_data.num_vertices = unique_vertices->size;
 	mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
@@ -135,6 +170,7 @@ MeshData load_mesh(String path) {
 		}
 	);
 
+	mesh_data.num_indices = indices->size;
 	mesh_data.index_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
@@ -170,41 +206,26 @@ MeshData load_mesh(String path) {
 	PositionTextureVertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
 	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
 
-	rewind(file);
-
-	int triangle_index = 0;
-	while (fgets(line, sizeof(line), file) != NULL) {
-		if (line[0] == 'f') {
-			int v[3], vt[3], vn[3];
-			int matches = sscanf(
-				line,
-				"f %d/%d/%d %d/%d/%d %d/%d/%d",
-				&v[0], &vt[0], &vn[0],
-				&v[1], &vt[1], &vn[1],
-				&v[2], &vt[2], &vn[2]
-			);
-			if (matches != 9) {
-				LOG_ERROR("Invalid face format in line: %s", line);
-				continue;
-			}
-
-			for (int i = 0; i < 3; i++) {
-				transfer_data[v[i] - 1] = (PositionTextureVertex) {
-					.position = *(Vector3*)ArrayList_get(vertices, v[i] - 1),
-					.uv = *(Vector2*)ArrayList_get(uvs, vt[i] - 1),
-					.normal = *(Vector3*)ArrayList_get(normals, vn[i] - 1)
-				};
-			}
-			index_data[3 * triangle_index] = v[0] - 1;
-			index_data[3 * triangle_index + 1] = v[1] - 1;
-			index_data[3 * triangle_index + 2] = v[2] - 1;
-			triangle_index++;
-		}
+	for (int i = 0; i < unique_vertices->size; i++) {
+		VertexIndices vi = *(VertexIndices*)ArrayList_get(unique_vertices, i);
+		PositionTextureVertex ptv = {
+			.position = *(Vector3*)ArrayList_get(positions, vi.position_idx),
+			.uv = *(Vector2*)ArrayList_get(uvs, vi.uv_idx),
+			.normal = *(Vector3*)ArrayList_get(normals, vi.normal_idx)
+		};
+		transfer_data[i] = ptv;
 	}
 
-	ArrayList_destroy(vertices);
+	for (int i = 0; i < indices->size; i++) {
+		int index = *(int*)ArrayList_get(indices, i);
+		index_data[i] = (Uint16)index;
+	}
+
+	ArrayList_destroy(unique_vertices);
+	ArrayList_destroy(positions);
 	ArrayList_destroy(normals);
 	ArrayList_destroy(uvs);
+	ArrayList_destroy(indices);
 	fclose(file);
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);

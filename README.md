@@ -1,5 +1,7 @@
 # README #
 
+![screenshot](screenshot.png)
+
 ### What is this? ###
 3D game prototype written "from scratch" using C and SDL3. Very much a work in progress.
 
@@ -10,6 +12,7 @@
 * Importing of 3D models in OBJ format
 
 ### TODO ###
+* 2D rendering
 * Normal maps
 * Dynamic shadows using shadow mapping
 * Data serialization for saving/loading game state

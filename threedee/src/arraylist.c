@@ -65,3 +65,13 @@ void ArrayList_for_each(ArrayList* list, void (*print_func)(void*)) {
         print_func((char*)list->data + i * list->element_size);
     }
 }
+
+
+int ArrayList_find(ArrayList* list, void* value) {
+    for (int i = 0; i < list->size; i++) {
+        if (memcmp((char*)list->data + i * list->element_size, value, list->element_size) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
