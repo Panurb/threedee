@@ -191,8 +191,8 @@ void update_physics(float time_step) {
         trans->rotation = quaternion_mult(delta_rotation, trans->rotation);
 
         // Clamp velocities
-        rigid_body->velocity = vec3_clamp(rigid_body->velocity, 0.0f, rigid_body->max_speed);
-        rigid_body->angular_velocity = vec3_clamp(rigid_body->angular_velocity, 0.0f, rigid_body->max_angular_speed);
+        rigid_body->velocity = clamp_magnitude3(rigid_body->velocity, 0.0f, rigid_body->max_speed);
+        rigid_body->angular_velocity = clamp_magnitude3(rigid_body->angular_velocity, 0.0f, rigid_body->max_angular_speed);
 
         // Apply damping
         rigid_body->velocity = mult3(rigid_body->linear_damping, rigid_body->velocity);

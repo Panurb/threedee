@@ -3,12 +3,10 @@
 #include <camera.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #include "scene.h"
-
 #include "util.h"
-#include "component.h")
+#include "component.h"
 
 
 void create_scene() {
@@ -68,12 +66,20 @@ void create_scene() {
     for (int j = 0; j < 1; j++) {
         i = create_entity();
         TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 1.0f, 0.0f));
-        // transform->scale = vec3(1.0f, 0.5f, 1.0f);
         transform->rotation = euler_to_quaternion((EulerAngles) { 10.0f, 0.0f, 0.0f });
         MeshComponent_add(i, "cube_textured", "tiles", "default");
+        RigidBodyComponent_add(i, 1.0f);
+        ColliderComponent_add(i, COLLIDER_CUBE,  0.5f);
+    }
+
+    for (int j = 0; j < 1; j++) {
+        i = create_entity();
+        TransformComponent* transform = TransformComponent_add(i, vec3((float) j, -1.0f, 0.0f));
+        transform->scale = vec3(0.5f, 0.5f, 0.5f);
+        MeshComponent_add(i, "sphere", "tiles", "default");
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
         // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
-        ColliderComponent_add(i, COLLIDER_CUBE,  0.5f);
+        ColliderComponent_add(i, COLLIDER_SPHERE,  1.0f);
     }
 
     i = create_entity();
