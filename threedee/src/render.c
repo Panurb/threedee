@@ -16,11 +16,19 @@
 #include "util.h"
 
 
-static SDL_GPUGraphicsPipeline* pipeline_2d = NULL;
-static SDL_GPUGraphicsPipeline* pipeline_3d = NULL;
-static SDL_GPUGraphicsPipeline* pipeline_3d_textured = NULL;
+typedef enum {
+	PIPELINE_2D,
+	PIPELINE_3D,
+	PIPELINE_3D_TEXTURED,
+	PIPELINE_SHADOW_DEPTH,
+	PIPELINE_COUNT
+} Pipeline;
+
+
+static SDL_GPUGraphicsPipeline** pipelines;
 static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
+static SDL_GPUSampler* sampler = NULL;
 
 static SDL_GPUBuffer* light_buffer = NULL;
 static SDL_GPUTransferBuffer* light_transfer_buffer = NULL;
@@ -319,6 +327,85 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 }
 
 
+SDL_GPUGraphicsPipeline* create_render_pipeline_shadow_depth() {
+	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "shadow_depth.vert", 0, 1, 1, 0);
+	if (!vertex_shader) {
+		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "shadow_depth.frag", 0, 0, 0, 0);
+	if (!fragment_shader) {
+		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 0,
+			.color_target_descriptions = NULL,
+			.has_depth_stencil_target = true,
+			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
+		},
+		.vertex_input_state = (SDL_GPUVertexInputState){
+			.num_vertex_buffers = 1,
+			.vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+				.slot = 0,
+				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+				.instance_step_rate = 0,
+				.pitch = sizeof(PositionTextureVertex)
+			}},
+			.num_vertex_attributes = 4,
+			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.location = 0,
+				.offset = 0
+			}, {
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+				.location = 1,
+				.offset = sizeof(float) * 3
+			}, {
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.location = 2,
+				.offset = sizeof(float) * 5
+			}, {
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.location = 3,
+				.offset = sizeof(float) * 8
+			}}
+		},
+		.rasterizer_state = (SDL_GPURasterizerState){
+			.cull_mode = SDL_GPU_CULLMODE_BACK,
+			.fill_mode = SDL_GPU_FILLMODE_FILL,
+			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
+		},
+		.depth_stencil_state = (SDL_GPUDepthStencilState){
+			.enable_depth_test = true,
+			.enable_depth_write = true,
+			.compare_op = SDL_GPU_COMPAREOP_LESS
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+		.vertex_shader = vertex_shader,
+		.fragment_shader = fragment_shader,
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
+	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
 MeshData create_mesh_quad() {
 	MeshData render_mode = {
 		.max_instances = 256,
@@ -541,9 +628,11 @@ void init_render() {
 	app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
 	SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
 
-	pipeline_2d = create_render_pipeline_2d();
-	pipeline_3d = create_render_pipeline_3d();
-	pipeline_3d_textured = create_render_pipeline_3d_textured();
+	pipelines = malloc(sizeof(SDL_GPUGraphicsPipeline*) * PIPELINE_COUNT);
+	pipelines[PIPELINE_2D] = create_render_pipeline_2d();
+	pipelines[PIPELINE_3D] = create_render_pipeline_3d();
+	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
+	pipelines[PIPELINE_SHADOW_DEPTH] = create_render_pipeline_shadow_depth();
 
 	meshes[MESH_QUAD] = create_mesh_quad();
 	meshes[MESH_CUBE] = create_mesh_cube();
@@ -576,11 +665,25 @@ void init_render() {
 			.size = sizeof(LightData) * max_lights
 		}
 	);
+
+	sampler = SDL_CreateGPUSampler(
+		app.gpu_device,
+		&(SDL_GPUSamplerCreateInfo){
+			.min_filter = SDL_GPU_FILTER_NEAREST,
+			.mag_filter = SDL_GPU_FILTER_NEAREST,
+			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			.enable_anisotropy = true,
+			.max_anisotropy = 16,
+		}
+	);
 }
 
 
 void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
-			MeshData* mesh_data, SDL_GPUGraphicsPipeline* pipeline) {
+			MeshData* mesh_data, Pipeline pipeline) {
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 
 	SDL_UploadToGPUBuffer(
@@ -599,22 +702,23 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 
 	SDL_EndGPUCopyPass(copy_pass);
 
-	SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
+	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[pipeline]);
 	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = mesh_data->vertex_buffer, .offset = 0 }, 1);
 	SDL_BindGPUIndexBuffer(
 		render_pass, &(SDL_GPUBufferBinding) { .buffer = mesh_data->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
 	);
 	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh_data->instance_buffer, 1);
 
-	if (mesh_data->sampler) {
+	if (pipeline == PIPELINE_3D_TEXTURED) {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			0,
 			&(SDL_GPUTextureSamplerBinding){
 				.texture = resources.texture_array,
-				.sampler = mesh_data->sampler,
+				.sampler = sampler,
 			},
-			1);
+			1
+		);
 	}
 
 	SDL_DrawGPUIndexedPrimitives(render_pass, mesh_data->num_indices, mesh_data->num_instances, 0, 0, 0);
@@ -640,6 +744,46 @@ void add_light(Vector3 position, Color diffuse_color, Color specular_color) {
 	num_lights++;
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, light_transfer_buffer);
+}
+
+
+void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
+	for (Entity i = 0; i < scene->components->entities; i++) {
+		LightComponent* light = get_component(i, COMPONENT_LIGHT);
+		if (!light) continue;
+
+		Matrix4 view_matrix = transform_inverse(get_transform(i));
+		view_matrix._34 += 1.0f;
+		Matrix4 projection_matrix = orthographic_projection_matrix(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
+		Matrix4 view_projection = matrix4_mult(projection_matrix, view_matrix);
+
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &view_projection, sizeof(Matrix4));
+
+		if (!light->shadow_map.depth_texture) {
+			LOG_ERROR("Light %d does not have a shadow map depth texture!", i);
+		}
+
+		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
+			command_buffer,
+			NULL,
+			0,
+			&(SDL_GPUDepthStencilTargetInfo){
+				.clear_depth = 1.0f,
+				.texture = light->shadow_map.depth_texture,
+				.cycle = true,
+				.load_op = SDL_GPU_LOADOP_CLEAR,
+				.store_op = SDL_GPU_STOREOP_STORE,
+				.stencil_load_op = SDL_GPU_LOADOP_CLEAR,
+				.stencil_store_op = SDL_GPU_STOREOP_STORE,
+			}
+		);
+
+		for (int j = 0; j < resources.meshes_size; j++) {
+			render_instances(command_buffer, render_pass, &resources.meshes[j], PIPELINE_SHADOW_DEPTH);
+		}
+
+		SDL_EndGPURenderPass(render_pass);
+	}
 }
 
 
@@ -671,17 +815,6 @@ void render() {
 			}
 		}
 
-		CameraComponent* camera = CameraComponent_get(scene->camera);
-		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
-		// Need to shift so rotation happens around the center of the camera
-		// Otherwise the camera "orbits"
-		view_matrix._34 += 1.0f;
-		Matrix4 projection_matrix = camera->projection_matrix;
-		Matrix4 projection_view_matrix = transpose4(matrix4_mult(projection_matrix, view_matrix));
-
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view_matrix, sizeof(Matrix4));
-		// SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { camera->near_plane, camera->far_plane }, 8);
-
 		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 		SDL_UploadToGPUBuffer(
 			copy_pass,
@@ -698,6 +831,19 @@ void render() {
 		);
 		SDL_EndGPUCopyPass(copy_pass);
 
+		render_shadow_maps(command_buffer);
+
+		CameraComponent* camera = CameraComponent_get(scene->camera);
+		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
+		// Need to shift so rotation happens around the center of the camera
+		// Otherwise the camera "orbits"
+		view_matrix._34 += 1.0f;
+		Matrix4 projection_matrix = camera->projection_matrix;
+		Matrix4 projection_view_matrix = transpose4(matrix4_mult(projection_matrix, view_matrix));
+
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view_matrix, sizeof(Matrix4));
+		// SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { camera->near_plane, camera->far_plane }, 8);
+
 		SDL_GPUColorTargetInfo color_target_info = {
 			.texture = swapchain_texture,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
@@ -710,7 +856,6 @@ void render() {
 			1,
 			&(SDL_GPUDepthStencilTargetInfo){
 				.clear_depth = 1.0f,
-				.load_op = SDL_GPU_LOADOP_CLEAR,
 				.texture = depth_stencil_texture,
 				.cycle = true,
 				.load_op = SDL_GPU_LOADOP_CLEAR,
@@ -733,7 +878,7 @@ void render() {
 		SDL_BindGPUFragmentStorageBuffers(render_pass, 0, &light_buffer, 1);
 
 		for (int i = 0; i < resources.meshes_size; i++) {
-			render_instances(command_buffer, render_pass, &resources.meshes[i], pipeline_3d_textured);
+			render_instances(command_buffer, render_pass, &resources.meshes[i], PIPELINE_3D_TEXTURED);
 			resources.meshes[i].num_instances = 0;
 		}
 

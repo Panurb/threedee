@@ -94,7 +94,7 @@ SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
 			.width = first_image->w,
 			.height = first_image->h,
 			.layer_count_or_depth = num_images,
-			.num_levels = 1,
+			.num_levels = num_levels,
 			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
 		}
 	);
@@ -145,9 +145,10 @@ SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, texture_transfer_buffer);
 
 	SDL_EndGPUCopyPass(copy_pass);
-	SDL_SubmitGPUCommandBuffer(upload_command_buffer);
 
-	// SDL_GenerateMipmapsForGPUTexture(upload_command_buffer, texture);
+	SDL_GenerateMipmapsForGPUTexture(upload_command_buffer, texture);
+
+	SDL_SubmitGPUCommandBuffer(upload_command_buffer);
 
 	SDL_ReleaseGPUTransferBuffer(app.gpu_device, texture_transfer_buffer);
 
@@ -376,19 +377,7 @@ MeshData load_mesh(String path) {
 	SDL_SubmitGPUCommandBuffer(upload_command_buffer);
 	SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
-	mesh_data.sampler = SDL_CreateGPUSampler(
-		app.gpu_device,
-		&(SDL_GPUSamplerCreateInfo){
-			.min_filter = SDL_GPU_FILTER_NEAREST,
-			.mag_filter = SDL_GPU_FILTER_NEAREST,
-			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
-			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-			.enable_anisotropy = true,
-			.max_anisotropy = 16,
-		}
-	);
+
 
 	return mesh_data;
 }

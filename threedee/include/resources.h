@@ -29,7 +29,6 @@ typedef struct MeshData {
     int num_instances;
     int max_instances;
     SDL_GPUTransferBuffer* instance_transfer_buffer;
-    SDL_GPUSampler* sampler;
 } MeshData;
 
 

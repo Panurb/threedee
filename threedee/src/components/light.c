@@ -2,6 +2,9 @@
 
 #include "component.h"
 #include "components/light.h"
+
+#include <app.h>
+
 #include "scene.h"
 
 
@@ -12,6 +15,18 @@ void LightComponent_add(Entity entity, Color color) {
     light->specular_color = color;
     light->range = 20.0f;
     light->intensity = 1.0f;
+    light->shadow_map.depth_texture = SDL_CreateGPUTexture(
+        app.gpu_device,
+        &(SDL_GPUTextureCreateInfo) {
+            .type = SDL_GPU_TEXTURETYPE_2D,
+            .format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+            .width = 2048,
+            .height = 2048,
+            .layer_count_or_depth = 1,
+            .num_levels = 1,
+            .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+        }
+    );
 
     scene->components->light[entity] = light;
 }
@@ -20,6 +35,7 @@ void LightComponent_add(Entity entity, Color color) {
 void LightComponent_remove(Entity entity) {
     LightComponent* light = scene->components->light[entity];
     if (light) {
+        SDL_ReleaseGPUTexture(app.gpu_device, light->shadow_map.depth_texture);
         free(light);
         scene->components->light[entity] = NULL;
     }

@@ -1,6 +1,15 @@
 #pragma once
 
+#include <SDL3/SDL_gpu.h>
+
 #include "component.h"
+
+
+typedef struct {
+    SDL_GPUTexture* depth_texture;
+    SDL_GPUBuffer* frame_buffer;
+    Matrix4 light_view_projection;
+} ShadowMap;
 
 
 typedef struct {
@@ -8,6 +17,7 @@ typedef struct {
     Color specular_color;
     float range;
     float intensity;
+    ShadowMap shadow_map;
 } LightComponent;
 
 

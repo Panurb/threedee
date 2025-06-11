@@ -16,6 +16,7 @@
 * 2D rendering
 * Dynamic shadows using shadow mapping
 * Data serialization for saving/loading game state
+* Particles
 
 ### How do I get set up? ###
 
