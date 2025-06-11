@@ -7,8 +7,7 @@
 
 typedef struct {
     SDL_GPUTexture* depth_texture;
-    SDL_GPUBuffer* frame_buffer;
-    Matrix4 light_view_projection;
+    Matrix4 view_projection_matrix;
 } ShadowMap;
 
 

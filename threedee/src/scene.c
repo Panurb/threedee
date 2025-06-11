@@ -83,12 +83,14 @@ void create_scene() {
     }
 
     i = create_entity();
-    TransformComponent_add(i, vec3(5.0f, 10.0f, 0.0f));
+    TransformComponent_add(i, vec3(5.0f, 5.0f, 0.0f));
     LightComponent_add(i, COLOR_BLUE);
+    MeshComponent_add(i, "sphere", "bark", "default");
 
     i = create_entity();
-    TransformComponent_add(i, vec3(-5.0f, 10.0f, 0.0f));
+    TransformComponent_add(i, vec3(-5.0f, 5.0f, 0.0f));
     LightComponent_add(i, COLOR_RED);
+    MeshComponent_add(i, "sphere", "bark", "default");
 
     LOG_INFO("Scene created");
 }

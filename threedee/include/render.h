@@ -51,6 +51,7 @@ typedef struct {
 	float _pad2;
 	Vector3 specular_color;
 	float _pad3;
+	Matrix4 view_projection_matrix;
 } LightData;
 
 

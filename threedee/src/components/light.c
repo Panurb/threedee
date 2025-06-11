@@ -27,6 +27,7 @@ void LightComponent_add(Entity entity, Color color) {
             .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
         }
     );
+    light->shadow_map.view_projection_matrix = matrix4_id();
 
     scene->components->light[entity] = light;
 }

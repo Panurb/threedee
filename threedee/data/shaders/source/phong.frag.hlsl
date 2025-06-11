@@ -1,5 +1,7 @@
 Texture2DArray<float4> tex : register(t0, space2);
+Texture2DArray<float3> shadow_maps : register(t1, space2);
 SamplerState sampler_tex : register(s0, space2);
+SamplerState sampler_shadow_maps : register(s1, space2);
 
 cbuffer UBO : register(b0, space3)
 {
@@ -15,9 +17,13 @@ struct LightData
     float3 position : packoffset(c0);
     float3 diffuse_color : packoffset(c1);
     float3 specular_color : packoffset(c2);
+    float4x4 view_projection_matrix : packoffset(c3);
 };
 
-StructuredBuffer<LightData> light_data : register(t1, space2);
+cbuffer LightBuffer : register(b1, space3)
+{
+    LightData light_data[32]; // Adjust size as needed
+};
 
 struct Input
 {
@@ -88,6 +94,26 @@ Output main(Input input)
         diffuse += base_color * diff * light_data[i].diffuse_color;
         specular += input.specular * spec * light_data[i].specular_color;
     }
+
+    float shadow_factor = 1.0;
+    for (int i = 0; i < num_lights; ++i) {
+        float4 shadow_coord = mul(float4(world_position, 1.0), light_data[i].view_projection_matrix);
+        shadow_coord.xyz /= shadow_coord.w;
+        float2 shadow_uv = shadow_coord.xy * 0.5 + 0.5;
+        float shadow_depth = shadow_coord.z * 0.5 + 0.5;
+
+        // Sample the shadow map at this light and position
+        float closest_depth = shadow_maps.Sample(sampler_shadow_maps, float3(shadow_uv, i)).r;
+
+        // Simple shadow test
+        if (shadow_depth - 0.005 > closest_depth) {
+            shadow_factor *= 0.5; // In shadow, reduce light
+        }
+    }
+
+    // Multiply diffuse/specular by shadow_factor
+    diffuse *= shadow_factor;
+    specular *= shadow_factor;
 
     float3 lit_color = ambient + diffuse + specular;
 

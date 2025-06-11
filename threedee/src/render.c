@@ -29,10 +29,9 @@ static SDL_GPUGraphicsPipeline** pipelines;
 static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
+static SDL_GPUTexture* shadow_maps = NULL;
 
-static SDL_GPUBuffer* light_buffer = NULL;
-static SDL_GPUTransferBuffer* light_transfer_buffer = NULL;
-static int max_lights = 128;
+static LightData lights[32];
 static int num_lights = 0;
 
 static MeshData meshes[3];
@@ -253,7 +252,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "phong.frag", 1, 1, 1, 0);
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "phong.frag", 2, 2, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -650,22 +649,6 @@ void init_render() {
 		LOG_ERROR("Failed to create depth stencil texture: %s", SDL_GetError());
 	}
 
-	light_buffer = SDL_CreateGPUBuffer(
-		app.gpu_device,
-		&(SDL_GPUBufferCreateInfo) {
-			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = sizeof(LightData) * max_lights
-		}
-	);
-
-	light_transfer_buffer = SDL_CreateGPUTransferBuffer(
-		app.gpu_device,
-		&(SDL_GPUTransferBufferCreateInfo) {
-			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = sizeof(LightData) * max_lights
-		}
-	);
-
 	sampler = SDL_CreateGPUSampler(
 		app.gpu_device,
 		&(SDL_GPUSamplerCreateInfo){
@@ -677,6 +660,19 @@ void init_render() {
 			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 			.enable_anisotropy = true,
 			.max_anisotropy = 16,
+		}
+	);
+
+	shadow_maps = SDL_CreateGPUTexture(
+		app.gpu_device,
+		&(SDL_GPUTextureCreateInfo){
+			.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
+			.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+			.width = 2048,
+			.height = 2048,
+			.layer_count_or_depth = 32, // Max number of lights
+			.num_levels = 1,
+			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
 		}
 	);
 }
@@ -719,31 +715,31 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 			},
 			1
 		);
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			1,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = shadow_maps,
+				.sampler = sampler,
+			},
+			1
+		);
 	}
 
 	SDL_DrawGPUIndexedPrimitives(render_pass, mesh_data->num_indices, mesh_data->num_instances, 0, 0, 0);
 }
 
 
-void add_light(Vector3 position, Color diffuse_color, Color specular_color) {
-	if (num_lights >= max_lights) {
-		light_buffer = double_buffer_size(light_buffer, sizeof(LightData) * max_lights);
-		light_transfer_buffer = double_transfer_buffer_size(light_transfer_buffer, sizeof(LightData) * max_lights);
-		max_lights *= 2;
-	}
-
-	LightData* lights = SDL_MapGPUTransferBuffer(app.gpu_device, light_transfer_buffer, false);
-
+void add_light(Vector3 position, Color diffuse_color, Color specular_color, Matrix4 view_projection) {
 	LightData light_data = {
 		.position = position,
 		.diffuse_color = { diffuse_color.r / 255.0f, diffuse_color.g / 255.0f, diffuse_color.b / 255.0f },
 		.specular_color = { specular_color.r / 255.0f, specular_color.g / 255.0f, specular_color.b / 255.0f },
+		.view_projection_matrix = view_projection,
 	};
 
-	lights[num_lights] = light_data;
+	memcpy(lights + num_lights, &light_data, sizeof(LightData));
 	num_lights++;
-
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, light_transfer_buffer);
 }
 
 
@@ -753,9 +749,10 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		if (!light) continue;
 
 		Matrix4 view_matrix = transform_inverse(get_transform(i));
-		view_matrix._34 += 1.0f;
+		// view_matrix._34 += 1.0f;
 		Matrix4 projection_matrix = orthographic_projection_matrix(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
 		Matrix4 view_projection = matrix4_mult(projection_matrix, view_matrix);
+		light->shadow_map.view_projection_matrix = view_projection;
 
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &view_projection, sizeof(Matrix4));
 
@@ -784,6 +781,31 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 
 		SDL_EndGPURenderPass(render_pass);
 	}
+
+	int layer = 0;
+	for (Entity i = 0; i < scene->components->entities; i++) {
+		LightComponent* light = get_component(i, COMPONENT_LIGHT);
+		if (!light) continue;
+
+		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+		SDL_CopyGPUTextureToTexture(
+			copy_pass,
+			&(SDL_GPUTextureLocation) {
+				.texture = light->shadow_map.depth_texture,
+				.layer = 0
+			},
+			&(SDL_GPUTextureLocation) {
+				.texture = shadow_maps,
+				.layer = layer,
+			},
+			2048,
+			2048,
+			1,
+			false
+		);
+		SDL_EndGPUCopyPass(copy_pass);
+		layer++;
+	}
 }
 
 
@@ -801,7 +823,12 @@ void render() {
 		for (Entity entity = 0; entity < scene->components->entities; entity++) {
 			LightComponent* light_component = get_component(entity, COMPONENT_LIGHT);
 			if (light_component) {
-				add_light(get_position(entity), light_component->diffuse_color, light_component->specular_color);
+				add_light(
+					get_position(entity),
+					light_component->diffuse_color,
+					light_component->specular_color,
+					light_component->shadow_map.view_projection_matrix
+				);
 			}
 
 			MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
@@ -814,22 +841,6 @@ void render() {
 				);
 			}
 		}
-
-		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
-		SDL_UploadToGPUBuffer(
-			copy_pass,
-			&(SDL_GPUTransferBufferLocation) {
-				.transfer_buffer = light_transfer_buffer,
-				.offset = 0
-			},
-			&(SDL_GPUBufferRegion) {
-				.buffer = light_buffer,
-				.offset = 0,
-				.size = sizeof(LightData) * num_lights
-			},
-			true
-		);
-		SDL_EndGPUCopyPass(copy_pass);
 
 		render_shadow_maps(command_buffer);
 
@@ -875,7 +886,7 @@ void render() {
 			.camera_position = get_position(scene->camera)
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
-		SDL_BindGPUFragmentStorageBuffers(render_pass, 0, &light_buffer, 1);
+		SDL_PushGPUFragmentUniformData(command_buffer, 1, &lights, sizeof(LightData) * num_lights);
 
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_instances(command_buffer, render_pass, &resources.meshes[i], PIPELINE_3D_TEXTURED);
