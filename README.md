@@ -10,10 +10,10 @@
 * Phong shading with multiple light sources
 * Impulse-based collision resolution
 * Importing of 3D models in OBJ format
+* Normal maps
 
 ### TODO ###
 * 2D rendering
-* Normal maps
 * Dynamic shadows using shadow mapping
 * Data serialization for saving/loading game state
 

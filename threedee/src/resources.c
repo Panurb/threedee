@@ -86,7 +86,6 @@ SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
 	SDL_Surface* first_image = images[0];
 
 	int num_levels = floorf(log2f(fmaxf(first_image->w, first_image->h)) + 1);
-	LOG_INFO("Number of levels: %d", num_levels);
 	SDL_GPUTexture* texture = SDL_CreateGPUTexture(
 		app.gpu_device,
 		&(SDL_GPUTextureCreateInfo){
@@ -156,6 +155,22 @@ SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
 }
 
 
+Vector3 calculate_tangent(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 uv0, Vector2 uv1, Vector2 uv2) {
+	Vector3 edge1 = diff3(v1, v0);
+	Vector3 edge2 = diff3(v2, v0);
+	Vector2 delta_uv1 = diff2(uv1, uv0);
+	Vector2 delta_uv2 = diff2(uv2, uv0);
+
+	float f = 1.0f / (delta_uv1.x * delta_uv2.y - delta_uv1.y * delta_uv2.x);
+	Vector3 tangent;
+	tangent.x = f * (delta_uv2.y * edge1.x - delta_uv1.y * edge2.x);
+	tangent.y = f * (delta_uv2.y * edge1.y - delta_uv1.y * edge2.y);
+	tangent.z = f * (delta_uv2.y * edge1.z - delta_uv1.y * edge2.z);
+
+	return normalized3(tangent);
+}
+
+
 MeshData load_mesh(String path) {
 	LOG_INFO("Loading mesh: %s", path);
 
@@ -175,6 +190,7 @@ MeshData load_mesh(String path) {
 	ArrayList* normals = ArrayList_create(sizeof(Vector3));
 	ArrayList* uvs = ArrayList_create(sizeof(Vector2));
 	ArrayList* indices = ArrayList_create(sizeof(Uint16));
+	ArrayList* tangents = ArrayList_create(sizeof(Vector3));
 
 	String line;
 	while (fgets(line, sizeof(line), file) != NULL) {
@@ -285,7 +301,8 @@ MeshData load_mesh(String path) {
 		PositionTextureVertex ptv = {
 			.position = *(Vector3*)ArrayList_get(positions, vi.position_idx),
 			.uv = *(Vector2*)ArrayList_get(uvs, vi.uv_idx),
-			.normal = *(Vector3*)ArrayList_get(normals, vi.normal_idx)
+			.normal = *(Vector3*)ArrayList_get(normals, vi.normal_idx),
+			.tangent = zeros3()
 		};
 		transfer_data[i] = ptv;
 	}
@@ -293,6 +310,26 @@ MeshData load_mesh(String path) {
 	for (int i = 0; i < indices->size; i++) {
 		int index = *(int*)ArrayList_get(indices, i);
 		index_data[i] = (Uint16)index;
+	}
+
+	for (int i = 0; i < indices->size; i += 3) {
+		Uint16 i0 = index_data[i];
+		Uint16 i1 = index_data[i + 1];
+		Uint16 i2 = index_data[i + 2];
+
+		Vector3 u0 = transfer_data[i0].position;
+		Vector3 u1 = transfer_data[i1].position;
+		Vector3 u2 = transfer_data[i2].position;
+		Vector2 uv0 = transfer_data[i0].uv;
+		Vector2 uv1 = transfer_data[i1].uv;
+		Vector2 uv2 = transfer_data[i2].uv;
+		Vector3 tangent = calculate_tangent(
+			u0, u1, u2,
+			uv0, uv1, uv2
+		);
+		transfer_data[i0].tangent = normalized3(sum3(transfer_data[i0].tangent, tangent));
+		transfer_data[i1].tangent = normalized3(sum3(transfer_data[i1].tangent, tangent));
+		transfer_data[i2].tangent = normalized3(sum3(transfer_data[i2].tangent, tangent));
 	}
 
 	ArrayList_destroy(unique_vertices);
@@ -362,9 +399,11 @@ void load_textures() {
 	ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
 
 	for (int i = 0; i < resources.textures_size; i++) {
+		LOG_INFO("Loading texture: %s", resources.texture_names[i]);
 		String path;
 		snprintf(path, STRING_SIZE, "%s%s%s", "data/images/", resources.texture_names[i], ".png");
 		SDL_Surface* surface = IMG_Load(path);
+		LOG_INFO("Format: %s, Size: %dx%d", SDL_GetPixelFormatName(surface->format), surface->w, surface->h);
 		if (!surface) {
 			LOG_ERROR("Failed to load image: %s", path);
 			continue;
@@ -372,10 +411,30 @@ void load_textures() {
 		ArrayList_add(surfaces, &surface);
 	}
 
-	resources.texture_array = create_texture_array(
-		ArrayList_get(surfaces, 0),
-		resources.textures_size
-	);
+	resources.texture_array = create_texture_array(surfaces->data, surfaces->size);
+
+	ArrayList_for_each(surfaces, SDL_DestroySurface);
+	ArrayList_destroy(surfaces);
+}
+
+
+void load_normal_maps() {
+	ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
+
+	for (int i = 0; i < resources.textures_size; i++) {
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/normals/", resources.texture_names[i], ".png");
+		SDL_Surface* surface = IMG_Load(path);
+		if (!surface) {
+			LOG_WARNING("Missing normal map: %s", path);
+			// Add a default normal map (flat blue = no perturbation)
+			surface = SDL_CreateSurface(2048, 2048, SDL_PIXELFORMAT_RGBA8888);
+			SDL_FillSurfaceRect(surface, NULL, 0x8080FF);
+		}
+		ArrayList_add(surfaces, &surface);
+	}
+
+	resources.normal_map_array = create_texture_array(surfaces->data, surfaces->size);
 
 	ArrayList_for_each(surfaces, SDL_DestroySurface);
 	ArrayList_destroy(surfaces);
@@ -388,6 +447,7 @@ void load_resources() {
 	resources = (Resources) { 0 };
 
 	load_textures();
+	// load_normal_maps();
 
     resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
     for (int i = 0; i < resources.sounds_size; i++) {

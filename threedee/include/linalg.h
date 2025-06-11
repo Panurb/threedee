@@ -97,7 +97,7 @@ Vector2 sum(Vector2 v, Vector2 u);
 
 Vector3 sum3(Vector3 v, Vector3 u);
 
-Vector2 diff(Vector2 v, Vector2 u);
+Vector2 diff2(Vector2 v, Vector2 u);
 
 Vector3 diff3(Vector3 v, Vector3 u);
 

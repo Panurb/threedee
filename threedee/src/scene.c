@@ -76,7 +76,7 @@ void create_scene() {
         i = create_entity();
         TransformComponent* transform = TransformComponent_add(i, vec3((float) j, -1.0f, 0.0f));
         transform->scale = vec3(0.5f, 0.5f, 0.5f);
-        MeshComponent_add(i, "sphere", "tiles", "default");
+        MeshComponent_add(i, "sphere", "bark", "default");
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
         // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
         ColliderComponent_add(i, COLLIDER_SPHERE,  1.0f);

@@ -277,13 +277,13 @@ bool point_inside_rectangle(Vector2 position, float angle, float width, float he
     Vector2 hh = mult(height / width, perp(hw));
 
     Vector2 a = sum(position, sum(hw, hh));
-    Vector2 b = diff(a, mult(2, hh));
-    Vector2 c = diff(b, mult(2, hw));
+    Vector2 b = diff2(a, mult(2, hh));
+    Vector2 c = diff2(b, mult(2, hw));
     Vector2 d = sum(c, mult(2, hh));
 
-    Vector2 am = diff(point, a);
-    Vector2 ab = diff(b, a);
-    Vector2 ad = diff(d, a);
+    Vector2 am = diff2(point, a);
+    Vector2 ab = diff2(b, a);
+    Vector2 ad = diff2(d, a);
 
     if (0.0f < dot2(am, ab) && dot2(am, ab) < dot2(ab, ab) && 0.0f < dot2(am, ad) && dot2(am, ad) < dot2(ad, ad)) {
         return true;
@@ -314,8 +314,8 @@ void get_rect_corners(Vector2 position, float angle, float width, float height, 
     Vector2 hh = mult(height / width, perp(hw));
 
     Vector2 a = sum(position, sum(hw, hh));
-    Vector2 b = diff(a, mult(2, hh));
-    Vector2 c = diff(b, mult(2, hw));
+    Vector2 b = diff2(a, mult(2, hh));
+    Vector2 c = diff2(b, mult(2, hw));
     Vector2 d = sum(c, mult(2, hh));
 
     corners[0] = a;

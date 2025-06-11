@@ -268,7 +268,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 				.instance_step_rate = 0,
 				.pitch = sizeof(PositionTextureVertex)
 			}},
-			.num_vertex_attributes = 3,
+			.num_vertex_attributes = 4,
 			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
 				.buffer_slot = 0,
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
@@ -281,9 +281,14 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 				.offset = sizeof(float) * 3
 			}, {
 				.buffer_slot = 0,
-					.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-					.location = 2,
-					.offset = sizeof(float) * 5
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.location = 2,
+				.offset = sizeof(float) * 5
+			}, {
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+				.location = 3,
+				.offset = sizeof(float) * 8
 			}}
 		},
 		.rasterizer_state = (SDL_GPURasterizerState){

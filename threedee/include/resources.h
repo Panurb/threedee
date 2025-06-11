@@ -37,6 +37,7 @@ typedef struct {
     String texture_names[MAX_TEXTURES];
     int textures_size;
     SDL_GPUTexture* texture_array;
+    SDL_GPUTexture* normal_map_array;
 
     String material_names[MAX_TEXTURES];
     int materials_size;

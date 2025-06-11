@@ -20,6 +20,7 @@ struct Input
     float3 position : POSITION0;
     float2 tex_coord : TEXCOORD0;
     float3 normal : NORMAL0;
+    float3 tangent : TANGENT0;
 };
 
 struct Output
@@ -27,7 +28,9 @@ struct Output
     float2 tex_coord : TEXCOORD0;
     float4 position : SV_Position;
     float3 normal : NORMAL0;
+    float3 tangent : TANGENT0;
 	int tex_index : TEXCOORD1;
+    int normal_index : TEXCOORD2;
     float3 world_position : POSITION0;
     float specular;
     float diffuse;
@@ -61,8 +64,10 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     Output output;
     output.tex_coord = input.tex_coord * tiling;
 	output.tex_index = instance_data[instance_id].tex_index;
+    output.normal_index = instance_data[instance_id].tex_index + 1; // Assuming normal map is next in texture array
     output.position = mul(mul(projection_matrix, transform), float4(input.position, 1.0f));
     output.normal = normalize(mul((float3x3)transform, input.normal));
+    output.tangent = normalize(mul((float3x3)transform, input.tangent));
     output.world_position = mul(transform, float4(input.position, 1.0f)).xyz;
 
     output.specular = instance_data[instance_id].specular;
