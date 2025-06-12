@@ -31,7 +31,7 @@ static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
 static SDL_GPUTexture* shadow_maps = NULL;
 
-static LightData lights[32];
+static LightData lights[MAX_LIGHTS];
 static int num_lights = 0;
 
 static MeshData meshes[3];
@@ -668,9 +668,9 @@ void init_render() {
 		&(SDL_GPUTextureCreateInfo){
 			.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
 			.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
-			.width = 2048,
-			.height = 2048,
-			.layer_count_or_depth = 32, // Max number of lights
+			.width = SHADOW_MAP_RESOLUTION,
+			.height = SHADOW_MAP_RESOLUTION,
+			.layer_count_or_depth = MAX_LIGHTS,
 			.num_levels = 1,
 			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
 		}
@@ -798,8 +798,8 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 				.texture = shadow_maps,
 				.layer = layer,
 			},
-			2048,
-			2048,
+			SHADOW_MAP_RESOLUTION,
+			SHADOW_MAP_RESOLUTION,
 			1,
 			false
 		);

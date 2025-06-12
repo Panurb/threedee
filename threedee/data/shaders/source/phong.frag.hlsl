@@ -22,7 +22,7 @@ struct LightData
 
 cbuffer LightBuffer : register(b1, space3)
 {
-    LightData light_data[32]; // Adjust size as needed
+    LightData light_data[32];  // Should match MAX_LIGHTS
 };
 
 struct Input
@@ -51,6 +51,8 @@ float linearize_depth(float depth, float near, float far)
     float z = depth * 2.0 - 1.0;
     return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
 }
+
+static const float2 texel_size = 1.0 / float2(4096.0, 4096.0);  // TODO: use SHADOW_MAP_RESOLUTION
 
 Output main(Input input)
 {
@@ -83,6 +85,7 @@ Output main(Input input)
     float3 diffuse = float3(0.0, 0.0, 0.0);
     float3 specular = float3(0.0, 0.0, 0.0);
 
+    float shadow_factor = 1.0;
 	for (int i = 0; i < num_lights; ++i)
     {
         float3 l = normalize(light_data[i].position - world_position);
@@ -93,10 +96,7 @@ Output main(Input input)
 
         diffuse += base_color * diff * light_data[i].diffuse_color;
         specular += input.specular * spec * light_data[i].specular_color;
-    }
 
-    float shadow_factor = 1.0;
-    for (int i = 0; i < num_lights; ++i) {
         float4 shadow_coord = mul(light_data[i].projection_view_matrix, float4(world_position, 1.0));
         shadow_coord.xyz /= shadow_coord.w;
         float2 shadow_uv = shadow_coord.xy * 0.5 + 0.5;
@@ -106,12 +106,22 @@ Output main(Input input)
         // Sample the shadow map at this light and position
         float closest_depth = shadow_maps.Sample(sampler_shadow_maps, float3(shadow_uv, i)).r;
 
-        // Simple shadow test
         if (all(shadow_uv >= 0.0) && all(shadow_uv <= 1.0)) {
-            float bias = 0.001; // Bias to avoid shadow acne
-            if (shadow_depth - bias > closest_depth) {
-                shadow_factor *= 0.5; // In shadow, reduce light
+            float shadow = 0.0;
+            const int kernel_radius = 1;
+
+            // PCF shadow mapping with a 3x3 kernel
+            for (int x = -kernel_radius; x <= kernel_radius; ++x) {
+                for (int y = -kernel_radius; y <= kernel_radius; ++y) {
+                    float2 offset = float2(x, y) * texel_size;
+                    float sample_depth = shadow_maps.Sample(sampler_shadow_maps, float3(shadow_uv + offset, i)).r;
+                    if (shadow_depth - 0.0005 > sample_depth)
+                        shadow += 1.0;
+                }
             }
+
+            shadow /= 9.0;
+            shadow_factor *= lerp(1.0, 0.5, shadow);
         }
     }
 

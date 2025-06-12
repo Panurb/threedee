@@ -2,11 +2,13 @@
 
 #include <SDL3/SDL_gpu.h>
 
-#include "component.h"
+
+#define SHADOW_MAP_RESOLUTION 4096
+#define MAX_LIGHTS 32  // Should match array size in phong shader
 
 
 typedef struct {
-    SDL_GPUTexture* texture;
+    SDL_GPUTexture* texture;  // Only used for debugging
     SDL_GPUTexture* depth_texture;
     Matrix4 projection_view_matrix;
 } ShadowMap;

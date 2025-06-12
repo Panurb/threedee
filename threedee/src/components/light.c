@@ -20,8 +20,8 @@ void LightComponent_add(Entity entity, Color color) {
         &(SDL_GPUTextureCreateInfo) {
             .type = SDL_GPU_TEXTURETYPE_2D,
             .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
-            .width = 2048,
-            .height = 2048,
+            .width = SHADOW_MAP_RESOLUTION,
+            .height = SHADOW_MAP_RESOLUTION,
             .layer_count_or_depth = 1,
             .num_levels = 1,
             .usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
@@ -32,8 +32,8 @@ void LightComponent_add(Entity entity, Color color) {
         &(SDL_GPUTextureCreateInfo) {
             .type = SDL_GPU_TEXTURETYPE_2D,
             .format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
-            .width = 2048,
-            .height = 2048,
+            .width = SHADOW_MAP_RESOLUTION,
+            .height = SHADOW_MAP_RESOLUTION,
             .layer_count_or_depth = 1,
             .num_levels = 1,
             .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
