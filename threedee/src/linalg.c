@@ -217,6 +217,14 @@ Matrix2 transpose(Matrix2 m) {
     return (Matrix2) { m.a, m.c, m.b, m.d };
 }
 
+Matrix3 transpose3(Matrix3 m) {
+    return (Matrix3) {
+        m._11, m._21, m._31,
+        m._12, m._22, m._32,
+        m._13, m._23, m._33
+    };
+}
+
 Matrix4 transpose4(Matrix4 m) {
     return (Matrix4) {
         m._11, m._21, m._31, m._41,
@@ -586,4 +594,63 @@ Vector3 clamp3(Vector3 v, Vector3 min, Vector3 max) {
         clamp(v.y, min.y, max.y),
         clamp(v.z, min.z, max.z)
     };
+}
+
+
+Matrix3 matrix3_abs(Matrix3 m) {
+    return (Matrix3) {
+        fabsf(m._11), fabsf(m._12), fabsf(m._13),
+        fabsf(m._21), fabsf(m._22), fabsf(m._23),
+        fabsf(m._31), fabsf(m._32), fabsf(m._33)
+    };
+}
+
+Matrix3 matrix3_add_scalar(Matrix3 m, float c) {
+    return (Matrix3) {
+        m._11 + c, m._12 + c, m._13 + c,
+        m._21 + c, m._22 + c, m._23 + c,
+        m._31 + c, m._32 + c, m._33 + c
+    };
+}
+
+Vector3 matrix3_row(Matrix3 m, int i) {
+    switch (i) {
+        case 0: return (Vector3) { m._11, m._12, m._13 };
+        case 1: return (Vector3) { m._21, m._22, m._23 };
+        case 2: return (Vector3) { m._31, m._32, m._33 };
+        default:
+            LOG_ERROR("Invalid row index %d for Matrix3", i);
+            return zeros3();
+    }
+}
+
+
+Vector3 matrix3_column(Matrix3 m, int i) {
+    switch (i) {
+        case 0: return (Vector3) { m._11, m._21, m._31 };
+        case 1: return (Vector3) { m._12, m._22, m._32 };
+        case 2: return (Vector3) { m._13, m._23, m._33 };
+        default:
+            LOG_ERROR("Invalid column index %d for Matrix3", i);
+            return zeros3();
+    }
+}
+
+
+float mat3_get(Matrix3 m, int i, int j) {
+    if (i == 0) {
+        if (j == 0) return m._11;
+        if (j == 1) return m._12;
+        if (j == 2) return m._13;
+    } else if (i == 1) {
+        if (j == 0) return m._21;
+        if (j == 1) return m._22;
+        if (j == 2) return m._23;
+    } else if (i == 2) {
+        if (j == 0) return m._31;
+        if (j == 1) return m._32;
+        if (j == 2) return m._33;
+    }
+    LOG_ERROR("Invalid indices (%d, %d) for Matrix3", i, j);
+    return 0.0f;
 }

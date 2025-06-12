@@ -652,9 +652,9 @@ void init_render() {
 	sampler = SDL_CreateGPUSampler(
 		app.gpu_device,
 		&(SDL_GPUSamplerCreateInfo){
-			.min_filter = SDL_GPU_FILTER_NEAREST,
-			.mag_filter = SDL_GPU_FILTER_NEAREST,
-			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+			.min_filter = SDL_GPU_FILTER_LINEAR,
+			.mag_filter = SDL_GPU_FILTER_LINEAR,
+			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
 			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
@@ -757,13 +757,8 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 
 		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
 			command_buffer,
-			&(SDL_GPUColorTargetInfo){
-				.texture = light->shadow_map.texture,
-				.load_op = SDL_GPU_LOADOP_CLEAR,
-				.store_op = SDL_GPU_STOREOP_STORE,
-				.clear_color = { 0.0f, 0.0f, 0.0f, 1.0f }
-			},
-			1,
+			 NULL,
+			0,
 			&(SDL_GPUDepthStencilTargetInfo){
 				.clear_depth = 1.0f,
 				.texture = light->shadow_map.depth_texture,

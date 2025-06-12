@@ -125,6 +125,8 @@ Vector2 matrix_mult(Matrix2 m, Vector2 v);
 
 Matrix2 transpose(Matrix2 m);
 
+Matrix3 transpose3(Matrix3 m);
+
 Matrix4 transpose4(Matrix4 m);
 
 Matrix2 matrix2_inverse(Matrix2 m);
@@ -180,3 +182,13 @@ Quaternion axis_angle_to_quaternion(Vector3 axis, float angle);
 Vector3 clamp_magnitude3(Vector3 v, float min, float max);
 
 Vector3 clamp3(Vector3 v, Vector3 min, Vector3 max);
+
+Matrix3 matrix3_abs(Matrix3 m);
+
+Matrix3 matrix3_add_scalar(Matrix3 m, float c);
+
+Vector3 matrix3_row(Matrix3 m, int i);
+
+Vector3 matrix3_column(Matrix3 m, int i);
+
+float mat3_get(Matrix3 m, int i, int j);

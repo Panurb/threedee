@@ -1,5 +1,5 @@
 Texture2DArray<float4> tex : register(t0, space2);
-Texture2DArray<float3> shadow_maps : register(t1, space2);
+Texture2DArray<float> shadow_maps : register(t1, space2);
 SamplerState sampler_tex : register(s0, space2);
 SamplerState sampler_shadow_maps : register(s1, space2);
 
@@ -48,8 +48,7 @@ struct Output
 
 float linearize_depth(float depth, float near, float far)
 {
-    float z = depth * 2.0 - 1.0;
-    return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
+    return (near * far) / (far - depth * (far - near));
 }
 
 static const float2 texel_size = 1.0 / float2(4096.0, 4096.0);  // TODO: use SHADOW_MAP_RESOLUTION

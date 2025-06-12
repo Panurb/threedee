@@ -63,7 +63,7 @@ void create_scene() {
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
     ColliderComponent_add(i, COLLIDER_PLANE, 0.5f);
 
-    for (int j = 0; j < 1; j++) {
+    for (int j = 0; j < 2; j++) {
         i = create_entity();
         TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 1.0f, 0.0f));
         transform->rotation = euler_to_quaternion((EulerAngles) { 10.0f, 0.0f, 0.0f });

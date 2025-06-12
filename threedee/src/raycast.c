@@ -42,8 +42,8 @@ Intersection intersection_cuboid_ray(Cuboid cuboid, Ray ray) {
     Vector3 local_origin = matrix3_map(inv_rot, diff3(ray.origin, cuboid.center));
     Vector3 local_dir = matrix3_map(inv_rot, ray.direction);
 
-    Vector3 min = mult3(-1.0f, cuboid.half_size);
-    Vector3 max = cuboid.half_size;
+    Vector3 min = mult3(-1.0f, cuboid.half_extents);
+    Vector3 max = cuboid.half_extents;
 
     float tmin = -INFINITY, tmax = INFINITY;
     int hit_axis = -1;

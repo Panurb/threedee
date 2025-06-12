@@ -70,14 +70,14 @@ Penetration penetration_cuboid_plane(Cuboid cuboid, Plane plane) {
     Matrix3 rot = quaternion_to_rotation_matrix(cuboid.rotation);
 
     Vector3 vertices[8] = {
-        { -cuboid.half_size.x, -cuboid.half_size.y, -cuboid.half_size.z },
-        {  cuboid.half_size.x, -cuboid.half_size.y, -cuboid.half_size.z },
-        {  cuboid.half_size.x,  cuboid.half_size.y, -cuboid.half_size.z },
-        { -cuboid.half_size.x,  cuboid.half_size.y, -cuboid.half_size.z },
-        { -cuboid.half_size.x, -cuboid.half_size.y,  cuboid.half_size.z },
-        {  cuboid.half_size.x, -cuboid.half_size.y,  cuboid.half_size.z },
-        {  cuboid.half_size.x,  cuboid.half_size.y,  cuboid.half_size.z },
-        { -cuboid.half_size.x,  cuboid.half_size.y,  cuboid.half_size.z }
+        { -cuboid.half_extents.x, -cuboid.half_extents.y, -cuboid.half_extents.z },
+        {  cuboid.half_extents.x, -cuboid.half_extents.y, -cuboid.half_extents.z },
+        {  cuboid.half_extents.x,  cuboid.half_extents.y, -cuboid.half_extents.z },
+        { -cuboid.half_extents.x,  cuboid.half_extents.y, -cuboid.half_extents.z },
+        { -cuboid.half_extents.x, -cuboid.half_extents.y,  cuboid.half_extents.z },
+        {  cuboid.half_extents.x, -cuboid.half_extents.y,  cuboid.half_extents.z },
+        {  cuboid.half_extents.x,  cuboid.half_extents.y,  cuboid.half_extents.z },
+        { -cuboid.half_extents.x,  cuboid.half_extents.y,  cuboid.half_extents.z }
     };
 
     Penetration penetration = {
@@ -108,7 +108,7 @@ Penetration penetration_cuboid_plane(Cuboid cuboid, Plane plane) {
 
 
 Penetration penetration_sphere_cuboid(Sphere sphere, Cuboid cuboid) {
-    Vector3 half_extents = cuboid.half_size;
+    Vector3 half_extents = cuboid.half_extents;
     Vector3 closest_point = clamp3(sphere.center, diff3(cuboid.center, half_extents), sum3(cuboid.center, half_extents));
 
     Sphere point = {
@@ -119,6 +119,105 @@ Penetration penetration_sphere_cuboid(Sphere sphere, Cuboid cuboid) {
     if (penetration.valid) {
         penetration.contact_point = closest_point;
     }
+    return penetration;
+}
+
+
+Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
+    const float eps = 1e-4f;
+
+    Matrix3 rot1 = quaternion_to_rotation_matrix(cuboid1.rotation);
+    Matrix3 inv_rot1 = transpose3(rot1);
+    Matrix3 rot2 = quaternion_to_rotation_matrix(cuboid2.rotation);
+    Vector3 t = diff3(cuboid2.center, cuboid1.center);
+
+    // Cuboid 2 rotation in cuboid 1 local frame
+    Matrix3 rot = matrix3_mult(inv_rot1, rot2);
+
+    // Translation vector in cuboid 1 local frame
+    t = matrix3_map(inv_rot1, t);
+
+    Matrix3 abs_rot = matrix3_add_scalar(matrix3_abs(rot), eps);
+
+    Penetration penetration = {
+        .valid = false
+    };
+
+    float min_overlap = INFINITY;
+    Vector3 overlap_axis = zeros3();
+
+    // Test axes L = A0, A1, A2 (cuboid 1 local axes)
+    for (int i = 0; i < 3; i++) {
+        float ra = vec3_get(cuboid1.half_extents, i);
+        float rb = dot3(cuboid2.half_extents, matrix3_row(abs_rot, i));
+
+        float overlap = ra + rb - fabsf(vec3_get(t, i));
+        if (overlap < 0.0f) {
+            return penetration;
+        }
+
+        if (overlap < min_overlap) {
+            min_overlap = overlap;
+            overlap_axis = matrix3_column(rot1, i);
+        }
+    }
+
+    // Test axes L = B0, B1, B2 (cuboid 2 local axes)
+    for (int i = 0; i < 3; i++) {
+        float ra = dot3(cuboid1.half_extents, matrix3_row(abs_rot, i));
+        float rb = vec3_get(cuboid2.half_extents, i);
+
+        float overlap = ra + rb - fabsf(dot3(t, matrix3_row(rot, i)));
+        if (overlap < 0.0f) {
+            return penetration;
+        }
+
+        if (overlap < min_overlap) {
+            min_overlap = overlap;
+            overlap_axis = matrix3_column(rot2, i);
+        }
+    }
+
+    // Test axes L = A0 x B0, ..., A2 x B2
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            Vector3 axis = cross(matrix3_column(rot1, i), matrix3_column(rot2, j));
+            float axis_norm = norm3(axis);
+            if (axis_norm < eps) continue;
+            axis = mult3(1.0f / axis_norm, axis);
+
+            float ra = 0.0f;
+            float rb = 0.0f;
+
+            for (int k = 0; k < 3; k++) {
+                ra += fabsf(vec3_get(cuboid1.half_extents, k) * dot3(axis, matrix3_column(rot1, k)));
+                rb += fabsf(vec3_get(cuboid2.half_extents, k) * dot3(axis, matrix3_column(rot2, k)));
+            }
+
+            float dist = fabsf(dot3(t, axis));
+            float overlap = ra + rb - dist;
+            if (overlap < 0.0f) {
+                return penetration;
+            }
+
+            if (overlap < min_overlap) {
+                min_overlap = overlap;
+                overlap_axis = axis;
+            }
+        }
+    }
+
+    if (dot3(t, overlap_axis) < 0.0f)
+        overlap_axis = mult3(-1.0f, overlap_axis);
+
+    penetration.valid = true;
+    penetration.overlap = mult3(min_overlap, overlap_axis);
+    LOG_INFO("Penetration found: %f, axis: (%f, %f, %f)",
+             min_overlap, overlap_axis.x, overlap_axis.y, overlap_axis.z);
+
+    // Calculate approximate contact point
+    penetration.contact_point = sum3(cuboid1.center, mult3(0.5f, penetration.overlap));
+
     return penetration;
 }
 
@@ -158,7 +257,7 @@ Shape get_shape(Entity entity) {
         case COLLIDER_CUBE: {
             shape.cuboid = (Cuboid) {
                 .center = position,
-                .half_size = mult3(radius, get_scale(entity)),
+                .half_extents = mult3(radius, get_scale(entity)),
                 .rotation = get_rotation(entity),
             };
             break;
@@ -178,9 +277,6 @@ Penetration get_penetration(Entity i, Entity j) {
             .valid = false
         };
     }
-
-    Vector3 position = get_position(i);
-    Vector3 other_position = get_position(j);
 
     Shape shape = get_shape(i);
     Shape shape_other = get_shape(j);
@@ -206,6 +302,10 @@ Penetration get_penetration(Entity i, Entity j) {
         Penetration penetration = penetration_sphere_cuboid(shape_other.sphere, shape.cuboid);
         penetration.overlap = mult3(-1.0f, penetration.overlap);
         return penetration;
+    }
+
+    if (collider->type == COLLIDER_CUBE && other_collider->type == COLLIDER_CUBE) {
+        return penetration_cuboid_cuboid(shape.cuboid, shape_other.cuboid);
     }
 
     // LOG_ERROR("Invalid collision: %d vs %d", collider->type, other_collider->type);
