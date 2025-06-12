@@ -80,7 +80,7 @@ CameraComponent* CameraComponent_add(Entity entity, Resolution resolution, float
     camera->resolution = resolution;
     camera->fov = fov;
     camera->near_plane = 0.1f;
-    camera->far_plane = 1000.0f;
+    camera->far_plane = 100.0f;
 
     float aspect_ratio = (float)camera->resolution.w / (float)camera->resolution.h;
     camera->projection_matrix = perspective_projection_matrix(

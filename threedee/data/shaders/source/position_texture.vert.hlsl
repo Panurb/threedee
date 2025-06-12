@@ -1,6 +1,6 @@
 cbuffer TransformBlock : register(b0, space1)
 {
-    float4x4 view_projection_matrix : packoffset(c0);
+    float4x4 projection_view_matrix : packoffset(c0);
 };
 
 struct InstanceData
@@ -65,7 +65,7 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     output.tex_coord = input.tex_coord * tiling;
 	output.tex_index = instance_data[instance_id].tex_index;
     output.normal_index = instance_data[instance_id].tex_index + 1; // Assuming normal map is next in texture array
-    output.position = mul(mul(view_projection_matrix, transform), float4(input.position, 1.0f));
+    output.position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
     output.normal = normalize(mul((float3x3)transform, input.normal));
     output.tangent = normalize(mul((float3x3)transform, input.tangent));
     output.world_position = mul(transform, float4(input.position, 1.0f)).xyz;

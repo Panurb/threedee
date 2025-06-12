@@ -434,18 +434,17 @@ Matrix4 orthographic_projection_matrix(float left, float right, float bottom, fl
     Matrix4 m = matrix4_id();
     m._11 = 2.0f / (right - left);
     m._22 = 2.0f / (top - bottom);
-    m._33 = -2.0f / (far - near);
+    m._33 = 1.0f / (near - far);
     m._41 = -(right + left) / (right - left);
     m._42 = -(top + bottom) / (top - bottom);
-    m._43 = -(far + near) / (far - near);
+    m._43 = near / (near - far);
     return m;
 }
 
-Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up) {
+Matrix4 look_at_matrix(Vector3 position, Vector3 target, Vector3 up) {
+    Vector3 forward = normalized3(diff3(target, position));
     Vector3 right = normalized3(cross(forward, up));
     up = normalized3(cross(right, forward));
-    LOG_INFO("up: %f, %f, %f", up.x, up.y, up.z);
-    LOG_INFO("right: %f, %f, %f", right.x, right.y, right.z);
     Matrix4 m = {
         right.x, up.x, -forward.x, 0.0f,
         right.y, up.y, -forward.y, 0.0f,

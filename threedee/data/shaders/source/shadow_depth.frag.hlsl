@@ -1,18 +1,12 @@
-struct Input
+struct Output
 {
-    float2 tex_coord : TEXCOORD0;
-    float4 position : SV_Position;
-    float3 normal : NORMAL0;
-    float3 tangent : TANGENT0;
-    int tex_index : TEXCOORD1;
-    int normal_index : TEXCOORD2;
-    float3 world_position : POSITION0;
-    float specular;
-    float diffuse;
-    float ambient;
-    float shininess;
+    float4 color : SV_Target0;
+    float depth : SV_Depth;
 };
 
-float main(Input input) : SV_Depth {
-    return 0.0f; // Just needed to satisfy the pipeline; depth comes from SV_POSITION
+Output main(float4 position) : SV_Depth {
+    Output output;
+    output.depth = position.z;
+    output.color = float4(1.0, 0.0, 0.0, 1.0); // Placeholder color
+    return output;
 }

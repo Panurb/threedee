@@ -730,12 +730,12 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 }
 
 
-void add_light(Vector3 position, Color diffuse_color, Color specular_color, Matrix4 view_projection) {
+void add_light(Vector3 position, Color diffuse_color, Color specular_color, Matrix4 projection_view) {
 	LightData light_data = {
 		.position = position,
 		.diffuse_color = { diffuse_color.r / 255.0f, diffuse_color.g / 255.0f, diffuse_color.b / 255.0f },
 		.specular_color = { specular_color.r / 255.0f, specular_color.g / 255.0f, specular_color.b / 255.0f },
-		.view_projection_matrix = view_projection,
+		.projection_view_matrix = transpose4(projection_view),
 	};
 
 	memcpy(lights + num_lights, &light_data, sizeof(LightData));
@@ -748,13 +748,8 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		LightComponent* light = get_component(i, COMPONENT_LIGHT);
 		if (!light) continue;
 
-		Matrix4 view_matrix = transform_inverse(get_transform(i));
-		// view_matrix._34 += 1.0f;
-		Matrix4 projection_matrix = orthographic_projection_matrix(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f);
-		Matrix4 view_projection = matrix4_mult(projection_matrix, view_matrix);
-		light->shadow_map.view_projection_matrix = view_projection;
-
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &view_projection, sizeof(Matrix4));
+		Matrix4 projection_view = transpose4(light->shadow_map.projection_view_matrix);
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view, sizeof(Matrix4));
 
 		if (!light->shadow_map.depth_texture) {
 			LOG_ERROR("Light %d does not have a shadow map depth texture!", i);
@@ -762,8 +757,13 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 
 		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
 			command_buffer,
-			NULL,
-			0,
+			&(SDL_GPUColorTargetInfo){
+				.texture = light->shadow_map.texture,
+				.load_op = SDL_GPU_LOADOP_CLEAR,
+				.store_op = SDL_GPU_STOREOP_STORE,
+				.clear_color = { 0.0f, 0.0f, 0.0f, 1.0f }
+			},
+			1,
 			&(SDL_GPUDepthStencilTargetInfo){
 				.clear_depth = 1.0f,
 				.texture = light->shadow_map.depth_texture,
@@ -776,7 +776,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		);
 
 		for (int j = 0; j < resources.meshes_size; j++) {
-			render_instances(command_buffer, render_pass, &resources.meshes[j], PIPELINE_SHADOW_DEPTH);
+			render_instances(command_buffer, render_pass, &resources.meshes[j], PIPELINE_3D_TEXTURED);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
@@ -823,11 +823,22 @@ void render() {
 		for (Entity entity = 0; entity < scene->components->entities; entity++) {
 			LightComponent* light_component = get_component(entity, COMPONENT_LIGHT);
 			if (light_component) {
+				Matrix4 view_matrix = look_at_matrix(
+					get_position(entity),
+					zeros3(),
+					(Vector3){ 0.0f, 1.0f, 0.0f }
+				);
+				Matrix4 projection_matrix = orthographic_projection_matrix(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 10.0f);
+				projection_matrix = perspective_projection_matrix(
+					1.6f, 1.0f, 0.1f, 10.0f
+				);
+				light_component->shadow_map.projection_view_matrix = matrix4_mult(projection_matrix, view_matrix);
+
 				add_light(
 					get_position(entity),
 					light_component->diffuse_color,
 					light_component->specular_color,
-					light_component->shadow_map.view_projection_matrix
+					light_component->shadow_map.projection_view_matrix
 				);
 			}
 
@@ -846,6 +857,11 @@ void render() {
 
 		CameraComponent* camera = CameraComponent_get(scene->camera);
 		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
+		// view_matrix = look_at_matrix(
+		// 	get_position(scene->camera),
+		// 	zeros3(),
+		// 	(Vector3){ 0.0f, 1.0f, 0.0f }
+		// );
 		// Need to shift so rotation happens around the center of the camera
 		// Otherwise the camera "orbits"
 		view_matrix._34 += 1.0f;

@@ -15,6 +15,18 @@ void LightComponent_add(Entity entity, Color color) {
     light->specular_color = color;
     light->range = 20.0f;
     light->intensity = 1.0f;
+    light->shadow_map.texture = SDL_CreateGPUTexture(
+        app.gpu_device,
+        &(SDL_GPUTextureCreateInfo) {
+            .type = SDL_GPU_TEXTURETYPE_2D,
+            .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+            .width = 2048,
+            .height = 2048,
+            .layer_count_or_depth = 1,
+            .num_levels = 1,
+            .usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
+        }
+    );
     light->shadow_map.depth_texture = SDL_CreateGPUTexture(
         app.gpu_device,
         &(SDL_GPUTextureCreateInfo) {
@@ -27,7 +39,7 @@ void LightComponent_add(Entity entity, Color color) {
             .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
         }
     );
-    light->shadow_map.view_projection_matrix = matrix4_id();
+    light->shadow_map.projection_view_matrix = matrix4_id();
 
     scene->components->light[entity] = light;
 }

@@ -17,7 +17,7 @@ struct LightData
     float3 position : packoffset(c0);
     float3 diffuse_color : packoffset(c1);
     float3 specular_color : packoffset(c2);
-    float4x4 view_projection_matrix : packoffset(c3);
+    float4x4 projection_view_matrix : packoffset(c3);
 };
 
 cbuffer LightBuffer : register(b1, space3)
@@ -97,17 +97,21 @@ Output main(Input input)
 
     float shadow_factor = 1.0;
     for (int i = 0; i < num_lights; ++i) {
-        float4 shadow_coord = mul(float4(world_position, 1.0), light_data[i].view_projection_matrix);
+        float4 shadow_coord = mul(light_data[i].projection_view_matrix, float4(world_position, 1.0));
         shadow_coord.xyz /= shadow_coord.w;
         float2 shadow_uv = shadow_coord.xy * 0.5 + 0.5;
-        float shadow_depth = shadow_coord.z * 0.5 + 0.5;
+        shadow_uv.y = 1.0 - shadow_uv.y; // Flip Y coordinate for texture sampling
+        float shadow_depth = shadow_coord.z;
 
         // Sample the shadow map at this light and position
         float closest_depth = shadow_maps.Sample(sampler_shadow_maps, float3(shadow_uv, i)).r;
 
         // Simple shadow test
-        if (shadow_depth - 0.005 > closest_depth) {
-            shadow_factor *= 0.5; // In shadow, reduce light
+        if (all(shadow_uv >= 0.0) && all(shadow_uv <= 1.0)) {
+            float bias = 0.001; // Bias to avoid shadow acne
+            if (shadow_depth - bias > closest_depth) {
+                shadow_factor *= 0.5; // In shadow, reduce light
+            }
         }
     }
 
@@ -119,6 +123,6 @@ Output main(Input input)
 
     Output result;
     result.color = float4(lit_color, 1.0);
-    result.depth = linearize_depth(position.z, near_plane, far_plane);
+    result.depth = position.z;
     return result;
 }
