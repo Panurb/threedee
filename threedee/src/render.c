@@ -850,7 +850,7 @@ void render() {
 
 		render_shadow_maps(command_buffer);
 
-		CameraComponent* camera = CameraComponent_get(scene->camera);
+		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
 		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
 		// view_matrix = look_at_matrix(
 		// 	get_position(scene->camera),

@@ -143,7 +143,7 @@ void input_game(SDL_Event sdl_event) {
     }
 
 
-    TransformComponent* trans = TransformComponent_get(scene->camera);
+    TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);
     float sens = game_settings.mouse_sensitivity / 10.0f;
 
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
@@ -201,7 +201,7 @@ void input() {
     }
 
 
-    TransformComponent* trans = TransformComponent_get(scene->camera);
+    TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);
     Vector3 velocity = zeros3();
 
     const bool* keyboard_state = SDL_GetKeyboardState(NULL);

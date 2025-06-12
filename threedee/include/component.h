@@ -5,36 +5,15 @@
 #include "util.h"
 #include "list.h"
 #include "linalg.h"
+#include "components/camera.h"
 #include "components/light.h"
 #include "components/mesh.h"
 #include "components/rigidbody.h"
 #include "components/collider.h"
+#include "components/transform.h"
 
 #define MAX_ENTITIES 2000
 
-
-typedef struct {
-    Vector3 position;
-    Quaternion rotation;
-    Vector3 scale;
-    Entity parent;
-    List* children;
-    float lifetime;
-    Filename prefab;
-    struct {
-        Vector3 position;
-        Quaternion rotation;
-        Vector3 scale;
-    } previous;
-} TransformComponent;
-
-typedef struct {
-    float fov;
-    float near_plane;
-    float far_plane;
-    Resolution resolution;
-    Matrix4 projection_matrix;
-} CameraComponent;
 
 typedef struct {
     bool loop;
@@ -54,7 +33,7 @@ typedef struct {
 typedef struct ComponentData {
     int entities;
     List* added_entities;
-    TransformComponent* coordinate[MAX_ENTITIES];
+    TransformComponent* transform[MAX_ENTITIES];
     CameraComponent* camera[MAX_ENTITIES];
     SoundComponent* sound[MAX_ENTITIES];
     MeshComponent* mesh[MAX_ENTITIES];
@@ -74,14 +53,6 @@ typedef enum ComponentType {
 } ComponentType;
 
 ComponentData* ComponentData_create();
-
-TransformComponent* TransformComponent_add(Entity entity, Vector3 pos);
-TransformComponent* TransformComponent_get(Entity entity);
-void TransformComponent_remove(Entity entity);
-
-CameraComponent* CameraComponent_add(Entity entity, Resolution resolution, float fov);
-CameraComponent* CameraComponent_get(Entity entity);
-void CameraComponent_remove(Entity entity);
 
 SoundComponent* SoundComponent_add(Entity entity, Filename hit_sound);
 SoundComponent* SoundComponent_get(Entity entity);

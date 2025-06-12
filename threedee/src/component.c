@@ -10,6 +10,7 @@
 #include "component.h"
 #include "components/light.h"
 #include "components/rigidbody.h"
+#include "components/transform.h"
 
 
 ComponentData* ComponentData_create() {
@@ -18,7 +19,7 @@ ComponentData* ComponentData_create() {
     components->added_entities = NULL;
 
     for (int i = 0; i < MAX_ENTITIES; i++) {
-        components->coordinate[i] = NULL;
+        components->transform[i] = NULL;
         components->camera[i] = NULL;
         components->sound[i] = NULL;
         components->mesh[i] = NULL;
@@ -27,83 +28,6 @@ ComponentData* ComponentData_create() {
         components->collider[i] = NULL;
     }
     return components;
-}
-
-
-TransformComponent* TransformComponent_add(Entity entity, Vector3 pos) {
-    TransformComponent* trans = malloc(sizeof(TransformComponent));
-    trans->position = pos;
-    trans->rotation = (Quaternion) { 0.0f, 0.0f, 0.0f, 1.0f };
-    trans->scale = ones3();
-    trans->parent = NULL_ENTITY;
-    trans->children = List_create();
-    trans->lifetime = -1.0f;
-    trans->prefab[0] = '\0';
-    trans->previous.position = pos;
-    trans->previous.rotation = trans->rotation;
-    trans->previous.scale = ones3();
-
-    scene->components->coordinate[entity] = trans;
-
-    return trans;
-}
-
-
-TransformComponent* TransformComponent_get(Entity entity) {
-    if (entity == -1) return NULL;
-    return scene->components->coordinate[entity];
-}
-
-
-void TransformComponent_remove(Entity entity) {
-    TransformComponent* coord = TransformComponent_get(entity);
-    if (coord) {
-        // if (coord->parent != -1) {
-        //     List_remove(CoordinateComponent_get(coord->parent)->children, entity);
-        // }
-        for (ListNode* node = coord->children->head; node; node = node->next) {
-            TransformComponent* child = TransformComponent_get(node->value);
-            if (child) {
-                child->parent = -1;
-            }
-        }
-        List_delete(coord->children);
-        free(coord);
-        scene->components->coordinate[entity] = NULL;
-    }
-}
-
-
-CameraComponent* CameraComponent_add(Entity entity, Resolution resolution, float fov) {
-    CameraComponent* camera = malloc(sizeof(CameraComponent));
-
-    camera->resolution = resolution;
-    camera->fov = fov;
-    camera->near_plane = 0.1f;
-    camera->far_plane = 100.0f;
-
-    float aspect_ratio = (float)camera->resolution.w / (float)camera->resolution.h;
-    camera->projection_matrix = perspective_projection_matrix(
-        camera->fov, aspect_ratio, camera->near_plane, camera->far_plane
-    );
-
-    scene->components->camera[entity] = camera;
-    return camera;
-}
-
-
-CameraComponent* CameraComponent_get(Entity entity) {
-    if (entity == -1) return NULL;
-    return scene->components->camera[entity];
-}
-
-
-void CameraComponent_remove(Entity entity) {
-    CameraComponent* camera = CameraComponent_get(entity);
-    if (camera) {
-        free(camera);
-        scene->components->camera[entity] = NULL;
-    }
 }
 
 
@@ -137,7 +61,7 @@ void SoundComponent_remove(Entity entity) {
 
 Entity create_entity() {
     for (Entity i = 0; i < scene->components->entities; i++) {
-        if (!scene->components->coordinate[i]) {
+        if (!scene->components->transform[i]) {
             if (scene->components->added_entities) {
                 List_add(scene->components->added_entities, i);
             }
@@ -160,9 +84,9 @@ void* get_component(Entity entity, ComponentType component_type) {
 
     switch (component_type) {
         case COMPONENT_TRANSFORM:
-            return TransformComponent_get(entity);
+            return scene->components->transform[entity];
         case COMPONENT_CAMERA:
-            return CameraComponent_get(entity);
+            return scene->components->camera[entity];
         case COMPONENT_SOUND:
             return SoundComponent_get(entity);
         case COMPONENT_MESH:
@@ -210,7 +134,7 @@ void remove_component(Entity entity, ComponentType component_type) {
 
 
 Entity get_root(Entity entity) {
-    TransformComponent* coord = TransformComponent_get(entity);
+    TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
     if (coord->parent != -1) {
         return get_root(coord->parent);
     }
@@ -219,31 +143,35 @@ Entity get_root(Entity entity) {
 
 
 void add_child(Entity parent, Entity child) {
-    TransformComponent_get(child)->parent = parent;
-    List_append(TransformComponent_get(parent)->children, child);
+    TransformComponent* trans = get_component(child, COMPONENT_TRANSFORM);
+    trans->parent = parent;
+    TransformComponent* parent_trans = get_component(parent, COMPONENT_TRANSFORM);
+    List_append(parent_trans->children, child);
 }
 
 
 void remove_children(Entity parent) {
-    TransformComponent* coord = TransformComponent_get(parent);
-    for (ListNode* node = coord->children->head; node; node = node->next) {
-        TransformComponent_get(node->value)->parent = -1;
+    TransformComponent* trans = get_component(parent, COMPONENT_TRANSFORM);
+    for (ListNode* node = trans->children->head; node; node = node->next) {
+        TransformComponent* child_trans = get_component(node->value, COMPONENT_TRANSFORM);
+        child_trans->parent = NULL_ENTITY;
     }
-    List_clear(coord->children);
+    List_clear(trans->children);
 }
 
 
 void remove_parent(Entity child) {
-    TransformComponent* coord = TransformComponent_get(child);
-    if (coord->parent != NULL_ENTITY) {
-        List_remove(TransformComponent_get(coord->parent)->children, child);
-        coord->parent = NULL_ENTITY;
+    TransformComponent* trans = get_component(child, COMPONENT_TRANSFORM);
+    if (trans->parent != NULL_ENTITY) {
+        TransformComponent* parent = get_component(trans->parent, COMPONENT_TRANSFORM);
+        List_remove(parent->children, child);
+        trans->parent = NULL_ENTITY;
     }
 }
 
 
 void remove_prefab(Entity entity) {
-    TransformComponent* coord = TransformComponent_get(entity);
+    TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
     coord->prefab[0] = '\0';
 }
 
@@ -271,7 +199,7 @@ void destroy_entities(List* entities) {
 
 
 void do_destroy_entity_recursive(Entity entity) {
-    TransformComponent* coord = TransformComponent_get(entity);
+    TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
     for (ListNode* node = coord->children->head; node; node = node->next) {
         do_destroy_entity_recursive(node->value);
     }
@@ -295,7 +223,7 @@ void ComponentData_clear() {
 
 
 Matrix4 get_transform(Entity entity) {
-    TransformComponent* trans = TransformComponent_get(entity);
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
     Matrix4 transform = transform_matrix(trans->position, trans->rotation, trans->scale);
     if (trans->parent != NULL_ENTITY) {
         return matrix4_mult(get_transform(trans->parent), transform);
@@ -364,7 +292,7 @@ Vector3 get_scale(Entity entity) {
 
 
 bool entity_exists(Entity entity) {
-    TransformComponent* coord = TransformComponent_get(entity);
+    TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
     if (coord) {
         return true;
     }
@@ -373,13 +301,13 @@ bool entity_exists(Entity entity) {
 
 
 int get_parent(Entity entity) {
-    TransformComponent* coord = TransformComponent_get(entity);
+    TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
     return coord->parent;
 }
 
 
 List* get_children(Entity entity) {
-    TransformComponent* coord = TransformComponent_get(entity);
+    TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
     return coord->children;
 }
 
@@ -389,7 +317,8 @@ Vector3 get_entities_center(List* entities) {
     ListNode* node;
     FOREACH(node, entities) {
         int i = node->value;
-        if (TransformComponent_get(i)->parent == -1) {
+        TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
+        if (trans->parent == NULL_ENTITY) {
             center = sum3(center, get_position(i));
         }
     }

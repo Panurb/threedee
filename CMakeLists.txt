@@ -25,10 +25,12 @@ set(SOURCES
     threedee/src/arraylist.c
     threedee/src/camera.c
     threedee/src/component.c
+    threedee/src/components/camera.c
     threedee/src/components/collider.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
     threedee/src/components/rigidbody.c
+    threedee/src/components/transform.c
     threedee/src/heap.c
     threedee/src/input.c
     threedee/src/interface.c

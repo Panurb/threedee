@@ -40,7 +40,7 @@ int create_menu_camera() {
 
 
 Vector2 camera_size(int camera) {
-    CameraComponent* cam = CameraComponent_get(camera);
+    CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
     float aspect_ratio = cam->resolution.w / (float) cam->resolution.h;
     return (Vector2) { 2.0f * aspect_ratio, 2.0f };
 }
@@ -67,7 +67,7 @@ Vector3 screen_to_world(int camera, Vector3 a) {
 
 
 void draw_cube(Entity camera, Vector3 position, float size, Color color) {
-    CameraComponent* cam = CameraComponent_get(camera);
+    CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
 
     // Matrix4 object_transform = transform_matrix(position, (Rotation) { 0 }, diag3(size));
 

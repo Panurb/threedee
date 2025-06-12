@@ -169,7 +169,7 @@ void update_physics(float time_step) {
         RigidBodyComponent* rigid_body = scene->components->rigid_body[i];
         if (!rigid_body) continue;
 
-        TransformComponent* trans = TransformComponent_get(i);
+        TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
 
         for (int j = 0; j < ITERATIONS; j++) {
             resolve_collisions(i, 1.0f / (float)ITERATIONS);

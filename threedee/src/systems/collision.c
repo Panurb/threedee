@@ -1,6 +1,7 @@
 #include "systems/collision.h"
 
 #include <math.h>
+#include <render.h>
 #include <stdio.h>
 
 #include "scene.h"
@@ -207,8 +208,9 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
         }
     }
 
-    if (dot3(t, overlap_axis) < 0.0f)
+    if (dot3(t, overlap_axis) > 0.0f) {
         overlap_axis = mult3(-1.0f, overlap_axis);
+    }
 
     penetration.valid = true;
     penetration.overlap = mult3(min_overlap, overlap_axis);
