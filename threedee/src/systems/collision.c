@@ -124,6 +124,125 @@ Penetration penetration_sphere_cuboid(Sphere sphere, Cuboid cuboid) {
 }
 
 
+Vector3 intersect(Vector3 p1, Vector3 p2, Plane plane) {
+    float d1 = dot3(p1, plane.normal) - plane.offset;
+    float d2 = dot3(p2, plane.normal) - plane.offset;
+    float t = d1 / (d1 - d2);
+    return sum3(p1, mult3(t, diff3(p2, p1)));
+}
+
+
+void clip_polygon(PolygonShape* polygon, Plane plane) {
+    // Sutherland-Hodgman algorithm for clipping a polygon against a plane
+    #define inside(p) (dot3(p, plane.normal) >= plane.offset)
+
+    // The clipped polygon will have at most 1 extra point
+    PolygonShape clipped = {
+        .points = malloc(sizeof(Vector3) * (polygon->size + 1)),
+        .size = 0
+    };
+
+    Vector3 prev = polygon->points[polygon->size - 1];
+    for (int i = 0; i < polygon->size; i++) {
+        Vector3 curr = polygon->points[i];
+        if (inside(curr)) {
+            if (!inside(prev)) {
+                clipped.points[clipped.size++] = intersect(prev, curr, plane);
+            }
+            clipped.points[clipped.size++] = curr;
+        } else if (inside(prev)) {
+            clipped.points[clipped.size++] = intersect(prev, curr, plane);
+        }
+        prev = curr;
+    }
+    polygon->points = clipped.points;
+    polygon->size = clipped.size;
+    #undef inside
+}
+
+
+Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 overlap_axis) {
+    Matrix3 rot1 = quaternion_to_rotation_matrix(cuboid1.rotation);
+
+    float dot_refs[3];
+    for (int i = 0; i < 3; i++) {
+        dot_refs[i] = dot3(overlap_axis, matrix3_column(rot1, i));
+    }
+    int ref_axis = argmax(dot_refs, 3);
+
+    Vector3 reference_face_normal = matrix3_column(rot1, ref_axis);
+
+    int face_axes[2] = {
+        (ref_axis + 1) % 3,
+        (ref_axis + 2) % 3
+    };
+
+    Matrix3 rot2 = quaternion_to_rotation_matrix(cuboid2.rotation);
+    float dot_incs[3];
+    for (int i = 0; i < 3; i++) {
+        dot_incs[i] = dot3(overlap_axis, matrix3_column(rot2, i));
+    }
+    int inc_axis = argmax(dot_incs, 3);
+
+    int inc_face_axes[2] = {
+        (inc_axis + 1) % 3,
+        (inc_axis + 2) % 3
+    };
+
+    Vector3 inc_face_points[4];
+    int n = 0;
+    for (int dx = -1; dx <= 1; dx += 2) {
+        for (int dy = -1; dy <= 1; dy += 2) {
+            Vector3 offset = sum3(
+                mult3(dx * vec3_get(cuboid2.half_extents, inc_face_axes[0]), matrix3_column(rot2, inc_face_axes[0])),
+                mult3(dy * vec3_get(cuboid2.half_extents, inc_face_axes[1]), matrix3_column(rot2, inc_face_axes[1]))
+            );
+            inc_face_points[n] = sum3(cuboid2.center, offset);
+            n++;
+        }
+    }
+
+    Vector3 ref_center = cuboid1.center;
+    Vector3 ref_u = matrix3_column(rot1, face_axes[0]);
+    Vector3 ref_v = matrix3_column(rot1, face_axes[1]);
+    float hx = vec3_get(cuboid1.half_extents, face_axes[0]);
+    float hy = vec3_get(cuboid1.half_extents, face_axes[1]);
+
+    PolygonShape clipped = {
+        .points = malloc(sizeof(Vector3) * 4),
+        .size = 4
+    };
+    memcpy(clipped.points, inc_face_points, sizeof(Vector3) * 4);
+
+    Plane planes[4] = {
+        {ref_u, dot3(ref_u, sum3(ref_center, mult3(hx, ref_u)))},
+        {neg3(ref_u), dot3(neg3(ref_u), sum3(ref_center, mult3(-hx, ref_u)))},
+        {ref_v, dot3(ref_v, sum3(ref_center, mult3(hy, ref_v)))},
+        {neg3(ref_v), dot3(neg3(ref_v), sum3(ref_center, mult3(-hy, ref_v)))}
+    };
+
+    for (int i = 0; i < 4; i++) {
+        clip_polygon(&clipped, planes[i]);
+        if (clipped.size == 0) {
+            free(clipped.points);
+            return zeros3();
+        }
+    }
+
+    Vector3 contact_normal = normalized3(reference_face_normal);
+    Vector3 avg_contact_point = zeros3();
+    for (int i = 0; i < clipped.size; i++) {
+        Vector3 p = clipped.points[i];
+        Vector3 contact_point = diff3(p, mult3(dot3(diff3(p, ref_center), contact_normal), contact_normal));
+        avg_contact_point = sum3(avg_contact_point, contact_point);
+    }
+    avg_contact_point = div3((float)clipped.size, avg_contact_point);
+
+    free(clipped.points);
+    return avg_contact_point;
+}
+
+
 Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
     const float eps = 1e-4f;
 
@@ -138,6 +257,7 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
     // Translation vector in cuboid 1 local frame
     t = matrix3_map(inv_rot1, t);
 
+    // Compute common subexpression
     Matrix3 abs_rot = matrix3_add_scalar(matrix3_abs(rot), eps);
 
     Penetration penetration = {
@@ -214,11 +334,10 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
 
     penetration.valid = true;
     penetration.overlap = mult3(min_overlap, overlap_axis);
-    LOG_INFO("Penetration found: %f, axis: (%f, %f, %f)",
-             min_overlap, overlap_axis.x, overlap_axis.y, overlap_axis.z);
 
     // Calculate approximate contact point
-    penetration.contact_point = sum3(cuboid1.center, mult3(0.5f, penetration.overlap));
+    // penetration.contact_point = sum3(cuboid1.center, mult3(0.5f, penetration.overlap));
+    penetration.contact_point = contact_point_cuboid_cuboid(cuboid1, cuboid2, overlap_axis);
 
     return penetration;
 }

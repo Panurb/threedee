@@ -20,7 +20,10 @@ ArrayList* ArrayList_create(int element_size) {
 
 
 void* ArrayList_get(ArrayList* list, int index) {
-    if (index < 0 || index >= list->size) {
+    if (index < 0) {
+        index += list->size;
+    }
+    if (index >= list->size) {
         LOG_ERROR("Index out of bounds: %d (size: %d)", index, list->size);
         return NULL; // Index out of bounds
     }

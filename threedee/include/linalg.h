@@ -107,6 +107,10 @@ Vector3 mult3(float c, Vector3 v);
 
 Vector4 mult4(float c, Vector4 v);
 
+Vector3 neg3(Vector3 v);
+
+Vector3 div3(float c, Vector3 v);
+
 Vector2 proj(Vector2 a, Vector2 b);
 
 Vector3 proj3(Vector3 a, Vector3 b);

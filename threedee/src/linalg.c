@@ -171,6 +171,18 @@ Vector4 mult4(float c, Vector4 v) {
     return (Vector4) { c * v.x, c * v.y, c * v.z, c * v.w };
 }
 
+Vector3 neg3(Vector3 v) {
+    return (Vector3) { -v.x, -v.y, -v.z };
+}
+
+Vector3 div3(float c, Vector3 v) {
+    if (c == 0.0f) {
+        LOG_ERROR("Division by zero in vector division");
+        return v;
+    }
+    return (Vector3) { v.x / c, v.y / c, v.z / c };
+}
+
 Vector2 proj(Vector2 a, Vector2 b) {
     Vector2 b_norm = normalized2(b);
     return mult(dot2(a, b_norm), b_norm);
@@ -354,13 +366,13 @@ Matrix4 matrix4_id() {
 
 Matrix4 transform_matrix(Vector3 position, Quaternion rotation, Vector3 scale) {
     Matrix3 r = quaternion_to_rotation_matrix(rotation);
-    Quaternion q = rotation_matrix_to_quaternion(r);
-
-    if (!quaternion_equals(rotation, q)) {
-        LOG_ERROR("Quaternion and rotation matrix do not match!");
-        LOG_ERROR("Quaternion: %f, %f, %f, %f", rotation.x, rotation.y, rotation.z, rotation.w);
-        LOG_ERROR("Quaternion2: %f, %f, %f, %f", q.x, q.y, q.z, q.w);
-    }
+    // Quaternion q = rotation_matrix_to_quaternion(r);
+    //
+    // if (!quaternion_equals(rotation, q)) {
+    //     LOG_ERROR("Quaternion and rotation matrix do not match!");
+    //     LOG_ERROR("Quaternion: %f, %f, %f, %f", rotation.x, rotation.y, rotation.z, rotation.w);
+    //     LOG_ERROR("Quaternion2: %f, %f, %f, %f", q.x, q.y, q.z, q.w);
+    // }
 
     Matrix4 rot = {
         r._11, r._12, r._13, 0.0f,

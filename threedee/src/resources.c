@@ -191,7 +191,6 @@ MeshData load_mesh(String path) {
 	ArrayList* normals = ArrayList_create(sizeof(Vector3));
 	ArrayList* uvs = ArrayList_create(sizeof(Vector2));
 	ArrayList* indices = ArrayList_create(sizeof(Uint16));
-	ArrayList* tangents = ArrayList_create(sizeof(Vector3));
 
 	String line;
 	while (fgets(line, sizeof(line), file) != NULL) {

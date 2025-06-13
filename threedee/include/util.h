@@ -72,6 +72,11 @@ typedef struct {
     Quaternion rotation;
 } Cuboid;
 
+typedef struct {
+    Vector3* points;
+    int size;
+} PolygonShape;
+
 typedef union {
     Plane plane;
     Sphere sphere;
