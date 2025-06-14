@@ -7,13 +7,6 @@
 #include "util.h"
 
 
-typedef enum Mesh {
-	MESH_TRIANGLE,
-	MESH_QUAD,
-	MESH_CUBE,
-} Mesh;
-
-
 typedef struct PositionColorVertex {
     Vector3 position;
     Color color;
@@ -66,13 +59,13 @@ void init_render();
 
 void render();
 
-void add_render_instance(Matrix4 transform, int mesh_index, int texture_index, int material_index);
-
-void add_debug_render_instance(Matrix4 transform, int mesh_index, Color color);
-
 SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size);
 
 SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transfer_buffer, int size);
+
+void add_light(Vector3 position, Color diffuse_color, Color specular_color, Matrix4 projection_view);
+
+void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index);
 
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 

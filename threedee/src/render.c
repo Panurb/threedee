@@ -34,7 +34,7 @@ static SDL_GPUTexture* shadow_maps = NULL;
 static LightData lights[MAX_LIGHTS];
 static int num_lights = 0;
 
-static MeshData meshes[3];
+static MeshData triangle_mesh;
 
 
 SDL_GPUShader* load_shader(
@@ -506,224 +506,6 @@ MeshData create_mesh_triangle() {
 }
 
 
-MeshData create_mesh_quad() {
-	MeshData render_mode = {
-		.max_instances = 256,
-		.num_instances = 0
-	};
-
-	render_mode.num_vertices = 4;
-    render_mode.vertex_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(PositionColorVertex) * render_mode.num_vertices,
-        }
-    );
-
-    render_mode.num_indices = 6;
-    render_mode.index_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-            .size = sizeof(Uint16) * render_mode.num_indices,
-        }
-    );
-
-    SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(PositionColorVertex) * render_mode.num_vertices + sizeof(Uint16) * render_mode.num_indices,
-        }
-    );
-
-    render_mode.instance_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(Matrix4) * render_mode.max_instances,
-        }
-    );
-
-    render_mode.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Matrix4),
-        }
-    );
-
-    PositionColorVertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
-
-    transfer_data[0] = (PositionColorVertex) { {-0.5f, -0.5f, 0.0f}, {255, 0, 0, 255}};
-    transfer_data[1] = (PositionColorVertex) { {0.5f, -0.5f, 0.0f}, {0, 255, 0, 255}};
-    transfer_data[2] = (PositionColorVertex) { {0.5f, 0.5f, 0.0f}, {0, 255, 0, 255}};
-    transfer_data[3] = (PositionColorVertex) { {-0.5f, 0.5f, 0.0f}, {0, 0, 255, 255} };
-
-    Uint16* index_data = (Uint16*) &transfer_data[render_mode.num_vertices];
-    const Uint16 indices[6] = { 0, 1, 2, 0, 2, 3 };
-    SDL_memcpy(index_data, indices, sizeof(indices));
-
-    SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
-
-    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
-    SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
-
-    SDL_UploadToGPUBuffer(
-        copy_pass,
-        &(SDL_GPUTransferBufferLocation) {
-            .transfer_buffer = transfer_buffer,
-            .offset = 0
-        },
-        &(SDL_GPUBufferRegion) {
-            .buffer = render_mode.vertex_buffer,
-            .offset = 0,
-            .size = sizeof(PositionColorVertex) * render_mode.num_vertices
-        },
-        false
-    );
-
-    SDL_UploadToGPUBuffer(
-        copy_pass,
-        &(SDL_GPUTransferBufferLocation) {
-            .transfer_buffer = transfer_buffer,
-            .offset = sizeof(PositionColorVertex) * render_mode.num_vertices
-        },
-        &(SDL_GPUBufferRegion) {
-            .buffer = render_mode.index_buffer,
-            .offset = 0,
-            .size = sizeof(Uint16) * render_mode.num_indices
-        },
-        false
-    );
-
-    SDL_EndGPUCopyPass(copy_pass);
-    SDL_SubmitGPUCommandBuffer(upload_command_buffer);
-    SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
-
-	return render_mode;
-}
-
-
-MeshData create_mesh_cube() {
-	MeshData mesh_data = {
-		.max_instances = 256,
-		.num_instances = 0
-	};
-
-	mesh_data.num_vertices = 8;
-    mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(PositionColorVertex) * mesh_data.num_vertices,
-        }
-    );
-
-    mesh_data.num_indices = 36;
-    mesh_data.index_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-            .size = sizeof(Uint16) * mesh_data.num_indices,
-        }
-    );
-
-    SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(PositionColorVertex) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
-        }
-    );
-
-    mesh_data.instance_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(Matrix4) * mesh_data.max_instances,
-        }
-    );
-
-    mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Matrix4),
-        }
-    );
-
-    PositionColorVertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
-
-    transfer_data[0] = (PositionColorVertex) { {-0.5f, -0.5f, -0.5f}, {255, 0, 0, 255}};
-	transfer_data[1] = (PositionColorVertex) { {0.5f, -0.5f, -0.5f}, {255, 255, 0, 255}};
-	transfer_data[2] = (PositionColorVertex) { {0.5f, 0.5f, -0.5f}, {0, 255, 0, 255}};
-	transfer_data[3] = (PositionColorVertex) { {-0.5f, 0.5f, -0.5f}, {0, 255, 255, 255}};
-	transfer_data[4] = (PositionColorVertex) { {-0.5f, -0.5f, 0.5f}, {255, 0, 255, 255}};
-	transfer_data[5] = (PositionColorVertex) { {0.5f, -0.5f, 0.5f}, {255, 255, 255, 255}};
-	transfer_data[6] = (PositionColorVertex) { {0.5f, 0.5f, 0.5f}, {128, 128, 128, 255}};
-	transfer_data[7] = (PositionColorVertex) { {-0.5f, 0.5f, 0.5f}, {64, 64, 64, 255} };
-
-	// Front-facing triangle should go clockwise
-    Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
-    const Uint16 indices[36] = {
-    	// Back face (z = -0.5)
-    	0, 2, 1, 0, 3, 2,
-		// Front face (z = +0.5)
-		4, 5, 6, 4, 6, 7,
-		// Bottom face (y = -0.5)
-		0, 1, 5, 0, 5, 4,
-		// Top face (y = +0.5)
-		3, 7, 6, 3, 6, 2,
-		// Left face (x = -0.5)
-		0, 4, 7, 0, 7, 3,
-		// Right face (x = +0.5)
-		1, 2, 6, 1, 6, 5
-	};
-    SDL_memcpy(index_data, indices, sizeof(indices));
-
-    SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
-
-    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
-    SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
-
-    SDL_UploadToGPUBuffer(
-        copy_pass,
-        &(SDL_GPUTransferBufferLocation) {
-            .transfer_buffer = transfer_buffer,
-            .offset = 0
-        },
-        &(SDL_GPUBufferRegion) {
-            .buffer = mesh_data.vertex_buffer,
-            .offset = 0,
-            .size = sizeof(PositionColorVertex) * mesh_data.num_vertices
-        },
-        false
-    );
-
-    SDL_UploadToGPUBuffer(
-        copy_pass,
-        &(SDL_GPUTransferBufferLocation) {
-            .transfer_buffer = transfer_buffer,
-            .offset = sizeof(PositionColorVertex) * mesh_data.num_vertices
-        },
-        &(SDL_GPUBufferRegion) {
-            .buffer = mesh_data.index_buffer,
-            .offset = 0,
-            .size = sizeof(Uint16) * mesh_data.num_indices
-        },
-        false
-    );
-
-    SDL_EndGPUCopyPass(copy_pass);
-    SDL_SubmitGPUCommandBuffer(upload_command_buffer);
-    SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
-
-	return mesh_data;
-}
-
-
 void init_render() {
 	app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
 	SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
@@ -734,9 +516,7 @@ void init_render() {
 	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
 	pipelines[PIPELINE_SHADOW_DEPTH] = create_render_pipeline_shadow_depth();
 
-	meshes[MESH_TRIANGLE] = create_mesh_triangle();
-	meshes[MESH_QUAD] = create_mesh_quad();
-	meshes[MESH_CUBE] = create_mesh_cube();
+	triangle_mesh = create_mesh_triangle();
 
 	SDL_GPUTextureCreateInfo depth_stencil_texture_info = {
 		.width = game_settings.width,
@@ -917,36 +697,6 @@ void render() {
 	SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, app.window, &swapchain_texture, NULL, NULL);
 
 	if (swapchain_texture) {
-		for (Entity entity = 0; entity < scene->components->entities; entity++) {
-			LightComponent* light_component = get_component(entity, COMPONENT_LIGHT);
-			if (light_component) {
-				Matrix4 view_matrix = look_at_matrix(
-					get_position(entity),
-					zeros3(),
-					(Vector3){ 0.0f, 1.0f, 0.0f }
-				);
-				Matrix4 projection_matrix = orthographic_projection_matrix(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 10.0f);
-				light_component->shadow_map.projection_view_matrix = matrix4_mult(projection_matrix, view_matrix);
-
-				add_light(
-					get_position(entity),
-					light_component->diffuse_color,
-					light_component->specular_color,
-					light_component->shadow_map.projection_view_matrix
-				);
-			}
-
-			MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
-			if (mesh_component) {
-				add_render_instance(
-					get_transform(entity),
-					mesh_component->mesh_index,
-					mesh_component->texture_index,
-					mesh_component->material_index
-				);
-			}
-		}
-
 		render_shadow_maps(command_buffer);
 
 		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
@@ -996,22 +746,17 @@ void render() {
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_instances(command_buffer, render_pass, &resources.meshes[i], PIPELINE_3D_TEXTURED);
 		}
-
-		for (int i = 0; i < 3; i++) {
-			render_instances(command_buffer, render_pass, &meshes[i], PIPELINE_3D);
-		}
+		render_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
 
 		SDL_EndGPURenderPass(render_pass);
 	}
 
 	// Reset instance counts for next frame
-	for (int i = 0; i < 3; i++) {
-		meshes[i].num_instances = 0;
-	}
+	num_lights = 0;
 	for (int i = 0; i < resources.meshes_size; i++) {
 		resources.meshes[i].num_instances = 0;
 	}
-	num_lights = 0;
+	triangle_mesh.num_instances = 0;
 
 	SDL_SubmitGPUCommandBuffer(command_buffer);
 	command_buffer = NULL;
@@ -1074,11 +819,11 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 }
 
 
-void add_render_instance(Matrix4 transform, int mesh_index, int texture_index, int material_index) {
+void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index) {
 	MeshData* mesh_data = &resources.meshes[mesh_index];
 
 	if (mesh_data->num_instances >= mesh_data->max_instances) {
-		LOG_INFO("Buffer full, resizing...");
+		LOG_INFO("Buffer %s full, resizing...", mesh_data->name);
 		mesh_data->instance_buffer = double_buffer_size(
 			mesh_data->instance_buffer,
 			sizeof(InstanceData) * mesh_data->max_instances
@@ -1106,35 +851,6 @@ void add_render_instance(Matrix4 transform, int mesh_index, int texture_index, i
 }
 
 
-void add_debug_render_instance(Matrix4 transform, int mesh_index, Color color) {
-	MeshData* mesh_data = &meshes[mesh_index];
-
-	if (mesh_data->num_instances >= mesh_data->max_instances) {
-		LOG_INFO("Buffer full, resizing...");
-		mesh_data->instance_buffer = double_buffer_size(
-			mesh_data->instance_buffer,
-			sizeof(InstanceColorData) * mesh_data->max_instances
-		);
-		mesh_data->instance_transfer_buffer = double_transfer_buffer_size(
-			mesh_data->instance_transfer_buffer,
-			sizeof(InstanceColorData) * mesh_data->max_instances
-		);
-		mesh_data->max_instances *= 2;
-		LOG_INFO("New buffer size: %d", mesh_data->max_instances);
-	}
-
-	InstanceColorData* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer, false);
-	InstanceColorData instance_data = {
-		.transform = transpose4(transform),
-		.color = { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f }
-	};
-	instance_datas[mesh_data->num_instances] = instance_data;
-	mesh_data->num_instances++;
-
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer);
-}
-
-
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 	Vector3 n = cross(
 		diff3(b, a),
@@ -1147,7 +863,29 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 		0.0f, 0.0f, 0.0f, 1.0f
 	};
 
-	add_debug_render_instance(transform, MESH_TRIANGLE, color);
+	if (triangle_mesh.num_instances >= triangle_mesh.max_instances) {
+		LOG_INFO("Buffer full, resizing...");
+		triangle_mesh.instance_buffer = double_buffer_size(
+			triangle_mesh.instance_buffer,
+			sizeof(InstanceColorData) * triangle_mesh.max_instances
+		);
+		triangle_mesh.instance_transfer_buffer = double_transfer_buffer_size(
+			triangle_mesh.instance_transfer_buffer,
+			sizeof(InstanceColorData) * triangle_mesh.max_instances
+		);
+		triangle_mesh.max_instances *= 2;
+		LOG_INFO("New buffer size: %d", triangle_mesh.max_instances);
+	}
+
+	InstanceColorData* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, triangle_mesh.instance_transfer_buffer, false);
+	InstanceColorData instance_data = {
+		.transform = transpose4(transform),
+		.color = { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f }
+	};
+	instance_datas[triangle_mesh.num_instances] = instance_data;
+	triangle_mesh.num_instances++;
+
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, triangle_mesh.instance_transfer_buffer);
 }
 
 
