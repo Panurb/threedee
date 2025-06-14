@@ -8,6 +8,7 @@
 
 
 typedef enum Mesh {
+	MESH_TRIANGLE,
 	MESH_QUAD,
 	MESH_CUBE,
 } Mesh;
@@ -45,6 +46,12 @@ typedef struct {
 
 
 typedef struct {
+	Matrix4 transform;
+	FloatColor color;
+} InstanceColorData;
+
+
+typedef struct {
 	Vector3 position;
 	float _pad;
 	Vector3 diffuse_color;
@@ -59,8 +66,14 @@ void init_render();
 
 void render();
 
-void add_render_instance(int mesh_index, Matrix4 transform, int texture_index, int material_index);
+void add_render_instance(Matrix4 transform, int mesh_index, int texture_index, int material_index);
+
+void add_debug_render_instance(Matrix4 transform, int mesh_index, Color color);
 
 SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size);
 
 SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transfer_buffer, int size);
+
+void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
+
+void render_line(Vector3 start, Vector3 end, float thickness, Color color);

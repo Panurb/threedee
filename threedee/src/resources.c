@@ -183,8 +183,10 @@ MeshData load_mesh(String path) {
 
 	MeshData mesh_data = {
 		.max_instances = 128,
-		.num_instances = 0
+		.num_instances = 0,
+		.instance_size = sizeof(InstanceData),
 	};
+	strcpy(mesh_data.name, path);
 
 	ArrayList* unique_vertices = ArrayList_create(sizeof(VertexIndices));
 	ArrayList* positions = ArrayList_create(sizeof(Vector3));

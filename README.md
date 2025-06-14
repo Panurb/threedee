@@ -6,6 +6,7 @@
 3D game prototype written "from scratch" using C and SDL3. Very much a work in progress.
 
 ### Features ###
+* Entity-component-system architecture
 * 3D rendering using SDL3 GPU interface
 * Phong shading with multiple light sources
 * Impulse-based collision resolution

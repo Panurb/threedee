@@ -57,6 +57,13 @@ typedef struct {
 } Color;
 
 typedef struct {
+    float r;
+    float g;
+    float b;
+    float a;
+} FloatColor;
+
+typedef struct {
     Vector3 normal;
     float offset; // Distance from the origin to the plane along the normal
 } Plane;

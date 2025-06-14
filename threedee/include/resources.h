@@ -21,6 +21,7 @@ typedef struct {
 
 
 typedef struct MeshData {
+    String name;
     SDL_GPUBuffer* vertex_buffer;
     int num_vertices;
     SDL_GPUBuffer* index_buffer;
@@ -29,6 +30,7 @@ typedef struct MeshData {
     int num_instances;
     int max_instances;
     SDL_GPUTransferBuffer* instance_transfer_buffer;
+    int instance_size;
 } MeshData;
 
 
