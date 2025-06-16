@@ -31,7 +31,7 @@ Matrix3 inertia_tensor(Entity entity) {
         case COLLIDER_PLANE:
             // Plane has no inertia
             break;
-        case COLLIDER_CUBE:
+        case COLLIDER_CUBOID:
             float m = 1.0f / rigid_body->inv_mass;
             float w = collider->radius * get_scale(entity).x;
             float h = collider->radius * get_scale(entity).y;

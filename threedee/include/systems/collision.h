@@ -10,8 +10,4 @@ typedef struct {
 } Penetration;
 
 
-float get_radius(Entity entity);
-
-Vector3 get_half_extents(Entity entity);
-
 void update_collisions();

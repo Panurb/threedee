@@ -29,7 +29,7 @@ void create_scene() {
     trans->scale.z = 100.0f;
     trans->rotation = euler_to_quaternion((EulerAngles) { 0.0f, 0.0f, 0.0f });
     MeshComponent_add(i, "cube_textured", "gravel", "concrete");
-    ColliderComponent_add(i, COLLIDER_PLANE, 0.5f);
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
 
     i = create_entity();
     trans = TransformComponent_add(i, vec3(5.5f, 0.0f, 0.0f));
@@ -37,7 +37,7 @@ void create_scene() {
     trans->scale.z = 10.0f;
     trans->rotation = euler_to_quaternion((EulerAngles) { 90.0f, 0.0f, 0.0f });
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
-    ColliderComponent_add(i, COLLIDER_PLANE, 0.5f);
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
 
     i = create_entity();
     trans = TransformComponent_add(i, vec3(0.0f, 0.0f, 5.5f));
@@ -45,7 +45,7 @@ void create_scene() {
     trans->scale.z = 3.0f;
     trans->rotation = euler_to_quaternion((EulerAngles) { 0.0f, 0.0f, -90.0f });
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
-    ColliderComponent_add(i, COLLIDER_PLANE, 0.5f);
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
 
     i = create_entity();
     trans = TransformComponent_add(i, vec3(-5.5f, 0.0f, 0.0f));
@@ -53,7 +53,7 @@ void create_scene() {
     trans->scale.z = 10.0f;
     trans->rotation = euler_to_quaternion((EulerAngles) { -90.0f, 0.0f, 0.0f });
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
-    ColliderComponent_add(i, COLLIDER_PLANE, 0.5f);
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
 
     i = create_entity();
     trans = TransformComponent_add(i, vec3(0.0f, 0.0f, -5.5f));
@@ -61,16 +61,16 @@ void create_scene() {
     trans->scale.z = 3.0f;
     trans->rotation = euler_to_quaternion((EulerAngles) { 0.0f, 0.0f, 90.0f });
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
-    ColliderComponent_add(i, COLLIDER_PLANE, 0.5f);
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
 
     for (int j = 0; j < 1; j++) {
         i = create_entity();
-        TransformComponent* transform = TransformComponent_add(i, vec3(0.0f, 2 * j, 0.0f));
+        TransformComponent* transform = TransformComponent_add(i, vec3(0.0f, -1.5f, 0.0f));
         transform->rotation = euler_to_quaternion((EulerAngles) { 10.0f, 5 * j, 0.0f });
         transform->scale = vec3(0.5f, 1.0f, 0.5f);
         MeshComponent_add(i, "cube_textured", "tiles", "default");
         RigidBodyComponent_add(i, 1.0f);
-        ColliderComponent_add(i, COLLIDER_CUBE,  0.5f);
+        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CAPSULE, .radius = 0.25f, .height = 1.0f });
     }
 
     for (int j = 0; j < 0; j++) {
@@ -80,7 +80,7 @@ void create_scene() {
         MeshComponent_add(i, "sphere", "bark", "default");
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
         // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
-        ColliderComponent_add(i, COLLIDER_SPHERE,  1.0f);
+        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .radius = 0.5f });
     }
 
     i = create_entity();

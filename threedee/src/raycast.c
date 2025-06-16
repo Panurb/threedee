@@ -79,6 +79,62 @@ Intersection intersection_cuboid_ray(Cuboid cuboid, Ray ray) {
 }
 
 
+Intersection intersection_capsule_ray(Capsule capsule, Ray ray) {
+    Intersection intersection = {
+        .distance = INFINITY,
+        .normal = zeros3()
+    };
+
+    // Transform ray to capsule's local space
+    Matrix3 rot = quaternion_to_rotation_matrix(capsule.rotation);
+    Matrix3 inv_rot = matrix3_inverse(rot);
+    Vector3 local_origin = matrix3_map(inv_rot, diff3(ray.origin, capsule.center));
+    Vector3 local_dir = matrix3_map(inv_rot, ray.direction);
+
+    Vector3 p0 = mult3(-capsule.height * 0.5f, matrix3_column(rot, 1));
+    Vector3 p1 = mult3(capsule.height * 0.5f, matrix3_column(rot, 1));
+
+    // Check for intersection with the cylinder part
+    Vector3 cylinder_axis = diff3(p1, p0);
+    float cylinder_radius = capsule.radius;
+    float a = dot3(local_dir, local_dir) - dot3(local_dir, cylinder_axis) * dot3(local_dir, cylinder_axis);
+    Vector3 oc = diff3(local_origin, p0);
+    float b = dot3(oc, local_dir) - dot3(oc, cylinder_axis) * dot3(local_dir, cylinder_axis);
+    float c = dot3(oc, oc) - dot3(oc, cylinder_axis) * dot3(oc, cylinder_axis) - cylinder_radius * cylinder_radius;
+    float discriminant = b * b - a * c;
+    if (discriminant >= 0) {
+        float t = (-b - sqrtf(discriminant)) / a;
+        if (t >= 0) {
+            intersection.distance = t;
+            intersection.point = sum3(ray.origin, mult3(t, ray.direction));
+            Vector3 hit_point = sum3(local_origin, mult3(t, local_dir));
+            Vector3 closest_point = diff3(hit_point, mult3(dot3(hit_point, cylinder_axis), cylinder_axis));
+            intersection.normal = normalized3(diff3(closest_point, p0));
+            intersection.normal = matrix3_map(rot, intersection.normal);
+            return intersection;
+        }
+    }
+    // Check for intersection with the sphere caps
+    Vector3 sphere_center0 = sum3(capsule.center, p0);
+    Vector3 sphere_center1 = sum3(capsule.center, p1);
+    Sphere sphere0 = { .center = sphere_center0, .radius = capsule.radius };
+    Sphere sphere1 = { .center = sphere_center1, .radius = capsule.radius };
+    Intersection intersection0 = intersection_sphere_ray(sphere0, ray);
+    Intersection intersection1 = intersection_sphere_ray(sphere1, ray);
+    if (intersection0.distance < intersection.distance) {
+        intersection = intersection0;
+        intersection.normal = normalized3(diff3(intersection.point, sphere_center0));
+        intersection.normal = matrix3_map(rot, intersection.normal);
+    }
+    if (intersection1.distance < intersection.distance) {
+        intersection = intersection1;
+        intersection.normal = normalized3(diff3(intersection.point, sphere_center1));
+        intersection.normal = matrix3_map(rot, intersection.normal);
+    }
+    return intersection;
+}
+
+
 Hit raycast(Ray ray) {
     Hit hit = {
         .entity = NULL_ENTITY,
@@ -94,17 +150,21 @@ Hit raycast(Ray ray) {
         Intersection intersection = {
             .distance = INFINITY
         };
+
+        Shape shape = get_shape(i);
+
         switch (collider->type) {
             case COLLIDER_PLANE:
                 break;
             case COLLIDER_SPHERE:
-                Sphere sphere = { get_position(i), get_radius(i) };
-                intersection = intersection_sphere_ray(sphere, ray);
+                intersection = intersection_sphere_ray(shape.sphere, ray);
                 break;
-            case COLLIDER_CUBE:
-                Cuboid cuboid = { get_position(i), get_half_extents(i), get_rotation(i) };
-                intersection = intersection_cuboid_ray(cuboid, ray);
+            case COLLIDER_CUBOID:
+                intersection = intersection_cuboid_ray(shape.cuboid, ray);
                 break;
+            case COLLIDER_CAPSULE: {
+                intersection = intersection_capsule_ray(shape.capsule, ray);
+            }
             default:
                 LOG_ERROR("Unknown collider type: %d", collider->type);
         }

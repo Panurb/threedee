@@ -181,6 +181,14 @@ float lerp(float a, float b, float t) {
     return a + t * (b - a);
 }
 
+Vector3 lerp3(Vector3 a, Vector3 b, float t) {
+    return (Vector3) {
+        a.x + t * (b.x - a.x),
+        a.y + t * (b.y - a.y),
+        a.z + t * (b.z - a.z)
+    };
+}
+
 float lerp_angle(float a, float b, float t) {
     float d = angle_diff(b, a);
     return angle_normalized(a + t * d);

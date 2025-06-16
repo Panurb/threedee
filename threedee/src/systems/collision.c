@@ -8,29 +8,6 @@
 #include "util.h"
 
 
-float get_radius(Entity entity) {
-    // Use y component since this works nicely with plane offset.
-    float scale = get_scale(entity).y;
-    ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
-    if (collider) {
-        return collider->radius * scale;
-    }
-    LOG_WARNING("No collider for entity %d", entity);
-    return 0.0f;
-}
-
-
-Vector3 get_half_extents(Entity entity) {
-    Vector3 scale = get_scale(entity);
-    ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
-    if (collider) {
-        return mult3(collider->radius, scale);
-    }
-    LOG_WARNING("No collider for entity %d", entity);
-    return zeros3();
-}
-
-
 Penetration penetration_sphere_sphere(Sphere sphere1, Sphere sphere2) {
     Penetration penetration = {
         .valid = false
@@ -391,50 +368,40 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
 }
 
 
-Shape get_shape(Entity entity) {
-    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
-    ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
-    if (!collider) {
-        LOG_WARNING("No collider for entity %d", entity);
-        return (Shape) { 0 };
+Penetration penetration_capsule_plane(Capsule capsule, Plane plane) {
+    Penetration penetration = {
+        .valid = false
+    };
+
+    Matrix3 rot = quaternion_to_rotation_matrix(capsule.rotation);
+    Vector3 up = matrix3_column(rot, 1);
+    Vector3 p0 = sum3(capsule.center, mult3(-capsule.height * 0.5f, up));
+    Vector3 p1 = sum3(capsule.center, mult3(capsule.height * 0.5f, up));
+    render_circle(p0, capsule.radius, 32, COLOR_WHITE);
+    render_circle(p1, capsule.radius, 32, COLOR_WHITE);
+    float dist0 = dot3(p0, plane.normal) - plane.offset;
+    float dist1 = dot3(p1, plane.normal) - plane.offset;
+
+    float denom = dist0 - dist1;
+    float t;
+    if (fabsf(denom) > 1e-6f) {
+        t = dist0 / denom;
+        t = clamp(t, 0.0f, 1.0f);
+    } else {
+        t = (fabsf(dist0) < fabsf(dist1)) ? 0.0f : 1.0f;
     }
 
-    Vector3 position = get_position(entity);
-    float radius = get_radius(entity);
-    Shape shape = { 0 };
+    Vector3 closest_point = lerp3(p0, p1, t);
+    float closest_dist = dot3(closest_point, plane.normal) - plane.offset;
 
-    switch (collider->type) {
-        case COLLIDER_PLANE: {
-            Vector4 up = { 0.0f, 1.0f, 0.0f, 0.0f };
-            Matrix4 transform = get_transform(entity);
-            up = matrix4_map(transform, up);
-            Vector3 plane_normal = (Vector3) { up.x, up.y, up.z };
-            float plane_offset = dot3(position, plane_normal) + radius;
-
-            shape.plane = (Plane) {
-                .normal = plane_normal,
-                .offset = plane_offset
-            };
-            break;
-        }
-        case COLLIDER_SPHERE: {
-            shape.sphere = (Sphere) {
-                .center = position,
-                .radius = radius
-            };
-            break;
-        }
-        case COLLIDER_CUBE: {
-            shape.cuboid = (Cuboid) {
-                .center = position,
-                .half_extents = get_half_extents(entity),
-                .rotation = get_rotation(entity),
-            };
-            break;
-        }
+    float penetration_depth = capsule.radius - closest_dist;
+    if (penetration_depth > 0.0f) {
+        penetration.valid = true;
+        penetration.overlap = mult3(penetration_depth, plane.normal);
+        penetration.contact_point = diff3(closest_point, mult3(capsule.radius, plane.normal));
     }
 
-    return shape;
+    return penetration;
 }
 
 
@@ -459,23 +426,27 @@ Penetration get_penetration(Entity i, Entity j) {
         return penetration_sphere_plane(shape.sphere, shape_other.plane);
     }
 
-    if (collider->type == COLLIDER_CUBE && other_collider->type == COLLIDER_PLANE) {
+    if (collider->type == COLLIDER_CUBOID && other_collider->type == COLLIDER_PLANE) {
         Penetration penetration = penetration_cuboid_plane(shape.cuboid, shape_other.plane);
         return penetration;
     }
 
-    if (collider->type == COLLIDER_SPHERE && other_collider->type == COLLIDER_CUBE) {
+    if (collider->type == COLLIDER_SPHERE && other_collider->type == COLLIDER_CUBOID) {
         return penetration_sphere_cuboid(shape.sphere, shape_other.cuboid);
     }
 
-    if (collider->type == COLLIDER_CUBE && other_collider->type == COLLIDER_SPHERE) {
+    if (collider->type == COLLIDER_CUBOID && other_collider->type == COLLIDER_SPHERE) {
         Penetration penetration = penetration_sphere_cuboid(shape_other.sphere, shape.cuboid);
         penetration.overlap = mult3(-1.0f, penetration.overlap);
         return penetration;
     }
 
-    if (collider->type == COLLIDER_CUBE && other_collider->type == COLLIDER_CUBE) {
+    if (collider->type == COLLIDER_CUBOID && other_collider->type == COLLIDER_CUBOID) {
         return penetration_cuboid_cuboid(shape.cuboid, shape_other.cuboid);
+    }
+
+    if (collider->type == COLLIDER_CAPSULE && other_collider->type == COLLIDER_PLANE) {
+        return penetration_capsule_plane(shape.capsule, shape_other.plane);
     }
 
     // LOG_ERROR("Invalid collision: %d vs %d", collider->type, other_collider->type);

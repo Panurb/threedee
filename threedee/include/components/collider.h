@@ -8,7 +8,8 @@
 typedef enum {
     COLLIDER_PLANE,
     COLLIDER_SPHERE,
-    COLLIDER_CUBE
+    COLLIDER_CUBOID,
+    COLLIDER_CAPSULE
 } ColliderType;
 
 
@@ -23,10 +24,28 @@ typedef struct {
 typedef struct {
     ColliderType type;
     float radius;
+    float width;
+    float height;
+    float depth;
     ArrayList* collisions;
 } ColliderComponent;
 
 
-void ColliderComponent_add(Entity entity, ColliderType type, float radius);
+typedef struct {
+    ColliderType type;
+    float radius;
+    float width;
+    float height;
+    float depth;
+} ColliderParameters;
+
+
+float get_radius(Entity entity);
+
+Vector3 get_half_extents(Entity entity);
+
+Shape get_shape(Entity entity);
+
+void ColliderComponent_add(Entity entity, ColliderParameters parameters);
 
 void ColliderComponent_remove(Entity entity);

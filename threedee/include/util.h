@@ -80,6 +80,13 @@ typedef struct {
 } Cuboid;
 
 typedef struct {
+    Vector3 center;
+    float radius;
+    float height;
+    Quaternion rotation;
+} Capsule;
+
+typedef struct {
     Vector3* points;
     int size;
 } PolygonShape;
@@ -88,6 +95,7 @@ typedef union {
     Plane plane;
     Sphere sphere;
     Cuboid cuboid;
+    Capsule capsule;
 } Shape;
 
 #define COLOR_NONE get_color(0.0f, 0.0f, 0.0f, 0.0f)
@@ -154,6 +162,8 @@ Color get_color(float r, float g, float b, float a);
 void permute(int* array, int size);
 
 float lerp(float a, float b, float t);
+
+Vector3 lerp3(Vector3 a, Vector3 b, float t);
 
 float lerp_angle(float a, float b, float t);
 

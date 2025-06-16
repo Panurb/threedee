@@ -10,6 +10,7 @@
 * 3D rendering using SDL3 GPU interface
 * Phong shading with multiple light sources
 * Impulse-based collision resolution
+    - Supported shapes: plane, sphere, cuboid, capsule
 * Importing of 3D models in OBJ format
 * Normal maps
 * Dynamic shadows using shadow mapping
