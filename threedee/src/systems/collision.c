@@ -134,8 +134,6 @@ Vector3 intersect(Vector3 p1, Vector3 p2, Plane plane) {
 
 void clip_polygon(PolygonShape* polygon, Plane plane) {
     // Sutherland-Hodgman algorithm for clipping a polygon against a plane
-    LOG_INFO("clipping polygon with %d points against plane with normal (%f, %f, %f) and offset %f",
-             polygon->size, plane.normal.x, plane.normal.y, plane.normal.z, plane.offset);
     if (polygon->size == 0) {
         return;
     }
@@ -201,13 +199,6 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
         mult3(vec3_get(ref_cuboid.half_extents, ref_axis), ref_face_normal)
     );
 
-    render_arrow(
-        ref_face_center,
-        sum3(ref_face_center, ref_face_normal),
-        0.01f,
-        COLOR_YELLOW
-    );
-
     int ref_face_axes[2] = {
         (ref_axis + 1) % 3,
         (ref_axis + 2) % 3
@@ -226,16 +217,9 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
         }
     }
 
-    render_quad(
-        ref_face_points[0], ref_face_points[1],
-        ref_face_points[2], ref_face_points[3],
-        (Color) {255, 0, 0, 128}
-    );
-
     float dot_incs[3];
     for (int i = 0; i < 3; i++) {
         dot_incs[i] = dot3(ref_face_normal, matrix3_column(inc_rot, i));
-        LOG_INFO("Dot product of inc axis %d: %f", i, dot_incs[i]);
     }
     int inc_axis = abs_argmax(dot_incs, 3);
     float inc_sign = sign(dot_incs[inc_axis]);
@@ -262,12 +246,6 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
         }
     }
 
-    render_quad(
-        inc_face_points[0], inc_face_points[1],
-        inc_face_points[2], inc_face_points[3],
-        (Color) {255, 0, 255, 128}
-    );
-
     Vector3 ref_u = matrix3_column(ref_rot, ref_face_axes[0]);
     Vector3 ref_v = matrix3_column(ref_rot, ref_face_axes[1]);
     float hu = vec3_get(ref_cuboid.half_extents, ref_face_axes[0]);
@@ -287,21 +265,11 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
     };
 
     for (int i = 0; i < 4; i++) {
-        float d = dot3(planes[i].normal, ref_face_center);
-        bool inside = (d <= planes[i].offset + 1e-4); // inside or on the plane
-        if (!inside) {
-            LOG_ERROR("Reference point not inside plane!");
-        }
-    }
-
-    for (int i = 0; i < 4; i++) {
         clip_polygon(&clipped, planes[i]);
         if (clipped.size == 0) {
             break;
         }
     }
-
-    LOG_INFO("Clipped polygon has %d points", clipped.size);
 
     Vector3 contact_normal = normalized3(ref_face_normal);
     Vector3 avg_contact_point = zeros3();
@@ -314,16 +282,12 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
         }
 
         Vector3 contact_point = diff3(p, mult3(depth, contact_normal));
-        render_circle(contact_point, 0.05f, 8, (Color) {0, 0.5f * (sign(depth) + 1.0f) * 255.0f, 0, 128});
         avg_contact_point = sum3(avg_contact_point, contact_point);
         contact_count++;
     }
     if (contact_count > 0) {
         avg_contact_point = div3((float)contact_count, avg_contact_point);
     }
-    LOG_INFO("Average contact point: (%f, %f, %f)", avg_contact_point.x, avg_contact_point.y, avg_contact_point.z);
-
-    render_circle(avg_contact_point, 0.05f, 8, (Color) {0, 0, 255, 128});
 
     free(clipped.points);
     return avg_contact_point;
