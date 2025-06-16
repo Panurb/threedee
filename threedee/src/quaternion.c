@@ -13,7 +13,7 @@ Quaternion quaternion_id() {
 
 Quaternion quaternion_normalize(Quaternion q) {
     float norm = sqrtf(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
-    if (norm == 0.0f) {
+    if (norm < 1e-6f) {
         return quaternion_id();
     }
     return (Quaternion) { q.x / norm, q.y / norm, q.z / norm, q.w / norm };

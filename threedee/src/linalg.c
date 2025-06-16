@@ -528,6 +528,8 @@ Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up) {
 
 
 Matrix3 quaternion_to_rotation_matrix(Quaternion q) {
+    q = quaternion_normalize(q);
+
     // Convert quaternion to rotation matrix
     float x = q.x;
     float y = q.y;

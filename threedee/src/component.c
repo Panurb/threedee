@@ -245,13 +245,13 @@ Vector2 get_xy(Entity entity) {
 
 
 Quaternion get_rotation(Entity entity) {
-    Matrix4 transform = get_transform(entity);
-    Matrix3 rot = {
-        transform._11, transform._12, transform._13,
-        transform._21, transform._22, transform._23,
-        transform._31, transform._32, transform._33
-    };
-    return rotation_matrix_to_quaternion(rot);
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+    Quaternion rotation = trans->rotation;
+    if (trans->parent != NULL_ENTITY) {
+        Quaternion parent_rotation = get_rotation(trans->parent);
+        rotation = quaternion_mult(parent_rotation, rotation);
+    }
+    return rotation;
 }
 
 

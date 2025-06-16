@@ -392,6 +392,7 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
 
 
 Shape get_shape(Entity entity) {
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
     if (!collider) {
         LOG_WARNING("No collider for entity %d", entity);
@@ -426,7 +427,7 @@ Shape get_shape(Entity entity) {
         case COLLIDER_CUBE: {
             shape.cuboid = (Cuboid) {
                 .center = position,
-                .half_extents = mult3(radius, get_scale(entity)),
+                .half_extents = get_half_extents(entity),
                 .rotation = get_rotation(entity),
             };
             break;

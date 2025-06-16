@@ -198,7 +198,7 @@ void update_physics(float time_step) {
         rigid_body->velocity = mult3(rigid_body->linear_damping, rigid_body->velocity);
         rigid_body->angular_velocity = mult3(rigid_body->angular_damping, rigid_body->angular_velocity);
 
-        if (norm3(rigid_body->velocity) < 0.01f && norm3(rigid_body->angular_velocity) < 0.01f) {
+        if (norm3(rigid_body->velocity) < 0.001f && norm3(rigid_body->angular_velocity) < 0.01f) {
             rigid_body->velocity = zeros3();
             rigid_body->angular_velocity = zeros3();
             rigid_body->asleep = true;
