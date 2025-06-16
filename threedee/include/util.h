@@ -117,6 +117,8 @@ float to_degrees(float radians);
 
 float to_radians(float degrees);
 
+int abs_argmax(float* a, int n);
+
 int abs_argmin(float* a, int n);
 
 int argmax(float* a, int n);

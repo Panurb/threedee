@@ -33,6 +33,18 @@ float to_radians(float degrees) {
     return degrees * (M_PI / 180.0f);
 }
 
+int abs_argmax(float* a, int n) {
+    int i = 0;
+
+    for (int j = 1; j < n; j++) {
+        if (fabs(a[j]) > fabs(a[i])) {
+            i = j;
+        }
+    }
+
+    return i;
+}
+
 int abs_argmin(float* a, int n) {
     int i = 0;
 

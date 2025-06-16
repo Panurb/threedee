@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_log.h>
@@ -891,13 +893,91 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 
 void render_line(Vector3 start, Vector3 end, float thickness, Color color) {
 	Vector3 direction = diff3(end, start);
-	Vector3 perpendicular = normalized3(cross(direction, (Vector3){0.0f, 0.0f, 1.0f}));
+	if (norm3(direction) < 1e-6f) return; // Avoid zero-length lines
 
-	Vector3 a = sum3(start, mult3(thickness / 2.0f, perpendicular));
-	Vector3 b = diff3(end, mult3(thickness / 2.0f, perpendicular));
-	Vector3 c = sum3(start, mult3(thickness / 2.0f, perpendicular));
-	Vector3 d = diff3(end, mult3(thickness / 2.0f, perpendicular));
+	Vector3 up = {0.0f, 0.0f, 1.0f};
+	if (fabsf(dot3(normalized3(direction), up)) > 0.99f) {
+		up = (Vector3){0.0f, 1.0f, 0.0f}; // Use a different up if parallel
+	}
+	Vector3 perpendicular = normalized3(cross(direction, up));
+	Vector3 half_offset = mult3(thickness / 2.0f, perpendicular);
+
+	Vector3 a = sum3(start, half_offset);
+	Vector3 b = sum3(end, half_offset);
+	Vector3 c = diff3(end, half_offset);
+	Vector3 d = diff3(start, half_offset);
 
 	render_triangle(a, b, c, color);
-	render_triangle(b, c, d, color);
+	render_triangle(a, c, d, color);
+}
+
+
+void render_circle(Vector3 center, float radius, int segments, Color color) {
+	if (segments < 3) return; // At least a triangle
+
+	float angle_increment = 2.0f * M_PI / segments;
+	Vector3 prev_point = {center.x + radius, center.y, center.z};
+
+	for (int i = 1; i <= segments; i++) {
+		float angle = i * angle_increment;
+		Vector3 current_point = {
+			center.x + radius * cosf(angle),
+			center.y + radius * sinf(angle),
+			center.z
+		};
+		render_triangle(center, prev_point, current_point, color);
+		prev_point = current_point;
+	}
+}
+
+
+void render_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color) {
+	render_triangle(a, b, c, color);
+	render_triangle(a, c, d, color);
+	render_triangle(d, a, b, color);
+}
+
+
+void render_arrow(Vector3 start, Vector3 end, float thickness, Color color) {
+	render_line(start, end, thickness, color);
+	Vector3 direction = diff3(end, start);
+	float len = norm3(direction);
+	if (len < 1e-6f) return;
+	Vector3 dir = normalized3(direction);
+
+	// Arrow tip size
+	float tip_length = 4.0f * thickness;
+	float tip_width = 5.0f * thickness;
+
+	Vector3 up = {0.0f, 0.0f, 1.0f};
+	if (fabsf(dot3(dir, up)) > 0.99f) {
+		up = (Vector3){0.0f, 1.0f, 0.0f};
+	}
+	Vector3 perp = normalized3(cross(dir, up));
+
+	Vector3 tip_base = diff3(end, mult3(tip_length, dir));
+	Vector3 left = sum3(tip_base, mult3(tip_width / 2.0f, perp));
+	Vector3 right = diff3(tip_base, mult3(tip_width / 2.0f, perp));
+
+	render_triangle(end, left, right, color);
+}
+
+
+void render_plane(Plane plane, Color color) {
+	// Create a large quad in the plane's normal direction
+	Vector3 up = {0.0f, 0.0f, 1.0f};
+	if (fabsf(dot3(plane.normal, up)) > 0.99f) {
+		up = (Vector3){0.0f, 1.0f, 0.0f}; // Use a different up if parallel
+	}
+	Vector3 right = normalized3(cross(plane.normal, up));
+	Vector3 forward = normalized3(cross(right, plane.normal));
+
+	float size = 100.0f; // Size of the plane
+	Vector3 center = mult3(plane.offset, plane.normal);
+	Vector3 a = sum3(center, mult3(size, right));
+	Vector3 b = sum3(center, mult3(size, forward));
+	Vector3 c = diff3(center, mult3(size, right));
+	Vector3 d = diff3(center, mult3(size, forward));
+
+	render_quad(a, b, c, d, color);
 }

@@ -36,5 +36,19 @@ void draw_entities() {
                 mesh_component->material_index
             );
         }
+
+        ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
+        RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+        if (collider && rb) {
+            Vector3 start = get_position(entity);
+            for (int i = 0; i < collider->collisions->size; i++) {
+                Collision collision = *(Collision*)ArrayList_get(collider->collisions, i);
+                Vector3 end = sum3(start, collision.overlap);
+                render_arrow(start, end, 0.01f, COLOR_RED);
+
+                end = sum3(start, collision.offset);
+                render_arrow(start, end, 0.01f, COLOR_BLUE);
+            }
+        }
     }
 }

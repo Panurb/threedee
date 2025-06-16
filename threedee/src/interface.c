@@ -34,6 +34,6 @@ void FPSCounter_draw(FpsCounter* fps) {
 
     Vector2 size = camera_size(scene->menu_camera);
     Vector2 pos = vec2(-0.49f * size.x, 0.49f * size.y);
-    draw_text(scene->menu_camera, pos, buffer, 20, COLOR_WHITE);
+    // draw_text(scene->menu_camera, pos, buffer, 20, COLOR_WHITE);
     LOG_INFO("draw fps");
 }

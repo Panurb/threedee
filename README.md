@@ -12,10 +12,10 @@
 * Impulse-based collision resolution
 * Importing of 3D models in OBJ format
 * Normal maps
+* Dynamic shadows using shadow mapping
 
 ### TODO ###
 * 2D rendering
-* Dynamic shadows using shadow mapping
 * Data serialization for saving/loading game state
 * Particles
 

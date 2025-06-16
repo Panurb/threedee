@@ -134,11 +134,17 @@ Vector3 intersect(Vector3 p1, Vector3 p2, Plane plane) {
 
 void clip_polygon(PolygonShape* polygon, Plane plane) {
     // Sutherland-Hodgman algorithm for clipping a polygon against a plane
-    #define inside(p) (dot3(p, plane.normal) >= plane.offset)
+    LOG_INFO("clipping polygon with %d points against plane with normal (%f, %f, %f) and offset %f",
+             polygon->size, plane.normal.x, plane.normal.y, plane.normal.z, plane.offset);
+    if (polygon->size == 0) {
+        return;
+    }
+
+    #define inside(p) (dot3(p, plane.normal) <= plane.offset)
 
     // The clipped polygon will have at most 1 extra point
     PolygonShape clipped = {
-        .points = malloc(sizeof(Vector3) * (polygon->size + 1)),
+        .points = malloc(sizeof(Vector3) * (polygon->size + 4)),
         .size = 0
     };
 
@@ -155,6 +161,7 @@ void clip_polygon(PolygonShape* polygon, Plane plane) {
         }
         prev = curr;
     }
+    free(polygon->points);
     polygon->points = clipped.points;
     polygon->size = clipped.size;
     #undef inside
@@ -163,26 +170,80 @@ void clip_polygon(PolygonShape* polygon, Plane plane) {
 
 Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 overlap_axis) {
     Matrix3 rot1 = quaternion_to_rotation_matrix(cuboid1.rotation);
+    Matrix3 rot2 = quaternion_to_rotation_matrix(cuboid2.rotation);
 
-    float dot_refs[3];
+    // Choose reference cuboid and axis which is most perpendicular to the overlap axis
+    float dot_refs[6];
     for (int i = 0; i < 3; i++) {
         dot_refs[i] = dot3(overlap_axis, matrix3_column(rot1, i));
+        dot_refs[i + 3] = dot3(overlap_axis, matrix3_column(rot2, i));
     }
-    int ref_axis = argmax(dot_refs, 3);
+    int ref_axis = abs_argmax(dot_refs, 6);
+    float ref_sign = sign(dot_refs[ref_axis]);
 
-    Vector3 reference_face_normal = matrix3_column(rot1, ref_axis);
+    Cuboid ref_cuboid = cuboid1;
+    Cuboid inc_cuboid = cuboid2;
+    Matrix3 ref_rot = rot1;
+    Matrix3 inc_rot = rot2;
+    if (ref_axis >= 3) {
+        ref_cuboid = cuboid2;
+        inc_cuboid = cuboid1;
+        ref_rot = rot2;
+        inc_rot = rot1;
+        ref_axis -= 3;
+        // Pick face closest to collision
+        ref_sign *= -1.0f;
+    }
 
-    int face_axes[2] = {
+    Vector3 ref_face_normal = mult3(-ref_sign, matrix3_column(ref_rot, ref_axis));
+    Vector3 ref_face_center = sum3(
+        ref_cuboid.center,
+        mult3(vec3_get(ref_cuboid.half_extents, ref_axis), ref_face_normal)
+    );
+
+    render_arrow(
+        ref_face_center,
+        sum3(ref_face_center, ref_face_normal),
+        0.01f,
+        COLOR_YELLOW
+    );
+
+    int ref_face_axes[2] = {
         (ref_axis + 1) % 3,
         (ref_axis + 2) % 3
     };
 
-    Matrix3 rot2 = quaternion_to_rotation_matrix(cuboid2.rotation);
+    Vector3 ref_face_points[4];
+    int n = 0;
+    for (int dx = -1; dx <= 1; dx += 2) {
+        for (int dy = -1; dy <= 1; dy += 2) {
+            Vector3 offset = sum3(
+                mult3(dx * vec3_get(ref_cuboid.half_extents, ref_face_axes[0]), matrix3_column(ref_rot, ref_face_axes[0])),
+                mult3(dy * vec3_get(ref_cuboid.half_extents, ref_face_axes[1]), matrix3_column(ref_rot, ref_face_axes[1]))
+            );
+            ref_face_points[n] = sum3(ref_face_center, offset);
+            n++;
+        }
+    }
+
+    render_quad(
+        ref_face_points[0], ref_face_points[1],
+        ref_face_points[2], ref_face_points[3],
+        (Color) {255, 0, 0, 128}
+    );
+
     float dot_incs[3];
     for (int i = 0; i < 3; i++) {
-        dot_incs[i] = dot3(overlap_axis, matrix3_column(rot2, i));
+        dot_incs[i] = dot3(ref_face_normal, matrix3_column(inc_rot, i));
+        LOG_INFO("Dot product of inc axis %d: %f", i, dot_incs[i]);
     }
-    int inc_axis = argmax(dot_incs, 3);
+    int inc_axis = abs_argmax(dot_incs, 3);
+    float inc_sign = sign(dot_incs[inc_axis]);
+
+    Vector3 inc_face_center = sum3(
+        inc_cuboid.center,
+        mult3(-inc_sign * vec3_get(inc_cuboid.half_extents, inc_axis), matrix3_column(inc_rot, inc_axis))
+    );
 
     int inc_face_axes[2] = {
         (inc_axis + 1) % 3,
@@ -190,23 +251,27 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
     };
 
     Vector3 inc_face_points[4];
-    int n = 0;
+    n = 0;
     for (int dx = -1; dx <= 1; dx += 2) {
         for (int dy = -1; dy <= 1; dy += 2) {
             Vector3 offset = sum3(
-                mult3(dx * vec3_get(cuboid2.half_extents, inc_face_axes[0]), matrix3_column(rot2, inc_face_axes[0])),
-                mult3(dy * vec3_get(cuboid2.half_extents, inc_face_axes[1]), matrix3_column(rot2, inc_face_axes[1]))
+                mult3(dx * vec3_get(inc_cuboid.half_extents, inc_face_axes[0]), matrix3_column(inc_rot, inc_face_axes[0])),
+                mult3(dy * vec3_get(inc_cuboid.half_extents, inc_face_axes[1]), matrix3_column(inc_rot, inc_face_axes[1]))
             );
-            inc_face_points[n] = sum3(cuboid2.center, offset);
-            n++;
+            inc_face_points[n++] = sum3(inc_face_center, offset);
         }
     }
 
-    Vector3 ref_center = cuboid1.center;
-    Vector3 ref_u = matrix3_column(rot1, face_axes[0]);
-    Vector3 ref_v = matrix3_column(rot1, face_axes[1]);
-    float hx = vec3_get(cuboid1.half_extents, face_axes[0]);
-    float hy = vec3_get(cuboid1.half_extents, face_axes[1]);
+    render_quad(
+        inc_face_points[0], inc_face_points[1],
+        inc_face_points[2], inc_face_points[3],
+        (Color) {255, 0, 255, 128}
+    );
+
+    Vector3 ref_u = matrix3_column(ref_rot, ref_face_axes[0]);
+    Vector3 ref_v = matrix3_column(ref_rot, ref_face_axes[1]);
+    float hu = vec3_get(ref_cuboid.half_extents, ref_face_axes[0]);
+    float hv = vec3_get(ref_cuboid.half_extents, ref_face_axes[1]);
 
     PolygonShape clipped = {
         .points = malloc(sizeof(Vector3) * 4),
@@ -215,28 +280,50 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
     memcpy(clipped.points, inc_face_points, sizeof(Vector3) * 4);
 
     Plane planes[4] = {
-        {ref_u, dot3(ref_u, sum3(ref_center, mult3(hx, ref_u)))},
-        {neg3(ref_u), dot3(neg3(ref_u), sum3(ref_center, mult3(-hx, ref_u)))},
-        {ref_v, dot3(ref_v, sum3(ref_center, mult3(hy, ref_v)))},
-        {neg3(ref_v), dot3(neg3(ref_v), sum3(ref_center, mult3(-hy, ref_v)))}
+        { ref_u, dot3(ref_u, sum3(ref_face_center, mult3(hu, ref_u))) },
+        { neg3(ref_u), dot3(neg3(ref_u), diff3(ref_face_center, mult3(hu, ref_u))) },
+        { ref_v, dot3(ref_v, sum3(ref_face_center, mult3(hv, ref_v))) },
+        { neg3(ref_v), dot3(neg3(ref_v), diff3(ref_face_center, mult3(hv, ref_v))) }
     };
+
+    for (int i = 0; i < 4; i++) {
+        float d = dot3(planes[i].normal, ref_face_center);
+        bool inside = (d <= planes[i].offset + 1e-4); // inside or on the plane
+        if (!inside) {
+            LOG_ERROR("Reference point not inside plane!");
+        }
+    }
 
     for (int i = 0; i < 4; i++) {
         clip_polygon(&clipped, planes[i]);
         if (clipped.size == 0) {
-            free(clipped.points);
-            return zeros3();
+            break;
         }
     }
 
-    Vector3 contact_normal = normalized3(reference_face_normal);
+    LOG_INFO("Clipped polygon has %d points", clipped.size);
+
+    Vector3 contact_normal = normalized3(ref_face_normal);
     Vector3 avg_contact_point = zeros3();
+    int contact_count = 0;
     for (int i = 0; i < clipped.size; i++) {
         Vector3 p = clipped.points[i];
-        Vector3 contact_point = diff3(p, mult3(dot3(diff3(p, ref_center), contact_normal), contact_normal));
+        float depth = dot3(diff3(p, ref_face_center), contact_normal);
+        if (depth > 1e-4f) {
+            continue;
+        }
+
+        Vector3 contact_point = diff3(p, mult3(depth, contact_normal));
+        render_circle(contact_point, 0.05f, 8, (Color) {0, 0.5f * (sign(depth) + 1.0f) * 255.0f, 0, 128});
         avg_contact_point = sum3(avg_contact_point, contact_point);
+        contact_count++;
     }
-    avg_contact_point = div3((float)clipped.size, avg_contact_point);
+    if (contact_count > 0) {
+        avg_contact_point = div3((float)contact_count, avg_contact_point);
+    }
+    LOG_INFO("Average contact point: (%f, %f, %f)", avg_contact_point.x, avg_contact_point.y, avg_contact_point.z);
+
+    render_circle(avg_contact_point, 0.05f, 8, (Color) {0, 0, 255, 128});
 
     free(clipped.points);
     return avg_contact_point;
@@ -249,13 +336,13 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
     Matrix3 rot1 = quaternion_to_rotation_matrix(cuboid1.rotation);
     Matrix3 inv_rot1 = transpose3(rot1);
     Matrix3 rot2 = quaternion_to_rotation_matrix(cuboid2.rotation);
-    Vector3 t = diff3(cuboid2.center, cuboid1.center);
+    Vector3 t_world = diff3(cuboid2.center, cuboid1.center);
 
     // Cuboid 2 rotation in cuboid 1 local frame
     Matrix3 rot = matrix3_mult(inv_rot1, rot2);
 
     // Translation vector in cuboid 1 local frame
-    t = matrix3_map(inv_rot1, t);
+    Vector3 t = matrix3_map(inv_rot1, t_world);
 
     // Compute common subexpression
     Matrix3 abs_rot = matrix3_add_scalar(matrix3_abs(rot), eps);
@@ -288,7 +375,7 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
         float ra = dot3(cuboid1.half_extents, matrix3_row(abs_rot, i));
         float rb = vec3_get(cuboid2.half_extents, i);
 
-        float overlap = ra + rb - fabsf(dot3(t, matrix3_row(rot, i)));
+        float overlap = ra + rb - fabsf(dot3(t, matrix3_column(rot, i)));
         if (overlap < 0.0f) {
             return penetration;
         }
@@ -311,8 +398,8 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
             float rb = 0.0f;
 
             for (int k = 0; k < 3; k++) {
-                ra += fabsf(vec3_get(cuboid1.half_extents, k) * dot3(axis, matrix3_column(rot1, k)));
-                rb += fabsf(vec3_get(cuboid2.half_extents, k) * dot3(axis, matrix3_column(rot2, k)));
+                ra += fabsf(vec3_get(cuboid1.half_extents, k) * dot3(axis, matrix3_row(rot1, k)));
+                rb += fabsf(vec3_get(cuboid2.half_extents, k) * dot3(axis, matrix3_row(rot2, k)));
             }
 
             float dist = fabsf(dot3(t, axis));
@@ -328,15 +415,12 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
         }
     }
 
-    if (dot3(t, overlap_axis) > 0.0f) {
+    if (dot3(t_world, overlap_axis) > 0.0f) {
         overlap_axis = mult3(-1.0f, overlap_axis);
     }
 
     penetration.valid = true;
     penetration.overlap = mult3(min_overlap, overlap_axis);
-
-    // Calculate approximate contact point
-    // penetration.contact_point = sum3(cuboid1.center, mult3(0.5f, penetration.overlap));
     penetration.contact_point = contact_point_cuboid_cuboid(cuboid1, cuboid2, overlap_axis);
 
     return penetration;
