@@ -377,8 +377,6 @@ Penetration penetration_capsule_plane(Capsule capsule, Plane plane) {
     Vector3 up = matrix3_column(rot, 1);
     Vector3 p0 = sum3(capsule.center, mult3(-capsule.height * 0.5f, up));
     Vector3 p1 = sum3(capsule.center, mult3(capsule.height * 0.5f, up));
-    render_circle(p0, capsule.radius, 32, COLOR_WHITE);
-    render_circle(p1, capsule.radius, 32, COLOR_WHITE);
     float dist0 = dot3(p0, plane.normal) - plane.offset;
     float dist1 = dot3(p1, plane.normal) - plane.offset;
 

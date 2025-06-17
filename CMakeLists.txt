@@ -27,12 +27,12 @@ set(SOURCES
     threedee/src/component.c
     threedee/src/components/camera.c
     threedee/src/components/collider.c
+    threedee/src/components/controller.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
     threedee/src/components/rigidbody.c
     threedee/src/components/transform.c
     threedee/src/heap.c
-    threedee/src/input.c
     threedee/src/interface.c
     threedee/src/linalg.c
     threedee/src/list.c
@@ -46,6 +46,7 @@ set(SOURCES
     threedee/src/systems/collision.c
     threedee/src/systems/draw.c
     threedee/src/systems/physics.c
+    threedee/src/systems/input.c
     threedee/src/util.c
     threedee/src/threedee.c
     threedee/src/render.c

@@ -6,6 +6,7 @@
 #include "list.h"
 #include "linalg.h"
 #include "components/camera.h"
+#include "components/controller.h"
 #include "components/light.h"
 #include "components/mesh.h"
 #include "components/rigidbody.h"
@@ -40,6 +41,7 @@ typedef struct ComponentData {
     LightComponent* light[MAX_ENTITIES];
     RigidBodyComponent* rigid_body[MAX_ENTITIES];
     ColliderComponent* collider[MAX_ENTITIES];
+    ControllerComponent* controller[MAX_ENTITIES];
 } ComponentData;
 
 typedef enum ComponentType {
@@ -50,6 +52,7 @@ typedef enum ComponentType {
     COMPONENT_LIGHT,
     COMPONENT_RIGIDBODY,
     COMPONENT_COLLIDER,
+    COMPONENT_CONTROLLER,
 } ComponentType;
 
 ComponentData* ComponentData_create();

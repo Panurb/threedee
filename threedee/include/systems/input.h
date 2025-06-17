@@ -2,8 +2,8 @@
 
 #include <SDL3/SDL.h>
 
-#include "util.h"
-#include "settings.h"
+#include "../util.h"
+#include "../settings.h"
 
 
 extern char* ACTIONS[];

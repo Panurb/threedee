@@ -162,9 +162,9 @@ Hit raycast(Ray ray) {
             case COLLIDER_CUBOID:
                 intersection = intersection_cuboid_ray(shape.cuboid, ray);
                 break;
-            case COLLIDER_CAPSULE: {
+            case COLLIDER_CAPSULE:
                 intersection = intersection_capsule_ray(shape.capsule, ray);
-            }
+                break;
             default:
                 LOG_ERROR("Unknown collider type: %d", collider->type);
         }

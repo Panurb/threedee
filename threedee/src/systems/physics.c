@@ -14,16 +14,33 @@ static int ITERATIONS = 10;
 static Vector3 gravity = { 0.0f, -9.81f, 0.0f };
 
 
+Quaternion extract_twist(Quaternion q, Vector3 axis) {
+    axis = normalized3(axis);
+
+    // Project the quaternion's vector part onto the axis
+    Vector3 q_vec = { q.x, q.y, q.z };
+    float dot = dot3(q_vec, axis);
+    Vector3 proj = mult3(dot, axis);
+
+    Quaternion twist = { proj.x, proj.y, proj.z, q.w };
+    return quaternion_normalize(twist);
+}
+
+
 Matrix3 inertia_tensor(Entity entity) {
     RigidBodyComponent* rigid_body = get_component(entity, COMPONENT_RIGIDBODY);
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
 
     Matrix3 tensor = (Matrix3) { 0 };
+    float m = 1.0f / rigid_body->inv_mass;
+    float r = get_radius(entity);
+    float w = collider->radius * get_scale(entity).x;
+    float h = collider->radius * get_scale(entity).y;
+    float d = collider->radius * get_scale(entity).z;
 
     switch (collider->type) {
         case COLLIDER_SPHERE: {
-            float radius = get_radius(entity);
-            tensor._11 = (2.0f / 5.0f) * radius * radius / rigid_body->inv_mass;
+            tensor._11 = (2.0f / 5.0f) * r * r / rigid_body->inv_mass;
             tensor._22 = tensor._11;
             tensor._33 = tensor._11;
             break;
@@ -32,14 +49,14 @@ Matrix3 inertia_tensor(Entity entity) {
             // Plane has no inertia
             break;
         case COLLIDER_CUBOID:
-            float m = 1.0f / rigid_body->inv_mass;
-            float w = collider->radius * get_scale(entity).x;
-            float h = collider->radius * get_scale(entity).y;
-            float d = collider->radius * get_scale(entity).z;
             tensor._11 = (m / 12.0f) * (h * h + d * d);
             tensor._22 = (m / 12.0f) * (w * w + d * d);
             tensor._33 = (m / 12.0f) * (w * w + h * h);
             break;
+        case COLLIDER_CAPSULE:
+            tensor._11 = (m / 12.0f) * (3 * r * r + h * h) + (m / 4.0f) * r * r;
+            tensor._22 = (m / 2.0f) * r * r + (m / 12.0f) * h * h;
+            tensor._33 = tensor._22;
         default:
             LOG_ERROR("Unknown collider type for inertia tensor calculation");
             break;
@@ -84,6 +101,13 @@ void resolve_collisions(Entity entity, float bias) {
             RigidBodyComponent* rb_other = get_component(collision.entity, COMPONENT_RIGIDBODY);
 
             Vector3 delta_position = mult3(bias, collision.overlap);
+            if (rb->axis_lock.x) {
+                delta_position.x = 0.0f;
+            } else if (rb->axis_lock.y) {
+                delta_position.y = 0.0f;
+            } else if (rb->axis_lock.z) {
+                delta_position.z = 0.0f;
+            }
 
             Vector3 n = normalized3(collision.overlap);
             Vector3 r = collision.offset;
@@ -181,13 +205,24 @@ void update_physics(float time_step) {
 
         rigid_body->acceleration = sum3(rigid_body->acceleration, gravity);
         rigid_body->velocity = sum3(rigid_body->velocity, mult3(time_step, rigid_body->acceleration));
-        trans->position = sum3(trans->position, mult3(time_step, rigid_body->velocity));
+        Vector3 delta_position = mult3(time_step, rigid_body->velocity);
+        if (rigid_body->axis_lock.x) {
+            delta_position.x = 0.0f;
+        } else if (rigid_body->axis_lock.y) {
+            delta_position.y = 0.0f;
+        } else if (rigid_body->axis_lock.z) {
+            delta_position.z = 0.0f;
+        }
+        trans->position = sum3(trans->position, delta_position);
 
         rigid_body->angular_velocity = sum3(rigid_body->angular_velocity, mult3(time_step, rigid_body->angular_acceleration));
 
         float angle = norm3(rigid_body->angular_velocity) * time_step;
         Vector3 axis = normalized3(rigid_body->angular_velocity);
         Quaternion delta_rotation = axis_angle_to_quaternion(axis, angle);
+        if (rigid_body->axis_lock.rotation) {
+            delta_rotation = extract_twist(delta_rotation, rigid_body->axis_lock.rotation_axis);
+        }
         trans->rotation = quaternion_mult(delta_rotation, trans->rotation);
 
         // Clamp velocities

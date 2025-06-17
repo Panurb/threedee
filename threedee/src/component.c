@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "util.h"
-#include "input.h"
+#include "../include/systems/input.h"
 #include "scene.h"
 #include "component.h"
 #include "components/light.h"
@@ -97,6 +97,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->rigid_body[entity];
         case COMPONENT_COLLIDER:
             return scene->components->collider[entity];
+        case COMPONENT_CONTROLLER:
+            return scene->components->controller[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;
@@ -125,6 +127,9 @@ void remove_component(Entity entity, ComponentType component_type) {
             RigidBodyComponent_remove(entity);
         case COMPONENT_COLLIDER:
             ColliderComponent_remove(entity);
+            break;
+        case COMPONENT_CONTROLLER:
+            ControllerComponent_remove(entity);
             break;
         default:
             LOG_ERROR("Unknown component type: %d", component_type);

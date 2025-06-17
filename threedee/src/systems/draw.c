@@ -45,7 +45,6 @@ void draw_entities() {
                 Collision collision = *(Collision*)ArrayList_get(collider->collisions, i);
                 Vector3 end = sum3(start, collision.overlap);
                 render_arrow(start, end, 0.01f, COLOR_RED);
-                LOG_INFO("overlap = (%.2f, %.2f, %.2f)", collision.overlap.x, collision.overlap.y, collision.overlap.z);
 
                 end = sum3(start, collision.offset);
                 render_arrow(start, end, 0.01f, COLOR_BLUE);

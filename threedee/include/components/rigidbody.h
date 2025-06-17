@@ -4,6 +4,15 @@
 
 
 typedef struct {
+    bool x;
+    bool y;
+    bool z;
+    bool rotation;
+    Vector3 rotation_axis;
+} AxisLock;
+
+
+typedef struct {
     Vector3 velocity;
     Vector3 acceleration;
     Vector3 angular_velocity;
@@ -17,7 +26,7 @@ typedef struct {
     float angular_damping;
     float max_speed;
     float max_angular_speed;
-    bool on_ground;
+    AxisLock axis_lock;
 } RigidBodyComponent;
 
 

@@ -6,7 +6,7 @@
 #include <SDL3/SDL.h>
 
 #include "settings.h"
-#include "input.h"
+#include "../include/systems/input.h"
 
 
 Settings game_settings = {

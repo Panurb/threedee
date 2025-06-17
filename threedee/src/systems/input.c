@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "app.h"
-#include "input.h"
+#include "../../include/systems/input.h"
 #include "util.h"
 #include "component.h"
 #include "camera.h"

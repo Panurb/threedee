@@ -161,8 +161,10 @@ void input_game(SDL_Event sdl_event) {
         }
     }
 
-    // TODO: Fix axis order
-    trans->rotation = euler_to_quaternion((EulerAngles) { 0.0f, yaw, pitch });
+    Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(yaw));
+    Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(pitch));
+
+    trans->rotation = quaternion_mult(q_yaw, q_pitch);
 }
 
 

@@ -66,10 +66,11 @@ void create_scene() {
     for (int j = 0; j < 1; j++) {
         i = create_entity();
         TransformComponent* transform = TransformComponent_add(i, vec3(0.0f, -1.5f, 0.0f));
-        transform->rotation = euler_to_quaternion((EulerAngles) { 10.0f, 5 * j, 0.0f });
+        // transform->rotation = euler_to_quaternion((EulerAngles) { 10.0f, 5 * j, 0.0f });
         transform->scale = vec3(0.5f, 1.0f, 0.5f);
         MeshComponent_add(i, "cube_textured", "tiles", "default");
-        RigidBodyComponent_add(i, 1.0f);
+        RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
+        rb->axis_lock.rotation = true;
         ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CAPSULE, .radius = 0.25f, .height = 1.0f });
     }
 
