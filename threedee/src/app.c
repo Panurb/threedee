@@ -164,25 +164,25 @@ void input() {
 
     const bool* keyboard_state = SDL_GetKeyboardState(NULL);
 
-    if (keyboard_state[SDL_SCANCODE_W]) {
-        velocity.z = -1.0f;
-    }
-    if (keyboard_state[SDL_SCANCODE_S]) {
-        velocity.z = 1.0f;
-    }
-    if (keyboard_state[SDL_SCANCODE_A]) {
-        velocity.x = -1.0f;
-    }
-    if (keyboard_state[SDL_SCANCODE_D]) {
-        velocity.x = 1.0f;
-    }
-
-    velocity = mult3(0.03f, normalized3(velocity));
-
-    Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
-    velocity = matrix3_map(rot, velocity);
-
-    trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, velocity.y, velocity.z });
+    // if (keyboard_state[SDL_SCANCODE_W]) {
+    //     velocity.z = -1.0f;
+    // }
+    // if (keyboard_state[SDL_SCANCODE_S]) {
+    //     velocity.z = 1.0f;
+    // }
+    // if (keyboard_state[SDL_SCANCODE_A]) {
+    //     velocity.x = -1.0f;
+    // }
+    // if (keyboard_state[SDL_SCANCODE_D]) {
+    //     velocity.x = 1.0f;
+    // }
+    //
+    // velocity = mult3(0.03f, normalized3(velocity));
+    //
+    // Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
+    // velocity = matrix3_map(rot, velocity);
+    //
+    // trans->position = sum3(trans->position, ( Vector3 ) { velocity.x, velocity.y, velocity.z });
 }
 
 

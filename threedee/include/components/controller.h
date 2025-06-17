@@ -28,6 +28,6 @@ typedef struct {
 } ControllerComponent;
 
 
-ControllerComponent* ControllerComponent_create(Entity entity, int joystick);
+ControllerComponent* ControllerComponent_add(Entity entity, int joystick);
 
 void ControllerComponent_remove(Entity entity);

@@ -19,9 +19,12 @@ void create_scene() {
     scene->ambient_light = 0.2f;
 
     scene->player = create_entity();
-    TransformComponent_add(scene->player, zeros3());
-    // ColliderComponent_add(scene->camera, COLLIDER_SPHERE, 0.5f);
+    TransformComponent_add(scene->player, vec3(0.0f, 1.0f, 0.0f));
+    RigidBodyComponent_add(scene->player, 1.0f);
+    MeshComponent_add(scene->player, "cube_textured", "tiles", "default");
+    ColliderComponent_add(scene->player, (ColliderParameters) { .type = COLLIDER_CAPSULE, .radius = 0.25f, .height = 1.0f });
     // add_child(scene->player, scene->camera);
+    // ControllerComponent_add(scene->player, -1);
 
     Entity i = create_entity();
     TransformComponent* trans = TransformComponent_add(i, vec3(0.0f, -2.0f, 0.0f));
@@ -63,7 +66,7 @@ void create_scene() {
     MeshComponent_add(i, "cube_textured", "tiles", "glass");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
 
-    for (int j = 0; j < 1; j++) {
+    for (int j = 0; j < 0; j++) {
         i = create_entity();
         TransformComponent* transform = TransformComponent_add(i, vec3(0.0f, -1.5f, 0.0f));
         // transform->rotation = euler_to_quaternion((EulerAngles) { 10.0f, 5 * j, 0.0f });

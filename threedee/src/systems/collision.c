@@ -416,6 +416,12 @@ Penetration get_penetration(Entity i, Entity j) {
     Shape shape = get_shape(i);
     Shape shape_other = get_shape(j);
 
+    if (collider->type == COLLIDER_PLANE && other_collider->type != COLLIDER_PLANE) {
+        Penetration penetration = get_penetration(j, i);
+        penetration.overlap = neg3(penetration.overlap);
+        return penetration;
+    }
+
     if (collider->type == COLLIDER_SPHERE && other_collider->type == COLLIDER_SPHERE) {
         return penetration_sphere_sphere(shape.sphere, shape_other.sphere);
     }

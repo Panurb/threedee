@@ -7,7 +7,7 @@
 #include "util.h"
 
 
-ControllerComponent* ControllerComponent_create(Entity entity, int joystick) {
+ControllerComponent* ControllerComponent_add(Entity entity, int joystick) {
     ControllerComponent* input = malloc(sizeof(ControllerComponent));
 
     input->controller.joystick = joystick;

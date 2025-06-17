@@ -209,10 +209,7 @@ void update_controller(Entity entity) {
         }
         player->controller.left_stick = normalized2(left_stick);
 
-        // Vector2 mouse = get_mouse_position(camera);
-        // right_stick = diff2(mouse, get_xy(entity));
-        // player->controller.right_stick = normalized2(right_stick);
-
+        player->controller.right_stick = mouse_motion;
         player->controller.left_trigger = keybind_pressed(ACTION_ATTACK) ? 1.0f : 0.0f;
         player->controller.right_trigger = keybind_pressed(ACTION_PICKUP) ? 1.0f : 0.0f;
 
@@ -320,9 +317,19 @@ void input_players() {
         ControllerComponent* controller = get_component(i, COMPONENT_CONTROLLER);
         if (!controller) continue;
 
-        LOG_INFO("Updating controller %d", i);
+        TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
+        RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
 
         update_controller(i);
+
+        Vector2 v = controller->controller.left_stick;
+        Vector3 velocity = vec3(v.x, 0.0f, v.y);
+        velocity = mult3(0.03f, normalized3(velocity));
+
+        Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
+        velocity = matrix3_map(rot, velocity);
+
+        rb->acceleration = sum3(rb->acceleration, velocity);
     }
 }
 
@@ -355,9 +362,9 @@ void input_game(SDL_Event sdl_event) {
     float sens = game_settings.mouse_sensitivity / 10.0f;
 
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
-        yaw -= sdl_event.motion.xrel * sens;
-        pitch -= sdl_event.motion.yrel * sens;
-        pitch = clamp(pitch, -89.0f, 89.0f);
+        mouse_motion.x -= sdl_event.motion.xrel * sens;
+        mouse_motion.y -= sdl_event.motion.yrel * sens;
+        // pitch = clamp(pitch, -89.0f, 89.0f);
     } else if (sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         Vector3 dir = look_direction(scene->camera);
         Ray ray = { get_position(scene->camera), dir };
@@ -367,8 +374,8 @@ void input_game(SDL_Event sdl_event) {
         }
     }
 
-    Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(yaw));
-    Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(pitch));
-
-    trans->rotation = quaternion_mult(q_yaw, q_pitch);
+    // Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(yaw));
+    // Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(pitch));
+    //
+    // trans->rotation = quaternion_mult(q_yaw, q_pitch);
 }

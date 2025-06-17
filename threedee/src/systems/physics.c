@@ -57,8 +57,9 @@ Matrix3 inertia_tensor(Entity entity) {
             tensor._11 = (m / 12.0f) * (3 * r * r + h * h) + (m / 4.0f) * r * r;
             tensor._22 = (m / 2.0f) * r * r + (m / 12.0f) * h * h;
             tensor._33 = tensor._22;
+            break;
         default:
-            LOG_ERROR("Unknown collider type for inertia tensor calculation");
+            LOG_ERROR("Unknown collider type for inertia tensor calculation: %d", collider->type);
             break;
     }
 
@@ -87,6 +88,9 @@ void apply_impulse(Entity entity, Vector3 point, Vector3 impulse) {
 
 
 void resolve_collisions(Entity entity, float bias) {
+    // Collisions are solved sequentially, updating positions and velocities of both bodies before moving
+    // to the next collision.
+
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
     RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
@@ -101,23 +105,32 @@ void resolve_collisions(Entity entity, float bias) {
             RigidBodyComponent* rb_other = get_component(collision.entity, COMPONENT_RIGIDBODY);
 
             Vector3 delta_position = mult3(bias, collision.overlap);
-            if (rb->axis_lock.x) {
-                delta_position.x = 0.0f;
-            } else if (rb->axis_lock.y) {
-                delta_position.y = 0.0f;
-            } else if (rb->axis_lock.z) {
-                delta_position.z = 0.0f;
+            if (rb) {
+                if (rb->axis_lock.x) {
+                    delta_position.x = 0.0f;
+                } else if (rb->axis_lock.y) {
+                    delta_position.y = 0.0f;
+                } else if (rb->axis_lock.z) {
+                    delta_position.z = 0.0f;
+                }
             }
 
             Vector3 n = normalized3(collision.overlap);
             Vector3 r = collision.offset;
-            Vector3 v_rel = sum3(rb->velocity, cross(rb->angular_velocity, r));
+            Vector3 v_rel = zeros3();
+            if (rb) {
+                v_rel = sum3(rb->velocity, cross(rb->angular_velocity, r));
+            }
 
             Vector3 r_other = zeros3();
             if (rb_other) {
                 r_other = collision.offset_other;
                 Vector3 v_other = sum3(rb_other->velocity, cross(rb_other->angular_velocity, r_other));
                 v_rel = diff3(v_rel, v_other);
+            }
+
+            // If both objects can move, move both halfway
+            if (rb && rb_other) {
                 delta_position = mult3(0.5f, delta_position);
             }
 
@@ -130,10 +143,25 @@ void resolve_collisions(Entity entity, float bias) {
                 continue;
             }
 
-            // Normal impulse
-            float j_n = -(1.0f + rb->bounce) * dot3(v_rel, n);
-            float denom_n = rb->inv_mass + dot3(n, cross(matrix3_map(rb->inv_inertia, cross(r, n)), r));
+            // Take the minimum bounce factor, and maximum friction factor.
+            // Static objects have bounce 1 and friction 0.
+            float bounce = 1.0f;
+            float friction = 0.0f;
+            if (rb) {
+                bounce = rb->bounce;
+                friction = rb->friction;
+            }
+            if (rb_other) {
+                bounce = fminf(bounce, rb_other->bounce);
+                friction = fmaxf(friction, rb_other->friction);
+            }
 
+            // Normal impulse
+            float j_n = -(1.0f + bounce) * dot3(v_rel, n);
+            float denom_n = 0.0f;
+            if (rb) {
+                denom_n = rb->inv_mass + dot3(n, cross(matrix3_map(rb->inv_inertia, cross(r, n)), r));
+            }
             if (rb_other) {
                 denom_n += rb_other->inv_mass + dot3(n, cross(matrix3_map(rb_other->inv_inertia, cross(r_other, n)), r_other));
             }
@@ -141,15 +169,17 @@ void resolve_collisions(Entity entity, float bias) {
 
             // Tangential impulse
             float j_t = -dot3(v_t, t);
-            float denom_t = (rb->inv_mass + dot3(t, cross(matrix3_map(rb->inv_inertia, cross(r, t)), r)));
-
+            float denom_t = 0.0f;
+            if (rb) {
+                denom_t = rb->inv_mass + dot3(t, cross(matrix3_map(rb->inv_inertia, cross(r, t)), r));
+            }
             if (rb_other) {
                 denom_t += (rb_other->inv_mass + dot3(t, cross(matrix3_map(rb_other->inv_inertia, cross(r_other, t)), r_other)));
             }
             j_t /= denom_t;
 
             // Clamp according to Coulomb's law of friction
-            float j_t_max = rb->friction * fabsf(j_n);
+            float j_t_max = friction * fabsf(j_n);
             if (fabsf(j_t) > j_t_max) {
                 j_t = j_t_max * sign(j_t);
             }
@@ -162,15 +192,15 @@ void resolve_collisions(Entity entity, float bias) {
             // Total impulse
             Vector3 j_total = sum3(mult3(j_n, n), mult3(j_t, t));
 
-            // TODO: What if entity has parent?
-            trans->position = sum3(trans->position, delta_position);
-
-            apply_impulse(entity, sum3(trans->position, r), j_total);
+            if (rb) {
+                // TODO: What if entity has parent?
+                trans->position = sum3(trans->position, delta_position);
+                apply_impulse(entity, sum3(trans->position, r), j_total);
+            }
 
             if (rb_other) {
                 TransformComponent* trans_other = get_component(collision.entity, COMPONENT_TRANSFORM);
                 trans_other->position = sum3(trans_other->position, mult3(-1.0f, delta_position));
-
                 apply_impulse(collision.entity, sum3(trans_other->position, r_other), mult3(-1.0f, j_total));
             }
         }
@@ -182,6 +212,7 @@ void init_physics(void) {
     for (Entity i = 0; i < scene->components->entities; i++) {
         RigidBodyComponent* rigid_body = get_component(i, COMPONENT_RIGIDBODY);
         if (rigid_body) {
+            // TODO: update inverse inertia
             rigid_body->inv_inertia = matrix3_inverse(inertia_tensor(i));
         }
     }
@@ -190,18 +221,21 @@ void init_physics(void) {
 
 void update_physics(float time_step) {
     for (Entity i = 0; i < scene->components->entities; i++) {
-        RigidBodyComponent* rigid_body = scene->components->rigid_body[i];
-        if (!rigid_body) continue;
-
-        TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
+        ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
+        if (!collider) continue;
 
         for (int j = 0; j < ITERATIONS; j++) {
+            // TODO: Break early if no change
             resolve_collisions(i, 1.0f / (float)ITERATIONS);
         }
+    }
 
-        if (rigid_body->asleep) {
-            continue;
-        }
+    for (Entity i = 0; i < scene->components->entities; i++) {
+        RigidBodyComponent* rigid_body = scene->components->rigid_body[i];
+        if (!rigid_body) continue;
+        if (rigid_body->asleep) continue;
+
+        TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
 
         rigid_body->acceleration = sum3(rigid_body->acceleration, gravity);
         rigid_body->velocity = sum3(rigid_body->velocity, mult3(time_step, rigid_body->acceleration));
