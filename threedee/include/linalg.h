@@ -157,6 +157,8 @@ Vector3 position_from_transform(Matrix4 m);
 
 Vector3 scale_from_transform(Matrix4 m);
 
+Quaternion rotation_from_transform(Matrix4 m);
+
 bool non_zero(Vector2 v);
 
 bool non_zero3(Vector3 v);
@@ -165,7 +167,7 @@ Matrix4 perspective_projection_matrix(float fov, float aspect, float near, float
 
 Matrix4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far);
 
-Matrix4 look_at_matrix(Vector3 position, Vector3 forward, Vector3 up);
+Matrix4 look_at_matrix(Vector3 position, Vector3 target, Vector3 up);
 
 void vector2_print(void* ptr);
 

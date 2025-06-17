@@ -23,7 +23,7 @@ SDL_FColor color_to_fcolor(Color color) {
 
 int create_camera() {
     int i = create_entity();
-    TransformComponent_add(i, vec3(0.0f, 0.0f, 5.0f));
+    TransformComponent_add(i, vec3(0.0f, 1.0f, 0.0f));
     CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, to_radians(game_settings.fov));
     return i;
 }

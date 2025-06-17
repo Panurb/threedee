@@ -710,7 +710,6 @@ void render() {
 		Matrix4 projection_view_matrix = transpose4(matrix4_mult(projection_matrix, view_matrix));
 
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view_matrix, sizeof(Matrix4));
-		// SDL_PushGPUFragmentUniformData(command_buffer, 0, (float[]) { camera->near_plane, camera->far_plane }, 8);
 
 		SDL_GPUColorTargetInfo color_target_info = {
 			.texture = swapchain_texture,
@@ -732,8 +731,6 @@ void render() {
 				.stencil_store_op = SDL_GPU_STOREOP_STORE,
 			}
 		);
-
-		// render_instances(command_buffer, render_pass, &meshes[0], pipeline_3d);
 
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,

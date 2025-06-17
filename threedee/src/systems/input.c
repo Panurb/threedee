@@ -210,6 +210,7 @@ void update_controller(Entity entity) {
         player->controller.left_stick = normalized2(left_stick);
 
         player->controller.right_stick = mouse_motion;
+        mouse_motion = zeros2();
         player->controller.left_trigger = keybind_pressed(ACTION_ATTACK) ? 1.0f : 0.0f;
         player->controller.right_trigger = keybind_pressed(ACTION_PICKUP) ? 1.0f : 0.0f;
 
@@ -217,7 +218,7 @@ void update_controller(Entity entity) {
             bool down = false;
             switch (b) {
                 case BUTTON_A:
-                    down = keybind_pressed(ACTION_ENTER);
+                    down = keybind_pressed(ACTION_JUMP);
                     break;
                 case BUTTON_B:
                     break;
@@ -313,6 +314,10 @@ void update_controller(Entity entity) {
 
 
 void input_players() {
+    // TODO: handle per-player
+    static float yaw = 0.0f;
+    static float pitch = 0.0f;
+
     for (int i = 0; i < scene->components->entities; i++) {
         ControllerComponent* controller = get_component(i, COMPONENT_CONTROLLER);
         if (!controller) continue;
@@ -323,13 +328,32 @@ void input_players() {
         update_controller(i);
 
         Vector2 v = controller->controller.left_stick;
-        Vector3 velocity = vec3(v.x, 0.0f, v.y);
-        velocity = mult3(0.03f, normalized3(velocity));
+        Vector3 velocity = vec3(v.x, 0.0f, -v.y);
+        velocity = mult3(3.0f, normalized3(velocity));
 
         Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
         velocity = matrix3_map(rot, velocity);
 
-        rb->acceleration = sum3(rb->acceleration, velocity);
+        rb->velocity.x = velocity.x;
+        rb->velocity.z = velocity.z;
+
+        yaw += controller->controller.right_stick.x;
+        pitch += controller->controller.right_stick.y;
+        pitch = clamp(pitch, -89.0f, 89.0f);
+
+        Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(yaw));
+        Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(pitch));
+
+        trans->rotation = q_yaw;
+
+        // Camera only moves in pitch direction
+        Entity camera = trans->children->head->value;
+        TransformComponent* camera_trans = get_component(camera, COMPONENT_TRANSFORM);
+        camera_trans->rotation = q_pitch;
+
+        if (controller->controller.buttons_pressed[BUTTON_A]) {
+            rb->velocity.y += 4.0f;
+        }
     }
 }
 
@@ -364,7 +388,6 @@ void input_game(SDL_Event sdl_event) {
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
         mouse_motion.x -= sdl_event.motion.xrel * sens;
         mouse_motion.y -= sdl_event.motion.yrel * sens;
-        // pitch = clamp(pitch, -89.0f, 89.0f);
     } else if (sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         Vector3 dir = look_direction(scene->camera);
         Ray ray = { get_position(scene->camera), dir };
@@ -373,9 +396,4 @@ void input_game(SDL_Event sdl_event) {
             apply_impulse(hit.entity, hit.point, mult3(10.0f, dir));
         }
     }
-
-    // Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(yaw));
-    // Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(pitch));
-    //
-    // trans->rotation = quaternion_mult(q_yaw, q_pitch);
 }

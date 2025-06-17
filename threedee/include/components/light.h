@@ -14,15 +14,25 @@ typedef struct {
 
 
 typedef struct {
+    float fov;
+    float range;
+    float intensity;
+    Color color;
+} LightParameters;
+
+
+typedef struct {
+    float fov;
     Color diffuse_color;
     Color specular_color;
     float range;
     float intensity;
+    Matrix4 projection_matrix;
     ShadowMap shadow_map;
 } LightComponent;
 
 
-void LightComponent_add(int entity, Color color);
+LightComponent* LightComponent_add(int entity, LightParameters parameters);
 
 
 void LightComponent_remove(int entity);

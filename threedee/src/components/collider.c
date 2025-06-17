@@ -15,11 +15,11 @@ float get_radius(Entity entity) {
     Vector3 scale = get_scale(entity);
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
     if (collider) {
-        if (collider->type == COLLIDER_SPHERE) {
-            if (scale.x != scale.y || scale.x != scale.z) {
-                LOG_WARNING("Sphere collider with non-uniform scale for entity %d", entity);
-            }
-        }
+        // if (collider->type == COLLIDER_SPHERE) {
+        //     if (scale.x != scale.y || scale.x != scale.z) {
+        //         LOG_WARNING("Sphere collider with non-uniform scale for entity %d", entity);
+        //     }
+        // }
         // Use y component since this works nicely with plane offset.
         return collider->radius * scale.y;
     }
@@ -32,7 +32,11 @@ Vector3 get_half_extents(Entity entity) {
     Vector3 scale = get_scale(entity);
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
     if (collider) {
-        return mult3(collider->radius, scale);
+        return (Vector3) {
+            collider->width * scale.x / 2.0f,
+            collider->height * scale.y / 2.0f,
+            collider->depth * scale.z / 2.0f
+        };
     }
     LOG_WARNING("No collider for entity %d", entity);
     return zeros3();

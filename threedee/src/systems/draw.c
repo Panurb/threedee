@@ -11,12 +11,8 @@ void draw_entities() {
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light_component = get_component(entity, COMPONENT_LIGHT);
         if (light_component) {
-            Matrix4 view_matrix = look_at_matrix(
-                get_position(entity),
-                zeros3(),
-                (Vector3){ 0.0f, 1.0f, 0.0f }
-            );
-            Matrix4 projection_matrix = orthographic_projection_matrix(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 10.0f);
+            Matrix4 view_matrix = transform_inverse(get_transform(entity));
+            Matrix4 projection_matrix = light_component->projection_matrix;
             light_component->shadow_map.projection_view_matrix = matrix4_mult(projection_matrix, view_matrix);
 
             add_light(
@@ -39,7 +35,7 @@ void draw_entities() {
 
         ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
         RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
-        if (collider && rb) {
+        if (entity != scene->player && collider && rb) {
             Vector3 start = get_position(entity);
             for (int i = 0; i < collider->collisions->size; i++) {
                 Collision collision = *(Collision*)ArrayList_get(collider->collisions, i);

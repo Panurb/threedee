@@ -4,17 +4,25 @@
 #include "components/light.h"
 
 #include <app.h>
+#include <stdio.h>
 
 #include "scene.h"
 
 
 
-void LightComponent_add(Entity entity, Color color) {
+LightComponent* LightComponent_add(Entity entity, LightParameters params) {
     LightComponent* light = malloc(sizeof(LightComponent));
-    light->diffuse_color = color;
-    light->specular_color = color;
-    light->range = 20.0f;
-    light->intensity = 1.0f;
+    light->fov = params.fov ? params.fov : 90.0f;
+    light->diffuse_color = params.color;
+    light->specular_color = params.color;
+    light->range = params.range ? params.range : 10.0f;
+    light->intensity = params.intensity ? params.intensity : 1.0f;
+    float half_size = light->range * tanf(to_radians(light->fov) * 0.5f);
+    light->projection_matrix = orthographic_projection_matrix(
+        -half_size, half_size,
+        -half_size, half_size,
+        0.1f, light->range
+    );
     light->shadow_map.depth_texture = SDL_CreateGPUTexture(
         app.gpu_device,
         &(SDL_GPUTextureCreateInfo) {
@@ -30,6 +38,8 @@ void LightComponent_add(Entity entity, Color color) {
     light->shadow_map.projection_view_matrix = matrix4_id();
 
     scene->components->light[entity] = light;
+
+    return light;
 }
 
 

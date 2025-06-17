@@ -431,6 +431,16 @@ Vector3 scale_from_transform(Matrix4 m) {
     };
 }
 
+Quaternion rotation_from_transform(Matrix4 m) {
+    Vector3 scale = scale_from_transform(m);
+    Matrix3 r = {
+        m._11 / scale.x, m._12 / scale.y, m._13 / scale.z,
+        m._21 / scale.x, m._22 / scale.y, m._23 / scale.z,
+        m._31 / scale.x, m._32 / scale.y, m._33 / scale.z
+    };
+    return rotation_matrix_to_quaternion(r);
+}
+
 bool non_zero(Vector2 v) {
     return (v.x != 0.0f || v.y != 0.0f);
 }

@@ -78,6 +78,7 @@ void remove_prefab(Entity entity);
 void ComponentData_clear();
 
 Matrix4 get_transform(Entity entity);
+void set_transform(Entity entity, Matrix4 transform);
 Vector3 get_position(Entity entity);
 Vector2 get_xy(Entity entity);
 Quaternion get_rotation(Entity entity);
@@ -90,7 +91,8 @@ Vector2 get_scale_interpolated(int entity, float delta);
 bool entity_exists(Entity entity);
 
 int get_parent(Entity entity);
-
 List* get_children(Entity entity);
 
 Vector3 get_entities_center(List* entities);
+
+void look_at(Entity entity, Vector3 target);
