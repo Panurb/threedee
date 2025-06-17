@@ -26,6 +26,7 @@ ComponentData* ComponentData_create() {
         components->light[i] = NULL;
         components->rigid_body[i] = NULL;
         components->collider[i] = NULL;
+        components->controller[i] = NULL;
     }
     return components;
 }

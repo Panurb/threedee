@@ -41,6 +41,7 @@ typedef struct {
     AppState state;
     const char* base_path;
     SDL_GPUDevice* gpu_device;
+    int debug_level;
 } App;
 
 

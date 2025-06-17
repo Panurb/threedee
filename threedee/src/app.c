@@ -30,8 +30,6 @@ App app;
 
 static String version = "0.0";
 
-static int debug_level = 0;
-
 
 void create_game_window() {
     LOG_INFO("Creating game window");
@@ -103,6 +101,7 @@ void init() {
     app.delta = 0.0f;
     app.state = STATE_GAME;
     app.base_path = SDL_GetBasePath();
+    app.debug_level = 0;
 
     create_game_window();
     init_render();
@@ -120,51 +119,6 @@ void quit() {
     Mix_CloseAudio();
     TTF_Quit();
     SDL_Quit();
-}
-
-
-void input_game(SDL_Event sdl_event) {
-    static float yaw = 0.0f;
-    static float pitch = 0.0f;
-
-    if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.key == SDLK_ESCAPE) {
-        app.quit = true;
-    }
-
-    switch (app.state) {
-        case STATE_GAME:
-            if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.repeat == 0) {
-                if (sdl_event.key.key == SDLK_F1) {
-                    if (game_settings.debug) {
-                        debug_level = (debug_level + 1) % 4;
-                    }
-                }
-            }
-        default:
-            break;
-    }
-
-
-    TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);
-    float sens = game_settings.mouse_sensitivity / 10.0f;
-
-    if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
-        yaw -= sdl_event.motion.xrel * sens;
-        pitch -= sdl_event.motion.yrel * sens;
-        pitch = clamp(pitch, -89.0f, 89.0f);
-    } else if (sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        Vector3 dir = look_direction(scene->camera);
-        Ray ray = { get_position(scene->camera), dir };
-        Hit hit = raycast(ray);
-        if (hit.entity != NULL_ENTITY && get_component(hit.entity, COMPONENT_RIGIDBODY)) {
-            apply_impulse(hit.entity, hit.point, mult3(10.0f, dir));
-        }
-    }
-
-    Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(yaw));
-    Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(pitch));
-
-    trans->rotation = quaternion_mult(q_yaw, q_pitch);
 }
 
 
@@ -237,6 +191,7 @@ void update(float time_step) {
 
     AppState state = app.state;
 
+    input_players();
     update_collisions();
     update_physics(time_step);
 

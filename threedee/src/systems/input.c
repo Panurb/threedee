@@ -5,6 +5,11 @@
 
 #include "app.h"
 #include "../../include/systems/input.h"
+
+#include <raycast.h>
+#include <scene.h>
+#include <systems/physics.h>
+
 #include "util.h"
 #include "component.h"
 #include "camera.h"
@@ -74,6 +79,8 @@ char* ACTION_BUTTONS_XBOX[] = {
     "LT",
     "LB"
 };
+
+static Vector2 mouse_motion = {0.0f, 0.0f};
 
 
 const char* key_to_string(SDL_Scancode key) {
@@ -181,143 +188,187 @@ Vector2 get_mouse_position(int camera) {
 }
 
 
-void update_controller(int camera, int i) {
-    // PlayerComponent* player = PlayerComponent_get(i);
-    // int joystick = player->controller.joystick;
-    //
-    // Vector2 left_stick = zeros2();
-    // Vector2 right_stick = zeros2();
-    // if (player->controller.joystick == -1) {
-    //     if (keybind_pressed(ACTION_LEFT)) {
-    //         left_stick.x -= 1.0f;
-    //     }
-    //     if (keybind_pressed(ACTION_RIGHT)) {
-    //         left_stick.x += 1.0f;
-    //     }
-    //     if (keybind_pressed(ACTION_DOWN)) {
-    //         left_stick.y -= 1.0f;
-    //     }
-    //     if (keybind_pressed(ACTION_UP)) {
-    //         left_stick.y += 1.0f;
-    //     }
-    //     player->controller.left_stick = normalized2(left_stick);
-    //
-    //     Vector2 mouse = get_mouse_position(camera);
-    //     right_stick = diff(mouse, get_xy(i));
-    //     player->controller.right_stick = normalized2(right_stick);
-    //
-    //     player->controller.left_trigger = keybind_pressed(ACTION_ATTACK) ? 1.0f : 0.0f;
-    //     player->controller.right_trigger = keybind_pressed(ACTION_PICKUP) ? 1.0f : 0.0f;
-    //
-    //     for (ControllerButton b = BUTTON_A; b <= BUTTON_R; b++) {
-    //         bool down = false;
-    //         switch (b) {
-    //             case BUTTON_A:
-    //                 down = keybind_pressed(ACTION_ENTER);
-    //                 break;
-    //             case BUTTON_B:
-    //                 break;
-    //             case BUTTON_X:
-    //                 down = keybind_pressed(ACTION_RELOAD);
-    //                 break;
-    //             case BUTTON_Y:
-    //                 down = keybind_pressed(ACTION_ATTACHMENT);
-    //                 break;
-    //             case BUTTON_LB:
-    //                 down = keybind_pressed(ACTION_AMMO);
-    //                 break;
-    //             case BUTTON_RB:
-    //                 down = keybind_pressed(ACTION_PICKUP);
-    //                 break;
-    //             case BUTTON_START:
-    //                 break;
-    //             case BUTTON_BACK:
-    //                 break;
-    //             case BUTTON_LT:
-    //                 down = keybind_pressed(ACTION_INVENTORY);
-    //                 break;
-    //             case BUTTON_RT:
-    //                 down = keybind_pressed(ACTION_ATTACK);
-    //                 break;
-    //             case BUTTON_L:
-    //                 break;
-    //             case BUTTON_R:
-    //                 break;
-    //         }
-    //
-    //         player->controller.buttons_pressed[b] = (down && !player->controller.buttons_down[b]);
-    //         player->controller.buttons_released[b] = (!down && player->controller.buttons_down[b]);
-    //         player->controller.buttons_down[b] = down;
-    //     }
-    // } else {
-    //     SDL_Gamepad* controller = app.controllers[joystick];
-    //
-    //     left_stick.x = map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTX),
-    //         SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
-    //     left_stick.y = -map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTY),
-    //         SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
-    //     if (fabsf(left_stick.x) < 0.05f) {
-    //         left_stick.x = 0.0f;
-    //     }
-    //     if (fabsf(left_stick.y) < 0.05f) {
-    //         left_stick.y = 0.0f;
-    //     }
-    //     player->controller.left_stick = left_stick;
-    //
-    //     right_stick.x = map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHTX),
-    //         SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
-    //     right_stick.y = -map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHTY),
-    //         SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
-    //     if (norm2(right_stick) < 0.25f) {
-    //         right_stick = zeros2();
-    //     }
-    //     if (norm2(right_stick) > 1.0f) {
-    //         right_stick = normalized2(right_stick);
-    //     }
-    //     player->controller.right_stick = right_stick;
-    //
-    //     float trigger = 0.01f * SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
-    //     if (fabsf(trigger) < 0.1f) {
-    //         trigger = 0.0f;
-    //     }
-    //     player->controller.left_trigger = trigger;
-    //
-    //     trigger = 0.01f * SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
-    //     if (fabsf(trigger) < 0.1f) {
-    //         trigger = 0.0f;
-    //     }
-    //     player->controller.right_trigger = trigger;
-    //
-    //     // player->controller.dpad.x = 0.01f * SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
-    //     // player->controller.dpad.y = 0.01f * SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
-    //
-    //     for (int b = BUTTON_A; b <= BUTTON_R; b++) {
-    //         SDL_GamepadButton button = player->controller.buttons[b];
-    //         bool down = SDL_GetGamepadButton(controller, player->controller.buttons[b]);
-    //         if (b == BUTTON_LT) {
-    //             down = (player->controller.left_trigger > 0.5f);
-    //         } else if (b == BUTTON_RT) {
-    //             down = (player->controller.right_trigger > 0.5f);
-    //         }
-    //
-    //         player->controller.buttons_pressed[b] = (down && !player->controller.buttons_down[b]);
-    //         player->controller.buttons_released[b] = (!down && player->controller.buttons_down[b]);
-    //         player->controller.buttons_down[b] = down;
-    //     }
-    // }
+void update_controller(Entity entity) {
+    ControllerComponent* player = get_component(entity, COMPONENT_CONTROLLER);
+    int joystick = player->controller.joystick;
+
+    Vector2 left_stick = zeros2();
+    Vector2 right_stick = zeros2();
+    if (player->controller.joystick == -1) {
+        if (keybind_pressed(ACTION_LEFT)) {
+            left_stick.x -= 1.0f;
+        }
+        if (keybind_pressed(ACTION_RIGHT)) {
+            left_stick.x += 1.0f;
+        }
+        if (keybind_pressed(ACTION_DOWN)) {
+            left_stick.y -= 1.0f;
+        }
+        if (keybind_pressed(ACTION_UP)) {
+            left_stick.y += 1.0f;
+        }
+        player->controller.left_stick = normalized2(left_stick);
+
+        // Vector2 mouse = get_mouse_position(camera);
+        // right_stick = diff2(mouse, get_xy(entity));
+        // player->controller.right_stick = normalized2(right_stick);
+
+        player->controller.left_trigger = keybind_pressed(ACTION_ATTACK) ? 1.0f : 0.0f;
+        player->controller.right_trigger = keybind_pressed(ACTION_PICKUP) ? 1.0f : 0.0f;
+
+        for (ControllerButton b = BUTTON_A; b <= BUTTON_R; b++) {
+            bool down = false;
+            switch (b) {
+                case BUTTON_A:
+                    down = keybind_pressed(ACTION_ENTER);
+                    break;
+                case BUTTON_B:
+                    break;
+                case BUTTON_X:
+                    down = keybind_pressed(ACTION_RELOAD);
+                    break;
+                case BUTTON_Y:
+                    down = keybind_pressed(ACTION_ATTACHMENT);
+                    break;
+                case BUTTON_LB:
+                    down = keybind_pressed(ACTION_AMMO);
+                    break;
+                case BUTTON_RB:
+                    down = keybind_pressed(ACTION_PICKUP);
+                    break;
+                case BUTTON_START:
+                    break;
+                case BUTTON_BACK:
+                    break;
+                case BUTTON_LT:
+                    down = keybind_pressed(ACTION_INVENTORY);
+                    break;
+                case BUTTON_RT:
+                    down = keybind_pressed(ACTION_ATTACK);
+                    break;
+                case BUTTON_L:
+                    break;
+                case BUTTON_R:
+                    break;
+            }
+
+            player->controller.buttons_pressed[b] = (down && !player->controller.buttons_down[b]);
+            player->controller.buttons_released[b] = (!down && player->controller.buttons_down[b]);
+            player->controller.buttons_down[b] = down;
+        }
+    } else {
+        SDL_Gamepad* controller = app.controllers[joystick];
+
+        left_stick.x = map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTX),
+            SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
+        left_stick.y = -map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTY),
+            SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
+        if (fabsf(left_stick.x) < 0.05f) {
+            left_stick.x = 0.0f;
+        }
+        if (fabsf(left_stick.y) < 0.05f) {
+            left_stick.y = 0.0f;
+        }
+        player->controller.left_stick = left_stick;
+
+        right_stick.x = map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHTX),
+            SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
+        right_stick.y = -map_to_range(SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHTY),
+            SDL_JOYSTICK_AXIS_MIN, SDL_JOYSTICK_AXIS_MAX, -1.0f, 1.0f);
+        if (norm2(right_stick) < 0.25f) {
+            right_stick = zeros2();
+        }
+        if (norm2(right_stick) > 1.0f) {
+            right_stick = normalized2(right_stick);
+        }
+        player->controller.right_stick = right_stick;
+
+        float trigger = 0.01f * SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+        if (fabsf(trigger) < 0.1f) {
+            trigger = 0.0f;
+        }
+        player->controller.left_trigger = trigger;
+
+        trigger = 0.01f * SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+        if (fabsf(trigger) < 0.1f) {
+            trigger = 0.0f;
+        }
+        player->controller.right_trigger = trigger;
+
+        // player->controller.dpad.x = 0.01f * SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        // player->controller.dpad.y = 0.01f * SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
+
+        for (int b = BUTTON_A; b <= BUTTON_R; b++) {
+            SDL_GamepadButton button = player->controller.buttons[b];
+            bool down = SDL_GetGamepadButton(controller, player->controller.buttons[b]);
+            if (b == BUTTON_LT) {
+                down = (player->controller.left_trigger > 0.5f);
+            } else if (b == BUTTON_RT) {
+                down = (player->controller.right_trigger > 0.5f);
+            }
+
+            player->controller.buttons_pressed[b] = (down && !player->controller.buttons_down[b]);
+            player->controller.buttons_released[b] = (!down && player->controller.buttons_down[b]);
+            player->controller.buttons_down[b] = down;
+        }
+    }
 }
 
 
-void input_players(int camera) {
-    // for (int i = 0; i < game_data->components->entities; i++) {
-    //     PlayerComponent* player = PlayerComponent_get(i);
-    //     if (!player) continue;
-    //
-    //     update_controller(camera, i);
-    //     Controller controller = player->controller;
-    //
-    //     switch (player->state) {
-    //
-    //     }
-    // }
+void input_players() {
+    for (int i = 0; i < scene->components->entities; i++) {
+        ControllerComponent* controller = get_component(i, COMPONENT_CONTROLLER);
+        if (!controller) continue;
+
+        LOG_INFO("Updating controller %d", i);
+
+        update_controller(i);
+    }
+}
+
+
+void input_game(SDL_Event sdl_event) {
+    static float yaw = 0.0f;
+    static float pitch = 0.0f;
+
+    if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.key == SDLK_ESCAPE) {
+        app.quit = true;
+    }
+
+    if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.repeat == 0) {
+        if (sdl_event.key.key == SDLK_F1) {
+            if (game_settings.debug) {
+                app.debug_level = (app.debug_level + 1) % 4;
+            }
+        }
+    }
+
+    switch (app.state) {
+        case STATE_GAME:
+
+        default:
+            break;
+    }
+
+
+    TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);
+    float sens = game_settings.mouse_sensitivity / 10.0f;
+
+    if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
+        yaw -= sdl_event.motion.xrel * sens;
+        pitch -= sdl_event.motion.yrel * sens;
+        pitch = clamp(pitch, -89.0f, 89.0f);
+    } else if (sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        Vector3 dir = look_direction(scene->camera);
+        Ray ray = { get_position(scene->camera), dir };
+        Hit hit = raycast(ray);
+        if (hit.entity != NULL_ENTITY && get_component(hit.entity, COMPONENT_RIGIDBODY)) {
+            apply_impulse(hit.entity, hit.point, mult3(10.0f, dir));
+        }
+    }
+
+    Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(yaw));
+    Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(pitch));
+
+    trans->rotation = quaternion_mult(q_yaw, q_pitch);
 }
