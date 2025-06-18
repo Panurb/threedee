@@ -51,6 +51,12 @@ float linearize_depth(float depth, float near, float far)
     return (near * far) / (far - depth * (far - near));
 }
 
+float radial_fade(float2 uv) {
+    float2 center_uv = float2(0.5, 0.5);
+    float dist = distance(uv, center_uv);
+    return 1.0 - smoothstep(0.4, 0.5, dist);
+}
+
 static const float2 texel_size = 1.0 / float2(4096.0, 4096.0);  // TODO: use SHADOW_MAP_RESOLUTION
 
 Output main(Input input)
@@ -105,7 +111,9 @@ Output main(Input input)
         // Sample the shadow map at this light and position
         float closest_depth = shadow_maps.Sample(sampler_shadow_maps, float3(shadow_uv, i)).r;
 
-        if (all(shadow_uv >= 0.0) && all(shadow_uv <= 1.0)) {
+	    bool in_bounds = all(shadow_uv >= 0.0) && all(shadow_uv <= 1.0) && (shadow_coord.z >= 0.0) && (shadow_coord.z <= 1.0);
+
+        if (in_bounds) {
             float shadow = 0.0;
             const int kernel_radius = 1;
 
@@ -120,7 +128,12 @@ Output main(Input input)
             }
 
             shadow /= 9.0;
-            shadow_factor *= lerp(1.0, 0.5, shadow);
+
+            float fade = radial_fade(shadow_uv);
+            float shadow_strength = lerp(1.0, 0.25, shadow);
+            shadow_factor *= lerp(0.25, shadow_strength, fade);
+        } else {
+            shadow_factor *= 0.25;
         }
     }
 
@@ -132,6 +145,7 @@ Output main(Input input)
 
     Output result;
     result.color = float4(lit_color, 1.0);
+    //result.color = float4(fade.xxx, 1.0);
     result.depth = position.z;
     return result;
 }

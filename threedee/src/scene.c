@@ -20,6 +20,12 @@ Entity create_player(Vector3 position) {
     ControllerComponent_add(i, -1);
     add_child(i, scene->camera);
 
+    Entity j = create_entity();
+    TransformComponent* trans = TransformComponent_add(j, vec3(0.0f, 1.0f, 1.0f));
+    look_at(j, vec3(0.0f, 0.0f, -1.0f));
+    LightComponent_add(j, (LightParameters) { .color = COLOR_WHITE, .fov = 30.0f });
+    // add_child(scene->camera, j);
+
     return i;
 }
 
@@ -112,15 +118,15 @@ void create_scene() {
         ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .radius = 1.0f });
     }
 
-    i = create_entity();
-    TransformComponent_add(i, vec3(5.0f, 5.0f, 0.0f));
-    look_at(i, zeros3());
-    LightComponent_add(i, (LightParameters) { .color = COLOR_BLUE });
-
-    i = create_entity();
-    TransformComponent_add(i, vec3(-5.0f, 5.0f, 0.0f));
-    look_at(i, zeros3());
-    LightComponent_add(i, (LightParameters) { .color = COLOR_RED });
+    // i = create_entity();
+    // TransformComponent_add(i, vec3(5.0f, 5.0f, 0.0f));
+    // look_at(i, zeros3());
+    // LightComponent_add(i, (LightParameters) { .color = COLOR_BLUE });
+    //
+    // i = create_entity();
+    // TransformComponent_add(i, vec3(-5.0f, 5.0f, 0.0f));
+    // look_at(i, zeros3());
+    // LightComponent_add(i, (LightParameters) { .color = COLOR_RED });
 
     // create_lamp(vec3(0.0f, 2.0f, 0.0f));
 
