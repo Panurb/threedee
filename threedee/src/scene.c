@@ -15,6 +15,7 @@ Entity create_player(Vector3 position) {
     RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
     rb->axis_lock.rotation = true;
     rb->bounce = 0.0f;
+    rb->friction = 0.0f;
     // MeshComponent_add(i, "cube", "tiles", "default");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CAPSULE, .radius = 0.4f, .height = 1.0f });
     ControllerComponent_add(i, -1);

@@ -936,15 +936,21 @@ void render_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color) {
 
 
 void render_arrow(Vector3 start, Vector3 end, float thickness, Color color) {
-	render_line(start, end, thickness, color);
+	// Arrow tip size
+	float tip_length = 4.0f * thickness;
+	float tip_width = 5.0f * thickness;
+
 	Vector3 direction = diff3(end, start);
 	float len = norm3(direction);
 	if (len < 1e-6f) return;
 	Vector3 dir = normalized3(direction);
 
-	// Arrow tip size
-	float tip_length = 4.0f * thickness;
-	float tip_width = 5.0f * thickness;
+	render_line(
+		start,
+		sum3(start, mult3(fmaxf(len - tip_length, 0.0f), dir)),
+		thickness,
+		color
+	);
 
 	Vector3 up = {0.0f, 0.0f, 1.0f};
 	if (fabsf(dot3(dir, up)) > 0.99f) {

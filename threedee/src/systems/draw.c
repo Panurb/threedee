@@ -9,17 +9,17 @@
 
 void draw_entities() {
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
-        LightComponent* light_component = get_component(entity, COMPONENT_LIGHT);
-        if (light_component) {
+        LightComponent* light = get_component(entity, COMPONENT_LIGHT);
+        if (light) {
             Matrix4 view_matrix = transform_inverse(get_transform(entity));
-            Matrix4 projection_matrix = light_component->projection_matrix;
-            light_component->shadow_map.projection_view_matrix = matrix4_mult(projection_matrix, view_matrix);
+            Matrix4 projection_matrix = light->projection_matrix;
+            light->shadow_map.projection_view_matrix = matrix4_mult(projection_matrix, view_matrix);
 
             add_light(
                 get_position(entity),
-                light_component->diffuse_color,
-                light_component->specular_color,
-                light_component->shadow_map.projection_view_matrix
+                light->diffuse_color,
+                light->specular_color,
+                light->shadow_map.projection_view_matrix
             );
         }
 
@@ -30,6 +30,22 @@ void draw_entities() {
                 mesh_component->mesh_index,
                 mesh_component->texture_index,
                 mesh_component->material_index
+            );
+        }
+
+        if (light) {
+            render_circle(
+                get_position(entity),
+                0.1f,
+                32,
+                COLOR_YELLOW
+            );
+
+            render_arrow(
+                get_position(entity),
+                sum3(get_position(entity), quaternion_forward(get_rotation(entity))),
+                0.1f,
+                COLOR_YELLOW
             );
         }
 

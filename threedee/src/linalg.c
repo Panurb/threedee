@@ -441,6 +441,15 @@ Quaternion rotation_from_transform(Matrix4 m) {
     return rotation_matrix_to_quaternion(r);
 }
 
+
+Vector3 quaternion_forward(Quaternion q) {
+    return (Vector3) {
+        2.0f * (q.x * q.z + q.w * q.y),
+        2.0f * (q.y * q.z - q.w * q.x),
+        1.0f - 2.0f * (q.x * q.x + q.y * q.y)
+    };
+}
+
 bool non_zero(Vector2 v) {
     return (v.x != 0.0f || v.y != 0.0f);
 }
