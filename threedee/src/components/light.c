@@ -18,11 +18,30 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
     light->range = params.range ? params.range : 10.0f;
     light->intensity = params.intensity ? params.intensity : 1.0f;
     float half_size = light->range * tanf(to_radians(light->fov) * 0.5f);
-    light->projection_matrix = orthographic_projection_matrix(
-        -half_size, half_size,
-        -half_size, half_size,
-        0.1f, light->range
-    );
+
+    switch (params.type) {
+        case LIGHT_SPOT:
+            light->projection_matrix = perspective_projection_matrix(
+                to_radians(light->fov),
+                (float) SHADOW_MAP_RESOLUTION / (float) SHADOW_MAP_RESOLUTION,
+                0.1f,
+                light->range + half_size
+            );
+            break;
+        case LIGHT_DIRECTIONAL:
+            light->projection_matrix = orthographic_projection_matrix(
+                -half_size, half_size,
+                -half_size, half_size,
+                0.1f,
+                light->range + half_size
+            );
+            break;
+        default:
+            LOG_ERROR("Unknown light type: %d", params.type);
+            free(light);
+            return NULL;
+    }
+
     light->shadow_map.depth_texture = SDL_CreateGPUTexture(
         app.gpu_device,
         &(SDL_GPUTextureCreateInfo) {

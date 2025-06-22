@@ -7,6 +7,11 @@
 #define MAX_LIGHTS 32  // Should match array size in phong shader
 
 
+typedef enum {
+    LIGHT_SPOT,
+    LIGHT_DIRECTIONAL
+} LightType;
+
 typedef struct {
     SDL_GPUTexture* depth_texture;
     Matrix4 projection_view_matrix;
@@ -14,6 +19,7 @@ typedef struct {
 
 
 typedef struct {
+    LightType type;
     float fov;
     float range;
     float intensity;

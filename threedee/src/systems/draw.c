@@ -1,7 +1,5 @@
 #include "systems/draw.h"
-
-#include <stdio.h>
-
+#include "app.h"
 #include "render.h"
 #include "scene.h"
 #include "util.h"
@@ -33,6 +31,10 @@ void draw_entities() {
             );
         }
 
+        if (app.debug_level == 0) {
+            continue;
+        }
+
         if (light) {
             render_circle(
                 get_position(entity),
@@ -41,9 +43,39 @@ void draw_entities() {
                 COLOR_YELLOW
             );
 
+            Vector3 forward = quaternion_forward(get_rotation(entity));
+            Vector3 up = vec3(0.0f, 1.0f, 0.0f);
+            Vector3 right = cross(forward, up);
+            up = cross(right, forward);
+
+            Vector3 far_center = sum3(get_position(entity), mult3(light->range, forward));
+            float half_size = light->range * tanf(to_radians(light->fov) * 0.5f);
+            Vector3 far_top_right = sum3(far_center, mult3(half_size, sum3(right, up)));
+            Vector3 far_top_left = sum3(far_center, mult3(half_size, diff3(right, up)));
+            Vector3 far_bottom_right = sum3(far_center, mult3(half_size, diff3(up, right)));
+            Vector3 far_bottom_left = diff3(far_center, mult3(half_size, sum3(right, up)));
+
             render_arrow(
                 get_position(entity),
-                sum3(get_position(entity), quaternion_forward(get_rotation(entity))),
+                far_top_left,
+                0.1f,
+                COLOR_YELLOW
+            );
+            render_arrow(
+                get_position(entity),
+                far_top_right,
+                0.1f,
+                COLOR_YELLOW
+            );
+            render_arrow(
+                get_position(entity),
+                far_bottom_left,
+                0.1f,
+                COLOR_YELLOW
+            );
+            render_arrow(
+                get_position(entity),
+                far_bottom_right,
                 0.1f,
                 COLOR_YELLOW
             );
