@@ -237,7 +237,7 @@ void update_physics(float time_step) {
 
         TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
 
-        rigid_body->acceleration = sum3(rigid_body->acceleration, gravity);
+        rigid_body->acceleration = sum3(rigid_body->acceleration, mult3(rigid_body->gravity_scale, gravity));
         rigid_body->velocity = sum3(rigid_body->velocity, mult3(time_step, rigid_body->acceleration));
         Vector3 delta_position = mult3(time_step, rigid_body->velocity);
         if (rigid_body->axis_lock.x) {

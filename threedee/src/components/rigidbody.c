@@ -14,6 +14,7 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, float mass) {
     rigid_body->inv_mass = 1.0f / mass;
     rigid_body->friction = 0.5f;
     rigid_body->bounce = 0.5f;
+    rigid_body->gravity_scale = 1.0f;
     rigid_body->asleep = false;
     rigid_body->angular_damping = 0.95f;
     rigid_body->linear_damping = 0.999f;

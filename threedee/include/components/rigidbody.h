@@ -20,6 +20,7 @@ typedef struct {
     float friction;
     float bounce;
     float inv_mass;
+    float gravity_scale;
     Matrix3 inv_inertia;
     bool asleep;
     float linear_damping;

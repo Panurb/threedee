@@ -22,9 +22,9 @@ Entity create_player(Vector3 position) {
     add_child(i, scene->camera);
 
     Entity j = create_entity();
-    TransformComponent* trans = TransformComponent_add(j, vec3(0.0f, 0.0f, 1.0f));
-    look_at(j, vec3(0.0f, 0.0f, -1.0f));
-    LightComponent_add(j, (LightParameters) { .type = LIGHT_SPOT, .color = COLOR_WHITE, .fov = 30.0f });
+    TransformComponent* trans = TransformComponent_add(j, vec3(0.0f, -0.5f, 0.1f));
+    look_at(j, vec3(0.0f, -0.5f, -1.0f));
+    LightComponent_add(j, (LightParameters) { .type = LIGHT_SPOT, .color = COLOR_WHITE, .fov = 40.0f });
     add_child(scene->camera, j);
 
     return i;

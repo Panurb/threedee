@@ -314,9 +314,7 @@ void update_controller(Entity entity) {
 
 
 void input_players() {
-    // TODO: handle per-player
-    static float yaw = 0.0f;
-    static float pitch = 0.0f;
+    static Entity grabbed_entity = NULL_ENTITY;
 
     for (int i = 0; i < scene->components->entities; i++) {
         ControllerComponent* controller = get_component(i, COMPONENT_CONTROLLER);
@@ -337,12 +335,12 @@ void input_players() {
         rb->velocity.x = velocity.x;
         rb->velocity.z = velocity.z;
 
-        yaw += controller->controller.right_stick.x;
-        pitch += controller->controller.right_stick.y;
-        pitch = clamp(pitch, -89.0f, 89.0f);
+        controller->yaw += controller->controller.right_stick.x;
+        controller->pitch += controller->controller.right_stick.y;
+        controller->pitch = clamp(controller->pitch, -89.0f, 89.0f);
 
-        Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(yaw));
-        Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(pitch));
+        Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(controller->yaw));
+        Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(controller->pitch));
 
         trans->rotation = q_yaw;
 
@@ -354,14 +352,38 @@ void input_players() {
         if (controller->controller.buttons_pressed[BUTTON_A]) {
             rb->velocity.y += 4.0f;
         }
+
+        Matrix4 camera_transform = get_transform(scene->camera);
+        Matrix4 inv_camera_transform = transform_inverse(camera_transform);
+        if (controller->controller.buttons_pressed[BUTTON_RT]) {
+            if (grabbed_entity != NULL_ENTITY) {
+                Vector3 dir = look_direction(scene->camera);
+                apply_impulse(grabbed_entity, get_position(grabbed_entity), mult3(10.0f, dir));
+                remove_parent(grabbed_entity);
+                set_transform(grabbed_entity, matrix4_mult(camera_transform, get_transform(grabbed_entity)));
+                RigidBodyComponent* grabbed_rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
+                grabbed_rb->gravity_scale = 1.0f;
+                grabbed_entity = NULL_ENTITY;
+            } else {
+                Vector3 dir = look_direction(scene->camera);
+                Ray ray = { get_position(scene->camera), dir };
+                Hit hit = raycast(ray);
+                if (hit.entity != NULL_ENTITY) {
+                    grabbed_entity = hit.entity;
+                    set_transform(grabbed_entity, matrix4_mult(inv_camera_transform, get_transform(grabbed_entity)));
+                    add_child(scene->camera, grabbed_entity);
+                    RigidBodyComponent* grabbed_rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
+                    grabbed_rb->gravity_scale = 0.0f;
+                    grabbed_rb->velocity = zeros3();
+                    grabbed_rb->angular_velocity = zeros3();
+                }
+            }
+        }
     }
 }
 
 
 void input_game(SDL_Event sdl_event) {
-    static float yaw = 0.0f;
-    static float pitch = 0.0f;
-
     if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.key == SDLK_ESCAPE) {
         app.quit = true;
     }
@@ -382,18 +404,10 @@ void input_game(SDL_Event sdl_event) {
     }
 
 
-    TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);
     float sens = game_settings.mouse_sensitivity / 10.0f;
 
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
         mouse_motion.x -= sdl_event.motion.xrel * sens;
         mouse_motion.y -= sdl_event.motion.yrel * sens;
-    } else if (sdl_event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        Vector3 dir = look_direction(scene->camera);
-        Ray ray = { get_position(scene->camera), dir };
-        Hit hit = raycast(ray);
-        if (hit.entity != NULL_ENTITY && get_component(hit.entity, COMPONENT_RIGIDBODY)) {
-            apply_impulse(hit.entity, hit.point, mult3(10.0f, dir));
-        }
     }
 }
