@@ -1,11 +1,17 @@
 #include "systems/collision.h"
 
-#include <math.h>
 #include <render.h>
 #include <stdio.h>
 
 #include "scene.h"
 #include "util.h"
+
+
+static const unsigned int COLLISION_MASKS[] = {
+    [GROUP_WALLS] = 0,
+    [GROUP_PLAYERS] = GROUP_WALLS,
+    [GROUP_PROPS] = GROUP_WALLS | GROUP_PLAYERS | GROUP_PROPS
+};
 
 
 Penetration penetration_sphere_sphere(Sphere sphere1, Sphere sphere2) {
@@ -476,6 +482,14 @@ void update_collisions() {
         for (Entity j = 0; j < i; j++) {
             ColliderComponent* other_collider = get_component(j, COMPONENT_COLLIDER);
             if (!other_collider) continue;
+
+            // TODO: Handle unsymmetric collisions
+            bool collides = (COLLISION_MASKS[collider->group] & other_collider->group);
+            bool other_collides = (COLLISION_MASKS[other_collider->group] & collider->group);
+
+            if (!collides && !other_collides) {
+                continue;
+            }
 
             Penetration penetration = get_penetration(i, j);
             if (penetration.valid) {

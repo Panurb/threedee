@@ -135,7 +135,7 @@ Intersection intersection_capsule_ray(Capsule capsule, Ray ray) {
 }
 
 
-Hit raycast(Ray ray) {
+Hit raycast(Ray ray, ColliderGroup group) {
     Hit hit = {
         .entity = NULL_ENTITY,
         .distance = INFINITY,
@@ -146,6 +146,10 @@ Hit raycast(Ray ray) {
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
         if (!collider) continue;
+
+        if (!(collider->group & group)) {
+            continue;
+        }
 
         Intersection intersection = {
             .distance = INFINITY

@@ -13,6 +13,13 @@ typedef enum {
 } ColliderType;
 
 
+typedef enum {
+    GROUP_WALLS = 1 << 0,
+    GROUP_PLAYERS = 1 << 1,
+    GROUP_PROPS = 1 << 2,
+} ColliderGroup;
+
+
 typedef struct {
     Entity entity;
     Vector3 overlap;
@@ -23,6 +30,7 @@ typedef struct {
 
 typedef struct {
     ColliderType type;
+    ColliderGroup group;
     float radius;
     float width;
     float height;
@@ -33,6 +41,7 @@ typedef struct {
 
 typedef struct {
     ColliderType type;
+    ColliderGroup group;
     float radius;
     float width;
     float height;

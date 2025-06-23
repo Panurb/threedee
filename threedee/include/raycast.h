@@ -2,6 +2,9 @@
 #include <util.h>
 
 
+#include "components/collider.h"
+
+
 typedef struct {
     float distance;
     Vector3 point;
@@ -21,4 +24,4 @@ typedef struct {
 } Hit;
 
 
-Hit raycast(Ray ray);
+Hit raycast(Ray ray, ColliderGroup group);

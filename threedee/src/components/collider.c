@@ -98,6 +98,7 @@ Shape get_shape(Entity entity) {
 void ColliderComponent_add(Entity entity, ColliderParameters parameters) {
     ColliderComponent* collider = malloc(sizeof(ColliderComponent));
     collider->type = parameters.type;
+    collider->group = parameters.group ? parameters.group : GROUP_WALLS;
 
     switch (collider->type) {
         case COLLIDER_PLANE:

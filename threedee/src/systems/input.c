@@ -359,25 +359,37 @@ void input_players() {
             if (grabbed_entity != NULL_ENTITY) {
                 Vector3 dir = look_direction(scene->camera);
                 apply_impulse(grabbed_entity, get_position(grabbed_entity), mult3(10.0f, dir));
-                remove_parent(grabbed_entity);
-                set_transform(grabbed_entity, matrix4_mult(camera_transform, get_transform(grabbed_entity)));
+                // remove_parent(grabbed_entity);
+                // set_transform(grabbed_entity, matrix4_mult(camera_transform, get_transform(grabbed_entity)));
                 RigidBodyComponent* grabbed_rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
                 grabbed_rb->gravity_scale = 1.0f;
                 grabbed_entity = NULL_ENTITY;
             } else {
                 Vector3 dir = look_direction(scene->camera);
                 Ray ray = { get_position(scene->camera), dir };
-                Hit hit = raycast(ray);
-                if (hit.entity != NULL_ENTITY) {
+                Hit hit = raycast(ray, GROUP_PROPS);
+                if (hit.entity != NULL_ENTITY && hit.distance < 3.0f) {
                     grabbed_entity = hit.entity;
-                    set_transform(grabbed_entity, matrix4_mult(inv_camera_transform, get_transform(grabbed_entity)));
-                    add_child(scene->camera, grabbed_entity);
+                    // set_transform(grabbed_entity, matrix4_mult(inv_camera_transform, get_transform(grabbed_entity)));
+                    // add_child(scene->camera, grabbed_entity);
                     RigidBodyComponent* grabbed_rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
                     grabbed_rb->gravity_scale = 0.0f;
                     grabbed_rb->velocity = zeros3();
                     grabbed_rb->angular_velocity = zeros3();
                 }
             }
+        }
+
+        if (grabbed_entity != NULL_ENTITY) {
+            Vector3 target_position = sum3(get_position(camera), mult3(2.0f, look_direction(camera)));
+            Quaternion target_rotation = get_rotation(camera);
+
+            // Update grabbed entity position to camera position
+            TransformComponent* trans = get_component(grabbed_entity, COMPONENT_TRANSFORM);
+            RigidBodyComponent* rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
+            Vector3 delta = diff3(target_position, get_position(grabbed_entity));
+            rb->velocity = mult3(10.0f, delta);
+            // trans->rotation = target_rotation;
         }
     }
 }
