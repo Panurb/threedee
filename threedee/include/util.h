@@ -87,6 +87,11 @@ typedef struct {
 } Capsule;
 
 typedef struct {
+    Vector3 center;
+    Vector3 half_extents;
+} AABB;
+
+typedef struct {
     Vector3* points;
     int size;
 } PolygonShape;
@@ -96,6 +101,7 @@ typedef union {
     Sphere sphere;
     Cuboid cuboid;
     Capsule capsule;
+    AABB aabb;
 } Shape;
 
 #define COLOR_NONE get_color(0.0f, 0.0f, 0.0f, 0.0f)

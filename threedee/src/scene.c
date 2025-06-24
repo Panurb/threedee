@@ -63,62 +63,55 @@ void create_scene() {
     scene->camera = create_camera();
     scene->menu_camera = create_menu_camera();
     scene->ambient_light = 0.2f;
-    scene->player = create_player(vec3(0.0f, 1.0f, 0.0f));
+    scene->player = create_player(vec3(0.0f, 2.0f, 0.0f));
 
     Entity i = create_entity();
     TransformComponent* trans = TransformComponent_add(i, vec3(0.0f, -2.0f, 0.0f));
     trans->scale.x = 100.0f;
     trans->scale.z = 100.0f;
-    trans->rotation = euler_to_quaternion((EulerAngles) { 0.0f, 0.0f, 0.0f });
     MeshComponent_add(i, "cube", "gravel", "concrete");
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .group = GROUP_WALLS, .height = 0.5f });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     i = create_entity();
     trans = TransformComponent_add(i, vec3(5.5f, 0.0f, 0.0f));
-    trans->scale.x = 3.0f;
+    trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
-    trans->rotation = euler_to_quaternion((EulerAngles) { 90.0f, 0.0f, 0.0f });
     MeshComponent_add(i, "cube", "tiles", "glass");
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .height = 0.5f });
 
     i = create_entity();
     trans = TransformComponent_add(i, vec3(0.0f, 0.0f, 5.5f));
     trans->scale.x = 10.0f;
-    trans->scale.z = 3.0f;
-    trans->rotation = euler_to_quaternion((EulerAngles) { 0.0f, 0.0f, -90.0f });
+    trans->scale.y = 3.0f;
     MeshComponent_add(i, "cube", "tiles", "glass");
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .height = 0.5f });
 
     i = create_entity();
     trans = TransformComponent_add(i, vec3(-5.5f, 0.0f, 0.0f));
-    trans->scale.x = 3.0f;
+    trans->scale.y = 3.0f;
     trans->scale.z = 10.0f;
-    trans->rotation = euler_to_quaternion((EulerAngles) { -90.0f, 0.0f, 0.0f });
     MeshComponent_add(i, "cube", "tiles", "glass");
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .height = 0.5f });
 
     i = create_entity();
     trans = TransformComponent_add(i, vec3(0.0f, 0.0f, -5.5f));
     trans->scale.x = 10.0f;
-    trans->scale.z = 3.0f;
-    trans->rotation = euler_to_quaternion((EulerAngles) { 0.0f, 0.0f, 90.0f });
+    trans->scale.y = 3.0f;
     MeshComponent_add(i, "cube", "tiles", "glass");
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .height = 0.5f });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .height = 0.5f });
 
-    for (int j = 0; j < 0; j++) {
+    for (int j = 0; j < 5; j++) {
         i = create_entity();
-        TransformComponent* transform = TransformComponent_add(i, vec3(0.0f, -1.5f, 0.0f));
-        // transform->rotation = euler_to_quaternion((EulerAngles) { 10.0f, 5 * j, 0.0f });
-        transform->scale = vec3(0.5f, 1.0f, 0.5f);
+        TransformComponent_add(i, vec3((float) j, 1.5f, -2.0f));
         MeshComponent_add(i, "cube", "tiles", "default");
         RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
-        rb->axis_lock.rotation = true;
-        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CAPSULE, .radius = 0.25f, .height = 1.0f });
+        // rb->axis_lock.rotation = true;
+        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_PROPS, .width = 1.0f, .height = 1.0f, .depth = 1.0f });
     }
 
     for (int j = 0; j < 5; j++) {
         i = create_entity();
-        TransformComponent* transform = TransformComponent_add(i, vec3((float) j, -1.0f, 0.0f));
+        TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 1.0f, 0.0f));
         transform->scale = vec3(0.5f, 0.5f, 0.5f);
         MeshComponent_add(i, "sphere", "bark", "default");
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);

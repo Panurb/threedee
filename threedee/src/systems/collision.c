@@ -409,6 +409,115 @@ Penetration penetration_capsule_plane(Capsule capsule, Plane plane) {
 }
 
 
+Penetration penetration_sphere_aabb(Sphere sphere, AABB aabb) {
+    Penetration penetration = {
+        .valid = false
+    };
+
+    Vector3 half_extents = aabb.half_extents;
+    Vector3 closest_point = clamp3(sphere.center, diff3(aabb.center, half_extents), sum3(aabb.center, half_extents));
+
+    Sphere point = {
+        .center = closest_point,
+        .radius = 0.0f
+    };
+    Penetration sphere_penetration = penetration_sphere_sphere(sphere, point);
+    if (sphere_penetration.valid) {
+        sphere_penetration.contact_point = closest_point;
+        return sphere_penetration;
+    }
+
+    return penetration;
+}
+
+
+Vector3 contact_point_obb_aabb(Cuboid obb, AABB aabb, Vector3 normal) {
+    Matrix3 rot_obb = quaternion_to_rotation_matrix(obb.rotation);
+    Vector3 contact_point = zeros3();
+    float max_penetration = -INFINITY;
+
+    // Compute all 8 corners of the OBB
+    for (int dx = -1; dx <= 1; dx += 2) {
+        for (int dy = -1; dy <= 1; dy += 2) {
+            for (int dz = -1; dz <= 1; dz += 2) {
+                Vector3 offset = sum3(
+                    mult3(dx * obb.half_extents.x, matrix3_column(rot_obb, 0)),
+                    sum3(
+                        mult3(dy * obb.half_extents.y, matrix3_column(rot_obb, 1)),
+                        mult3(dz * obb.half_extents.z, matrix3_column(rot_obb, 2))
+                    )
+                );
+                Vector3 corner = sum3(obb.center, offset);
+
+                // Vector from AABB to OBB corner
+                Vector3 diff = diff3(corner, aabb.center);
+                float depth = -dot3(diff, normal);  // Negative = into AABB
+
+                if (depth > max_penetration) {
+                    max_penetration = depth;
+                    contact_point = corner;
+                }
+            }
+        }
+    }
+
+    // Project deepest point onto AABB face (by removing normal component of penetration)
+    contact_point = sum3(contact_point, mult3(max_penetration, normal));
+
+    // Clamp to AABB bounds along the tangent directions (to get a valid surface point)
+    Vector3 aabb_min = diff3(aabb.center, aabb.half_extents);
+    Vector3 aabb_max = sum3(aabb.center, aabb.half_extents);
+
+    for (int i = 0; i < 3; i++) {
+        // If normal is mostly aligned with this axis, skip clamping that axis
+        if (fabsf(vec3_get(normal, i)) > 0.99f) continue;
+
+        float v = vec3_get(contact_point, i);
+        v = fmaxf(vec3_get(aabb_min, i), fminf(v, vec3_get(aabb_max, i)));
+        vec3_set(&contact_point, i, v);
+    }
+
+    return contact_point;
+}
+
+
+
+Penetration penetration_cuboid_aabb(Cuboid cuboid, AABB aabb) {
+    Cuboid cuboid_aabb = {
+        .center = aabb.center,
+        .half_extents = aabb.half_extents,
+        .rotation = quaternion_id(),
+    };
+
+    Penetration penetration = penetration_cuboid_cuboid(cuboid, cuboid_aabb);
+    penetration.contact_point = contact_point_obb_aabb(cuboid, aabb, penetration.overlap);
+
+    return penetration;
+}
+
+
+Penetration penetration_capsule_aabb(Capsule capsule, AABB aabb) {
+    Penetration penetration = {
+        .valid = false
+    };
+
+    Vector3 half_extents = aabb.half_extents;
+    Vector3 closest_point = clamp3(capsule.center, diff3(aabb.center, half_extents), sum3(aabb.center, half_extents));
+
+    Sphere point = {
+        .center = closest_point,
+        .radius = 0.0f
+    };
+    Penetration sphere_penetration = penetration_sphere_sphere((Sphere) { .center = capsule.center, .radius = capsule.radius }, point);
+    if (sphere_penetration.valid) {
+        sphere_penetration.contact_point = closest_point;
+        return sphere_penetration;
+    }
+
+    return penetration;
+}
+
+
 Penetration get_penetration(Entity i, Entity j) {
     ColliderComponent* collider = scene->components->collider[i];
     ColliderComponent* other_collider = scene->components->collider[j];
@@ -447,7 +556,7 @@ Penetration get_penetration(Entity i, Entity j) {
 
     if (collider->type == COLLIDER_CUBOID && other_collider->type == COLLIDER_SPHERE) {
         Penetration penetration = penetration_sphere_cuboid(shape_other.sphere, shape.cuboid);
-        penetration.overlap = mult3(-1.0f, penetration.overlap);
+        penetration.overlap = neg3(penetration.overlap);
         return penetration;
     }
 
@@ -457,6 +566,36 @@ Penetration get_penetration(Entity i, Entity j) {
 
     if (collider->type == COLLIDER_CAPSULE && other_collider->type == COLLIDER_PLANE) {
         return penetration_capsule_plane(shape.capsule, shape_other.plane);
+    }
+
+    if (collider->type == COLLIDER_SPHERE && other_collider->type == COLLIDER_AABB) {
+        return penetration_sphere_aabb(shape.sphere, shape_other.aabb);
+    }
+
+    if (collider->type == COLLIDER_AABB && other_collider->type == COLLIDER_SPHERE) {
+        Penetration penetration = penetration_sphere_aabb(shape_other.sphere, shape.aabb);
+        penetration.overlap = neg3(penetration.overlap);
+        return penetration;
+    }
+
+    if (collider->type == COLLIDER_CUBOID && other_collider->type == COLLIDER_AABB) {
+        return penetration_cuboid_aabb(shape.cuboid, shape_other.aabb);
+    }
+
+    if (collider->type == COLLIDER_AABB && other_collider->type == COLLIDER_CUBOID) {
+        Penetration penetration = penetration_cuboid_aabb(shape_other.cuboid, shape.aabb);
+        penetration.overlap = neg3(penetration.overlap);
+        return penetration;
+    }
+
+    if (collider->type == COLLIDER_CAPSULE && other_collider->type == COLLIDER_AABB) {
+        return penetration_capsule_aabb(shape.capsule, shape_other.aabb);
+    }
+
+    if (collider->type == COLLIDER_AABB && other_collider->type == COLLIDER_CAPSULE) {
+        Penetration penetration = penetration_capsule_aabb(shape_other.capsule, shape.aabb);
+        penetration.overlap = neg3(penetration.overlap);
+        return penetration;
     }
 
     // LOG_ERROR("Invalid collision: %d vs %d", collider->type, other_collider->type);

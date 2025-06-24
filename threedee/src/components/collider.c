@@ -89,6 +89,12 @@ Shape get_shape(Entity entity) {
                 .rotation = get_rotation(entity),
             };
             break;
+        case COLLIDER_AABB:
+            shape.aabb = (AABB) {
+                .center = position,
+                .half_extents = get_half_extents(entity),
+            };
+            break;
     }
 
     return shape;
@@ -108,25 +114,28 @@ void ColliderComponent_add(Entity entity, ColliderParameters parameters) {
             collider->depth = INFINITY;
             break;
         case COLLIDER_SPHERE:
-            collider->radius = parameters.radius;
-            collider->width = 2.0f * parameters.radius;
-            collider->height = 2.0f * parameters.radius;
-            collider->depth = 2.0f * parameters.radius;
+            collider->radius = parameters.radius ? parameters.radius : 1.0f;
+            collider->width = 2.0f * collider->radius;
+            collider->height = 2.0f * collider->radius;
+            collider->depth = 2.0f * collider->radius;
             break;
         case COLLIDER_CUBOID:
-            collider->radius = sqrtf(
-                parameters.width * parameters.width + parameters.height * parameters.height
-                + parameters.depth * parameters.depth) / 2.0f;
-            collider->width = parameters.width;
-            collider->height = parameters.height;
-            collider->depth = parameters.depth;
+            collider->width = parameters.width ? parameters.width : 1.0f;
+            collider->height = parameters.height ? parameters.height : 1.0f;
+            collider->depth = parameters.depth ? parameters.depth : 1.0f;
+            collider->radius = norm3(vec3(collider->width, collider->height, collider->depth)) / 2.0f;
             break;
         case COLLIDER_CAPSULE:
-            collider->radius = parameters.radius;
-            collider->width = 2.0f * parameters.radius;
-            collider->height = parameters.height;
+            collider->radius = parameters.radius ? parameters.radius : 0.5f;
+            collider->width = 2.0f * collider->radius;
+            collider->height = parameters.height ? parameters.height : 1.0f;
             collider->depth = collider->width;
             break;
+        case COLLIDER_AABB:
+            collider->width = parameters.width ? parameters.width : 1.0f;
+            collider->height = parameters.height ? parameters.height : 1.0f;
+            collider->depth = parameters.depth ? parameters.depth : 1.0f;
+            collider->radius = norm3(vec3(collider->width, collider->height, collider->depth)) / 2.0f;
     }
 
     collider->collisions = ArrayList_create(sizeof(Collision));

@@ -101,7 +101,7 @@ void init() {
     app.delta = 0.0f;
     app.state = STATE_GAME;
     app.base_path = SDL_GetBasePath();
-    app.debug_level = 0;
+    app.debug_level = 1;
 
     create_game_window();
     init_render();

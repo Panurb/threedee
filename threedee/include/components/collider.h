@@ -9,7 +9,8 @@ typedef enum {
     COLLIDER_PLANE,
     COLLIDER_SPHERE,
     COLLIDER_CUBOID,
-    COLLIDER_CAPSULE
+    COLLIDER_CAPSULE,
+    COLLIDER_AABB
 } ColliderType;
 
 

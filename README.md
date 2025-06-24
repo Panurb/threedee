@@ -10,7 +10,8 @@
 * 3D rendering using SDL3 GPU interface
 * Phong shading with multiple light sources
 * Impulse-based collision resolution
-    - Supported shapes: plane, sphere, cuboid, capsule
+    - Supported shapes: plane, sphere, cuboid, capsule, AABB
+    - Supported collisions: sphere-plane, sphere-sphere, sphere-cuboid, cuboid-plane, cuboid-cuboid, capsule-AABB
 * Importing of 3D models in OBJ format
 * Normal maps
 * Dynamic shadows using shadow mapping
