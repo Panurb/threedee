@@ -10,6 +10,7 @@ cbuffer UBO : register(b0, space3)
     float ambient_light : packoffset(c0.z);
     int num_lights : packoffset(c0.w);
     float3 camera_position : packoffset(c1);
+    int shadow_map_resolution : packoffset(c1.w);
 };
 
 struct LightData
@@ -57,8 +58,6 @@ float radial_fade(float2 uv) {
     return 1.0 - smoothstep(0.4, 0.5, dist);
 }
 
-static const float2 texel_size = 1.0 / float2(4096.0, 4096.0);  // TODO: use SHADOW_MAP_RESOLUTION
-
 Output main(Input input)
 {
     float2 tex_coord = input.tex_coord;
@@ -66,6 +65,7 @@ Output main(Input input)
     float3 normal = input.normal;
     float3 tangent = input.tangent;
     float3 world_position = input.world_position;
+    float2 texel_size = 1.0 / float2(shadow_map_resolution, shadow_map_resolution);
 
     float3 base_color = tex.Sample(sampler_tex, float3(tex_coord, input.tex_index)).rgb;
 

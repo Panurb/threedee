@@ -749,7 +749,8 @@ void render() {
 			.far_plane = camera->far_plane,
 			.ambient_light = scene->ambient_light,
 			.num_lights = num_lights,
-			.camera_position = get_position(scene->camera)
+			.camera_position = get_position(scene->camera),
+			.shadow_map_resolution = SHADOW_MAP_RESOLUTION,
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
 		SDL_PushGPUFragmentUniformData(command_buffer, 1, &lights, sizeof(LightData) * num_lights);

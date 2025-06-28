@@ -27,6 +27,7 @@ typedef struct UniformData {
 	float ambient_light;
 	int num_lights;
 	Vector3 camera_position;
+	int shadow_map_resolution;
 } UniformData;
 
 
