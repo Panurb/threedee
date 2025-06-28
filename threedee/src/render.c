@@ -554,6 +554,8 @@ void init_render() {
 			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 			.enable_anisotropy = true,
 			.max_anisotropy = 16,
+			.min_lod = 0.0f,
+			.max_lod = 1000.0f
 		}
 	);
 

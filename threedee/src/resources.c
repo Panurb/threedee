@@ -17,7 +17,6 @@ typedef struct {
 
 SDL_GPUTexture* create_texture(SDL_Surface* image_data) {
 	int num_levels = floorf(log2f(fmaxf(image_data->w, image_data->h)) + 1);
-	LOG_INFO("Number of levels: %d", num_levels);
 	SDL_GPUTexture* texture = SDL_CreateGPUTexture(
 		app.gpu_device,
 		&(SDL_GPUTextureCreateInfo){
