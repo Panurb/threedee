@@ -47,6 +47,8 @@ void draw_entities() {
                 end = sum3(start, collision.offset);
                 render_arrow(start, end, 0.01f, COLOR_BLUE);
             }
+
+            draw_collider(entity);
         }
 
         if (app.debug_level < 2) {

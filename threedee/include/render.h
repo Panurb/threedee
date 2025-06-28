@@ -73,6 +73,8 @@ void render_line(Vector3 start, Vector3 end, float thickness, Color color);
 
 void render_circle(Vector3 center, float radius, int segments, Color color);
 
+void render_sphere(Vector3 center, float radius, int segments, Color color);
+
 void render_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color);
 
 void render_arrow(Vector3 start, Vector3 end, float thickness, Color color);

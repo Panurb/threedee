@@ -192,16 +192,24 @@ void resolve_collisions(Entity entity, float bias) {
             // Total impulse
             Vector3 j_total = sum3(mult3(j_n, n), mult3(j_t, t));
 
+            float verticality = dot3(n, vec3(0.0f, 1.0f, 0.0f));
+
             if (rb) {
                 // TODO: What if entity has parent?
                 trans->position = sum3(trans->position, delta_position);
                 apply_impulse(entity, sum3(trans->position, r), j_total);
+                if (verticality > 0.99f) {
+                    rb->on_ground = true;
+                }
             }
 
             if (rb_other) {
                 TransformComponent* trans_other = get_component(collision.entity, COMPONENT_TRANSFORM);
                 trans_other->position = sum3(trans_other->position, mult3(-1.0f, delta_position));
                 apply_impulse(collision.entity, sum3(trans_other->position, r_other), mult3(-1.0f, j_total));
+                if (verticality < -0.99f) {
+                    rb_other->on_ground = true;
+                }
             }
         }
     }
@@ -220,6 +228,13 @@ void init_physics(void) {
 
 
 void update_physics(float time_step) {
+    for (Entity i = 0; i < scene->components->entities; i++) {
+        RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
+        if (rb) {
+            rb->on_ground = false;
+        }
+    }
+
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
         if (!collider) continue;
@@ -267,7 +282,7 @@ void update_physics(float time_step) {
         rigid_body->velocity = mult3(rigid_body->linear_damping, rigid_body->velocity);
         rigid_body->angular_velocity = mult3(rigid_body->angular_damping, rigid_body->angular_velocity);
 
-        if (norm3(rigid_body->velocity) < 0.001f && norm3(rigid_body->angular_velocity) < 0.01f) {
+        if (rigid_body->can_sleep && norm3(rigid_body->velocity) < 0.001f && norm3(rigid_body->angular_velocity) < 0.01f) {
             rigid_body->velocity = zeros3();
             rigid_body->angular_velocity = zeros3();
             rigid_body->asleep = true;

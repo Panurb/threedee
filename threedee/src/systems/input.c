@@ -350,7 +350,9 @@ void input_players() {
         camera_trans->rotation = q_pitch;
 
         if (controller->controller.buttons_pressed[BUTTON_A]) {
-            rb->velocity.y += 4.0f;
+            if (rb->on_ground) {
+                rb->velocity.y += 4.0f;
+            }
         }
 
         Matrix4 camera_transform = get_transform(scene->camera);

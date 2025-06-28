@@ -5,6 +5,7 @@
 
 #include "components/collider.h"
 
+#include <render.h>
 #include <stdio.h>
 
 #include "scene.h"
@@ -129,7 +130,7 @@ void ColliderComponent_add(Entity entity, ColliderParameters parameters) {
             collider->radius = parameters.radius ? parameters.radius : 0.5f;
             collider->width = 2.0f * collider->radius;
             collider->height = parameters.height ? parameters.height : 1.0f;
-            collider->depth = collider->width;
+            collider->depth = 2.0f * collider->width;
             break;
         case COLLIDER_AABB:
             collider->width = parameters.width ? parameters.width : 1.0f;
@@ -149,5 +150,38 @@ void ColliderComponent_remove(Entity entity) {
         ArrayList_destroy(collider->collisions);
         free(collider);
         scene->components->collider[entity] = NULL;
+    }
+}
+
+
+void draw_collider(Entity entity) {
+    ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
+    if (!collider) return;
+
+    Vector3 position = get_position(entity);
+    Vector3 scale = get_scale(entity);
+    Matrix3 rot = quaternion_to_rotation_matrix(get_rotation(entity));
+
+    Color color = get_color(1.0f, 0.0f, 0.0f, 0.5f);
+
+    switch (collider->type) {
+        case COLLIDER_PLANE: {
+            render_plane(get_shape(entity).plane, color);
+            break;
+        }
+        case COLLIDER_SPHERE:
+            render_circle(position, collider->radius * scale.x, 32, color);
+            break;
+        case COLLIDER_CUBOID:
+            break;
+        case COLLIDER_CAPSULE:
+            Vector3 h = matrix3_map(rot, vec3(0.0f, collider->height / 2.0f, 0.0f));
+            Vector3 p0 = sum3(position, h);
+            Vector3 p1 = sum3(position, neg3(h));
+            render_sphere(p0, collider->radius, 16, color);
+            render_sphere(p1, collider->radius, 16, color);
+            break;
+        case COLLIDER_AABB:
+            break;
     }
 }

@@ -59,3 +59,5 @@ Shape get_shape(Entity entity);
 void ColliderComponent_add(Entity entity, ColliderParameters parameters);
 
 void ColliderComponent_remove(Entity entity);
+
+void draw_collider(Entity entity);

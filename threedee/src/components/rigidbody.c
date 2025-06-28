@@ -15,7 +15,9 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, float mass) {
     rigid_body->friction = 0.5f;
     rigid_body->bounce = 0.5f;
     rigid_body->gravity_scale = 1.0f;
+    rigid_body->can_sleep = true;
     rigid_body->asleep = false;
+    rigid_body->on_ground = false;
     rigid_body->angular_damping = 0.95f;
     rigid_body->linear_damping = 0.999f;
     rigid_body->inv_inertia = matrix3_id();

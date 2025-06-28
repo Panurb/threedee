@@ -22,7 +22,9 @@ typedef struct {
     float inv_mass;
     float gravity_scale;
     Matrix3 inv_inertia;
+    bool can_sleep;
     bool asleep;
+    bool on_ground;
     float linear_damping;
     float angular_damping;
     float max_speed;

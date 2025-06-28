@@ -496,22 +496,61 @@ Penetration penetration_cuboid_aabb(Cuboid cuboid, AABB aabb) {
 }
 
 
+Vector3 closest_point_on_segment(Vector3 p0, Vector3 p1, Vector3 point) {
+    Vector3 segment = diff3(p1, p0);
+    float t = dot3(diff3(point, p0), segment) / dot3(segment, segment);
+    t = clamp(t, 0.0f, 1.0f);
+    return sum3(p0, mult3(t, segment));
+}
+
+
+Vector3 closest_point_on_aabb(AABB aabb, Vector3 point) {
+    Vector3 box_min = diff3(aabb.center, aabb.half_extents);
+    Vector3 box_max = sum3(aabb.center, aabb.half_extents);
+    return clamp3(point, box_min, box_max);
+}
+
+
 Penetration penetration_capsule_aabb(Capsule capsule, AABB aabb) {
     Penetration penetration = {
         .valid = false
     };
 
-    Vector3 half_extents = aabb.half_extents;
-    Vector3 closest_point = clamp3(capsule.center, diff3(aabb.center, half_extents), sum3(aabb.center, half_extents));
+    Matrix3 rot = quaternion_to_rotation_matrix(capsule.rotation);
+    Vector3 h = matrix3_map(rot, vec3(0.0f, capsule.height / 2.0f, 0.0f));
+    Vector3 p0 = sum3(capsule.center, h);
+    Vector3 p1 = sum3(capsule.center, neg3(h));
+    render_circle(p0, 0.05f, 32, get_color(0.0f, 0.0f, 0.0f, 0.5f));
+    render_circle(p1, 0.05f, 32, get_color(0.0f, 0.0f, 0.0f, 0.5f));
 
-    Sphere point = {
-        .center = closest_point,
-        .radius = 0.0f
-    };
-    Penetration sphere_penetration = penetration_sphere_sphere((Sphere) { .center = capsule.center, .radius = capsule.radius }, point);
-    if (sphere_penetration.valid) {
-        sphere_penetration.contact_point = closest_point;
-        return sphere_penetration;
+    // Step 1: Find closest point on segment to box
+    Vector3 closest_to_box = closest_point_on_aabb(aabb, capsule.center);
+    Vector3 closest_on_segment = closest_point_on_segment(p0, p1, closest_to_box);
+
+    render_circle(closest_on_segment, 0.05f, 32, get_color(1.0f, 0.0f, 0.0f, 0.5f));
+    render_circle(closest_to_box, 0.05f, 32, get_color(0.0f, 1.0f, 0.0f, 0.5f));
+
+    // Step 2: Find closest point on box to that segment point
+    Vector3 closest_on_box = closest_point_on_aabb(aabb, closest_on_segment);
+
+    render_circle(closest_on_box, 0.05f, 32, get_color(0.0f, 0.0f, 1.0f, 0.5f));
+
+    // Step 3: Distance and direction
+    Vector3 diff = diff3(closest_on_segment, closest_on_box);
+    float dist = norm3(diff);
+
+    if (dist < capsule.radius) {
+        float depth = capsule.radius - dist;
+        Vector3 direction = diff3(aabb.center, capsule.center);
+        if (dist >= 1e-6f) {
+            direction = div3(dist, diff);
+        }
+        penetration.valid = true;
+        penetration.overlap = mult3(depth, direction);
+        penetration.contact_point = sum3(
+            closest_on_segment,
+            mult3(-capsule.radius, direction)
+        );
     }
 
     return penetration;

@@ -8,6 +8,7 @@
 
 #include "render.h"
 
+#include <camera.h>
 #include <component.h>
 #include <resources.h>
 #include <scene.h>
@@ -194,6 +195,15 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+				.blend_state = (SDL_GPUColorTargetBlendState) {
+					.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+					.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+					.color_blend_op = SDL_GPU_BLENDOP_ADD,
+					.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+					.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+					.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+					.enable_blend = true
+				}
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
@@ -924,6 +934,45 @@ void render_circle(Vector3 center, float radius, int segments, Color color) {
 		};
 		render_triangle(center, prev_point, current_point, color);
 		prev_point = current_point;
+	}
+}
+
+
+void render_sphere(Vector3 center, float radius, int segments, Color color) {
+	if (segments < 3) return; // At least a triangle
+
+	float angle_increment = M_PI / segments;
+	for (int i = 0; i < segments; i++) {
+		float theta1 = i * angle_increment;
+		float theta2 = (i + 1) * angle_increment;
+
+		for (int j = 0; j < segments; j++) {
+			float phi1 = j * (2.0f * M_PI / segments);
+			float phi2 = (j + 1) * (2.0f * M_PI / segments);
+
+			Vector3 a = {
+				center.x + radius * sinf(theta1) * cosf(phi1),
+				center.y + radius * sinf(theta1) * sinf(phi1),
+				center.z + radius * cosf(theta1)
+			};
+			Vector3 b = {
+				center.x + radius * sinf(theta1) * cosf(phi2),
+				center.y + radius * sinf(theta1) * sinf(phi2),
+				center.z + radius * cosf(theta1)
+			};
+			Vector3 c = {
+				center.x + radius * sinf(theta2) * cosf(phi2),
+				center.y + radius * sinf(theta2) * sinf(phi2),
+				center.z + radius * cosf(theta2)
+			};
+			Vector3 d = {
+				center.x + radius * sinf(theta2) * cosf(phi1),
+				center.y + radius * sinf(theta2) * sinf(phi1),
+				center.z + radius * cosf(theta2)
+			};
+
+			render_quad(a, b, c, d, color);
+		}
 	}
 }
 
