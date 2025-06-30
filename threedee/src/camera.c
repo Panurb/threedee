@@ -1,16 +1,5 @@
-#define _USE_MATH_DEFINES
-
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-
-#include "app.h"
+#include "render.h"
 #include "camera.h"
-
-#include <render.h>
-
 #include "component.h"
 #include "util.h"
 #include "settings.h"

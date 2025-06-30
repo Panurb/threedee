@@ -459,13 +459,15 @@ bool non_zero3(Vector3 v) {
 }
 
 Matrix4 perspective_projection_matrix(float fov, float aspect_ratio, float near, float far) {
+    // Depth is mapped to [0, 1] range as expected by Vulkan
     float f = 1.0f / tanf(fov / 2.0f);
     Matrix4 m = matrix4_id();
     m._11 = f / aspect_ratio;
     m._22 = f;
-    m._33 = (far + near) / (near - far);
-    m._34 = (2.0f * far * near) / (near - far);
+    m._33 = far / (near - far);
+    m._34 = (far * near) / (near - far);
     m._43 = -1.0f;
+    m._44 = 0.0f;
     return m;
 }
 

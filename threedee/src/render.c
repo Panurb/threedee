@@ -715,9 +715,6 @@ void render() {
 
 		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
 		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
-		// Need to shift so rotation happens around the center of the camera
-		// Otherwise the camera "orbits"
-		view_matrix._34 += 1.0f;
 		Matrix4 projection_matrix = camera->projection_matrix;
 		Matrix4 projection_view_matrix = transpose4(matrix4_mult(projection_matrix, view_matrix));
 

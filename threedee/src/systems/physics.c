@@ -87,7 +87,7 @@ void apply_impulse(Entity entity, Vector3 point, Vector3 impulse) {
 }
 
 
-void resolve_collisions(Entity entity, float bias) {
+bool resolve_collisions(Entity entity, float bias) {
     // Collisions are solved sequentially, updating positions and velocities of both bodies before moving
     // to the next collision.
 
@@ -95,6 +95,7 @@ void resolve_collisions(Entity entity, float bias) {
     RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
 
+    bool has_moved = false;
     if (collider) {
         for (int i = 0; i < collider->collisions->size; i++) {
             Collision collision = *(Collision*)ArrayList_get(collider->collisions, i);
@@ -201,6 +202,7 @@ void resolve_collisions(Entity entity, float bias) {
                 if (verticality > 0.99f) {
                     rb->on_ground = true;
                 }
+                has_moved = true;
             }
 
             if (rb_other) {
@@ -210,9 +212,12 @@ void resolve_collisions(Entity entity, float bias) {
                 if (verticality < -0.99f) {
                     rb_other->on_ground = true;
                 }
+                has_moved = true;
             }
         }
     }
+
+    return has_moved;
 }
 
 
@@ -240,8 +245,9 @@ void update_physics(float time_step) {
         if (!collider) continue;
 
         for (int j = 0; j < ITERATIONS; j++) {
-            // TODO: Break early if no change
-            resolve_collisions(i, 1.0f / (float)ITERATIONS);
+            if (!resolve_collisions(i, 1.0f / (float)ITERATIONS)) {
+                break;
+            }
         }
     }
 
