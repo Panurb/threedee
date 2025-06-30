@@ -137,6 +137,7 @@ void ColliderComponent_add(Entity entity, ColliderParameters parameters) {
             collider->height = parameters.height ? parameters.height : 1.0f;
             collider->depth = parameters.depth ? parameters.depth : 1.0f;
             collider->radius = norm3(vec3(collider->width, collider->height, collider->depth)) / 2.0f;
+            break;
     }
 
     collider->collisions = ArrayList_create(sizeof(Collision));

@@ -347,5 +347,7 @@ Vector3 get_entities_center(List* entities) {
 void look_at(Entity entity, Vector3 target) {
     Vector3 position = get_position(entity);
     Matrix4 transform = look_at_matrix(position, target, vec3(0.0f, 1.0f, 0.0f));
-    set_transform(entity, transform_inverse(transform));
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+    trans->position = position_from_transform(transform);
+    trans->rotation = rotation_from_transform(transform);
 }

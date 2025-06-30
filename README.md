@@ -20,6 +20,7 @@
 * 2D rendering
 * Data serialization for saving/loading game state
 * Particles
+* Sound effects
 
 ### How do I get set up? ###
 
