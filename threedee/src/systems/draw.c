@@ -13,13 +13,7 @@ void draw_entities() {
             Matrix4 projection_matrix = light->projection_matrix;
             light->shadow_map.projection_view_matrix = matrix4_mult(projection_matrix, view_matrix);
 
-            add_light(
-                get_position(entity),
-                light->diffuse_color,
-                light->specular_color,
-                light->shadow_map.projection_view_matrix,
-                light->type
-            );
+            add_light(entity);
         }
 
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);

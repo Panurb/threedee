@@ -50,6 +50,8 @@ typedef struct {
 typedef struct {
 	Vector3 position;
 	int light_type;
+	Vector3 direction;
+	float cutoff_cos;
 	Vector3 diffuse_color;
 	float _pad2;
 	Vector3 specular_color;
@@ -66,7 +68,7 @@ SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size);
 
 SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transfer_buffer, int size);
 
-void add_light(Vector3 position, Color diffuse_color, Color specular_color, Matrix4 projection_view, LightType light_type);
+void add_light(Entity entity);
 
 void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int light_index);
 

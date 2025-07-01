@@ -33,7 +33,7 @@ Entity create_player(Vector3 position) {
     Entity j = create_entity();
     TransformComponent_add(j, vec3(0.0f, -0.5f, 0.1f));
     look_at(j, vec3(0.0f, -0.5f, -1.0f));
-    LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_MAGENTA, .fov = 50.0f, .type = LIGHT_UV });
+    LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_WHITE, .fov = 50.0f, .type = LIGHT_UV });
     add_child(cam, j);
 
     return i;
@@ -70,11 +70,11 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
         if (width > depth) {
             float x = position.x - 0.5f * width + 0.5f * segment_width + j * (segment_width + window_width);
             trans = TransformComponent_add(window, vec3(x, position.y, position.z));
-            trans->scale = vec3(segment_width, 1.5f, depth);
+            trans->scale = vec3(segment_width, 1.0f, depth);
         } else {
             float z = position.z - 0.5f * depth + 0.5f * segment_depth + j * (segment_depth + window_width);
             trans = TransformComponent_add(window, vec3(position.x, position.y, z));
-            trans->scale = vec3(width, 1.5f, segment_depth);
+            trans->scale = vec3(width, 1.0f, segment_depth);
         }
         MeshComponent_add(window, "cube", "tiles", "glass");
         ColliderComponent_add(window, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
@@ -83,7 +83,7 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
     i = create_entity();
     trans = TransformComponent_add(i, position);
     trans->position.y = position.y + 1.0f;
-    trans->scale = vec3(width, 0.5f, depth);
+    trans->scale = vec3(width, 1.0f, depth);
     MeshComponent_add(i, "cube", "tiles", "glass");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
@@ -116,7 +116,9 @@ void create_scene() {
     create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
 
     create_lamp(vec3(0.0f, 2.0f, 0.0f));
-    // create_lamp(vec3(0.0f, 2.0f, -5.0f));
+    // i = create_lamp(vec3(0.0f, 2.0f, -5.0f));
+    // LightComponent* light = get_component(i, COMPONENT_LIGHT);
+    // light->type = LIGHT_UV;
 
     for (int j = 0; j < 5; j++) {
         i = create_entity();

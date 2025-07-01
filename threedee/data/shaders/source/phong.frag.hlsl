@@ -17,9 +17,11 @@ struct LightData
 {
     float3 position : packoffset(c0);
     uint light_type : packoffset(c0.w);
-    float3 diffuse_color : packoffset(c1);
-    float3 specular_color : packoffset(c2);
-    float4x4 projection_view_matrix : packoffset(c3);
+    float3 direction : packoffset(c1);
+    float cutoff_cos : packoffset(c1.w);
+    float3 diffuse_color : packoffset(c2);
+    float3 specular_color : packoffset(c3);
+    float4x4 projection_view_matrix : packoffset(c4);
 };
 
 cbuffer LightBuffer : register(b1, space3)
@@ -48,11 +50,6 @@ struct Output
     float4 color : SV_Target0;
     float depth : SV_Depth;
 };
-
-float linearize_depth(float depth, float near, float far)
-{
-    return (near * far) / (far - depth * (far - near));
-}
 
 float radial_fade(float2 uv) {
     float2 center_uv = float2(0.5, 0.5);
@@ -91,9 +88,9 @@ Output main(Input input)
     float3 ambient = input.ambient * ambient_light * base_color;
     float3 diffuse = float3(0.0, 0.0, 0.0);
     float3 specular = float3(0.0, 0.0, 0.0);
+    float combined_spot_intensity = 0.0;
 
-    float shadow_factor = 1.0;
-	for (int i = 0; i < num_lights; ++i)
+    for (int i = 0; i < num_lights; ++i)
     {
         if ((light_data[i].light_type & input.visibility) == 0) {
             continue;
@@ -102,32 +99,32 @@ Output main(Input input)
         float3 l = normalize(light_data[i].position - world_position);
         float3 r = reflect(-l, n);
 
+        // Check if inside spotlight cone
+        float spot_cos = dot(-l, light_data[i].direction);
+        if (spot_cos < light_data[i].cutoff_cos) {
+            continue;
+        }
+
         float diff = max(dot(n, l), 0.0);
+        float spot_intensity = saturate((spot_cos - light_data[i].cutoff_cos) / (1.0 - light_data[i].cutoff_cos));
+
         if (diff <= 0.0) {
-            continue; // Skip lights that do not contribute
+            continue;
         }
 
         float spec = pow(max(dot(r, v), 0.0), input.shininess);
 
-        diffuse += base_color * diff * light_data[i].diffuse_color;
-        specular += input.specular * spec * light_data[i].specular_color;
-
         float4 shadow_coord = mul(light_data[i].projection_view_matrix, float4(world_position, 1.0));
         shadow_coord.xyz /= shadow_coord.w;
         float2 shadow_uv = shadow_coord.xy * 0.5 + 0.5;
-        shadow_uv.y = 1.0 - shadow_uv.y; // Flip Y coordinate for texture sampling
+        shadow_uv.y = 1.0 - shadow_uv.y;
         float shadow_depth = shadow_coord.z;
 
-        // Sample the shadow map at this light and position
-        float closest_depth = shadow_maps.Sample(sampler_shadow_maps, float3(shadow_uv, i)).r;
+        bool in_bounds = all(shadow_uv >= 0.0) && all(shadow_uv <= 1.0) && (shadow_coord.z >= 0.0) && (shadow_coord.z <= 1.0);
 
-	    bool in_bounds = all(shadow_uv >= 0.0) && all(shadow_uv <= 1.0) && (shadow_coord.z >= 0.0) && (shadow_coord.z <= 1.0);
-
+        float shadow = 0.0;
         if (in_bounds) {
-            float shadow = 0.0;
             const int kernel_radius = 1;
-
-            // PCF shadow mapping with a 3x3 kernel
             for (int x = -kernel_radius; x <= kernel_radius; ++x) {
                 for (int y = -kernel_radius; y <= kernel_radius; ++y) {
                     float2 offset = float2(x, y) * texel_size;
@@ -136,28 +133,34 @@ Output main(Input input)
                         shadow += 1.0;
                 }
             }
-
             shadow /= 9.0;
-
-            float fade = radial_fade(shadow_uv);
-            float shadow_strength = lerp(1.0, 0.25, shadow);
-            shadow_factor *= lerp(0.25, shadow_strength, fade);
         } else {
-            shadow_factor *= 0.25;
+            shadow = 1.0; // fully in shadow if out of bounds
         }
-    }
 
-    // Multiply diffuse/specular by shadow_factor
-    diffuse *= shadow_factor;
-    specular *= shadow_factor;
+        float shadow_strength = lerp(1.0, 0.25, shadow);
+        float light_shadow_factor = lerp(0.25, shadow_strength, shadow_uv);
+
+        combined_spot_intensity = max(combined_spot_intensity, spot_intensity);
+        diff *= spot_intensity;
+        spec *= spot_intensity;
+
+        diffuse += base_color * diff * light_data[i].diffuse_color * light_shadow_factor;
+        specular += input.specular * spec * light_data[i].specular_color * light_shadow_factor;
+    }
 
     float3 lit_color = ambient + diffuse + specular;
     if (length(lit_color) < 0.001) {
         discard;
     }
 
+    float alpha = saturate(combined_spot_intensity);
+    if (input.ambient > 0.0) {
+        alpha = 1.0;
+    }
+
     Output result;
-    result.color = float4(lit_color, 1.0);
+    result.color = float4(lit_color, alpha);
     //result.color = float4(fade.xxx, 1.0);
     result.depth = position.z;
     return result;

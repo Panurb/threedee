@@ -275,6 +275,15 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+				.blend_state = (SDL_GPUColorTargetBlendState) {
+					.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+					.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+					.color_blend_op = SDL_GPU_BLENDOP_ADD,
+					.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+					.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+					.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+					.enable_blend = true
+				}
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
@@ -626,13 +635,19 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 }
 
 
-void add_light(Vector3 position, Color diffuse_color, Color specular_color, Matrix4 projection_view, LightType light_type) {
+void add_light(Entity entity) {
+	LightComponent* light = get_component(entity, COMPONENT_LIGHT);
+	Color diffuse_color = light->diffuse_color;
+	Color specular_color = light->specular_color;
+
 	LightData light_data = {
-		.position = position,
+		.position = get_position(entity),
+		.light_type = light->type,
+		.direction = quaternion_forward(get_rotation(entity)),
+		.cutoff_cos = cosf(to_radians(light->fov * 0.5f)),
 		.diffuse_color = { diffuse_color.r / 255.0f, diffuse_color.g / 255.0f, diffuse_color.b / 255.0f },
 		.specular_color = { specular_color.r / 255.0f, specular_color.g / 255.0f, specular_color.b / 255.0f },
-		.projection_view_matrix = transpose4(projection_view),
-		.light_type = light_type
+		.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
 	};
 
 	memcpy(lights + num_lights, &light_data, sizeof(LightData));
