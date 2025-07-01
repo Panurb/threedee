@@ -626,12 +626,13 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 }
 
 
-void add_light(Vector3 position, Color diffuse_color, Color specular_color, Matrix4 projection_view) {
+void add_light(Vector3 position, Color diffuse_color, Color specular_color, Matrix4 projection_view, LightType light_type) {
 	LightData light_data = {
 		.position = position,
 		.diffuse_color = { diffuse_color.r / 255.0f, diffuse_color.g / 255.0f, diffuse_color.b / 255.0f },
 		.specular_color = { specular_color.r / 255.0f, specular_color.g / 255.0f, specular_color.b / 255.0f },
 		.projection_view_matrix = transpose4(projection_view),
+		.light_type = light_type
 	};
 
 	memcpy(lights + num_lights, &light_data, sizeof(LightData));
@@ -744,7 +745,7 @@ void render() {
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,
 			.far_plane = camera->far_plane,
-			.ambient_light = scene->ambient_light,
+			.ambient_light = num_lights * 0.1f,
 			.num_lights = num_lights,
 			.camera_position = get_position(scene->camera),
 			.shadow_map_resolution = SHADOW_MAP_RESOLUTION,
@@ -828,7 +829,7 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 }
 
 
-void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index) {
+void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, LightType visibility) {
 	MeshData* mesh_data = &resources.meshes[mesh_index];
 
 	if (mesh_data->num_instances >= mesh_data->max_instances) {
@@ -852,6 +853,7 @@ void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int mater
 		.transform = transpose4(transform),
 		.material = resources.materials[material_index],
 		.texture_index = texture_index,
+		.visiblity = visibility,
 	};
 	transforms[mesh_data->num_instances] = instance_data;
 	mesh_data->num_instances++;

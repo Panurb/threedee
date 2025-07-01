@@ -11,6 +11,7 @@ struct InstanceData
     float ambient : packoffset(c4.z);
     float shininess : packoffset(c4.w);
     int tex_index : packoffset(c5);
+    uint visibility : packoffset(c5.y);
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);
@@ -36,6 +37,7 @@ struct Output
     float diffuse;
     float ambient;
     float shininess;
+    int visiblity;
 };
 
 float3 scale_from_transform(float4x4 transform)
@@ -74,6 +76,7 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     output.diffuse = instance_data[instance_id].diffuse;
     output.ambient = instance_data[instance_id].ambient;
     output.shininess = instance_data[instance_id].shininess;
+    output.visiblity = instance_data[instance_id].visibility;
 
     return output;
 }

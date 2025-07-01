@@ -17,7 +17,8 @@ void draw_entities() {
                 get_position(entity),
                 light->diffuse_color,
                 light->specular_color,
-                light->shadow_map.projection_view_matrix
+                light->shadow_map.projection_view_matrix,
+                light->type
             );
         }
 
@@ -27,7 +28,8 @@ void draw_entities() {
                 get_transform(entity),
                 mesh_component->mesh_index,
                 mesh_component->texture_index,
-                mesh_component->material_index
+                mesh_component->material_index,
+                mesh_component->visibility
             );
         }
 

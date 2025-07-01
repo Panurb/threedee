@@ -11,6 +11,7 @@ struct InstanceData
     float ambient : packoffset(c4.z);
     float shininess : packoffset(c4.w);
     int tex_index : packoffset(c5);
+    uint visibility : packoffset(c5.y);
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);

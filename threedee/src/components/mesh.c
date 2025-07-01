@@ -11,6 +11,7 @@ MeshComponent* MeshComponent_add(Entity entity, String mesh_filename, String tex
     mesh->mesh_index = -1;
     mesh->texture_index = -1;
     mesh->material_index = -1;
+    mesh->visibility = LIGHT_NORMAL | LIGHT_UV;
 
     if (mesh_filename[0] != '\0') {
         mesh->mesh_index = binary_search_filename(mesh_filename, resources.mesh_names, resources.meshes_size);

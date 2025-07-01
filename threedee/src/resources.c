@@ -458,15 +458,18 @@ void load_resources() {
 		}
 	}
 
+	// Keep in alphabetical order
 	resources.materials[0] = (Material) {0.3f, 0.3f, 0.3f, 8.0f};
 	strcpy(resources.material_names[0], "concrete");
 	resources.materials[1] = (Material) {0.5f, 0.5f, 0.5f, 32.0f};
 	strcpy(resources.material_names[1], "default");
 	resources.materials[2] = (Material) {0.9f, 0.9f, 0.9f, 64.0f};
 	strcpy(resources.material_names[2], "glass");
-	resources.materials[3] = (Material) {0.1f, 0.1f, 0.1f, 16.0f};
-	strcpy(resources.material_names[3], "plastic");
-	resources.materials_size = 4;
+	resources.materials[3] = (Material) { 0.0f, 0.0f, 0.0f, 1.0f };
+	strcpy(resources.material_names[3], "hidden");
+	resources.materials[4] = (Material) {0.1f, 0.1f, 0.1f, 16.0f};
+	strcpy(resources.material_names[4], "plastic");
+	resources.materials_size = 5;
 
     LOG_INFO("Resources loaded");
 }

@@ -31,9 +31,9 @@ Entity create_player(Vector3 position) {
     add_child(i, cam);
 
     Entity j = create_entity();
-    TransformComponent_add(j, vec3(0.0f, 0.5f, 0.1f));
-    look_at(j, vec3(0.0f, 0.5f, -1.0f));
-    LightComponent_add(j, (LightParameters) { .type = LIGHT_SPOT, .color = COLOR_WHITE, .fov = 40.0f });
+    TransformComponent_add(j, vec3(0.0f, -0.5f, 0.1f));
+    look_at(j, vec3(0.0f, -0.5f, -1.0f));
+    LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_MAGENTA, .fov = 50.0f, .type = LIGHT_UV });
     add_child(cam, j);
 
     return i;
@@ -42,16 +42,10 @@ Entity create_player(Vector3 position) {
 
 Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent* trans = TransformComponent_add(i, position);
-    trans->scale = vec3(1.0f, 1.0f, 1.0f);
-    RigidBodyComponent_add(i, 1.0f);
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CUBOID, .width = 1.0f, .height = 1.0f, .depth = 1.0f });
+    TransformComponent_add(i, position);
+    look_at(i, vec3(position.x, position.y - 1.0f, position.z));
     MeshComponent_add(i, "cube", "bark", "default");
-
-    Entity j = create_entity();
-    TransformComponent_add(j, vec3(0.0f, 1.0f, 0.0f));
-    LightComponent* light = LightComponent_add(j, (LightParameters) { .color = COLOR_YELLOW });
-    add_child(i, j);
+    LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .type = LIGHT_NORMAL });
 
     return i;
 }
@@ -104,7 +98,7 @@ void create_scene() {
     scene = malloc(sizeof(Scene));
     scene->components = ComponentData_create();
     scene->menu_camera = create_menu_camera();
-    scene->ambient_light = 0.2f;
+    scene->ambient_light = 0.0f;
     scene->player = create_player(vec3(0.0f, 2.0f, 0.0f));
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
@@ -121,6 +115,9 @@ void create_scene() {
     create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
     create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
 
+    create_lamp(vec3(0.0f, 2.0f, 0.0f));
+    // create_lamp(vec3(0.0f, 2.0f, -5.0f));
+
     for (int j = 0; j < 5; j++) {
         i = create_entity();
         TransformComponent_add(i, vec3((float) j, 1.5f, -2.0f));
@@ -134,7 +131,7 @@ void create_scene() {
         i = create_entity();
         TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 1.0f, 0.0f));
         transform->scale = vec3(0.5f, 0.5f, 0.5f);
-        MeshComponent_add(i, "sphere", "bark", "default");
+        MeshComponent_add(i, "sphere", "bark", "hidden")->visibility = LIGHT_UV;
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
         // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
         ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS, .radius = 1.0f });

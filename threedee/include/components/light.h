@@ -10,7 +10,14 @@
 typedef enum {
     LIGHT_SPOT,
     LIGHT_DIRECTIONAL
+} LightShape;
+
+
+typedef enum {
+    LIGHT_NORMAL = 1 << 0,
+    LIGHT_UV = 1 << 1
 } LightType;
+
 
 typedef struct {
     SDL_GPUTexture* depth_texture;
@@ -19,6 +26,7 @@ typedef struct {
 
 
 typedef struct {
+    LightShape shape;
     LightType type;
     float fov;
     float range;
@@ -28,6 +36,7 @@ typedef struct {
 
 
 typedef struct {
+    LightType type;
     float fov;
     Color diffuse_color;
     Color specular_color;

@@ -346,8 +346,13 @@ Vector3 get_entities_center(List* entities) {
 
 void look_at(Entity entity, Vector3 target) {
     Vector3 position = get_position(entity);
-    Matrix4 transform = look_at_matrix(position, target, vec3(0.0f, 1.0f, 0.0f));
+    Vector3 direction = diff3(target, position);
+    Vector3 up = vec3(0.0f, 1.0f, 0.0f);
+    if (fabsf(dot3(direction, up)) > 0.99f) {
+        // If the direction is almost vertical, use a different up vector
+        up = vec3(0.0f, 0.0f, 1.0f);
+    }
+    Matrix4 transform = look_at_matrix(position, target, up);
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
-    trans->position = position_from_transform(transform);
     trans->rotation = rotation_from_transform(transform);
 }

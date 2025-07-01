@@ -16,6 +16,7 @@ cbuffer UBO : register(b0, space3)
 struct LightData
 {
     float3 position : packoffset(c0);
+    uint light_type : packoffset(c0.w);
     float3 diffuse_color : packoffset(c1);
     float3 specular_color : packoffset(c2);
     float4x4 projection_view_matrix : packoffset(c3);
@@ -39,6 +40,7 @@ struct Input
     float diffuse;
     float ambient;
     float shininess;
+    uint visibility;
 };
 
 struct Output
@@ -93,10 +95,18 @@ Output main(Input input)
     float shadow_factor = 1.0;
 	for (int i = 0; i < num_lights; ++i)
     {
+        if ((light_data[i].light_type & input.visibility) == 0) {
+            continue;
+        }
+
         float3 l = normalize(light_data[i].position - world_position);
         float3 r = reflect(-l, n);
 
         float diff = max(dot(n, l), 0.0);
+        if (diff <= 0.0) {
+            continue; // Skip lights that do not contribute
+        }
+
         float spec = pow(max(dot(r, v), 0.0), input.shininess);
 
         diffuse += base_color * diff * light_data[i].diffuse_color;
@@ -142,6 +152,9 @@ Output main(Input input)
     specular *= shadow_factor;
 
     float3 lit_color = ambient + diffuse + specular;
+    if (length(lit_color) < 0.001) {
+        discard;
+    }
 
     Output result;
     result.color = float4(lit_color, 1.0);

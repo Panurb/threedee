@@ -12,6 +12,7 @@
 
 LightComponent* LightComponent_add(Entity entity, LightParameters params) {
     LightComponent* light = malloc(sizeof(LightComponent));
+    light->type = params.type ? params.type : LIGHT_NORMAL;
     light->fov = params.fov ? params.fov : 90.0f;
     light->diffuse_color = params.color;
     light->specular_color = params.color;
@@ -19,7 +20,7 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
     light->intensity = params.intensity ? params.intensity : 1.0f;
     float half_size = light->range * tanf(to_radians(light->fov) * 0.5f);
 
-    switch (params.type) {
+    switch (params.shape) {
         case LIGHT_SPOT:
             light->projection_matrix = perspective_projection_matrix(
                 to_radians(light->fov),
@@ -37,7 +38,7 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
             );
             break;
         default:
-            LOG_ERROR("Unknown light type: %d", params.type);
+            LOG_ERROR("Unknown light type: %d", params.shape);
             free(light);
             return NULL;
     }
