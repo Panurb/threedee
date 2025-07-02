@@ -660,8 +660,11 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		LightComponent* light = get_component(i, COMPONENT_LIGHT);
 		if (!light) continue;
 
-		Matrix4 projection_view = transpose4(light->shadow_map.projection_view_matrix);
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view, sizeof(Matrix4));
+		ShadowUniformData shadow_uniform_data = {
+			.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
+			.light_type = light->type
+		};
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &shadow_uniform_data, sizeof(ShadowUniformData));
 
 		if (!light->shadow_map.depth_texture) {
 			LOG_ERROR("Light %d does not have a shadow map depth texture!", i);
@@ -683,7 +686,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		);
 
 		for (int j = 0; j < resources.meshes_size; j++) {
-			render_instances(command_buffer, render_pass, &resources.meshes[j], PIPELINE_3D_TEXTURED);
+			render_instances(command_buffer, render_pass, &resources.meshes[j], PIPELINE_SHADOW_DEPTH);
 		}
 
 		SDL_EndGPURenderPass(render_pass);

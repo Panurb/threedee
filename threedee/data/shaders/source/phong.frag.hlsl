@@ -99,16 +99,12 @@ Output main(Input input)
         float3 l = normalize(light_data[i].position - world_position);
         float3 r = reflect(-l, n);
 
-        // Check if inside spotlight cone
-        float spot_cos = dot(-l, light_data[i].direction);
-        if (spot_cos < light_data[i].cutoff_cos) {
-            continue;
-        }
-
         float diff = max(dot(n, l), 0.0);
+
+        float spot_cos = dot(-l, light_data[i].direction);
         float spot_intensity = saturate((spot_cos - light_data[i].cutoff_cos) / (1.0 - light_data[i].cutoff_cos));
 
-        if (diff <= 0.0) {
+        if (diff <= 0.0 || spot_intensity <= 0.0) {
             continue;
         }
 

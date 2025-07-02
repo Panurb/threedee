@@ -60,6 +60,12 @@ typedef struct {
 } LightData;
 
 
+typedef struct {
+	Matrix4 projection_view_matrix;
+	LightType light_type;
+} ShadowUniformData;
+
+
 void init_render();
 
 void render();

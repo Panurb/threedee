@@ -1,6 +1,7 @@
-cbuffer TransformBlock : register(b0, space1)
+cbuffer UBO : register(b0, space1)
 {
     float4x4 projection_view_matrix : packoffset(c0);
+    uint light_type : packoffset(c4);
 };
 
 struct InstanceData
@@ -26,6 +27,11 @@ struct Input
 
 float4 main(Input input, uint instance_id : SV_InstanceID) : SV_Position
 {
+    if ((instance_data[instance_id].visibility & light_type) == 0)
+    {
+        return float4(0.0f, 0.0f, -1e6f, 0.0f);
+    }
+
     float4x4 transform = instance_data[instance_id].transform_matrix;
 
     float4 position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
