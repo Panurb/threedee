@@ -110,10 +110,9 @@ typedef union {
 #define COLOR_RED get_color(1.0f, 0.0f, 0.0f, 1.0f)
 #define COLOR_GREEN get_color(0.0f, 1.0f, 0.0f, 1.0f)
 #define COLOR_MAGENTA get_color(1.0f, 0.0f, 1.0f, 1.0f)
-#define COLOR_BLOOD get_color(0.78f, 0.0f, 0.0f, 1.0f)
 #define COLOR_ORANGE get_color(1.0f, 0.6f, 0.0f, 1.0f)
 #define COLOR_BLUE get_color(0.0f, 0.0f, 1.0f, 1.0f)
-#define COLOR_ENERGY get_color(0.5f, 1.0f, 0.0f, 1.0f)
+#define COLOR_SKY get_color(0.5f, 0.5f, 0.5f, 1.0f)
 
 #define STRING_SIZE 1024
 typedef char String[STRING_SIZE];
@@ -164,6 +163,8 @@ int maxi(int a, int b);
 float mod(float x, float y);
 
 Color get_color(float r, float g, float b, float a);
+
+FloatColor get_float_color(float r, float g, float b, float a);
 
 void permute(int* array, int size);
 

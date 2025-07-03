@@ -12,7 +12,7 @@
 
 LightComponent* LightComponent_add(Entity entity, LightParameters params) {
     LightComponent* light = malloc(sizeof(LightComponent));
-    light->type = params.type ? params.type : LIGHT_NORMAL;
+    light->visibility_mask = params.visibility_mask ? params.visibility_mask : LIGHT_NORMAL;
     light->fov = params.fov ? params.fov : 90.0f;
     light->diffuse_color = params.color;
     light->specular_color = params.color;
@@ -38,7 +38,7 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
             );
             break;
         default:
-            LOG_ERROR("Unknown light type: %d", params.shape);
+            LOG_ERROR("Unknown light shape: %d", params.shape);
             free(light);
             return NULL;
     }

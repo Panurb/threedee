@@ -5,7 +5,7 @@ typedef struct MeshComponent {
     int mesh_index;
     int texture_index;
     int material_index;
-    LightType visibility;
+    Visibility visibility;
 } MeshComponent;
 
 

@@ -7,14 +7,10 @@
 #include <stdio.h>
 
 #include "render.h"
-
-#include <camera.h>
-#include <component.h>
-#include <resources.h>
-#include <scene.h>
-#include <settings.h>
-#include <SDL3_image/SDL_image.h>
-
+#include "component.h"
+#include "resources.h"
+#include "scene.h"
+#include "settings.h"
 #include "app.h"
 #include "util.h"
 
@@ -28,7 +24,7 @@ typedef enum {
 } Pipeline;
 
 
-static SDL_GPUGraphicsPipeline** pipelines;
+static SDL_GPUGraphicsPipeline** pipelines = NULL;
 static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
@@ -642,7 +638,7 @@ void add_light(Entity entity) {
 
 	LightData light_data = {
 		.position = get_position(entity),
-		.light_type = light->type,
+		.visibility_mask = light->visibility_mask,
 		.direction = quaternion_forward(get_rotation(entity)),
 		.cutoff_cos = cosf(to_radians(light->fov * 0.5f)),
 		.diffuse_color = { diffuse_color.r / 255.0f, diffuse_color.g / 255.0f, diffuse_color.b / 255.0f },
@@ -662,7 +658,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 
 		ShadowUniformData shadow_uniform_data = {
 			.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
-			.light_type = light->type
+			.visibility_mask = light->visibility_mask
 		};
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &shadow_uniform_data, sizeof(ShadowUniformData));
 
@@ -743,7 +739,12 @@ void render() {
 			.texture = swapchain_texture,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_STORE,
-			.clear_color = { 0.0f, 0.0f, 0.0f, 1.0f }
+			.clear_color = {
+				.r = COLOR_SKY.r / 255.0f,
+				.g = COLOR_SKY.g / 255.0f,
+				.b = COLOR_SKY.b / 255.0f,
+				.a = 1.0f
+			},
 		};
 		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
 			command_buffer,
@@ -760,6 +761,8 @@ void render() {
 			}
 		);
 
+		WeatherComponent* weather = get_component(scene->weather, COMPONENT_WEATHER);
+
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,
 			.far_plane = camera->far_plane,
@@ -767,6 +770,13 @@ void render() {
 			.num_lights = num_lights,
 			.camera_position = get_position(scene->camera),
 			.shadow_map_resolution = SHADOW_MAP_RESOLUTION,
+			.fog_color = {
+				weather->fog_color.r / 255.0f,
+				weather->fog_color.g / 255.0f,
+				weather->fog_color.b / 255.0f
+			},
+			.fog_start = weather->fog_start,
+			.fog_end = weather->fog_end,
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
 		SDL_PushGPUFragmentUniformData(command_buffer, 1, &lights, sizeof(LightData) * num_lights);
@@ -847,7 +857,7 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 }
 
 
-void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, LightType visibility) {
+void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, Visibility visibility) {
 	MeshData* mesh_data = &resources.meshes[mesh_index];
 
 	if (mesh_data->num_instances >= mesh_data->max_instances) {

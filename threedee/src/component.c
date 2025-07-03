@@ -15,19 +15,7 @@
 
 ComponentData* ComponentData_create() {
     ComponentData* components = malloc(sizeof(ComponentData));
-    components->entities = 0;
-    components->added_entities = NULL;
-
-    for (int i = 0; i < MAX_ENTITIES; i++) {
-        components->transform[i] = NULL;
-        components->camera[i] = NULL;
-        components->sound[i] = NULL;
-        components->mesh[i] = NULL;
-        components->light[i] = NULL;
-        components->rigid_body[i] = NULL;
-        components->collider[i] = NULL;
-        components->controller[i] = NULL;
-    }
+    memset(components, 0, sizeof(ComponentData));
     return components;
 }
 
@@ -100,6 +88,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->collider[entity];
         case COMPONENT_CONTROLLER:
             return scene->components->controller[entity];
+        case COMPONENT_WEATHER:
+            return scene->components->weather[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;

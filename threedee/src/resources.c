@@ -465,7 +465,7 @@ void load_resources() {
 	strcpy(resources.material_names[1], "default");
 	resources.materials[2] = (Material) {0.9f, 0.9f, 0.9f, 64.0f};
 	strcpy(resources.material_names[2], "glass");
-	resources.materials[3] = (Material) { 0.0f, 0.0f, 0.0f, 1.0f };
+	resources.materials[3] = (Material) { 2.0f, 0.1f, 0.0f, 128.0f };
 	strcpy(resources.material_names[3], "hidden");
 	resources.materials[4] = (Material) {0.1f, 0.1f, 0.1f, 16.0f};
 	strcpy(resources.material_names[4], "plastic");

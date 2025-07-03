@@ -3,7 +3,7 @@
 #include <SDL3/SDL_gpu.h>
 
 
-#define SHADOW_MAP_RESOLUTION 2048
+#define SHADOW_MAP_RESOLUTION 512
 #define MAX_LIGHTS 32  // Should match array size in phong shader
 
 
@@ -16,7 +16,7 @@ typedef enum {
 typedef enum {
     LIGHT_NORMAL = 1 << 0,
     LIGHT_UV = 1 << 1
-} LightType;
+} Visibility;
 
 
 typedef struct {
@@ -27,7 +27,7 @@ typedef struct {
 
 typedef struct {
     LightShape shape;
-    LightType type;
+    Visibility visibility_mask;
     float fov;
     float range;
     float intensity;
@@ -36,7 +36,7 @@ typedef struct {
 
 
 typedef struct {
-    LightType type;
+    Visibility visibility_mask;
     float fov;
     Color diffuse_color;
     Color specular_color;

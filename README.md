@@ -21,6 +21,8 @@
 * Data serialization for saving/loading game state
 * Particles
 * Sound effects
+* PCSS for soft shadows?
+* Skybox
 
 ### How do I get set up? ###
 

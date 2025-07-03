@@ -29,6 +29,9 @@ typedef struct UniformData {
 	int num_lights;
 	Vector3 camera_position;
 	int shadow_map_resolution;
+	FloatColor fog_color;
+	float fog_start;
+	float fog_end;
 } UniformData;
 
 
@@ -36,7 +39,7 @@ typedef struct {
 	Matrix4 transform;
 	Material material;
 	int texture_index;
-	LightType visiblity;
+	Visibility visiblity;
 	float _pad[2];
 } InstanceData;
 
@@ -49,7 +52,7 @@ typedef struct {
 
 typedef struct {
 	Vector3 position;
-	int light_type;
+	int visibility_mask;
 	Vector3 direction;
 	float cutoff_cos;
 	Vector3 diffuse_color;
@@ -62,7 +65,7 @@ typedef struct {
 
 typedef struct {
 	Matrix4 projection_view_matrix;
-	LightType light_type;
+	Visibility visibility_mask;
 } ShadowUniformData;
 
 

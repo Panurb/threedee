@@ -32,6 +32,7 @@ set(SOURCES
     threedee/src/components/mesh.c
     threedee/src/components/rigidbody.c
     threedee/src/components/transform.c
+    threedee/src/components/weather.c
     threedee/src/heap.c
     threedee/src/interface.c
     threedee/src/linalg.c

@@ -33,7 +33,7 @@ Entity create_player(Vector3 position) {
     Entity j = create_entity();
     TransformComponent_add(j, vec3(0.0f, -0.5f, 0.1f));
     look_at(j, vec3(0.0f, -0.5f, -1.0f));
-    LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_WHITE, .fov = 50.0f, .type = LIGHT_UV });
+    LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_MAGENTA, .fov = 50.0f, .visibility_mask = LIGHT_UV });
     add_child(cam, j);
 
     return i;
@@ -45,7 +45,7 @@ Entity create_lamp(Vector3 position) {
     TransformComponent_add(i, position);
     look_at(i, vec3(position.x, position.y - 1.0f, position.z));
     MeshComponent_add(i, "cube", "bark", "default");
-    LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .type = LIGHT_NORMAL });
+    LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = LIGHT_NORMAL });
 
     return i;
 }
@@ -98,16 +98,21 @@ void create_scene() {
     scene = malloc(sizeof(Scene));
     scene->components = ComponentData_create();
     scene->menu_camera = create_menu_camera();
-    scene->ambient_light = 0.0f;
     scene->player = create_player(vec3(0.0f, 2.0f, 0.0f));
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
 
     Entity i = create_entity();
+    trans = TransformComponent_add(i, vec3(0.0f, -2.1f, 0.0f));
+    trans->scale.x = 100.0f;
+    trans->scale.z = 100.0f;
+    MeshComponent_add(i, "cube", "gravel", "concrete");
+
+    i = create_entity();
     trans = TransformComponent_add(i, vec3(0.0f, -2.0f, 0.0f));
     trans->scale.x = 10.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube", "gravel", "concrete");
+    MeshComponent_add(i, "cube", "tiles", "concrete");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 3);
@@ -158,6 +163,18 @@ void create_scene() {
     // LightComponent_add(i, (LightParameters) { .color = COLOR_RED });
 
     // create_lamp(vec3(0.0f, 2.0f, 0.0f));
+
+    scene->weather = create_entity();
+    WeatherComponent_add(scene->weather, (WeatherParameters) {
+        .fog_color = COLOR_SKY,
+        .fog_start = 10.0f,
+        .fog_end = 50.0f
+    });
+    // LightComponent_add(scene->weather, (LightParameters) {
+    //     .color = COLOR_WHITE,
+    //     .shape = LIGHT_DIRECTIONAL,
+    //     .visibility_mask = LIGHT_NORMAL
+    // });
 
     LOG_INFO("Scene created");
 }
