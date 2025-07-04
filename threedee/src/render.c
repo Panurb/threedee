@@ -539,18 +539,7 @@ MeshData create_mesh_triangle() {
 }
 
 
-void init_render() {
-	app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
-	SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
-
-	pipelines = malloc(sizeof(SDL_GPUGraphicsPipeline*) * PIPELINE_COUNT);
-	pipelines[PIPELINE_2D] = create_render_pipeline_2d();
-	pipelines[PIPELINE_3D] = create_render_pipeline_3d();
-	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
-	pipelines[PIPELINE_SHADOW_DEPTH] = create_render_pipeline_shadow_depth();
-
-	triangle_mesh = create_mesh_triangle();
-
+void create_screen_textures() {
 	SDL_GPUTextureCreateInfo depth_stencil_texture_info = {
 		.width = game_settings.width,
 		.height = game_settings.height,
@@ -561,38 +550,6 @@ void init_render() {
 		.sample_count = get_sample_count()
 	};
 	depth_stencil_texture = SDL_CreateGPUTexture(app.gpu_device, &depth_stencil_texture_info);
-	if (!depth_stencil_texture) {
-		LOG_ERROR("Failed to create depth stencil texture: %s", SDL_GetError());
-	}
-
-	sampler = SDL_CreateGPUSampler(
-		app.gpu_device,
-		&(SDL_GPUSamplerCreateInfo){
-			.min_filter = SDL_GPU_FILTER_LINEAR,
-			.mag_filter = SDL_GPU_FILTER_LINEAR,
-			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-			.enable_anisotropy = true,
-			.max_anisotropy = (float)game_settings.anisotropic_filtering,
-			.min_lod = 0.0f,
-			.max_lod = 1000.0f
-		}
-	);
-
-	shadow_maps = SDL_CreateGPUTexture(
-		app.gpu_device,
-		&(SDL_GPUTextureCreateInfo){
-			.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
-			.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
-			.width = SHADOW_MAP_RESOLUTION,
-			.height = SHADOW_MAP_RESOLUTION,
-			.layer_count_or_depth = MAX_LIGHTS,
-			.num_levels = 1,
-			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
-		}
-	);
 
 	SDL_GPUTextureFormat swapchain_format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window);
 
@@ -624,6 +581,63 @@ void init_render() {
 			.num_levels = 1
 		}
 	);
+}
+
+
+void init_render() {
+	app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
+	SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
+
+	pipelines = malloc(sizeof(SDL_GPUGraphicsPipeline*) * PIPELINE_COUNT);
+	pipelines[PIPELINE_2D] = create_render_pipeline_2d();
+	pipelines[PIPELINE_3D] = create_render_pipeline_3d();
+	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
+	pipelines[PIPELINE_SHADOW_DEPTH] = create_render_pipeline_shadow_depth();
+
+	triangle_mesh = create_mesh_triangle();
+
+	sampler = SDL_CreateGPUSampler(
+		app.gpu_device,
+		&(SDL_GPUSamplerCreateInfo){
+			.min_filter = SDL_GPU_FILTER_LINEAR,
+			.mag_filter = SDL_GPU_FILTER_LINEAR,
+			.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			.enable_anisotropy = true,
+			.max_anisotropy = (float)game_settings.anisotropic_filtering,
+			.min_lod = 0.0f,
+			.max_lod = 1000.0f
+		}
+	);
+
+	shadow_maps = SDL_CreateGPUTexture(
+		app.gpu_device,
+		&(SDL_GPUTextureCreateInfo){
+			.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
+			.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+			.width = SHADOW_MAP_RESOLUTION,
+			.height = SHADOW_MAP_RESOLUTION,
+			.layer_count_or_depth = MAX_LIGHTS,
+			.num_levels = 1,
+			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+		}
+	);
+
+	create_screen_textures();
+}
+
+
+void apply_render_settings() {
+	// Needs to be called if resolution, antialiasing settings change
+	SDL_ReleaseGPUGraphicsPipeline(app.gpu_device, pipelines[PIPELINE_3D_TEXTURED]);
+	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
+
+	SDL_ReleaseGPUTexture(app.gpu_device, depth_stencil_texture);
+	SDL_ReleaseGPUTexture(app.gpu_device, screen_texture);
+	SDL_ReleaseGPUTexture(app.gpu_device, resolve_texture);
+	create_screen_textures();
 }
 
 
