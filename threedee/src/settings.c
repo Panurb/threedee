@@ -12,7 +12,8 @@
 Settings game_settings = {
     .width = 1280,
     .height = 720,
-    .antialiasing = 8,
+    .antialiasing = 4,
+    .anisotropic_filtering = 16,
     .fullscreen = false,
     .vsync = false,
     .max_fps = 0,

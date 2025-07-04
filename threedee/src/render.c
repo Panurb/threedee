@@ -29,11 +29,24 @@ static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
 static SDL_GPUTexture* shadow_maps = NULL;
+static SDL_GPUTexture* screen_texture = NULL;
+static SDL_GPUTexture* resolve_texture = NULL;
 
 static LightData lights[MAX_LIGHTS];
 static int num_lights = 0;
 
 static MeshData triangle_mesh;
+
+
+SDL_GPUSampleCount get_sample_count() {
+	switch (game_settings.antialiasing) {
+		case 0: return SDL_GPU_SAMPLECOUNT_1;
+		case 2: return SDL_GPU_SAMPLECOUNT_2;
+		case 4: return SDL_GPU_SAMPLECOUNT_4;
+		case 8: return SDL_GPU_SAMPLECOUNT_8;
+		default: return SDL_GPU_SAMPLECOUNT_1;
+	}
+}
 
 
 SDL_GPUShader* load_shader(
@@ -320,6 +333,9 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
 			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
 		},
+		.multisample_state = (SDL_GPUMultisampleState) {
+			.sample_count = get_sample_count()
+		},
 		.depth_stencil_state = (SDL_GPUDepthStencilState){
 			.enable_depth_test = true,
 			.enable_depth_write = true,
@@ -541,7 +557,8 @@ void init_render() {
 		.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
 		.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
 		.layer_count_or_depth = 1,
-		.num_levels = 1
+		.num_levels = 1,
+		.sample_count = get_sample_count()
 	};
 	depth_stencil_texture = SDL_CreateGPUTexture(app.gpu_device, &depth_stencil_texture_info);
 	if (!depth_stencil_texture) {
@@ -558,7 +575,7 @@ void init_render() {
 			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
 			.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 			.enable_anisotropy = true,
-			.max_anisotropy = 16,
+			.max_anisotropy = (float)game_settings.anisotropic_filtering,
 			.min_lod = 0.0f,
 			.max_lod = 1000.0f
 		}
@@ -574,6 +591,37 @@ void init_render() {
 			.layer_count_or_depth = MAX_LIGHTS,
 			.num_levels = 1,
 			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+		}
+	);
+
+	SDL_GPUTextureFormat swapchain_format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window);
+
+	SDL_GPUTextureCreateInfo screen_texture_info = {
+		.width = game_settings.width,
+		.height = game_settings.height,
+		.format = swapchain_format,
+		.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+		.layer_count_or_depth = 1,
+		.num_levels = 1,
+		.sample_count = get_sample_count()
+	};
+	if (game_settings.antialiasing == 0) {
+		screen_texture_info.usage |= SDL_GPU_TEXTUREUSAGE_SAMPLER;
+	}
+	screen_texture = SDL_CreateGPUTexture(
+		app.gpu_device,
+		&screen_texture_info
+	);
+
+	resolve_texture = SDL_CreateGPUTexture(
+		app.gpu_device,
+		&(SDL_GPUTextureCreateInfo){
+			.width = game_settings.width,
+			.height = game_settings.height,
+			.format = swapchain_format,
+			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+			.layer_count_or_depth = 1,
+			.num_levels = 1
 		}
 	);
 }
@@ -736,7 +784,7 @@ void render() {
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view_matrix, sizeof(Matrix4));
 
 		SDL_GPUColorTargetInfo color_target_info = {
-			.texture = swapchain_texture,
+			.texture = screen_texture,
 			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_STORE,
 			.clear_color = {
@@ -746,6 +794,12 @@ void render() {
 				.a = 1.0f
 			},
 		};
+
+		if (game_settings.antialiasing != 0) {
+			color_target_info.store_op = SDL_GPU_STOREOP_RESOLVE;
+			color_target_info.resolve_texture = resolve_texture;
+		}
+
 		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
 			command_buffer,
 			&color_target_info,
@@ -787,6 +841,28 @@ void render() {
 		render_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
 
 		SDL_EndGPURenderPass(render_pass);
+
+		SDL_GPUTexture* blit_source_texture = color_target_info.texture;
+		if (game_settings.antialiasing != 0) {
+			blit_source_texture = resolve_texture;
+		}
+		SDL_BlitGPUTexture(
+			command_buffer,
+			&(SDL_GPUBlitInfo) {
+				.source = {
+					.texture = blit_source_texture,
+					.w = game_settings.width,
+					.h = game_settings.height,
+				},
+				.destination = {
+					.texture = swapchain_texture,
+					.w = game_settings.width,
+					.h = game_settings.height,
+				},
+				.load_op = SDL_GPU_LOADOP_DONT_CARE,
+				.filter = SDL_GPU_FILTER_LINEAR
+			}
+		);
 	}
 
 	// Reset instance counts for next frame

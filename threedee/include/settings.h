@@ -22,6 +22,7 @@ typedef struct {
     int width;
     int height;
     int antialiasing;
+    int anisotropic_filtering;
     bool fullscreen;
     bool vsync;
     int max_fps;
