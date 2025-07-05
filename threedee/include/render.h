@@ -22,6 +22,12 @@ typedef struct PositionTextureVertex {
 } PositionTextureVertex;
 
 
+typedef struct {
+	Vector2 position;
+	Vector2 uv;
+} PositionTextureVertex2D;
+
+
 typedef struct UniformData {
 	float near_plane;
 	float far_plane;

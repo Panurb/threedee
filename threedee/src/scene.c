@@ -134,14 +134,14 @@ void create_scene() {
         ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_PROPS, .width = 1.0f, .height = 1.0f, .depth = 1.0f });
     }
 
-    for (int j = 0; j < 5; j++) {
+    for (int j = 0; j < 1; j++) {
         i = create_entity();
         TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 1.0f, 0.0f));
-        transform->scale = vec3(0.5f, 0.5f, 0.5f);
-        MeshComponent_add(i, "sphere", "bark", "hidden")->visibility = LIGHT_UV;
+        transform->scale = vec3(0.05f, 0.05f, 0.05f);
+        MeshComponent_add(i, "teapot", "tiles", "hidden")->visibility = LIGHT_UV;
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
         // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
-        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS, .radius = 1.0f });
+        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS, .radius = 10.0f });
     }
 
     for (int j = 0; j < 1; j++) {

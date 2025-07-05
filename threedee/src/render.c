@@ -20,6 +20,7 @@ typedef enum {
 	PIPELINE_3D,
 	PIPELINE_3D_TEXTURED,
 	PIPELINE_SHADOW_DEPTH,
+	PIPELINE_POST_PROCESSING,
 	PIPELINE_COUNT
 } Pipeline;
 
@@ -31,11 +32,19 @@ static SDL_GPUSampler* sampler = NULL;
 static SDL_GPUTexture* shadow_maps = NULL;
 static SDL_GPUTexture* screen_texture = NULL;
 static SDL_GPUTexture* resolve_texture = NULL;
+static SDL_GPUSampler* screen_sampler = NULL;
 
 static LightData lights[MAX_LIGHTS];
 static int num_lights = 0;
 
 static MeshData triangle_mesh;
+
+static PositionTextureVertex2D fullscreen_vertices[4] = {
+	{ { -1.0f, -1.0f }, { 0.0f, 1.0f } },
+	{ { 1.0f, -1.0f }, { 1.0f, 1.0f } },
+	{ { -1.0f, 1.0f }, { 0.0f, 0.0f } },
+	{ { 1.0f, 1.0f }, { 1.0f, 0.0f } }
+};
 
 
 SDL_GPUSampleCount get_sample_count() {
@@ -243,6 +252,9 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
 			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
 		},
+		.multisample_state = (SDL_GPUMultisampleState) {
+			.sample_count = get_sample_count()
+		},
 		.depth_stencil_state = (SDL_GPUDepthStencilState){
 			.enable_depth_test = true,
 			.enable_depth_write = true,
@@ -438,6 +450,38 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_shadow_depth() {
 }
 
 
+SDL_GPUGraphicsPipeline* create_render_pipeline_post_processing() {
+	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
+	if (!vertex_shader) {
+		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "post_processing.frag", 1, 0, 0, 0);
+	if (!fragment_shader) {
+		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window)
+			}},
+			.has_depth_stencil_target = false
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+		.vertex_shader = vertex_shader,
+		.fragment_shader = fragment_shader,
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	return pipeline;
+}
+
+
 MeshData create_mesh_triangle() {
 	MeshData mesh_data = {
 		.name = "triangle",
@@ -552,6 +596,7 @@ void create_screen_textures() {
 	depth_stencil_texture = SDL_CreateGPUTexture(app.gpu_device, &depth_stencil_texture_info);
 
 	SDL_GPUTextureFormat swapchain_format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window);
+	LOG_INFO("Swapchain format: %d", swapchain_format);
 
 	SDL_GPUTextureCreateInfo screen_texture_info = {
 		.width = game_settings.width,
@@ -593,6 +638,7 @@ void init_render() {
 	pipelines[PIPELINE_3D] = create_render_pipeline_3d();
 	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
 	pipelines[PIPELINE_SHADOW_DEPTH] = create_render_pipeline_shadow_depth();
+	pipelines[PIPELINE_POST_PROCESSING] = create_render_pipeline_post_processing();
 
 	triangle_mesh = create_mesh_triangle();
 
@@ -609,6 +655,16 @@ void init_render() {
 			.max_anisotropy = (float)game_settings.anisotropic_filtering,
 			.min_lod = 0.0f,
 			.max_lod = 1000.0f
+		}
+	);
+
+	screen_sampler = SDL_CreateGPUSampler(
+		app.gpu_device,
+		&(SDL_GPUSamplerCreateInfo){
+			.min_filter = SDL_GPU_FILTER_LINEAR,
+			.mag_filter = SDL_GPU_FILTER_LINEAR,
+			.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+			.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 		}
 	);
 
@@ -631,7 +687,9 @@ void init_render() {
 
 void apply_render_settings() {
 	// Needs to be called if resolution, antialiasing settings change
+	SDL_ReleaseGPUGraphicsPipeline(app.gpu_device, pipelines[PIPELINE_3D]);
 	SDL_ReleaseGPUGraphicsPipeline(app.gpu_device, pipelines[PIPELINE_3D_TEXTURED]);
+	pipelines[PIPELINE_3D] = create_render_pipeline_3d();
 	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
 
 	SDL_ReleaseGPUTexture(app.gpu_device, depth_stencil_texture);
@@ -856,27 +914,31 @@ void render() {
 
 		SDL_EndGPURenderPass(render_pass);
 
-		SDL_GPUTexture* blit_source_texture = color_target_info.texture;
-		if (game_settings.antialiasing != 0) {
-			blit_source_texture = resolve_texture;
-		}
-		SDL_BlitGPUTexture(
+		color_target_info = (SDL_GPUColorTargetInfo) {
+			.texture = swapchain_texture,
+			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.store_op = SDL_GPU_STOREOP_STORE
+		};
+
+		render_pass = SDL_BeginGPURenderPass(
 			command_buffer,
-			&(SDL_GPUBlitInfo) {
-				.source = {
-					.texture = blit_source_texture,
-					.w = game_settings.width,
-					.h = game_settings.height,
-				},
-				.destination = {
-					.texture = swapchain_texture,
-					.w = game_settings.width,
-					.h = game_settings.height,
-				},
-				.load_op = SDL_GPU_LOADOP_DONT_CARE,
-				.filter = SDL_GPU_FILTER_LINEAR
-			}
+			&color_target_info,
+			1,
+			NULL
 		);
+		SDL_BindGPUGraphicsPipeline(render_pass, pipelines[PIPELINE_POST_PROCESSING]);
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			0,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = resolve_texture,
+				.sampler = screen_sampler,
+			},
+			1
+		);
+		SDL_DrawGPUPrimitives(render_pass, 4, 1, 0, 0);
+
+		SDL_EndGPURenderPass(render_pass);
 	}
 
 	// Reset instance counts for next frame
