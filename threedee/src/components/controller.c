@@ -1,9 +1,7 @@
 #include <SDL3/SDL_gamepad.h>
 
 #include "components/controller.h"
-
-#include <scene.h>
-
+#include "scene.h"
 #include "util.h"
 
 
@@ -34,8 +32,6 @@ ControllerComponent* ControllerComponent_add(Entity entity, int joystick) {
         input->controller.buttons_pressed[i] = false;
         input->controller.buttons_released[i] = false;
     }
-    input->yaw = 0.0f;
-    input->pitch = 0.0f;
 
     scene->components->controller[entity] = input;
     return input;

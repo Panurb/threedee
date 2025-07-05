@@ -30,6 +30,7 @@ set(SOURCES
     threedee/src/components/controller.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
+    threedee/src/components/player.c
     threedee/src/components/rigidbody.c
     threedee/src/components/transform.c
     threedee/src/components/weather.c

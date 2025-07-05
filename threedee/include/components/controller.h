@@ -25,8 +25,6 @@ typedef struct {
 typedef struct {
     Controller controller;
     void (*on_button_down)(ControllerButton button);
-    float yaw;
-    float pitch;
 } ControllerComponent;
 
 

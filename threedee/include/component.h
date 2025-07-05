@@ -6,11 +6,12 @@
 #include "list.h"
 #include "linalg.h"
 #include "components/camera.h"
+#include "components/collider.h"
 #include "components/controller.h"
 #include "components/light.h"
 #include "components/mesh.h"
+#include "components/player.h"
 #include "components/rigidbody.h"
-#include "components/collider.h"
 #include "components/transform.h"
 #include "components/weather.h"
 
@@ -44,6 +45,7 @@ typedef struct ComponentData {
     ColliderComponent* collider[MAX_ENTITIES];
     ControllerComponent* controller[MAX_ENTITIES];
     WeatherComponent* weather[MAX_ENTITIES];
+    PlayerComponent* player[MAX_ENTITIES];
 } ComponentData;
 
 typedef enum ComponentType {
@@ -56,6 +58,7 @@ typedef enum ComponentType {
     COMPONENT_COLLIDER,
     COMPONENT_CONTROLLER,
     COMPONENT_WEATHER,
+    COMPONENT_PLAYER,
 } ComponentType;
 
 ComponentData* ComponentData_create();

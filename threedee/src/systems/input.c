@@ -314,11 +314,11 @@ void update_controller(Entity entity) {
 
 
 void input_players() {
-    static Entity grabbed_entity = NULL_ENTITY;
-
     for (int i = 0; i < scene->components->entities; i++) {
+        PlayerComponent* player = get_component(i, COMPONENT_PLAYER);
+        if (!player) continue;
+
         ControllerComponent* controller = get_component(i, COMPONENT_CONTROLLER);
-        if (!controller) continue;
 
         TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
         RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
@@ -335,12 +335,12 @@ void input_players() {
         rb->velocity.x = velocity.x;
         rb->velocity.z = velocity.z;
 
-        controller->yaw += controller->controller.right_stick.x;
-        controller->pitch += controller->controller.right_stick.y;
-        controller->pitch = clamp(controller->pitch, -89.0f, 89.0f);
+        player->yaw += controller->controller.right_stick.x;
+        player->pitch += controller->controller.right_stick.y;
+        player->pitch = clamp(player->pitch, -89.0f, 89.0f);
 
-        Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(controller->yaw));
-        Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(controller->pitch));
+        Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->yaw));
+        Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(player->pitch));
 
         trans->rotation = q_yaw;
 
@@ -358,25 +358,25 @@ void input_players() {
         Matrix4 camera_transform = get_transform(scene->camera);
         Matrix4 inv_camera_transform = transform_inverse(camera_transform);
         if (controller->controller.buttons_pressed[BUTTON_RT]) {
-            if (grabbed_entity != NULL_ENTITY) {
+            if (player->grabbed_entity != NULL_ENTITY) {
                 Vector3 dir = look_direction(scene->camera);
-                apply_impulse(grabbed_entity, get_position(grabbed_entity), mult3(10.0f, dir));
+                apply_impulse(player->grabbed_entity, get_position(player->grabbed_entity), mult3(10.0f, dir));
                 // remove_parent(grabbed_entity);
                 // set_transform(grabbed_entity, matrix4_mult(camera_transform, get_transform(grabbed_entity)));
-                RigidBodyComponent* grabbed_rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
+                RigidBodyComponent* grabbed_rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
                 if (grabbed_rb) {
                     grabbed_rb->gravity_scale = 1.0f;
                 }
-                grabbed_entity = NULL_ENTITY;
+                player->grabbed_entity = NULL_ENTITY;
             } else {
                 Vector3 dir = look_direction(scene->camera);
                 Ray ray = { get_position(scene->camera), dir };
                 Hit hit = raycast(ray, GROUP_PROPS);
                 if (hit.entity != NULL_ENTITY && hit.distance < 3.0f) {
-                    grabbed_entity = hit.entity;
+                    player->grabbed_entity = hit.entity;
                     // set_transform(grabbed_entity, matrix4_mult(inv_camera_transform, get_transform(grabbed_entity)));
                     // add_child(scene->camera, grabbed_entity);
-                    RigidBodyComponent* grabbed_rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
+                    RigidBodyComponent* grabbed_rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
                     if (grabbed_rb) {
                         grabbed_rb->gravity_scale = 0.0f;
                         grabbed_rb->velocity = zeros3();
@@ -386,15 +386,15 @@ void input_players() {
             }
         }
 
-        if (grabbed_entity != NULL_ENTITY) {
+        if (player->grabbed_entity != NULL_ENTITY) {
             Vector3 target_position = sum3(get_position(camera), mult3(2.0f, look_direction(camera)));
             Quaternion target_rotation = get_rotation(camera);
 
             // Update grabbed entity position to camera position
-            TransformComponent* trans = get_component(grabbed_entity, COMPONENT_TRANSFORM);
-            RigidBodyComponent* rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
+            TransformComponent* trans = get_component(player->grabbed_entity, COMPONENT_TRANSFORM);
+            RigidBodyComponent* rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
             if (rb) {
-                Vector3 delta = diff3(target_position, get_position(grabbed_entity));
+                Vector3 delta = diff3(target_position, get_position(player->grabbed_entity));
                 rb->velocity = mult3(10.0f, delta);
             }
             // trans->rotation = target_rotation;

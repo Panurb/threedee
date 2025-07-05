@@ -27,6 +27,7 @@ Entity create_player(Vector3 position) {
         }
     );
     ControllerComponent_add(i, -1);
+    PlayerComponent_add(i);
     Entity cam = create_camera();
     add_child(i, cam);
 
