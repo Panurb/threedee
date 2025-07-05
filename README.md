@@ -23,6 +23,7 @@
 * Sound effects
 * PCSS for soft shadows?
 * Skybox
+* Proper HDR lighting
 
 ### How do I get set up? ###
 

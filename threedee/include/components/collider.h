@@ -15,6 +15,7 @@ typedef enum {
 
 
 typedef enum {
+    GROUP_NONE = 0,
     GROUP_WALLS = 1 << 0,
     GROUP_PLAYERS = 1 << 1,
     GROUP_PROPS = 1 << 2,

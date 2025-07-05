@@ -125,6 +125,11 @@ void create_scene() {
     // LightComponent* light = get_component(i, COMPONENT_LIGHT);
     // light->type = LIGHT_UV;
 
+    i = create_entity();
+    TransformComponent_add(i, vec3(0.0f, 0.0f, 0.0f));
+    MeshComponent_add(i, "paper", "tiles", "default");
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS });
+
     for (int j = 0; j < 5; j++) {
         i = create_entity();
         TransformComponent_add(i, vec3((float) j, 1.5f, -2.0f));

@@ -11,6 +11,8 @@ struct Input {
 float4 main(Input input) : SV_Target {
     float3 color = tex.Sample(sampler_tex, input.tex_coord).rgb;
 
+    color *= 0.5;
+
     // ACES Filmic Tone Mapping
     color = max(color, 0.0);
     color = (color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14);

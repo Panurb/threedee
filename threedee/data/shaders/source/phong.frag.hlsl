@@ -84,6 +84,7 @@ Output main(Input input)
     float2 texel_size = 1.0 / float2(shadow_map_resolution, shadow_map_resolution);
 
     float3 base_color = tex.Sample(sampler_tex, float3(tex_coord, input.tex_index)).rgb;
+    base_color = pow(base_color, float3(2.2)); // Convert to linear space
 
     float3 normal_map = tex.Sample(sampler_tex, float3(tex_coord, input.normal_index)).rgb;
     normal_map = normal_map * 2.0 - 1.0; // Convert to range [-1, 1]

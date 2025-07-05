@@ -364,7 +364,9 @@ void input_players() {
                 // remove_parent(grabbed_entity);
                 // set_transform(grabbed_entity, matrix4_mult(camera_transform, get_transform(grabbed_entity)));
                 RigidBodyComponent* grabbed_rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
-                grabbed_rb->gravity_scale = 1.0f;
+                if (grabbed_rb) {
+                    grabbed_rb->gravity_scale = 1.0f;
+                }
                 grabbed_entity = NULL_ENTITY;
             } else {
                 Vector3 dir = look_direction(scene->camera);
@@ -375,9 +377,11 @@ void input_players() {
                     // set_transform(grabbed_entity, matrix4_mult(inv_camera_transform, get_transform(grabbed_entity)));
                     // add_child(scene->camera, grabbed_entity);
                     RigidBodyComponent* grabbed_rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
-                    grabbed_rb->gravity_scale = 0.0f;
-                    grabbed_rb->velocity = zeros3();
-                    grabbed_rb->angular_velocity = zeros3();
+                    if (grabbed_rb) {
+                        grabbed_rb->gravity_scale = 0.0f;
+                        grabbed_rb->velocity = zeros3();
+                        grabbed_rb->angular_velocity = zeros3();
+                    }
                 }
             }
         }
@@ -389,8 +393,10 @@ void input_players() {
             // Update grabbed entity position to camera position
             TransformComponent* trans = get_component(grabbed_entity, COMPONENT_TRANSFORM);
             RigidBodyComponent* rb = get_component(grabbed_entity, COMPONENT_RIGIDBODY);
-            Vector3 delta = diff3(target_position, get_position(grabbed_entity));
-            rb->velocity = mult3(10.0f, delta);
+            if (rb) {
+                Vector3 delta = diff3(target_position, get_position(grabbed_entity));
+                rb->velocity = mult3(10.0f, delta);
+            }
             // trans->rotation = target_rotation;
         }
     }

@@ -601,7 +601,7 @@ void create_screen_textures() {
 	SDL_GPUTextureCreateInfo screen_texture_info = {
 		.width = game_settings.width,
 		.height = game_settings.height,
-		.format = swapchain_format,
+		.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
 		.usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
 		.layer_count_or_depth = 1,
 		.num_levels = 1,
@@ -620,7 +620,7 @@ void create_screen_textures() {
 		&(SDL_GPUTextureCreateInfo){
 			.width = game_settings.width,
 			.height = game_settings.height,
-			.format = swapchain_format,
+			.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
 			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
 			.layer_count_or_depth = 1,
 			.num_levels = 1
