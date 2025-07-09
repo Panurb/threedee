@@ -148,14 +148,10 @@ void create_scene() {
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
         // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
         ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS, .radius = 10.0f });
-    }
-
-    for (int j = 0; j < 1; j++) {
-        i = create_entity();
-        TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 1.0f, 2.0f));
-        MeshComponent_add(i, "cube", "bark", "default");
-        RigidBodyComponent_add(i, 1.0f);
-        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CAPSULE, .group = GROUP_PROPS, .radius = 0.5f, .height = 1.0f });
+        SoundComponent_add(i, (SoundParameters) {
+            .hit_sound = "wood_hit",
+            .loop_sound = "wood_hit"
+        });
     }
 
     // i = create_entity();

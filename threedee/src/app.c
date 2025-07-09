@@ -13,7 +13,7 @@
 #include <systems/draw.h>
 
 #include "resources.h"
-#include "sound.h"
+#include "../include/systems/sound.h"
 #include "systems/collision.h"
 
 #include "settings.h"
@@ -205,7 +205,7 @@ void play_audio() {
     //     music_fade = fminf(1.0f, music_fade + 0.01f);
     // }
     //
-    // play_sounds(game_data->camera);
+    play_sounds(scene->camera);
 
     Mix_VolumeMusic(0.5f * game_settings.music * music_fade);
 }

@@ -20,34 +20,6 @@ ComponentData* ComponentData_create() {
 }
 
 
-SoundComponent* SoundComponent_add(Entity entity, Filename hit_sound) {
-    SoundComponent* sound = malloc(sizeof(SoundComponent));
-    sound->size = 4;
-    for (int i = 0; i < sound->size; i++) {
-        sound->events[i] = NULL;
-    }
-    strcpy(sound->hit_sound, hit_sound);
-    strcpy(sound->loop_sound, "");
-    scene->components->sound[entity] = sound;
-    return sound;
-}
-
-
-SoundComponent* SoundComponent_get(Entity entity) {
-    if (entity == -1) return NULL;
-    return scene->components->sound[entity];
-}
-
-
-void SoundComponent_remove(Entity entity) {
-    SoundComponent* sound = SoundComponent_get(entity);
-    if (sound) {
-        free(sound);
-        scene->components->sound[entity] = NULL;
-    }
-}
-
-
 Entity create_entity() {
     for (Entity i = 0; i < scene->components->entities; i++) {
         if (!scene->components->transform[i]) {
@@ -77,7 +49,7 @@ void* get_component(Entity entity, ComponentType component_type) {
         case COMPONENT_CAMERA:
             return scene->components->camera[entity];
         case COMPONENT_SOUND:
-            return SoundComponent_get(entity);
+            return scene->components->sound[entity];
         case COMPONENT_MESH:
             return scene->components->mesh[entity];
         case COMPONENT_LIGHT:

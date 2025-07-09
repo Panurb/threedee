@@ -15,15 +15,16 @@
 * Importing of 3D models in OBJ format
 * Normal maps
 * Dynamic shadows using shadow mapping
+* Sound effects
 
 ### TODO ###
 * 2D rendering
 * Data serialization for saving/loading game state
 * Particles
-* Sound effects
 * PCSS for soft shadows?
 * Skybox
 * Proper HDR lighting
+* 3D audio using OpenAL
 
 ### How do I get set up? ###
 

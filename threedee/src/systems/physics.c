@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <render.h>
+#include <systems/sound.h>
 
 #include "components/rigidbody.h"
 
@@ -213,6 +214,17 @@ bool resolve_collisions(Entity entity, float bias) {
                     rb_other->on_ground = true;
                 }
                 has_moved = true;
+            }
+
+            float volume = clamp(0.5f * norm3(v_rel), 0.0f, 1.0f);
+            if (volume > 0.5f) {
+                SoundComponent* sound = get_component(entity, COMPONENT_SOUND);
+                SoundComponent* sound_other = get_component(collision.entity, COMPONENT_SOUND);
+                if (sound) {
+                    add_sound(entity, sound->hit_sound, volume, 1.0f);
+                } else if (sound_other) {
+                    add_sound(collision.entity, sound_other->hit_sound, volume, 1.0f);
+                }
             }
         }
     }

@@ -12,26 +12,12 @@
 #include "components/mesh.h"
 #include "components/player.h"
 #include "components/rigidbody.h"
+#include "components/sound.h"
 #include "components/transform.h"
 #include "components/weather.h"
 
 #define MAX_ENTITIES 2000
 
-
-typedef struct {
-    bool loop;
-    int channel;
-    float volume;
-    float pitch;
-    Filename filename;
-} SoundEvent;
-
-typedef struct {
-    int size;
-    SoundEvent* events[4];
-    Filename hit_sound;
-    Filename loop_sound;
-} SoundComponent;
 
 typedef struct ComponentData {
     int entities;
@@ -62,10 +48,6 @@ typedef enum ComponentType {
 } ComponentType;
 
 ComponentData* ComponentData_create();
-
-SoundComponent* SoundComponent_add(Entity entity, Filename hit_sound);
-SoundComponent* SoundComponent_get(Entity entity);
-void SoundComponent_remove(Entity entity);
 
 void* add_component(Entity entity, ComponentType component_type);
 void* get_component(Entity entity, ComponentType component_type);

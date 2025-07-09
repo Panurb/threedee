@@ -7,7 +7,7 @@
 
 #include <SDL3_mixer/SDL_mixer.h>
 
-#include "sound.h"
+#include "../../include/systems/sound.h"
 #include "util.h"
 #include "component.h"
 #include "settings.h"
@@ -18,7 +18,7 @@
 void load_sounds() {
     LOG_INFO("Loading sounds");
 
-    resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names); 
+    resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
 
     for (int i = 0; i < resources.sounds_size; i++) {
         String path;
@@ -35,7 +35,7 @@ int sound_index(Filename filename) {
 
 
 void add_sound(int entity, Filename filename, float volume, float pitch) {
-    SoundComponent* scomp = SoundComponent_get(entity);
+    SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
     for (int i = 0; i < scomp->size; i++) {
         if (!scomp->events[i]) {
             SoundEvent* event = malloc(sizeof(SoundEvent));
@@ -52,7 +52,7 @@ void add_sound(int entity, Filename filename, float volume, float pitch) {
 
 
 void loop_sound(int entity, Filename filename, float volume, float pitch) {
-    SoundComponent* scomp = SoundComponent_get(entity);
+    SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
     for (int i = 0; i < scomp->size; i++) {
         if (!scomp->events[i]) {
             SoundEvent* event = malloc(sizeof(SoundEvent));
@@ -69,7 +69,7 @@ void loop_sound(int entity, Filename filename, float volume, float pitch) {
 
 
 void stop_loop(int entity) {
-    SoundComponent* scomp = SoundComponent_get(entity);
+    SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
     for (int i = 0; i < scomp->size; i++) {
         SoundEvent* event = scomp->events[i];
         if (event) {
@@ -81,12 +81,33 @@ void stop_loop(int entity) {
 }
 
 
+void set_panning_from_angle(int channel, float angle) {
+    // There seems to be a bug in SDL_mixer so have to do this by hand
+
+    angle = fmodf(angle + 360.0f, 360.0f);
+    float pan = sinf(to_radians(angle));
+
+    Uint8 left = 255 * (1.0f - pan) / 2.0f;
+    Uint8 right = 255 * (1.0f + pan) / 2.0f;
+
+    Mix_SetPanning(channel, left, right);
+}
+
+
 void play_sounds(int camera) {
     for (int i = 0; i < scene->components->entities; i++) {
-        SoundComponent* scomp = SoundComponent_get(i);
+        SoundComponent* scomp = get_component(i, COMPONENT_SOUND);
         if (!scomp) continue;
 
-        float dist = norm2(diff2(get_xy(i), get_xy(camera)));
+        Vector3 position = get_position(i);
+        float dist = norm3(diff3(position, get_position(camera)));
+        float max_dist = 10.0f;
+
+        Matrix4 camera_transform = get_transform(camera);
+
+        Vector4 position_rel = matrix4_map(transform_inverse(camera_transform), vec4(position.x, position.y, position.z, 1.0f));
+
+        float angle = to_degrees(atan2f(position_rel.x, position_rel.z));
 
         if (scomp->loop_sound[0] != '\0') {
             if (!scomp->events[0]) {
@@ -100,8 +121,8 @@ void play_sounds(int camera) {
 
             int chan = event->channel;
 
-            float vol = event->volume;
-
+            set_panning_from_angle(chan, angle);
+            Mix_SetDistance(chan, (int) (fminf(dist / max_dist, 1.0f) * 255.0f));
             if (chan != -1) {
                 if (!event->loop) {
                     event->volume *= 0.95;
@@ -123,7 +144,7 @@ void play_sounds(int camera) {
                 }
             }
 
-            Mix_Volume(chan, vol * MIX_MAX_VOLUME * game_settings.volume / 100.0f);
+            Mix_Volume(chan, event->volume * MIX_MAX_VOLUME * game_settings.volume / 100.0f);
             // TODO: pitch
         }
     }
@@ -131,7 +152,7 @@ void play_sounds(int camera) {
 
 
 void clear_sounds(int entity) {
-    SoundComponent* scomp = SoundComponent_get(entity);
+    SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
     for (int i = 0; i < scomp->size; i++) {
         SoundEvent* event = scomp->events[i];
         if (event) {

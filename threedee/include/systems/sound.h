@@ -1,6 +1,6 @@
 #pragma once
 
-#include "component.h"
+#include "../component.h"
 
 // https://freesound.org/people/RSilveira_88/sounds/216316/
 // https://freesound.org/people/willybilly1984/sounds/345335/
