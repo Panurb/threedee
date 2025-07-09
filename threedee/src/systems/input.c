@@ -325,29 +325,32 @@ void input_players() {
 
         update_controller(i);
 
-        Vector2 v = controller->controller.left_stick;
-        Vector3 velocity = vec3(v.x, 0.0f, -v.y);
-        velocity = mult3(3.0f, normalized3(velocity));
-
-        Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
-        velocity = matrix3_map(rot, velocity);
-
-        rb->velocity.x = velocity.x;
-        rb->velocity.z = velocity.z;
-
-        player->yaw += controller->controller.right_stick.x;
-        player->pitch += controller->controller.right_stick.y;
-        player->pitch = clamp(player->pitch, -89.0f, 89.0f);
-
-        Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->yaw));
-        Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(player->pitch));
-
-        trans->rotation = q_yaw;
-
-        // Camera only moves in pitch direction
         Entity camera = trans->children->head->value;
-        TransformComponent* camera_trans = get_component(camera, COMPONENT_TRANSFORM);
-        camera_trans->rotation = q_pitch;
+
+        if (!player->examining) {
+            player->yaw += controller->controller.right_stick.x;
+            player->pitch += controller->controller.right_stick.y;
+            player->pitch = clamp(player->pitch, -89.0f, 89.0f);
+
+            Vector2 v = controller->controller.left_stick;
+            Vector3 velocity = vec3(v.x, 0.0f, -v.y);
+            velocity = mult3(3.0f, normalized3(velocity));
+
+            Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
+            velocity = matrix3_map(rot, velocity);
+
+            rb->velocity.x = velocity.x;
+            rb->velocity.z = velocity.z;
+
+            Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->yaw));
+            Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(player->pitch));
+
+            trans->rotation = q_yaw;
+
+            // Camera only moves in pitch direction
+            TransformComponent* camera_trans = get_component(camera, COMPONENT_TRANSFORM);
+            camera_trans->rotation = q_pitch;
+        }
 
         if (controller->controller.buttons_pressed[BUTTON_A]) {
             if (rb->on_ground) {
@@ -366,6 +369,11 @@ void input_players() {
                 RigidBodyComponent* grabbed_rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
                 if (grabbed_rb) {
                     grabbed_rb->gravity_scale = 1.0f;
+                } else {
+                    player->examining = false;
+                    trans = get_component(player->grabbed_entity, COMPONENT_TRANSFORM);
+                    trans->position = player->grabbed_position;
+                    trans->rotation = player->grabbed_rotation;
                 }
                 player->grabbed_entity = NULL_ENTITY;
             } else {
@@ -381,6 +389,11 @@ void input_players() {
                         grabbed_rb->gravity_scale = 0.0f;
                         grabbed_rb->velocity = zeros3();
                         grabbed_rb->angular_velocity = zeros3();
+                    } else {
+                        player->examining = true;
+                        player->examine_yaw = player->yaw;
+                        player->grabbed_position = get_position(player->grabbed_entity);
+                        player->grabbed_rotation = get_rotation(player->grabbed_entity);
                     }
                 }
             }
@@ -391,13 +404,21 @@ void input_players() {
             Quaternion target_rotation = get_rotation(camera);
 
             // Update grabbed entity position to camera position
-            TransformComponent* trans = get_component(player->grabbed_entity, COMPONENT_TRANSFORM);
+            trans = get_component(player->grabbed_entity, COMPONENT_TRANSFORM);
             RigidBodyComponent* rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
             if (rb) {
                 Vector3 delta = diff3(target_position, get_position(player->grabbed_entity));
                 rb->velocity = mult3(10.0f, delta);
+                rb->asleep = false;
+            } else {
+                player->examine_yaw -= controller->controller.right_stick.x;
+
+                target_position = sum3(get_position(camera), mult3(1.0f, look_direction(camera)));
+                trans->position = target_position;
+
+                Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->examine_yaw));
+                trans->rotation = q_yaw;
             }
-            // trans->rotation = target_rotation;
         }
     }
 }

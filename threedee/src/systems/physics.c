@@ -215,17 +215,6 @@ bool resolve_collisions(Entity entity, float bias) {
                 }
                 has_moved = true;
             }
-
-            float volume = clamp(0.5f * norm3(v_rel), 0.0f, 1.0f);
-            if (volume > 0.5f) {
-                SoundComponent* sound = get_component(entity, COMPONENT_SOUND);
-                SoundComponent* sound_other = get_component(collision.entity, COMPONENT_SOUND);
-                if (sound) {
-                    add_sound(entity, sound->hit_sound, volume, 1.0f);
-                } else if (sound_other) {
-                    add_sound(collision.entity, sound_other->hit_sound, volume, 1.0f);
-                }
-            }
         }
     }
 
@@ -255,6 +244,16 @@ void update_physics(float time_step) {
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
         if (!collider) continue;
+
+        for (int j = 0; j < collider->collisions->size; j++) {
+            Collision collision = *(Collision*)ArrayList_get(collider->collisions, j);
+            SoundComponent* sound = get_component(i, COMPONENT_SOUND);
+            // Approximate impulse with overlap length
+            float volume = clamp(5.0f * norm3(collision.overlap), 0.0f, 1.0f);
+            if (sound && volume > 0.1f) {
+                add_sound(i, sound->hit_sound, volume, 1.0f);
+            }
+        }
 
         for (int j = 0; j < ITERATIONS; j++) {
             if (!resolve_collisions(i, 1.0f / (float)ITERATIONS)) {

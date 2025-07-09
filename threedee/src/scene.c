@@ -128,7 +128,7 @@ void create_scene() {
 
     i = create_entity();
     TransformComponent_add(i, vec3(0.0f, 0.0f, 0.0f));
-    MeshComponent_add(i, "paper", "tiles", "default");
+    MeshComponent_add(i, "paper", "paper", "concrete");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS });
 
     for (int j = 0; j < 5; j++) {
@@ -142,15 +142,14 @@ void create_scene() {
 
     for (int j = 0; j < 1; j++) {
         i = create_entity();
-        TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 1.0f, 0.0f));
+        TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 4.0f, 0.0f));
         transform->scale = vec3(0.05f, 0.05f, 0.05f);
         MeshComponent_add(i, "teapot", "tiles", "hidden")->visibility = LIGHT_UV;
         RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
         // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
         ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS, .radius = 10.0f });
         SoundComponent_add(i, (SoundParameters) {
-            .hit_sound = "wood_hit",
-            .loop_sound = "wood_hit"
+            .hit_sound = "wood_hit"
         });
     }
 

@@ -151,9 +151,6 @@ Output main(Input input)
     }
 
     float3 lit_color = ambient + diffuse + specular;
-    if (length(lit_color) < 0.001) {
-        discard;
-    }
 
     // Only hidden entities (ambient = 0) should be faded out
     float alpha = saturate(combined_spot_intensity);

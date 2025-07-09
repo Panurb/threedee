@@ -11,6 +11,8 @@ PlayerComponent* PlayerComponent_add(Entity entity) {
     component->yaw = 0.0f;
     component->pitch = 0.0f;
     component->grabbed_entity = NULL_ENTITY;
+    component->examine_yaw = 0.0f;
+    component->examining = false;
     scene->components->player[entity] = component;
     return component;
 }
