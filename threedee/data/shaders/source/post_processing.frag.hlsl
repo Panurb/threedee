@@ -1,5 +1,5 @@
 Texture2D tex : register(t0, space2);
-Texture2D depth_tex : register(t1, space2);
+Texture2DMS<float> depth_tex : register(t1, space2);
 SamplerState sampler_tex : register(s0, space2);
 
 
@@ -34,7 +34,7 @@ float4 main(Input input) : SV_Target {
     float3 color = float3(0.0, 0.0, 0.0);
 
     if (dof_enabled) {
-        float raw_depth = depth_tex.Sample(sampler_tex, input.tex_coord).r;
+        float raw_depth = depth_tex.Load(input.position.xy, 0);
         float linear_depth = linearize_depth(raw_depth);
 
         float blur_amount = compute_blur_amount(linear_depth);
