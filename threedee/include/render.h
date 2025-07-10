@@ -75,6 +75,16 @@ typedef struct {
 } ShadowUniformData;
 
 
+typedef struct PostProcessingUniformData {
+	float near_plane;
+	float far_plane;
+	bool dof_enabled;
+	float focal_distance;
+	float focal_range;
+	float screen_size[2];
+} PostProcessingUniformData;
+
+
 void init_render();
 
 void apply_render_settings();

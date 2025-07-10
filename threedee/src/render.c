@@ -457,7 +457,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_post_processing() {
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "post_processing.frag", 1, 0, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "post_processing.frag", 2, 1, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -587,8 +587,8 @@ void create_screen_textures() {
 	SDL_GPUTextureCreateInfo depth_stencil_texture_info = {
 		.width = game_settings.width,
 		.height = game_settings.height,
-		.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
-		.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+		.format = SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
+		.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER,
 		.layer_count_or_depth = 1,
 		.num_levels = 1,
 		.sample_count = get_sample_count()
@@ -935,6 +935,28 @@ void render() {
 				.sampler = screen_sampler,
 			},
 			1
+		);
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			1,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = depth_stencil_texture,
+				.sampler = screen_sampler,
+			},
+			1
+		);
+		SDL_PushGPUFragmentUniformData(
+			command_buffer,
+			0,
+			&(PostProcessingUniformData){
+				.near_plane = camera->near_plane,
+				.far_plane = camera->far_plane,
+				.dof_enabled = camera->dof_enabled,
+				.focal_distance = (camera->focal_distance - camera->near_plane) / (camera->far_plane - camera->near_plane),
+				.focal_range = camera->focal_range,
+				.screen_size = { (float)game_settings.width, (float)game_settings.height },
+			},
+			sizeof(PostProcessingUniformData)
 		);
 		SDL_DrawGPUPrimitives(render_pass, 4, 1, 0, 0);
 

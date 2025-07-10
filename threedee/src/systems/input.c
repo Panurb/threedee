@@ -326,6 +326,7 @@ void input_players() {
         update_controller(i);
 
         Entity camera = trans->children->head->value;
+        CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
 
         if (!player->examining) {
             player->yaw += controller->controller.right_stick.x;
@@ -350,6 +351,9 @@ void input_players() {
             // Camera only moves in pitch direction
             TransformComponent* camera_trans = get_component(camera, COMPONENT_TRANSFORM);
             camera_trans->rotation = q_pitch;
+        } else {
+            rb->velocity.x = 0.0f;
+            rb->velocity.z = 0.0f;
         }
 
         if (controller->controller.buttons_pressed[BUTTON_A]) {
@@ -358,14 +362,10 @@ void input_players() {
             }
         }
 
-        Matrix4 camera_transform = get_transform(scene->camera);
-        Matrix4 inv_camera_transform = transform_inverse(camera_transform);
         if (controller->controller.buttons_pressed[BUTTON_RT]) {
             if (player->grabbed_entity != NULL_ENTITY) {
                 Vector3 dir = look_direction(scene->camera);
                 apply_impulse(player->grabbed_entity, get_position(player->grabbed_entity), mult3(10.0f, dir));
-                // remove_parent(grabbed_entity);
-                // set_transform(grabbed_entity, matrix4_mult(camera_transform, get_transform(grabbed_entity)));
                 RigidBodyComponent* grabbed_rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
                 if (grabbed_rb) {
                     grabbed_rb->gravity_scale = 1.0f;
@@ -374,6 +374,7 @@ void input_players() {
                     trans = get_component(player->grabbed_entity, COMPONENT_TRANSFORM);
                     trans->position = player->grabbed_position;
                     trans->rotation = player->grabbed_rotation;
+                    cam->dof_enabled = false;
                 }
                 player->grabbed_entity = NULL_ENTITY;
             } else {
@@ -382,8 +383,6 @@ void input_players() {
                 Hit hit = raycast(ray, GROUP_PROPS);
                 if (hit.entity != NULL_ENTITY && hit.distance < 3.0f) {
                     player->grabbed_entity = hit.entity;
-                    // set_transform(grabbed_entity, matrix4_mult(inv_camera_transform, get_transform(grabbed_entity)));
-                    // add_child(scene->camera, grabbed_entity);
                     RigidBodyComponent* grabbed_rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
                     if (grabbed_rb) {
                         grabbed_rb->gravity_scale = 0.0f;
@@ -394,6 +393,9 @@ void input_players() {
                         player->examine_yaw = player->yaw;
                         player->grabbed_position = get_position(player->grabbed_entity);
                         player->grabbed_rotation = get_rotation(player->grabbed_entity);
+                        cam->dof_enabled = true;
+                        cam->focal_distance = 1.0f;
+                        cam->focal_range = 0.5f;
                     }
                 }
             }
@@ -450,5 +452,11 @@ void input_game(SDL_Event sdl_event) {
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
         mouse_motion.x -= sdl_event.motion.xrel * sens;
         mouse_motion.y -= sdl_event.motion.yrel * sens;
+    }
+
+    if (sdl_event.type == SDL_EVENT_MOUSE_WHEEL) {
+        CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
+        camera->focal_distance += sdl_event.wheel.y * 0.1f;
+        LOG_INFO("Focal distance: %f", camera->focal_distance);
     }
 }

@@ -140,7 +140,7 @@ void create_scene() {
         ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_PROPS, .width = 1.0f, .height = 1.0f, .depth = 1.0f });
     }
 
-    for (int j = 0; j < 1; j++) {
+    for (int j = 0; j < 0; j++) {
         i = create_entity();
         TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 4.0f, 0.0f));
         transform->scale = vec3(0.05f, 0.05f, 0.05f);
