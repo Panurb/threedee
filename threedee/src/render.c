@@ -21,6 +21,7 @@ typedef enum {
 	PIPELINE_3D_TEXTURED,
 	PIPELINE_SHADOW_DEPTH,
 	PIPELINE_POST_PROCESSING,
+	PIPELINE_DEPTH_OF_FIELD,
 	PIPELINE_COUNT
 } Pipeline;
 
@@ -32,19 +33,13 @@ static SDL_GPUSampler* sampler = NULL;
 static SDL_GPUTexture* shadow_maps = NULL;
 static SDL_GPUTexture* screen_texture = NULL;
 static SDL_GPUTexture* resolve_texture = NULL;
+static SDL_GPUTexture* dof_temp_texture = NULL;
 static SDL_GPUSampler* screen_sampler = NULL;
 
 static LightData lights[MAX_LIGHTS];
 static int num_lights = 0;
 
 static MeshData triangle_mesh;
-
-static PositionTextureVertex2D fullscreen_vertices[4] = {
-	{ { -1.0f, -1.0f }, { 0.0f, 1.0f } },
-	{ { 1.0f, -1.0f }, { 1.0f, 1.0f } },
-	{ { -1.0f, 1.0f }, { 0.0f, 0.0f } },
-	{ { 1.0f, 1.0f }, { 1.0f, 0.0f } }
-};
 
 
 SDL_GPUSampleCount get_sample_count() {
@@ -482,6 +477,38 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_post_processing() {
 }
 
 
+SDL_GPUGraphicsPipeline* create_render_pipeline_depth_of_field() {
+	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
+	if (!vertex_shader) {
+		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "depth_of_field.frag", 2, 1, 0, 0);
+	if (!fragment_shader) {
+		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window)
+			}},
+			.has_depth_stencil_target = false
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+		.vertex_shader = vertex_shader,
+		.fragment_shader = fragment_shader,
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	return pipeline;
+}
+
+
 MeshData create_mesh_triangle() {
 	MeshData mesh_data = {
 		.name = "triangle",
@@ -595,9 +622,6 @@ void create_screen_textures() {
 	};
 	depth_stencil_texture = SDL_CreateGPUTexture(app.gpu_device, &depth_stencil_texture_info);
 
-	SDL_GPUTextureFormat swapchain_format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window);
-	LOG_INFO("Swapchain format: %d", swapchain_format);
-
 	SDL_GPUTextureCreateInfo screen_texture_info = {
 		.width = game_settings.width,
 		.height = game_settings.height,
@@ -615,17 +639,17 @@ void create_screen_textures() {
 		&screen_texture_info
 	);
 
-	resolve_texture = SDL_CreateGPUTexture(
-		app.gpu_device,
-		&(SDL_GPUTextureCreateInfo){
-			.width = game_settings.width,
-			.height = game_settings.height,
-			.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
-			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
-			.layer_count_or_depth = 1,
-			.num_levels = 1
-		}
-	);
+	SDL_GPUTextureCreateInfo resolve_texture_info = {
+		.width = game_settings.width,
+		.height = game_settings.height,
+		.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
+		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+		.layer_count_or_depth = 1,
+		.num_levels = 1
+	};
+	resolve_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
+
+	dof_temp_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
 }
 
 
@@ -639,6 +663,7 @@ void init_render() {
 	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
 	pipelines[PIPELINE_SHADOW_DEPTH] = create_render_pipeline_shadow_depth();
 	pipelines[PIPELINE_POST_PROCESSING] = create_render_pipeline_post_processing();
+	pipelines[PIPELINE_DEPTH_OF_FIELD] = create_render_pipeline_depth_of_field();
 
 	triangle_mesh = create_mesh_triangle();
 
@@ -695,6 +720,7 @@ void apply_render_settings() {
 	SDL_ReleaseGPUTexture(app.gpu_device, depth_stencil_texture);
 	SDL_ReleaseGPUTexture(app.gpu_device, screen_texture);
 	SDL_ReleaseGPUTexture(app.gpu_device, resolve_texture);
+	SDL_ReleaseGPUTexture(app.gpu_device, dof_temp_texture);
 	create_screen_textures();
 }
 
@@ -835,6 +861,53 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 }
 
 
+void render_depth_of_field(SDL_GPUCommandBuffer* command_buffer, SDL_GPUTexture* source, SDL_GPUTexture* target, bool vertical) {
+	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
+		command_buffer,
+		&(SDL_GPUColorTargetInfo) {
+			.texture = target,
+			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.store_op = SDL_GPU_STOREOP_STORE
+		},
+		1,
+		NULL
+	);
+	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[PIPELINE_DEPTH_OF_FIELD]);
+	SDL_BindGPUFragmentSamplers(
+		render_pass,
+		0,
+		&(SDL_GPUTextureSamplerBinding){
+			.texture = source,
+			.sampler = screen_sampler,
+		},
+		1
+	);
+	SDL_BindGPUFragmentSamplers(
+		render_pass,
+		1,
+		&(SDL_GPUTextureSamplerBinding){
+			.texture = depth_stencil_texture,
+			.sampler = screen_sampler,
+		},
+		1
+	);
+
+	CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
+	DepthOfFieldUniformData dof_uniform_data = {
+		.near_plane = camera->near_plane,
+		.far_plane = camera->far_plane,
+		.focal_distance = (camera->focal_distance - camera->near_plane) / (camera->far_plane - camera->near_plane),
+		.focal_range = camera->focal_range,
+		.screen_size = { (float)game_settings.width, (float)game_settings.height },
+		.vertical = vertical
+	};
+	SDL_PushGPUFragmentUniformData(command_buffer, 0, &dof_uniform_data, sizeof(DepthOfFieldUniformData));
+	SDL_DrawGPUPrimitives(render_pass, 4, 1, 0, 0);
+
+	SDL_EndGPURenderPass(render_pass);
+}
+
+
 void render() {
 	command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
 	if (!command_buffer) {
@@ -914,6 +987,13 @@ void render() {
 
 		SDL_EndGPURenderPass(render_pass);
 
+		SDL_GPUTexture* source_texture = game_settings.antialiasing == 0 ? screen_texture : resolve_texture;
+		if (camera->dof_enabled) {
+			render_depth_of_field(command_buffer, source_texture, dof_temp_texture, false);
+			render_depth_of_field(command_buffer, dof_temp_texture, source_texture, true);
+		}
+
+		// Draw to swapchain texture
 		color_target_info = (SDL_GPUColorTargetInfo) {
 			.texture = swapchain_texture,
 			.load_op = SDL_GPU_LOADOP_DONT_CARE,
@@ -931,7 +1011,7 @@ void render() {
 			render_pass,
 			0,
 			&(SDL_GPUTextureSamplerBinding){
-				.texture = resolve_texture,
+				.texture = source_texture,
 				.sampler = screen_sampler,
 			},
 			1
@@ -951,10 +1031,6 @@ void render() {
 			&(PostProcessingUniformData){
 				.near_plane = camera->near_plane,
 				.far_plane = camera->far_plane,
-				.dof_enabled = camera->dof_enabled,
-				.focal_distance = (camera->focal_distance - camera->near_plane) / (camera->far_plane - camera->near_plane),
-				.focal_range = camera->focal_range,
-				.screen_size = { (float)game_settings.width, (float)game_settings.height },
 			},
 			sizeof(PostProcessingUniformData)
 		);

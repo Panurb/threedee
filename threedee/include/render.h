@@ -78,11 +78,17 @@ typedef struct {
 typedef struct PostProcessingUniformData {
 	float near_plane;
 	float far_plane;
-	bool dof_enabled;
+} PostProcessingUniformData;
+
+
+typedef struct DepthOfFieldUniformData {
+	float near_plane;
+	float far_plane;
 	float focal_distance;
 	float focal_range;
 	float screen_size[2];
-} PostProcessingUniformData;
+	bool vertical;
+} DepthOfFieldUniformData;
 
 
 void init_render();
