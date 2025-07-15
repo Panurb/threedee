@@ -436,7 +436,7 @@ void load_resources() {
 	resources = (Resources) { 0 };
 
 	load_textures();
-	// load_normal_maps();
+	load_normal_maps();
 
     resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
     for (int i = 0; i < resources.sounds_size; i++) {

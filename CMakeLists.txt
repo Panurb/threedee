@@ -9,16 +9,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
 endif()
 
-#include_directories(cJSON/include)
-include_directories(threedee/include)
-
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
-    include_directories(SDL/include)
-    include_directories(SDL_image/include)
-    include_directories(SDL_ttf/include)
-    include_directories(SDL_mixer/include)
-endif()
-
 set(SOURCES
 #    cJSON/src/cJSON.c
     threedee/src/app.c
@@ -32,6 +22,7 @@ set(SOURCES
     threedee/src/components/mesh.c
     threedee/src/components/player.c
     threedee/src/components/rigidbody.c
+    threedee/src/components/sound.c
     threedee/src/components/transform.c
     threedee/src/components/weather.c
     threedee/src/heap.c
@@ -44,7 +35,7 @@ set(SOURCES
     threedee/src/resources.c
     threedee/src/scene.c
     threedee/src/settings.c
-    threedee/src/sound.c
+    threedee/src/systems/sound.c
     threedee/src/systems/collision.c
     threedee/src/systems/draw.c
     threedee/src/systems/physics.c
@@ -71,6 +62,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 else()
     # Enable console by removing WIN32 flag
     add_executable(threedee ${SOURCES})
+endif()
+
+#include_directories(cJSON/include)
+target_include_directories(threedee PRIVATE threedee/include)
+
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+    include_directories(SDL/include)
+    include_directories(SDL_image/include)
+    include_directories(SDL_ttf/include)
+    include_directories(SDL_mixer/include)
 endif()
 
 set(SHADER_SRC_DIR ${CMAKE_SOURCE_DIR}/threedee/data/shaders/source)

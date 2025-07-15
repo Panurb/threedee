@@ -31,7 +31,6 @@ struct Output
     float3 normal : NORMAL0;
     float3 tangent : TANGENT0;
 	int tex_index : TEXCOORD1;
-    int normal_index : TEXCOORD2;
     float3 world_position : POSITION0;
     float specular;
     float diffuse;
@@ -66,7 +65,6 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     Output output;
     output.tex_coord = input.tex_coord * tiling;
 	output.tex_index = instance_data[instance_id].tex_index;
-    output.normal_index = instance_data[instance_id].tex_index + 1; // Assuming normal map is next in texture array
     output.position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
     output.normal = normalize(mul((float3x3)transform, input.normal));
     output.tangent = normalize(mul((float3x3)transform, input.tangent));

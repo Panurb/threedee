@@ -280,7 +280,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "phong.frag", 2, 2, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "phong.frag", 3, 2, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -765,6 +765,15 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			1,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = resources.normal_map_array,
+				.sampler = sampler,
+			},
+			1
+		);
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			2,
 			&(SDL_GPUTextureSamplerBinding){
 				.texture = shadow_maps,
 				.sampler = sampler,

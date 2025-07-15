@@ -1,7 +1,9 @@
 Texture2DArray<float4> tex : register(t0, space2);
-Texture2DArray<float> shadow_maps : register(t1, space2);
+Texture2DArray<float3> normal_tex : register(t1, space2);
+Texture2DArray<float> shadow_maps : register(t2, space2);
 SamplerState sampler_tex : register(s0, space2);
-SamplerState sampler_shadow_maps : register(s1, space2);
+SamplerState sampler_normal_tex : register(s1, space2);
+SamplerState sampler_shadow_maps : register(s2, space2);
 
 cbuffer UBO : register(b0, space3)
 {
@@ -39,7 +41,6 @@ struct Input
     float3 normal : NORMAL0;
     float3 tangent : TANGENT0;
     int tex_index : TEXCOORD1;
-    int normal_index : TEXCOORD2;
     float3 world_position : POSITION0;
     float specular;
     float diffuse;
@@ -86,7 +87,7 @@ Output main(Input input)
     float3 base_color = tex.Sample(sampler_tex, float3(tex_coord, input.tex_index)).rgb;
     base_color = pow(base_color, float3(2.2)); // Convert to linear space
 
-    float3 normal_map = tex.Sample(sampler_tex, float3(tex_coord, input.normal_index)).rgb;
+    float3 normal_map = normal_tex.Sample(sampler_normal_tex, float3(tex_coord, input.tex_index)).rgb;
     normal_map = normal_map * 2.0 - 1.0; // Convert to range [-1, 1]
 
     // Transform normal from tangent space to world space

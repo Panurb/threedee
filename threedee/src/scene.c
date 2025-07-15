@@ -55,7 +55,7 @@ Entity create_lamp(Vector3 position) {
 Entity create_wall(Vector3 position, float width, float depth, int windows) {
     Entity i = create_entity();
     TransformComponent* trans = TransformComponent_add(i, position);
-    trans->position.y = position.y - 1.0f;
+    trans->position.y = position.y + 1.0f;
     trans->scale = vec3(width, 1.0f, depth);
     MeshComponent_add(i, "cube", "tiles", "glass");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
@@ -70,11 +70,11 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
         Entity window = create_entity();
         if (width > depth) {
             float x = position.x - 0.5f * width + 0.5f * segment_width + j * (segment_width + window_width);
-            trans = TransformComponent_add(window, vec3(x, position.y, position.z));
+            trans = TransformComponent_add(window, vec3(x, position.y + 2.0f, position.z));
             trans->scale = vec3(segment_width, 1.0f, depth);
         } else {
             float z = position.z - 0.5f * depth + 0.5f * segment_depth + j * (segment_depth + window_width);
-            trans = TransformComponent_add(window, vec3(position.x, position.y, z));
+            trans = TransformComponent_add(window, vec3(position.x, position.y + 2.0f, z));
             trans->scale = vec3(width, 1.0f, segment_depth);
         }
         MeshComponent_add(window, "cube", "tiles", "glass");
@@ -83,7 +83,7 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
 
     i = create_entity();
     trans = TransformComponent_add(i, position);
-    trans->position.y = position.y + 1.0f;
+    trans->position.y = position.y + 3.0f;
     trans->scale = vec3(width, 1.0f, depth);
     MeshComponent_add(i, "cube", "tiles", "glass");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
@@ -127,68 +127,31 @@ void create_scene() {
     scene->camera = trans->children->head->value;
 
     Entity i = create_entity();
-    trans = TransformComponent_add(i, vec3(0.0f, -2.1f, 0.0f));
+    trans = TransformComponent_add(i, vec3(0.0f, -0.01f, 0.0f));
     trans->scale.x = 100.0f;
     trans->scale.z = 100.0f;
     MeshComponent_add(i, "cube", "gravel", "concrete");
 
     i = create_entity();
-    trans = TransformComponent_add(i, vec3(0.0f, -2.0f, 0.0f));
+    trans = TransformComponent_add(i, zeros3());
     trans->scale.x = 10.0f;
     trans->scale.z = 10.0f;
     MeshComponent_add(i, "cube", "tiles", "concrete");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
-    create_forest(vec3(0.0f, -2.0f, 0.0f), 50.0f, 50.0f, 3.0f, 10.0f);
+    create_forest(zeros3(), 50.0f, 50.0f, 3.0f, 10.0f);
 
     create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 3);
     create_wall(vec3(0.0f, 0.0f, 5.25f), 10.0f, 0.5f, 3);
     create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
     create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
 
-    create_lamp(vec3(0.0f, 2.0f, 0.0f));
-    // i = create_lamp(vec3(0.0f, 2.0f, -5.0f));
-    // LightComponent* light = get_component(i, COMPONENT_LIGHT);
-    // light->type = LIGHT_UV;
+    create_lamp(vec3(0.0f, 5.0f, 0.0f));
 
     i = create_entity();
     TransformComponent_add(i, vec3(0.0f, 0.0f, 0.0f));
     MeshComponent_add(i, "paper", "paper", "concrete");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
-
-    for (int j = 0; j < 5; j++) {
-        i = create_entity();
-        TransformComponent_add(i, vec3((float) j, 1.5f, -2.0f));
-        MeshComponent_add(i, "cube", "tiles", "default");
-        RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
-        // rb->axis_lock.rotation = true;
-        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_PROPS, .width = 1.0f, .height = 1.0f, .depth = 1.0f });
-    }
-
-    for (int j = 0; j < 0; j++) {
-        i = create_entity();
-        TransformComponent* transform = TransformComponent_add(i, vec3((float) j, 4.0f, 0.0f));
-        transform->scale = vec3(0.05f, 0.05f, 0.05f);
-        MeshComponent_add(i, "teapot", "tiles", "hidden")->visibility = LIGHT_UV;
-        RigidBodyComponent* rigid_body = RigidBodyComponent_add(i, 1.0f);
-        // rigid_body->angular_velocity = vec3(0.0f, 1.0f, 0.0f);
-        ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS, .radius = 10.0f });
-        SoundComponent_add(i, (SoundParameters) {
-            .hit_sound = "wood_hit"
-        });
-    }
-
-    // i = create_entity();
-    // TransformComponent_add(i, vec3(5.0f, 5.0f, 0.0f));
-    // look_at(i, zeros3());
-    // LightComponent_add(i, (LightParameters) { .color = COLOR_BLUE });
-    //
-    // i = create_entity();
-    // TransformComponent_add(i, vec3(-5.0f, 5.0f, 0.0f));
-    // look_at(i, zeros3());
-    // LightComponent_add(i, (LightParameters) { .color = COLOR_RED });
-
-    // create_lamp(vec3(0.0f, 2.0f, 0.0f));
 
     scene->weather = create_entity();
     WeatherComponent_add(scene->weather, (WeatherParameters) {
@@ -196,11 +159,6 @@ void create_scene() {
         .fog_start = 10.0f,
         .fog_end = 50.0f
     });
-    // LightComponent_add(scene->weather, (LightParameters) {
-    //     .color = COLOR_WHITE,
-    //     .shape = LIGHT_DIRECTIONAL,
-    //     .visibility_mask = LIGHT_NORMAL
-    // });
 
     LOG_INFO("Scene created");
 }
