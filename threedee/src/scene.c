@@ -92,6 +92,27 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
 }
 
 
+void create_tree(Vector3 position) {
+    Entity i = create_entity();
+    TransformComponent* trans = TransformComponent_add(i, position);
+    MeshComponent_add(i, "tree", "bark", "default");
+}
+
+
+void create_forest(Vector3 position, float width, float depth, float density, float min_distance) {
+    for (float x = -width / 2.0f; x < width / 2.0f; x += density) {
+        for (float z = -depth / 2.0f; z < depth / 2.0f; z += density) {
+            if (fabs(x) < min_distance && fabs(z) < min_distance) {
+                continue; // Skip the center area
+            }
+
+            if (rand() % 100 < 10) {
+                create_tree(vec3(position.x + x, position.y, position.z + z));
+            }
+        }
+    }
+}
+
 
 void create_scene() {
     LOG_INFO("Creating scene");
@@ -116,6 +137,8 @@ void create_scene() {
     MeshComponent_add(i, "cube", "tiles", "concrete");
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
+    create_forest(vec3(0.0f, -2.0f, 0.0f), 50.0f, 50.0f, 3.0f, 10.0f);
+
     create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 3);
     create_wall(vec3(0.0f, 0.0f, 5.25f), 10.0f, 0.5f, 3);
     create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
@@ -129,7 +152,7 @@ void create_scene() {
     i = create_entity();
     TransformComponent_add(i, vec3(0.0f, 0.0f, 0.0f));
     MeshComponent_add(i, "paper", "paper", "concrete");
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_PROPS });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
 
     for (int j = 0; j < 5; j++) {
         i = create_entity();

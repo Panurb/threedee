@@ -18,13 +18,14 @@
 * Sound effects
 
 ### TODO ###
-* 2D rendering
+* 2D and text rendering
 * Data serialization for saving/loading game state
 * Particles
 * PCSS for soft shadows?
 * Skybox
 * Proper HDR lighting
 * 3D audio using OpenAL
+* Broad-phase collision detection for optimization
 
 ### How do I get set up? ###
 

@@ -380,7 +380,7 @@ void input_players() {
             } else {
                 Vector3 dir = look_direction(scene->camera);
                 Ray ray = { get_position(scene->camera), dir };
-                Hit hit = raycast(ray, GROUP_PROPS);
+                Hit hit = raycast(ray, GROUP_PROPS | GROUP_ITEMS);
                 if (hit.entity != NULL_ENTITY && hit.distance < 3.0f) {
                     player->grabbed_entity = hit.entity;
                     RigidBodyComponent* grabbed_rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
@@ -395,7 +395,7 @@ void input_players() {
                         player->grabbed_rotation = get_rotation(player->grabbed_entity);
                         cam->dof_enabled = true;
                         cam->focal_distance = 1.0f;
-                        cam->focal_range = 0.5f;
+                        cam->focal_range = 1.0f;
                     }
                 }
             }
@@ -416,10 +416,10 @@ void input_players() {
                 player->examine_yaw -= controller->controller.right_stick.x;
 
                 target_position = sum3(get_position(camera), mult3(1.0f, look_direction(camera)));
-                trans->position = target_position;
+                trans->position = lerp3(get_position(player->grabbed_entity), target_position, 0.5f);
 
                 Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->examine_yaw));
-                trans->rotation = q_yaw;
+                trans->rotation = slerp(get_rotation(player->grabbed_entity), q_yaw, 0.5f);
             }
         }
     }
@@ -452,11 +452,5 @@ void input_game(SDL_Event sdl_event) {
     if (sdl_event.type == SDL_EVENT_MOUSE_MOTION) {
         mouse_motion.x -= sdl_event.motion.xrel * sens;
         mouse_motion.y -= sdl_event.motion.yrel * sens;
-    }
-
-    if (sdl_event.type == SDL_EVENT_MOUSE_WHEEL) {
-        CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
-        camera->focal_distance += sdl_event.wheel.y * 0.1f;
-        LOG_INFO("Focal distance: %f", camera->focal_distance);
     }
 }

@@ -98,3 +98,42 @@ Quaternion euler_to_quaternion(EulerAngles euler) {
     q.w = cr * cp * cy + sr * sp * sy;
     return q;
 }
+
+
+Quaternion slerp(Quaternion a, Quaternion b, float t) {
+    // Spherical linear interpolation between two quaternions
+    float dot = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+    if (dot < 0.0f) {
+        b.x = -b.x;
+        b.y = -b.y;
+        b.z = -b.z;
+        b.w = -b.w;
+        dot = -dot;
+    }
+
+    if (dot > 0.9999f) {
+        // If the quaternions are very close, use linear interpolation
+        Quaternion result;
+        result.x = a.x + t * (b.x - a.x);
+        result.y = a.y + t * (b.y - a.y);
+        result.z = a.z + t * (b.z - a.z);
+        result.w = a.w + t * (b.w - a.w);
+        return quaternion_normalize(result);
+    }
+
+    float theta_0 = acosf(dot);
+    float theta = theta_0 * t;
+    float sin_theta = sinf(theta);
+    float sin_theta_0 = sinf(theta_0);
+
+    float s0 = cosf(theta) / sin_theta_0;
+    float s1 = sin_theta / sin_theta_0;
+
+    Quaternion result;
+    result.x = s0 * a.x + s1 * b.x;
+    result.y = s0 * a.y + s1 * b.y;
+    result.z = s0 * a.z + s1 * b.z;
+    result.w = s0 * a.w + s1 * b.w;
+
+    return quaternion_normalize(result);
+}
