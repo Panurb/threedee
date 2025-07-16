@@ -122,3 +122,5 @@ void render_arrow(Vector3 start, Vector3 end, float thickness, Color color);
 void render_plane(Plane plane, Color color);
 
 void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color);
+
+void draw_circle_2d(Vector2 center, float radius, Color color);

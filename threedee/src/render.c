@@ -150,6 +150,15 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+				.blend_state = (SDL_GPUColorTargetBlendState) {
+					.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+					.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+					.color_blend_op = SDL_GPU_BLENDOP_ADD,
+					.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+					.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+					.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+					.enable_blend = true
+				}
 			}},
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
@@ -1161,9 +1170,12 @@ void render() {
 			NULL
 		);
 
+		float aspect_ratio = (float)game_settings.width / (float)game_settings.height;
+		float w = game_settings.width / 2.0f;
+		float h = game_settings.height / 2.0f;
 		Matrix4 ortho_projection = orthographic_projection_matrix(
-			0.0f, (float)game_settings.width,
-			0.0f, (float)game_settings.height,
+			-aspect_ratio, aspect_ratio,
+			-1.0f, 1.0f,
 			0.0f, 1.0f
 		);
 		ortho_projection = transpose4(ortho_projection);
@@ -1477,4 +1489,22 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
 	triangle_2d_mesh.num_instances++;
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, triangle_2d_mesh.instance_transfer_buffer);
+}
+
+
+void draw_circle_2d(Vector2 center, float radius, Color color) {
+	int segments = 1000 * radius;
+
+	float angle_increment = 2.0f * M_PI / segments;
+	Vector2 prev_point = {center.x + radius, center.y};
+
+	for (int i = 1; i <= segments; i++) {
+		float angle = i * angle_increment;
+		Vector2 current_point = {
+			center.x + radius * cosf(angle),
+			center.y + radius * sinf(angle)
+		};
+		draw_triangle_2d(center, prev_point, current_point, color);
+		prev_point = current_point;
+	}
 }
