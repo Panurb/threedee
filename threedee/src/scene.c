@@ -97,7 +97,7 @@ void create_tree(Vector3 position) {
     TransformComponent* trans = TransformComponent_add(i, position);
     trans->rotation = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), (float) (rand() % 360));
     trans->scale = diag3(randf(0.5f, 1.0f));
-    MeshComponent_add(i, "tree", "bark", "default");
+    MeshComponent_add(i, "tree", "bark", "concrete");
 }
 
 

@@ -459,6 +459,7 @@ void load_resources() {
 	}
 
 	// Keep in alphabetical order
+	// TODO: read from json files
 	resources.materials[0] = (Material) {0.3f, 0.3f, 0.3f, 8.0f};
 	strcpy(resources.material_names[0], "concrete");
 	resources.materials[1] = (Material) {0.5f, 0.5f, 0.5f, 32.0f};

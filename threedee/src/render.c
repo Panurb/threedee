@@ -520,6 +520,8 @@ MeshData create_mesh_triangle() {
 		.max_instances = 256,
 		.num_instances = 0,
 		.instance_size = sizeof(InstanceColorData),
+		.num_indices = 0,
+		.index_buffer = NULL,
 	};
 
 	mesh_data.num_vertices = 3;
@@ -531,20 +533,11 @@ MeshData create_mesh_triangle() {
         }
     );
 
-    mesh_data.num_indices = 3;
-    mesh_data.index_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-            .size = sizeof(Uint16) * mesh_data.num_indices,
-        }
-    );
-
     SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Vector3) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+            .size = sizeof(Vector3) * mesh_data.num_vertices,
         }
     );
 
@@ -570,10 +563,6 @@ MeshData create_mesh_triangle() {
 	transfer_data[1] = (Vector3) { 1.0f, 0.0f, 0.0f };
 	transfer_data[2] = (Vector3) { 0.0f, 1.0f, 0.0f };
 
-    Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
-    const Uint16 indices[3] = { 0, 1, 2 };
-    SDL_memcpy(index_data, indices, sizeof(indices));
-
     SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
     SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
@@ -593,20 +582,6 @@ MeshData create_mesh_triangle() {
         false
     );
 
-    SDL_UploadToGPUBuffer(
-        copy_pass,
-        &(SDL_GPUTransferBufferLocation) {
-            .transfer_buffer = transfer_buffer,
-            .offset = sizeof(Vector3) * mesh_data.num_vertices
-        },
-        &(SDL_GPUBufferRegion) {
-            .buffer = mesh_data.index_buffer,
-            .offset = 0,
-            .size = sizeof(Uint16) * mesh_data.num_indices
-        },
-        false
-    );
-
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
     SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
@@ -621,6 +596,8 @@ MeshData create_mesh_triangle_2d() {
 		.max_instances = 256,
 		.num_instances = 0,
 		.instance_size = sizeof(InstanceColorData2D),
+		.num_indices = 0,
+		.index_buffer = NULL,
 	};
 
 	mesh_data.num_vertices = 3;
@@ -632,20 +609,11 @@ MeshData create_mesh_triangle_2d() {
         }
     );
 
-    mesh_data.num_indices = 3;
-    mesh_data.index_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-            .size = sizeof(Uint16) * mesh_data.num_indices,
-        }
-    );
-
     SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Vector2) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+            .size = sizeof(Vector2) * mesh_data.num_vertices,
         }
     );
 
@@ -671,10 +639,6 @@ MeshData create_mesh_triangle_2d() {
 	transfer_data[1] = (Vector2) { 1.0f, 0.0f };
 	transfer_data[2] = (Vector2) { 0.0f, 1.0f };
 
-    Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
-    const Uint16 indices[3] = { 0, 1, 2 };
-    SDL_memcpy(index_data, indices, sizeof(indices));
-
     SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
     SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
@@ -690,20 +654,6 @@ MeshData create_mesh_triangle_2d() {
             .buffer = mesh_data.vertex_buffer,
             .offset = 0,
             .size = sizeof(Vector2) * mesh_data.num_vertices
-        },
-        false
-    );
-
-    SDL_UploadToGPUBuffer(
-        copy_pass,
-        &(SDL_GPUTransferBufferLocation) {
-            .transfer_buffer = transfer_buffer,
-            .offset = sizeof(Vector2) * mesh_data.num_vertices
-        },
-        &(SDL_GPUBufferRegion) {
-            .buffer = mesh_data.index_buffer,
-            .offset = 0,
-            .size = sizeof(Uint16) * mesh_data.num_indices
         },
         false
     );
@@ -859,9 +809,6 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 
 	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[pipeline]);
 	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = mesh_data->vertex_buffer, .offset = 0 }, 1);
-	SDL_BindGPUIndexBuffer(
-		render_pass, &(SDL_GPUBufferBinding) { .buffer = mesh_data->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
-	);
 	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh_data->instance_buffer, 1);
 
 	if (pipeline == PIPELINE_3D_TEXTURED) {
@@ -894,7 +841,15 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 		);
 	}
 
-	SDL_DrawGPUIndexedPrimitives(render_pass, mesh_data->num_indices, mesh_data->num_instances, 0, 0, 0);
+	if (mesh_data->index_buffer) {
+		SDL_BindGPUIndexBuffer(
+			render_pass, &(SDL_GPUBufferBinding) { .buffer = mesh_data->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
+		);
+
+		SDL_DrawGPUIndexedPrimitives(render_pass, mesh_data->num_indices, mesh_data->num_instances, 0, 0, 0);
+	} else {
+		SDL_DrawGPUPrimitives(render_pass, mesh_data->num_vertices, mesh_data->num_instances, 0, 0);
+	}
 }
 
 
