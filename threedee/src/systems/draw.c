@@ -6,6 +6,8 @@
 
 
 void draw_entities() {
+    draw_triangle_2d(vec2(500.0f, 200.0f), vec2(100.0f, 0.0f), vec2(0.0f, 100.0f), COLOR_RED);
+
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
         if (light) {

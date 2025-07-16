@@ -176,6 +176,15 @@ FloatColor get_float_color(float r, float g, float b, float a) {
     return color;
 }
 
+FloatColor to_float_color(Color color) {
+    FloatColor float_color;
+    float_color.r = color.r / 255.0f;
+    float_color.g = color.g / 255.0f;
+    float_color.b = color.b / 255.0f;
+    float_color.a = color.a / 255.0f;
+    return float_color;
+}
+
 void permute(int* array, int size) {
     for (int i = 0; i < size; i++) {
         // Warning: skewed distribution

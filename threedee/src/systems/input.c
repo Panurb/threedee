@@ -179,12 +179,11 @@ void replace_actions(String output, String input) {
 }
 
 
-Vector2 get_mouse_position(int camera) {
-    // int x;
-    // int y;
-    // SDL_GetMouseState(&x, &y);
-    // return screen_to_world(camera, (Vector2) {x, y});
-    return zeros2();
+Vector2 get_mouse_position() {
+    float x;
+    float y;
+    SDL_GetMouseState(&x, &y);
+    return (Vector2) { x / game_settings.width, y / game_settings.height };
 }
 
 

@@ -475,10 +475,10 @@ Matrix4 orthographic_projection_matrix(float left, float right, float bottom, fl
     Matrix4 m = matrix4_id();
     m._11 = 2.0f / (right - left);
     m._22 = 2.0f / (top - bottom);
-    m._33 = 1.0f / (near - far);
-    m._41 = -(right + left) / (right - left);
-    m._42 = -(top + bottom) / (top - bottom);
-    m._43 = near / (near - far);
+    m._33 = 1.0f / (far - near);
+    m._14 = -(right + left) / (right - left);
+    m._24 = -(top + bottom) / (top - bottom);
+    m._34 = near / (near - far);
     return m;
 }
 
@@ -512,10 +512,10 @@ void matrix3_print(Matrix3 m) {
 }
 
 void matrix4_print(Matrix4 m) {
-    printf("[[%.2f, %.2f, %.2f, %.2f]\n", m._11, m._12, m._13, m._14);
-    printf("[%.2f, %.2f, %.2f, %.2f]\n", m._21, m._22, m._23, m._24);
-    printf("[%.2f, %.2f, %.2f, %.2f]\n", m._31, m._32, m._33, m._34);
-    printf("[%.2f, %.2f, %.2f, %.2f]]\n", m._41, m._42, m._43, m._44);
+    printf("[[%.5f, %.5f, %.5f, %.5f],\n", m._11, m._12, m._13, m._14);
+    printf("[%.5f, %.5f, %.5f, %.5f],\n", m._21, m._22, m._23, m._24);
+    printf("[%.5f, %.5f, %.5f, %.5f],\n", m._31, m._32, m._33, m._34);
+    printf("[%.5f, %.5f, %.5f, %.5f]]\n", m._41, m._42, m._43, m._44);
 }
 
 

@@ -166,6 +166,8 @@ Color get_color(float r, float g, float b, float a);
 
 FloatColor get_float_color(float r, float g, float b, float a);
 
+FloatColor to_float_color(Color color);
+
 void permute(int* array, int size);
 
 float lerp(float a, float b, float t);

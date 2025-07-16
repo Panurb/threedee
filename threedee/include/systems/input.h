@@ -42,7 +42,7 @@ typedef enum {
     ACTION_AMMO
 } PlayerAction;
 
-Vector2 get_mouse_position(int camera);
+Vector2 get_mouse_position();
 
 const char* key_to_string(SDL_Scancode key);
 

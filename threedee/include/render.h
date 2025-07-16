@@ -22,12 +22,6 @@ typedef struct PositionTextureVertex {
 } PositionTextureVertex;
 
 
-typedef struct {
-	Vector2 position;
-	Vector2 uv;
-} PositionTextureVertex2D;
-
-
 typedef struct UniformData {
 	float near_plane;
 	float far_plane;
@@ -54,6 +48,14 @@ typedef struct {
 	Matrix4 transform;
 	FloatColor color;
 } InstanceColorData;
+
+
+typedef struct InstanceColorData2D {
+	float transform_row0[4];
+	float transform_row1[4];
+	float transform_row2[4];
+	FloatColor color;
+} InstanceColorData2D;
 
 
 typedef struct {
@@ -118,3 +120,5 @@ void render_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color);
 void render_arrow(Vector3 start, Vector3 end, float thickness, Color color);
 
 void render_plane(Plane plane, Color color);
+
+void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color);
