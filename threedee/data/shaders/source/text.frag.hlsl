@@ -6,12 +6,8 @@ struct Input
     float2 tex_coord : TEXCOORD0;
 };
 
-struct Output
+float4 main(Input input) : SV_Target0
 {
-    float4 color : SV_Target0;
-};
-
-Output main(Input input)
-{
-    return tex.Sample(sampler_tex, input.tex_coord);
+    float alpha = tex.Sample(sampler_tex, input.tex_coord).a;
+    return float4(1.0f, 1.0f, 1.0f, alpha);
 }

@@ -22,6 +22,12 @@ typedef struct PositionTextureVertex {
 } PositionTextureVertex;
 
 
+typedef struct PositionTextureVertex2D {
+	Vector2 position;
+	Vector2 uv;
+} PositionTextureVertex2D;
+
+
 typedef struct UniformData {
 	float near_plane;
 	float far_plane;
@@ -109,7 +115,7 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 
 void add_light(Entity entity);
 
-void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int light_index);
+void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int light_index);
 
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 
@@ -128,3 +134,5 @@ void render_plane(Plane plane, Color color);
 void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color);
 
 void draw_circle_2d(Vector2 center, float radius, Color color);
+
+void draw_text(String string, Vector2 position, int size, Color color);

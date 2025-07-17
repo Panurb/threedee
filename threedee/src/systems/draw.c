@@ -12,6 +12,8 @@ void draw_entities() {
         get_color(1.0f, 1.0f, 1.0f, 0.5f)
     );
 
+    draw_text("test", vec2(-0.49f, 0.49f), 128, get_color(1.0f, 1.0f, 1.0f, 1.0f));
+
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
         if (light) {
@@ -24,7 +26,7 @@ void draw_entities() {
 
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
         if (mesh_component) {
-            render_mesh(
+            draw_mesh(
                 get_transform(entity),
                 mesh_component->mesh_index,
                 mesh_component->texture_index,

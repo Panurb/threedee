@@ -17,6 +17,7 @@
 
 typedef enum {
 	PIPELINE_2D,
+	PIPELINE_TEXT,
 	PIPELINE_3D,
 	PIPELINE_3D_TEXTURED,
 	PIPELINE_SHADOW_DEPTH,
@@ -41,7 +42,7 @@ static int num_lights = 0;
 
 static MeshData triangle_mesh;
 static MeshData triangle_2d_mesh;
-static MeshData text_mesh;
+static ArrayList* text_meshes;
 
 
 SDL_GPUSampleCount get_sample_count() {
@@ -196,14 +197,14 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 }
 
 
-SDL_GPUGraphicsPipeline* create_render_pipeline_2d_textured() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "position_color_2d.vert", 0, 1, 1, 0);
+SDL_GPUGraphicsPipeline* create_render_pipeline_text() {
+	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "text.vert", 0, 1, 0, 0);
 	if (!vertex_shader) {
 		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -231,14 +232,19 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d_textured() {
 				.slot = 0,
 				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
 				.instance_step_rate = 0,
-				.pitch = sizeof(Vector2)
+				.pitch = sizeof(PositionTextureVertex2D)
 			}},
-			.num_vertex_attributes = 1,
+			.num_vertex_attributes = 2,
 			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
 				.buffer_slot = 0,
 				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
 				.location = 0,
 				.offset = 0
+			}, {
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+				.location = 1,
+				.offset = sizeof(float) * 2
 			}}
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
@@ -355,6 +361,9 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 		return NULL;
 	}
 
+	SDL_PropertiesID props = SDL_CreateProperties();
+	SDL_SetStringProperty(props, SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING, "3d textured");
+
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
@@ -420,12 +429,14 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 		.vertex_shader = vertex_shader,
 		.fragment_shader = fragment_shader,
+		.props = props
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
 
 	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
 	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
+	SDL_DestroyProperties(props);
 
 	if (!pipeline) {
 		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
@@ -730,26 +741,23 @@ MeshData create_mesh_triangle_2d() {
 }
 
 
-MeshData create_mesh_text(TTF_GPUAtlasDrawSequence draw_sequence) {
+MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
 	MeshData mesh_data = {
 		.name = "text",
-		.max_instances = 256,
-		.num_instances = 0,
-		.instance_size = sizeof(InstanceColorData2D),
-		.num_indices = 0,
-		.index_buffer = NULL,
+		.num_vertices = data.num_vertices,
+		.num_indices = data.num_indices,
+		.texture = data.atlas_texture,
+		.num_instances = 1
 	};
 
-	mesh_data.num_vertices = 3;
     mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(Vector2) * mesh_data.num_vertices,
+            .size = sizeof(PositionTextureVertex2D) * mesh_data.num_vertices,
         }
     );
 
-	mesh_data.num_indices = 3;
 	mesh_data.index_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
@@ -762,35 +770,24 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence draw_sequence) {
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        	.size = sizeof(Vector3) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+        	.size = sizeof(PositionTextureVertex2D) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
         }
     );
 
-    mesh_data.instance_buffer = SDL_CreateGPUBuffer(
-        app.gpu_device,
-        &(SDL_GPUBufferCreateInfo){
-            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
-        }
-    );
+    PositionTextureVertex2D* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
 
-    mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
-        }
-    );
-
-    Vector2* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
-
-    transfer_data[0] = (Vector2) { 0.0f, 0.0f };
-	transfer_data[1] = (Vector2) { 1.0f, 0.0f };
-	transfer_data[2] = (Vector2) { 0.0f, 1.0f };
+	float w = (float)game_settings.width;
+	float h = (float)game_settings.height;
+    for (int i = 0; i < mesh_data.num_vertices; ++i) {
+    	SDL_FPoint xy = data.xy[i];
+    	SDL_FPoint uv = data.uv[i];
+		transfer_data[i] = (PositionTextureVertex2D) { xy.x / w, xy.y / h, uv.x, uv.y };
+	}
 
 	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
-	const Uint16 indices[3] = { 0, 1, 2 };
-	SDL_memcpy(index_data, indices, sizeof(indices));
+	for (int i = 0; i < mesh_data.num_indices; ++i) {
+		index_data[i] = data.indices[i];
+	}
 
     SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
@@ -806,7 +803,7 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence draw_sequence) {
         &(SDL_GPUBufferRegion) {
             .buffer = mesh_data.vertex_buffer,
             .offset = 0,
-            .size = sizeof(Vector2) * mesh_data.num_vertices
+            .size = sizeof(PositionTextureVertex2D) * mesh_data.num_vertices
         },
         false
     );
@@ -815,7 +812,7 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence draw_sequence) {
 		copy_pass,
 		&(SDL_GPUTransferBufferLocation) {
 			.transfer_buffer = transfer_buffer,
-			.offset = sizeof(Vector3) * mesh_data.num_vertices
+			.offset = sizeof(PositionTextureVertex2D) * mesh_data.num_vertices
 		},
 		&(SDL_GPUBufferRegion) {
 			.buffer = mesh_data.index_buffer,
@@ -882,6 +879,7 @@ void init_render() {
 
 	pipelines = malloc(sizeof(SDL_GPUGraphicsPipeline*) * PIPELINE_COUNT);
 	pipelines[PIPELINE_2D] = create_render_pipeline_2d();
+	pipelines[PIPELINE_TEXT] = create_render_pipeline_text();
 	pipelines[PIPELINE_3D] = create_render_pipeline_3d();
 	pipelines[PIPELINE_3D_TEXTURED] = create_render_pipeline_3d_textured();
 	pipelines[PIPELINE_SHADOW_DEPTH] = create_render_pipeline_shadow_depth();
@@ -890,6 +888,7 @@ void init_render() {
 
 	triangle_mesh = create_mesh_triangle();
 	triangle_2d_mesh = create_mesh_triangle_2d();
+	text_meshes = ArrayList_create(sizeof(MeshData));
 
 	sampler = SDL_CreateGPUSampler(
 		app.gpu_device,
@@ -949,34 +948,21 @@ void apply_render_settings() {
 }
 
 
-void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
-			MeshData* mesh_data, Pipeline pipeline) {
-	if (mesh_data->num_instances == 0) {
-		return;
-	}
-
-	// LOG_INFO("Rendering mesh %s with %d instances", mesh_data->name, mesh_data->num_instances);
-	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
-
-	SDL_UploadToGPUBuffer(
-		copy_pass,
-		&(SDL_GPUTransferBufferLocation) {
-			.transfer_buffer = mesh_data->instance_transfer_buffer,
-			.offset = 0
-		},
-		&(SDL_GPUBufferRegion) {
-			.buffer = mesh_data->instance_buffer,
-			.offset = 0,
-			.size = mesh_data->instance_size * mesh_data->num_instances
-		},
-		true
-	);
-
-	SDL_EndGPUCopyPass(copy_pass);
-
+void render_mesh(SDL_GPURenderPass* render_pass, MeshData* mesh_data, Pipeline pipeline) {
 	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[pipeline]);
 	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = mesh_data->vertex_buffer, .offset = 0 }, 1);
-	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh_data->instance_buffer, 1);
+
+	if (mesh_data->texture) {
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			0,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = mesh_data->texture,
+				.sampler = sampler,
+			},
+			1
+		);
+	}
 
 	if (pipeline == PIPELINE_3D_TEXTURED) {
 		SDL_BindGPUFragmentSamplers(
@@ -1017,6 +1003,37 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 	} else {
 		SDL_DrawGPUPrimitives(render_pass, mesh_data->num_vertices, mesh_data->num_instances, 0, 0);
 	}
+}
+
+
+void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass,
+			MeshData* mesh_data, Pipeline pipeline) {
+	if (mesh_data->num_instances == 0) {
+		return;
+	}
+
+	// LOG_INFO("Rendering mesh %s with %d instances", mesh_data->name, mesh_data->num_instances);
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = mesh_data->instance_transfer_buffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = mesh_data->instance_buffer,
+			.offset = 0,
+			.size = mesh_data->instance_size * mesh_data->num_instances
+		},
+		true
+	);
+
+	SDL_EndGPUCopyPass(copy_pass);
+
+	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh_data->instance_buffer, 1);
+
+	render_mesh(render_pass, mesh_data, pipeline);
 }
 
 
@@ -1293,8 +1310,6 @@ void render() {
 		);
 
 		float aspect_ratio = (float)game_settings.width / (float)game_settings.height;
-		float w = game_settings.width / 2.0f;
-		float h = game_settings.height / 2.0f;
 		Matrix4 ortho_projection = orthographic_projection_matrix(
 			-aspect_ratio, aspect_ratio,
 			-1.0f, 1.0f,
@@ -1304,6 +1319,10 @@ void render() {
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &ortho_projection, sizeof(Matrix4));
 
 		render_instances(command_buffer, render_pass, &triangle_2d_mesh, PIPELINE_2D);
+		for (int i = 0; i < text_meshes->size; i++) {
+			MeshData* text_mesh = ArrayList_get(text_meshes, i);
+			render_mesh(render_pass, text_mesh, PIPELINE_TEXT);
+		}
 
 		SDL_EndGPURenderPass(render_pass);
 	}
@@ -1315,6 +1334,7 @@ void render() {
 	}
 	triangle_mesh.num_instances = 0;
 	triangle_2d_mesh.num_instances = 0;
+	ArrayList_clear(text_meshes);
 
 	SDL_SubmitGPUCommandBuffer(command_buffer);
 	command_buffer = NULL;
@@ -1377,7 +1397,7 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 }
 
 
-void render_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, Visibility visibility) {
+void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, Visibility visibility) {
 	MeshData* mesh_data = &resources.meshes[mesh_index];
 
 	if (mesh_data->num_instances >= mesh_data->max_instances) {
@@ -1634,7 +1654,14 @@ void draw_circle_2d(Vector2 center, float radius, Color color) {
 
 
 void draw_text(String string, Vector2 position, int size, Color color) {
-	TTF_Text* text = TTF_CreateText(app.text_engine, resources.fonts[size], string, 0);
+	TTF_Text* text = TTF_CreateText(app.text_engine, resources.fonts[0], string, 0);
 
-	TTF_GPUAtlasDrawSequence* atlas = TTF_GetGPUTextDrawData(text);
+	TTF_GPUAtlasDrawSequence* data = TTF_GetGPUTextDrawData(text);
+
+	if (data->next != NULL) {
+		LOG_WARNING("Text %s has more than one draw sequence, only the first will be rendered", string);
+	}
+
+	MeshData mesh_data = create_mesh_text(*data);
+	ArrayList_add(text_meshes, &mesh_data);
 }

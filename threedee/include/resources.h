@@ -10,6 +10,7 @@
 #define MAX_MATERIALS 128
 #define MAX_SOUNDS 128
 #define MAX_MESHES 128
+#define MAX_FONTS 16
 
 
 typedef struct {
@@ -31,6 +32,7 @@ typedef struct MeshData {
     int max_instances;
     SDL_GPUTransferBuffer* instance_transfer_buffer;
     int instance_size;
+    SDL_GPUTexture* texture;
 } MeshData;
 
 
@@ -44,7 +46,9 @@ typedef struct {
     int materials_size;
     Material materials[MAX_TEXTURES];
 
-    TTF_Font* fonts[301];
+    String font_names[MAX_FONTS];
+    TTF_Font* fonts[MAX_FONTS];
+    int fonts_size;
 
     String sound_names[MAX_SOUNDS];
     int sounds_size;

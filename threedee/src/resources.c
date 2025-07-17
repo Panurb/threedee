@@ -431,12 +431,13 @@ void load_normal_maps() {
 
 
 void load_fonts() {
-	resources.fonts[0] = NULL;
-	for (int size = 1; size <= 300; size++) {
-		resources.fonts[size] = TTF_OpenFont("data/Helvetica.ttf", size);
-		if (!resources.fonts[size]) {
-			fprintf(stderr, "Error loading font: %s\n", SDL_GetError());
-			exit(1);
+	resources.fonts_size = list_files_alphabetically("data/fonts/*.ttf", resources.font_names);
+	for (int i = 0; i < resources.fonts_size; i++) {
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/fonts/", resources.font_names[i], ".ttf");
+		resources.fonts[i] = TTF_OpenFont(path, 300);
+		if (!resources.fonts[i]) {
+			LOG_ERROR("Failed to load font: %s", path);
 		}
 	}
 }
