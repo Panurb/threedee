@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "interface.h"
 
@@ -41,6 +42,7 @@ typedef struct {
     AppState state;
     const char* base_path;
     SDL_GPUDevice* gpu_device;
+    TTF_TextEngine* text_engine;
     int debug_level;
 } App;
 

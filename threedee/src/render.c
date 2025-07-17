@@ -41,6 +41,7 @@ static int num_lights = 0;
 
 static MeshData triangle_mesh;
 static MeshData triangle_2d_mesh;
+static MeshData text_mesh;
 
 
 SDL_GPUSampleCount get_sample_count() {
@@ -133,6 +134,69 @@ SDL_GPUShader* load_shader(
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
+	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "position_color_2d.vert", 0, 1, 1, 0);
+	if (!vertex_shader) {
+		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
+	if (!fragment_shader) {
+		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
+		return NULL;
+	}
+
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+				.blend_state = (SDL_GPUColorTargetBlendState) {
+					.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+					.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+					.color_blend_op = SDL_GPU_BLENDOP_ADD,
+					.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+					.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+					.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+					.enable_blend = true
+				}
+			}},
+		},
+		.vertex_input_state = (SDL_GPUVertexInputState){
+			.num_vertex_buffers = 1,
+			.vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+				.slot = 0,
+				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+				.instance_step_rate = 0,
+				.pitch = sizeof(Vector2)
+			}},
+			.num_vertex_attributes = 1,
+			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
+				.buffer_slot = 0,
+				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+				.location = 0,
+				.offset = 0
+			}}
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+		.vertex_shader = vertex_shader,
+		.fragment_shader = fragment_shader,
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
+	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
+SDL_GPUGraphicsPipeline* create_render_pipeline_2d_textured() {
 	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "position_color_2d.vert", 0, 1, 1, 0);
 	if (!vertex_shader) {
 		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
@@ -657,6 +721,109 @@ MeshData create_mesh_triangle_2d() {
         },
         false
     );
+
+    SDL_EndGPUCopyPass(copy_pass);
+    SDL_SubmitGPUCommandBuffer(upload_command_buffer);
+    SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+	return mesh_data;
+}
+
+
+MeshData create_mesh_text(TTF_GPUAtlasDrawSequence draw_sequence) {
+	MeshData mesh_data = {
+		.name = "text",
+		.max_instances = 256,
+		.num_instances = 0,
+		.instance_size = sizeof(InstanceColorData2D),
+		.num_indices = 0,
+		.index_buffer = NULL,
+	};
+
+	mesh_data.num_vertices = 3;
+    mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+            .size = sizeof(Vector2) * mesh_data.num_vertices,
+        }
+    );
+
+	mesh_data.num_indices = 3;
+	mesh_data.index_buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
+			.size = sizeof(Uint16) * mesh_data.num_indices,
+		}
+	);
+
+    SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
+        app.gpu_device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        	.size = sizeof(Vector3) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+        }
+    );
+
+    mesh_data.instance_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+            .size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
+        }
+    );
+
+    mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
+        app.gpu_device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
+        }
+    );
+
+    Vector2* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+
+    transfer_data[0] = (Vector2) { 0.0f, 0.0f };
+	transfer_data[1] = (Vector2) { 1.0f, 0.0f };
+	transfer_data[2] = (Vector2) { 0.0f, 1.0f };
+
+	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
+	const Uint16 indices[3] = { 0, 1, 2 };
+	SDL_memcpy(index_data, indices, sizeof(indices));
+
+    SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+    SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+    SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
+
+    SDL_UploadToGPUBuffer(
+        copy_pass,
+        &(SDL_GPUTransferBufferLocation) {
+            .transfer_buffer = transfer_buffer,
+            .offset = 0
+        },
+        &(SDL_GPUBufferRegion) {
+            .buffer = mesh_data.vertex_buffer,
+            .offset = 0,
+            .size = sizeof(Vector2) * mesh_data.num_vertices
+        },
+        false
+    );
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = transfer_buffer,
+			.offset = sizeof(Vector3) * mesh_data.num_vertices
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = mesh_data.index_buffer,
+			.offset = 0,
+			.size = sizeof(Uint16) * mesh_data.num_indices
+		},
+		false
+	);
 
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
@@ -1435,9 +1602,10 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
 
 	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, triangle_2d_mesh.instance_transfer_buffer, false);
 	InstanceColorData2D instance_data = {
-		.transform_row0 = { b.x - a.x, c.x - a.x, a.x, 0.0f },
-		.transform_row1 = { b.y - a.y, c.y - a.y, a.y, 0.0f },
-		.transform_row2 = { 0.0f, 0.0f, 1.0f, 0.0f },
+		.transform = {
+			b.x - a.x, c.x - a.x, a.x, 0.0f,
+			b.y - a.y, c.y - a.y, a.y, 0.0f,
+		},
 		.color = to_float_color(color)
 	};
 	instance_datas[triangle_2d_mesh.num_instances] = instance_data;
@@ -1462,4 +1630,11 @@ void draw_circle_2d(Vector2 center, float radius, Color color) {
 		draw_triangle_2d(center, prev_point, current_point, color);
 		prev_point = current_point;
 	}
+}
+
+
+void draw_text(String string, Vector2 position, int size, Color color) {
+	TTF_Text* text = TTF_CreateText(app.text_engine, resources.fonts[size], string, 0);
+
+	TTF_GPUAtlasDrawSequence* atlas = TTF_GetGPUTextDrawData(text);
 }

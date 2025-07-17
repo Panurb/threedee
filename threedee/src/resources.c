@@ -430,6 +430,18 @@ void load_normal_maps() {
 }
 
 
+void load_fonts() {
+	resources.fonts[0] = NULL;
+	for (int size = 1; size <= 300; size++) {
+		resources.fonts[size] = TTF_OpenFont("data/Helvetica.ttf", size);
+		if (!resources.fonts[size]) {
+			fprintf(stderr, "Error loading font: %s\n", SDL_GetError());
+			exit(1);
+		}
+	}
+}
+
+
 void load_resources() {
     LOG_INFO("Loading resources");
 
@@ -437,6 +449,7 @@ void load_resources() {
 
 	load_textures();
 	load_normal_maps();
+	load_fonts();
 
     resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
     for (int i = 0; i < resources.sounds_size; i++) {

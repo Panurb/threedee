@@ -7,7 +7,7 @@ struct InstanceData
 {
     float4 transform_row0;
     float4 transform_row1;
-    float4 color;
+    int tex_index : packoffset(c5);
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);
@@ -20,7 +20,7 @@ struct Input
 
 struct Output
 {
-    float4 color : TEXCOORD0;
+    float2 tex_coord : TEXCOORD0;
     float4 position : SV_Position;
 };
 
@@ -29,7 +29,7 @@ Output main(Input input)
     InstanceData instance = instance_data[input.instance_id];
 
     Output output;
-    output.color = instance.color;
+    output.tex_coord = input.tex_coord;
     float2x3 transform = float2x3(
         instance.transform_row0.xyz,
         instance.transform_row1.xyz

@@ -45,11 +45,6 @@ void create_game_window() {
 void destroy_game_window() {
     SDL_DestroyWindow(app.window);
     app.window = NULL;
-
-    // SDL_ReleaseGPUGraphicsPipeline(app.gpu_device, pipeline);
-    // pipeline = NULL;
-    // SDL_ReleaseGPUBuffer(app.gpu_device, vertex_buffer);
-    // vertex_buffer = NULL;
 }
 
 
@@ -69,7 +64,6 @@ void init() {
     setbuf(stdout, NULL);
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO);
-    // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
     TTF_Init();
     Mix_OpenAudio(0, NULL);
@@ -105,6 +99,7 @@ void init() {
 
     create_game_window();
     init_render();
+    app.text_engine = TTF_CreateGPUTextEngine(app.gpu_device);
     load_resources();
     create_scene();
 
@@ -117,6 +112,7 @@ void quit() {
     destroy_game_window();
 
     Mix_CloseAudio();
+    TTF_DestroyGPUTextEngine(app.text_engine);
     TTF_Quit();
     SDL_Quit();
 }

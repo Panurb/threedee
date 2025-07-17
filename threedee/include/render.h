@@ -50,10 +50,14 @@ typedef struct {
 } InstanceColorData;
 
 
+typedef struct Matrix2x3 {
+	float _11, _12, _13, _pad1;
+	float _21, _22, _23, _pad2;
+} Matrix2x3;
+
+
 typedef struct InstanceColorData2D {
-	float transform_row0[4];
-	float transform_row1[4];
-	float transform_row2[4];
+	Matrix2x3 transform;
 	FloatColor color;
 } InstanceColorData2D;
 
