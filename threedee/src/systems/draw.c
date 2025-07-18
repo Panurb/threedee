@@ -12,7 +12,7 @@ void draw_entities() {
         get_color(1.0f, 1.0f, 1.0f, 0.5f)
     );
 
-    draw_text("test", vec2(-0.49f, 0.49f), 128, get_color(1.0f, 1.0f, 1.0f, 1.0f));
+    draw_text("HELLO", vec2(-0.49f, 0.49f), 1.0f, get_color(1.0f, 1.0f, 1.0f, 1.0f));
 
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);

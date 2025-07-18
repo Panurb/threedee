@@ -42,7 +42,7 @@ static int num_lights = 0;
 
 static MeshData triangle_mesh;
 static MeshData triangle_2d_mesh;
-static ArrayList* text_meshes;
+static ArrayList* texts;
 
 
 SDL_GPUSampleCount get_sample_count() {
@@ -204,7 +204,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_text() {
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "text.frag", 1, 1, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -741,7 +741,28 @@ MeshData create_mesh_triangle_2d() {
 }
 
 
-MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
+Vector2 get_text_center(TTF_GPUAtlasDrawSequence data) {
+	float min_x = INFINITY;
+	float min_y = INFINITY;
+	float max_x = -INFINITY;
+	float max_y = -INFINITY;
+
+	for (int i = 0; i < data.num_vertices; ++i) {
+		SDL_FPoint xy = data.xy[i];
+		min_x = fminf(min_x, xy.x);
+		min_y = fminf(min_y, xy.y);
+		max_x = fmaxf(max_x, xy.x);
+		max_y = fmaxf(max_y, xy.y);
+	}
+
+	return (Vector2) {
+		.x = (min_x + max_x) * 0.5f,
+		.y = (min_y + max_y) * 0.5f
+	};
+}
+
+
+MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data, float size) {
 	MeshData mesh_data = {
 		.name = "text",
 		.num_vertices = data.num_vertices,
@@ -776,12 +797,17 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
 
     PositionTextureVertex2D* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
 
-	float w = (float)game_settings.width;
-	float h = (float)game_settings.height;
+	// Match text pixel size to screen coordinates
+	float scale = size / 216.0f;
+
+	Vector2 text_center = get_text_center(data);
+	float w = text_center.x;
+	float h = text_center.y;
+
     for (int i = 0; i < mesh_data.num_vertices; ++i) {
     	SDL_FPoint xy = data.xy[i];
     	SDL_FPoint uv = data.uv[i];
-		transfer_data[i] = (PositionTextureVertex2D) { xy.x / w, xy.y / h, uv.x, uv.y };
+		transfer_data[i] = (PositionTextureVertex2D) { (xy.x - w) * scale, (xy.y - h) * scale, uv.x, uv.y };
 	}
 
 	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
@@ -888,7 +914,7 @@ void init_render() {
 
 	triangle_mesh = create_mesh_triangle();
 	triangle_2d_mesh = create_mesh_triangle_2d();
-	text_meshes = ArrayList_create(sizeof(MeshData));
+	texts = ArrayList_create(sizeof(TextData));
 
 	sampler = SDL_CreateGPUSampler(
 		app.gpu_device,
@@ -1317,11 +1343,13 @@ void render() {
 		);
 		ortho_projection = transpose4(ortho_projection);
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &ortho_projection, sizeof(Matrix4));
+		FloatColor color = to_float_color(COLOR_RED);
+		SDL_PushGPUFragmentUniformData(command_buffer, 0, &color, sizeof(FloatColor));
 
 		render_instances(command_buffer, render_pass, &triangle_2d_mesh, PIPELINE_2D);
-		for (int i = 0; i < text_meshes->size; i++) {
-			MeshData* text_mesh = ArrayList_get(text_meshes, i);
-			render_mesh(render_pass, text_mesh, PIPELINE_TEXT);
+		for (int i = 0; i < texts->size; i++) {
+			TextData* text = ArrayList_get(texts, i);
+			render_mesh(render_pass, &text->mesh, PIPELINE_TEXT);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
@@ -1334,7 +1362,7 @@ void render() {
 	}
 	triangle_mesh.num_instances = 0;
 	triangle_2d_mesh.num_instances = 0;
-	ArrayList_clear(text_meshes);
+	ArrayList_clear(texts);
 
 	SDL_SubmitGPUCommandBuffer(command_buffer);
 	command_buffer = NULL;
@@ -1653,7 +1681,7 @@ void draw_circle_2d(Vector2 center, float radius, Color color) {
 }
 
 
-void draw_text(String string, Vector2 position, int size, Color color) {
+void draw_text(String string, Vector2 position, float size, Color color) {
 	TTF_Text* text = TTF_CreateText(app.text_engine, resources.fonts[0], string, 0);
 
 	TTF_GPUAtlasDrawSequence* data = TTF_GetGPUTextDrawData(text);
@@ -1662,6 +1690,11 @@ void draw_text(String string, Vector2 position, int size, Color color) {
 		LOG_WARNING("Text %s has more than one draw sequence, only the first will be rendered", string);
 	}
 
-	MeshData mesh_data = create_mesh_text(*data);
-	ArrayList_add(text_meshes, &mesh_data);
+	MeshData mesh_data = create_mesh_text(*data, size);
+	TextData text_data = {
+		.mesh = mesh_data,
+		.position = position,
+		.color = color
+	};
+	ArrayList_add(texts, &text_data);
 }

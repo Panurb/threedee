@@ -81,6 +81,13 @@ typedef struct {
 } LightData;
 
 
+typedef struct TextData {
+	MeshData mesh;
+	Color color;
+	Vector2 position;
+} TextData;
+
+
 typedef struct {
 	Matrix4 projection_view_matrix;
 	Visibility visibility_mask;
@@ -135,4 +142,4 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color);
 
 void draw_circle_2d(Vector2 center, float radius, Color color);
 
-void draw_text(String string, Vector2 position, int size, Color color);
+void draw_text(String string, Vector2 position, float size, Color color);
