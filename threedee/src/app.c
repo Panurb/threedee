@@ -173,6 +173,7 @@ void update(float time_step) {
 
 void draw() {
     draw_entities();
+    FPSCounter_draw(app.fps);
     render();
 }
 
