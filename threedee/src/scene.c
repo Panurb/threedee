@@ -121,7 +121,7 @@ void create_scene() {
 
     scene = malloc(sizeof(Scene));
     scene->components = ComponentData_create();
-    scene->menu_camera = create_menu_camera();
+    scene->screen_camera = create_screen_camera();
     scene->player = create_player(vec3(0.0f, 2.0f, 0.0f));
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;

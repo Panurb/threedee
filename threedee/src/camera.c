@@ -18,7 +18,7 @@ int create_camera() {
 }
 
 
-int create_menu_camera() {
+int create_screen_camera() {
     int i = create_entity();
     TransformComponent_add(i, zeros3());
     CameraComponent* cam = CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, 25.0f);

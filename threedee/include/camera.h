@@ -5,14 +5,9 @@
 #include "component.h"
 
 
-typedef enum {
-    SHADER_NONE,
-    SHADER_OUTLINE
-} CameraShader;
-
 int create_camera();
 
-int create_menu_camera();
+int create_screen_camera();
 
 Vector2 camera_size(int camera);
 

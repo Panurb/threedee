@@ -198,13 +198,13 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_text() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "text.vert", 0, 1, 0, 0);
+	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "text.vert", 0, 1, 1, 0);
 	if (!vertex_shader) {
 		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "text.frag", 1, 1, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -768,7 +768,9 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data, float size) {
 		.num_vertices = data.num_vertices,
 		.num_indices = data.num_indices,
 		.texture = data.atlas_texture,
-		.num_instances = 1
+		.num_instances = 0,
+		.max_instances = 256,
+		.instance_size = sizeof(InstanceColorData2D),
 	};
 
     mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
@@ -784,6 +786,22 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data, float size) {
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
 			.size = sizeof(Uint16) * mesh_data.num_indices,
+		}
+	);
+
+	mesh_data.instance_buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+			.size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
+		}
+	);
+
+	mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
+		app.gpu_device,
+		&(SDL_GPUTransferBufferCreateInfo){
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
 		}
 	);
 
@@ -959,6 +977,19 @@ void init_render() {
 }
 
 
+void destroy_mesh(MeshData* mesh_data) {
+	if (!mesh_data) return;
+
+	SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->vertex_buffer);
+	SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->instance_buffer);
+	SDL_ReleaseGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer);
+
+	if (mesh_data->index_buffer) {
+		SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->index_buffer);
+	}
+}
+
+
 void apply_render_settings() {
 	// Needs to be called if resolution, antialiasing settings change
 	SDL_ReleaseGPUGraphicsPipeline(app.gpu_device, pipelines[PIPELINE_3D]);
@@ -1038,7 +1069,10 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 		return;
 	}
 
-	// LOG_INFO("Rendering mesh %s with %d instances", mesh_data->name, mesh_data->num_instances);
+	if (mesh_data->instance_size == 0) {
+		LOG_ERROR("Instance size is zero");
+	}
+
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 
 	SDL_UploadToGPUBuffer(
@@ -1335,25 +1369,22 @@ void render() {
 			NULL
 		);
 
-		float aspect_ratio = (float)game_settings.width / (float)game_settings.height;
-		Matrix4 ortho_projection = orthographic_projection_matrix(
-			-aspect_ratio, aspect_ratio,
-			-1.0f, 1.0f,
-			0.0f, 1.0f
-		);
-		ortho_projection = transpose4(ortho_projection);
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &ortho_projection, sizeof(Matrix4));
-		FloatColor color = to_float_color(COLOR_RED);
-		SDL_PushGPUFragmentUniformData(command_buffer, 0, &color, sizeof(FloatColor));
+		CameraComponent* screen_camera = get_component(scene->screen_camera, COMPONENT_CAMERA);
+		projection_matrix = transpose4(screen_camera->projection_matrix);
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_matrix, sizeof(Matrix4));
 
 		render_instances(command_buffer, render_pass, &triangle_2d_mesh, PIPELINE_2D);
+
 		for (int i = 0; i < texts->size; i++) {
 			TextData* text = ArrayList_get(texts, i);
-			render_mesh(render_pass, &text->mesh, PIPELINE_TEXT);
+			render_instances(command_buffer, render_pass, &text->mesh, PIPELINE_TEXT);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
 	}
+
+	SDL_SubmitGPUCommandBuffer(command_buffer);
+	command_buffer = NULL;
 
 	// Reset instance counts for next frame
 	num_lights = 0;
@@ -1362,10 +1393,11 @@ void render() {
 	}
 	triangle_mesh.num_instances = 0;
 	triangle_2d_mesh.num_instances = 0;
+	for (int i = 0; i < texts->size; i++) {
+		TextData* text = ArrayList_get(texts, i);
+		destroy_mesh(&text->mesh);
+	}
 	ArrayList_clear(texts);
-
-	SDL_SubmitGPUCommandBuffer(command_buffer);
-	command_buffer = NULL;
 }
 
 
@@ -1691,6 +1723,20 @@ void draw_text(String string, Vector2 position, float size, Color color) {
 	}
 
 	MeshData mesh_data = create_mesh_text(*data, size);
+
+	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, mesh_data.instance_transfer_buffer, false);
+	InstanceColorData2D instance_data = {
+		.transform = {
+			1.0f, 0.0f, position.x, 0.0f,
+			0.0f, 1.0f, position.y, 0.0f
+		},
+		.color = to_float_color(color)
+	};
+	instance_datas[mesh_data.num_instances] = instance_data;
+	mesh_data.num_instances++;
+
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data.instance_transfer_buffer);
+
 	TextData text_data = {
 		.mesh = mesh_data,
 		.position = position,
