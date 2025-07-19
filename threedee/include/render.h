@@ -74,7 +74,7 @@ typedef struct {
 	Vector3 direction;
 	float cutoff_cos;
 	Vector3 diffuse_color;
-	float _pad2;
+	float range;
 	Vector3 specular_color;
 	float _pad3;
 	Matrix4 projection_view_matrix;

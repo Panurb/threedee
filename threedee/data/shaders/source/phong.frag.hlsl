@@ -25,6 +25,7 @@ struct LightData
     float3 direction : packoffset(c1);
     float cutoff_cos : packoffset(c1.w);
     float3 diffuse_color : packoffset(c2);
+    float range : packoffset(c2.w);
     float3 specular_color : packoffset(c3);
     float4x4 projection_view_matrix : packoffset(c4);
 };
@@ -124,6 +125,11 @@ Output main(Input input)
         float spot_cos = dot(-l, light_data[i].direction);
         float spot_intensity = saturate((spot_cos - light_data[i].cutoff_cos) / (1.0 - light_data[i].cutoff_cos));
 
+        float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
+        float fade = smoothstep(light_data[i].range, 0.8 * light_data[i].range, distance);
+        attenuation *= fade;
+        spot_intensity *= attenuation;
+
         if (diff <= 0.0 || spot_intensity <= 0.0) {
             continue;
         }
@@ -164,7 +170,6 @@ Output main(Input input)
 
     Output result;
     result.color = float4(fogged_color, alpha);
-    //result.color = float4(fade.xxx, 1.0);
     result.depth = position.z;
     return result;
 }
