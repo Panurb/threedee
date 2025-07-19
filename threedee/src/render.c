@@ -762,7 +762,7 @@ Vector2 get_text_center(TTF_GPUAtlasDrawSequence data) {
 }
 
 
-MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data, float size) {
+MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
 	MeshData mesh_data = {
 		.name = "text",
 		.num_vertices = data.num_vertices,
@@ -815,9 +815,6 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data, float size) {
 
     PositionTextureVertex2D* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
 
-	// Match text pixel size to screen coordinates
-	float scale = size / 216.0f;
-
 	Vector2 text_center = get_text_center(data);
 	float w = text_center.x;
 	float h = text_center.y;
@@ -825,7 +822,7 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data, float size) {
     for (int i = 0; i < mesh_data.num_vertices; ++i) {
     	SDL_FPoint xy = data.xy[i];
     	SDL_FPoint uv = data.uv[i];
-		transfer_data[i] = (PositionTextureVertex2D) { (xy.x - w) * scale, (xy.y - h) * scale, uv.x, uv.y };
+		transfer_data[i] = (PositionTextureVertex2D) { xy.x - w, xy.y - h, uv.x, uv.y };
 	}
 
 	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
@@ -932,7 +929,7 @@ void init_render() {
 
 	triangle_mesh = create_mesh_triangle();
 	triangle_2d_mesh = create_mesh_triangle_2d();
-	texts = ArrayList_create(sizeof(TextData));
+	texts = ArrayList_create(sizeof(MeshData));
 
 	sampler = SDL_CreateGPUSampler(
 		app.gpu_device,
@@ -1376,8 +1373,8 @@ void render() {
 		render_instances(command_buffer, render_pass, &triangle_2d_mesh, PIPELINE_2D);
 
 		for (int i = 0; i < texts->size; i++) {
-			TextData* text = ArrayList_get(texts, i);
-			render_instances(command_buffer, render_pass, &text->mesh, PIPELINE_TEXT);
+			MeshData* text = ArrayList_get(texts, i);
+			render_instances(command_buffer, render_pass, text, PIPELINE_TEXT);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
@@ -1393,10 +1390,7 @@ void render() {
 	}
 	triangle_mesh.num_instances = 0;
 	triangle_2d_mesh.num_instances = 0;
-	for (int i = 0; i < texts->size; i++) {
-		TextData* text = ArrayList_get(texts, i);
-		destroy_mesh(&text->mesh);
-	}
+	ArrayList_for_each(texts, destroy_mesh);
 	ArrayList_clear(texts);
 }
 
@@ -1713,7 +1707,7 @@ void draw_circle_2d(Vector2 center, float radius, Color color) {
 }
 
 
-void draw_text(String string, Vector2 position, float size, Color color) {
+void draw_text(String string, Vector2 position, float angle, float size, Color color) {
 	TTF_Text* text = TTF_CreateText(app.text_engine, resources.fonts[0], string, 0);
 
 	TTF_GPUAtlasDrawSequence* data = TTF_GetGPUTextDrawData(text);
@@ -1722,13 +1716,17 @@ void draw_text(String string, Vector2 position, float size, Color color) {
 		LOG_WARNING("Text %s has more than one draw sequence, only the first will be rendered", string);
 	}
 
-	MeshData mesh_data = create_mesh_text(*data, size);
+	MeshData mesh_data = create_mesh_text(*data);
+	strcpy(mesh_data.name, text->text);
+
+	// Match text pixel size to screen coordinates
+	float scale = size / 216.0f;
 
 	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, mesh_data.instance_transfer_buffer, false);
 	InstanceColorData2D instance_data = {
 		.transform = {
-			1.0f, 0.0f, position.x, 0.0f,
-			0.0f, 1.0f, position.y, 0.0f
+			scale * cosf(angle), -scale * sinf(angle), position.x, 0.0f,
+			scale * sinf(angle), scale * cosf(angle), position.y, 0.0f
 		},
 		.color = to_float_color(color)
 	};
@@ -1737,10 +1735,5 @@ void draw_text(String string, Vector2 position, float size, Color color) {
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data.instance_transfer_buffer);
 
-	TextData text_data = {
-		.mesh = mesh_data,
-		.position = position,
-		.color = color
-	};
-	ArrayList_add(texts, &text_data);
+	ArrayList_add(texts, &mesh_data);
 }

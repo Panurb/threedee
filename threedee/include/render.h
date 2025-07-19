@@ -142,4 +142,4 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color);
 
 void draw_circle_2d(Vector2 center, float radius, Color color);
 
-void draw_text(String string, Vector2 position, float size, Color color);
+void draw_text(String string, Vector2 position, float angle, float size, Color color);
