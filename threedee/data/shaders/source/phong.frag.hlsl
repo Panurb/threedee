@@ -153,8 +153,18 @@ Output main(Input input)
         diff *= spot_intensity;
         spec *= spot_intensity;
 
-        diffuse += base_color * diff * light_data[i].diffuse_color * light_shadow_factor;
-        specular += input.specular * spec * light_data[i].specular_color * light_shadow_factor;
+        float3 diffuse_color = light_data[i].diffuse_color;
+        float3 specular_color = light_data[i].specular_color;
+
+        // Hidden entities light up in different color
+        // TODO: parametrize the color
+        if (input.ambient == 0.0) {
+            diffuse_color = float3(0.2, 5.0, 0.5);
+            specular_color = float3(0.2, 5.0, 0.5);
+        }
+
+        diffuse += base_color * diff * diffuse_color * light_shadow_factor;
+        specular += input.specular * spec * specular_color * light_shadow_factor;
     }
 
     float3 lit_color = ambient + diffuse + specular;

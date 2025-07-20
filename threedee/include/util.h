@@ -112,7 +112,9 @@ typedef union {
 #define COLOR_MAGENTA get_color(1.0f, 0.0f, 1.0f, 1.0f)
 #define COLOR_ORANGE get_color(1.0f, 0.6f, 0.0f, 1.0f)
 #define COLOR_BLUE get_color(0.0f, 0.0f, 1.0f, 1.0f)
+#define COLOR_CYAN get_color(0.0f, 1.0f, 1.0f, 1.0f)
 #define COLOR_SKY get_color(0.5f, 0.5f, 0.5f, 1.0f)
+#define COLOR_UV get_color(0.8f, 0.0f, 1.0f, 1.0f)
 
 #define STRING_SIZE 1024
 typedef char String[STRING_SIZE];

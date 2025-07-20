@@ -6,34 +6,36 @@
 #include "scene.h"
 
 
-MeshComponent* MeshComponent_add(Entity entity, String mesh_filename, String texture_filename, String material_filename) {
+MeshComponent* MeshComponent_add(Entity entity, MeshParameters params) {
     MeshComponent* mesh = malloc(sizeof(MeshComponent));
     mesh->mesh_index = -1;
     mesh->texture_index = -1;
     mesh->material_index = -1;
-    mesh->visibility = LIGHT_NORMAL | LIGHT_UV;
+    mesh->visibility = params.visibility ? params.visibility : LIGHT_ALL;
 
-    if (mesh_filename[0] != '\0') {
-        mesh->mesh_index = binary_search_filename(mesh_filename, resources.mesh_names, resources.meshes_size);
+    if (params.mesh_filename[0] != '\0') {
+        mesh->mesh_index = binary_search_filename(params.mesh_filename, resources.mesh_names, resources.meshes_size);
         if (mesh->mesh_index == -1) {
-            LOG_ERROR("Mesh not found: %s", mesh_filename);
+            LOG_ERROR("Mesh not found: %s", params.mesh_filename);
             free(mesh);
             return NULL;
         }
     }
 
-    if (texture_filename[0] != '\0') {
-        mesh->texture_index = binary_search_filename(texture_filename, resources.texture_names, resources.textures_size);
+    if (params.texture_filename[0] != '\0') {
+        mesh->texture_index = binary_search_filename(params.texture_filename, resources.texture_names, resources.textures_size);
         if (mesh->texture_index == -1) {
-            LOG_ERROR("Texture not found: %s", texture_filename);
+            LOG_ERROR("Texture not found: %s", params.texture_filename);
         }
     }
 
-    if (material_filename[0] != '\0') {
-        mesh->material_index = binary_search_filename(material_filename, resources.material_names, resources.materials_size);
+    if (params.material_filename[0] != '\0') {
+        mesh->material_index = binary_search_filename(params.material_filename, resources.material_names, resources.materials_size);
         if (mesh->material_index == -1) {
-            LOG_ERROR("Material not found: %s", material_filename);
+            LOG_ERROR("Material not found: %s", params.material_filename);
         }
+    } else {
+        mesh->material_index = binary_search_filename("default", resources.material_names, resources.materials_size);
     }
 
     scene->components->mesh[entity] = mesh;

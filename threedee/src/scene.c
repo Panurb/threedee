@@ -34,7 +34,7 @@ Entity create_player(Vector3 position) {
     Entity j = create_entity();
     TransformComponent_add(j, vec3(0.0f, -0.5f, 0.1f));
     look_at(j, vec3(0.0f, -0.5f, -1.0f));
-    LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_WHITE, .fov = 50.0f, .visibility_mask = LIGHT_UV });
+    LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_UV, .fov = 50.0f, .visibility_mask = LIGHT_UV });
     add_child(cam, j);
 
     return i;
@@ -45,7 +45,7 @@ Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
     TransformComponent_add(i, position);
     look_at(i, vec3(position.x, position.y - 1.0f, position.z));
-    MeshComponent_add(i, "cube", "bark", "default");
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "bark" });
     LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = LIGHT_NORMAL });
 
     return i;
@@ -57,7 +57,7 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
     TransformComponent* trans = TransformComponent_add(i, position);
     trans->position.y = position.y + 1.0f;
     trans->scale = vec3(width, 1.0f, depth);
-    MeshComponent_add(i, "cube", "tiles", "glass");
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     float window_width = 1.0f;
@@ -77,7 +77,7 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
             trans = TransformComponent_add(window, vec3(position.x, position.y + 2.0f, z));
             trans->scale = vec3(width, 1.0f, segment_depth);
         }
-        MeshComponent_add(window, "cube", "tiles", "glass");
+        MeshComponent_add(window, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
         ColliderComponent_add(window, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
     }
 
@@ -85,7 +85,7 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
     trans = TransformComponent_add(i, position);
     trans->position.y = position.y + 3.0f;
     trans->scale = vec3(width, 1.0f, depth);
-    MeshComponent_add(i, "cube", "tiles", "glass");
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     return i;
@@ -97,7 +97,11 @@ void create_tree(Vector3 position) {
     TransformComponent* trans = TransformComponent_add(i, position);
     trans->rotation = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), (float) (rand() % 360));
     trans->scale = diag3(randf(0.5f, 1.0f));
-    MeshComponent_add(i, "tree", "bark", "concrete");
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "tree",
+        .texture_filename = "bark",
+        .material_filename = "concrete",
+    });
 }
 
 
@@ -130,13 +134,21 @@ void create_scene() {
     trans = TransformComponent_add(i, vec3(0.0f, -0.01f, 0.0f));
     trans->scale.x = 100.0f;
     trans->scale.z = 100.0f;
-    MeshComponent_add(i, "cube", "gravel", "concrete");
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "cube",
+        .texture_filename = "gravel",
+        .material_filename = "concrete"
+    });
 
     i = create_entity();
     trans = TransformComponent_add(i, zeros3());
     trans->scale.x = 10.0f;
     trans->scale.z = 10.0f;
-    MeshComponent_add(i, "cube", "tiles", "concrete");
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "cube",
+        .texture_filename = "gravel",
+        .material_filename = "concrete"
+    });
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     create_forest(zeros3(), 50.0f, 50.0f, 3.0f, 10.0f);
@@ -149,8 +161,13 @@ void create_scene() {
     create_lamp(vec3(0.0f, 5.0f, 0.0f));
 
     i = create_entity();
-    TransformComponent_add(i, vec3(0.0f, 0.0f, 0.0f));
-    MeshComponent_add(i, "paper", "paper", "concrete");
+    TransformComponent_add(i, vec3(0.0f, 2.0f, 0.0f));
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "paper",
+        .texture_filename = "paper",
+        .material_filename = "hidden",
+        .visibility = LIGHT_UV
+    });
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
 
     scene->weather = create_entity();
