@@ -1104,8 +1104,8 @@ void add_light(Entity entity) {
 		.visibility_mask = light->visibility_mask,
 		.direction = quaternion_forward(get_rotation(entity)),
 		.cutoff_cos = cosf(to_radians(light->fov * 0.5f)),
-		.diffuse_color = { diffuse_color.r / 255.0f, diffuse_color.g / 255.0f, diffuse_color.b / 255.0f },
-		.specular_color = { specular_color.r / 255.0f, specular_color.g / 255.0f, specular_color.b / 255.0f },
+		.diffuse_color = { diffuse_color.r, diffuse_color.g, diffuse_color.b },
+		.specular_color = { specular_color.r, specular_color.g, specular_color.b },
 		.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
 		.range = light->range,
 	};
@@ -1251,9 +1251,9 @@ void render() {
 			.load_op = SDL_GPU_LOADOP_CLEAR,
 			.store_op = SDL_GPU_STOREOP_STORE,
 			.clear_color = {
-				.r = COLOR_SKY.r / 255.0f,
-				.g = COLOR_SKY.g / 255.0f,
-				.b = COLOR_SKY.b / 255.0f,
+				.r = COLOR_SKY.r,
+				.g = COLOR_SKY.g,
+				.b = COLOR_SKY.b,
 				.a = 1.0f
 			},
 		};
@@ -1287,11 +1287,7 @@ void render() {
 			.num_lights = num_lights,
 			.camera_position = get_position(scene->camera),
 			.shadow_map_resolution = SHADOW_MAP_RESOLUTION,
-			.fog_color = {
-				weather->fog_color.r / 255.0f,
-				weather->fog_color.g / 255.0f,
-				weather->fog_color.b / 255.0f
-			},
+			.fog_color = weather->fog_color,
 			.fog_start = weather->fog_start,
 			.fog_end = weather->fog_end,
 		};
@@ -1681,7 +1677,7 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
 			b.x - a.x, c.x - a.x, a.x, 0.0f,
 			b.y - a.y, c.y - a.y, a.y, 0.0f,
 		},
-		.color = to_float_color(color)
+		.color = color
 	};
 	instance_datas[triangle_2d_mesh.num_instances] = instance_data;
 	triangle_2d_mesh.num_instances++;
@@ -1729,7 +1725,7 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 			scale * cosf(angle), -scale * sinf(angle), position.x, 0.0f,
 			scale * sinf(angle), scale * cosf(angle), position.y, 0.0f
 		},
-		.color = to_float_color(color)
+		.color = color
 	};
 	instance_datas[mesh_data.num_instances] = instance_data;
 	mesh_data.num_instances++;

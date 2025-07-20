@@ -50,18 +50,11 @@ typedef struct {
 } Rect;
 
 typedef struct {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    unsigned char a;
-} Color;
-
-typedef struct {
     float r;
     float g;
     float b;
     float a;
-} FloatColor;
+} Color;
 
 typedef struct {
     Vector3 normal;
@@ -165,10 +158,6 @@ int maxi(int a, int b);
 float mod(float x, float y);
 
 Color get_color(float r, float g, float b, float a);
-
-FloatColor get_float_color(float r, float g, float b, float a);
-
-FloatColor to_float_color(Color color);
 
 void permute(int* array, int size);
 

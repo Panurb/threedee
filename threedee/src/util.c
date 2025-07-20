@@ -160,29 +160,11 @@ float mod(float x, float y) {
 
 Color get_color(float r, float g, float b, float a) {
     Color color;
-    color.r = (int) (r * 255);
-    color.g = (int) (g * 255);
-    color.b = (int) (b * 255);
-    color.a = (int) (a * 255);
-    return color;
-}
-
-FloatColor get_float_color(float r, float g, float b, float a) {
-    FloatColor color;
     color.r = r;
     color.g = g;
     color.b = b;
     color.a = a;
     return color;
-}
-
-FloatColor to_float_color(Color color) {
-    FloatColor float_color;
-    float_color.r = color.r / 255.0f;
-    float_color.g = color.g / 255.0f;
-    float_color.b = color.b / 255.0f;
-    float_color.a = color.a / 255.0f;
-    return float_color;
 }
 
 void permute(int* array, int size) {

@@ -35,7 +35,7 @@ typedef struct UniformData {
 	int num_lights;
 	Vector3 camera_position;
 	int shadow_map_resolution;
-	FloatColor fog_color;
+	Color fog_color;
 	float fog_start;
 	float fog_end;
 } UniformData;
@@ -52,7 +52,7 @@ typedef struct {
 
 typedef struct {
 	Matrix4 transform;
-	FloatColor color;
+	Color color;
 } InstanceColorData;
 
 
@@ -64,7 +64,7 @@ typedef struct Matrix2x3 {
 
 typedef struct InstanceColorData2D {
 	Matrix2x3 transform;
-	FloatColor color;
+	Color color;
 } InstanceColorData2D;
 
 
