@@ -20,7 +20,7 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, float mass) {
     rigid_body->on_ground = false;
     rigid_body->angular_damping = 0.95f;
     rigid_body->linear_damping = 0.999f;
-    rigid_body->inv_inertia = matrix3_id();
+    rigid_body->inv_inertia = identity3();
     rigid_body->max_speed = 10.0f;
     rigid_body->max_angular_speed = 2.0f;
     rigid_body->axis_lock.x = false;

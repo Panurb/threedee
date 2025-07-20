@@ -196,7 +196,7 @@ Matrix4 get_transform(Entity entity) {
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
     Matrix4 transform = transform_matrix(trans->position, trans->rotation, trans->scale);
     if (trans->parent != NULL_ENTITY) {
-        return matrix4_mult(get_transform(trans->parent), transform);
+        return matrix4_mul(get_transform(trans->parent), transform);
     }
     return transform;
 }
@@ -297,11 +297,11 @@ Vector3 get_entities_center(List* entities) {
         int i = node->value;
         TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
         if (trans->parent == NULL_ENTITY) {
-            center = sum3(center, get_position(i));
+            center = add3(center, get_position(i));
         }
     }
     if (entities->size != 0) {
-        center = mult3(1.0f / entities->size, center);
+        center = mul3(1.0f / entities->size, center);
     }
 
     return center;
@@ -310,7 +310,7 @@ Vector3 get_entities_center(List* entities) {
 
 void look_at(Entity entity, Vector3 target) {
     Vector3 position = get_position(entity);
-    Vector3 direction = diff3(target, position);
+    Vector3 direction = sub3(target, position);
     Vector3 up = vec3(0.0f, 1.0f, 0.0f);
     if (fabsf(dot3(direction, up)) > 0.99f) {
         // If the direction is almost vertical, use a different up vector

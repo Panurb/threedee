@@ -334,10 +334,10 @@ void input_players() {
 
             Vector2 v = controller->controller.left_stick;
             Vector3 velocity = vec3(v.x, 0.0f, -v.y);
-            velocity = mult3(3.0f, normalized3(velocity));
+            velocity = mul3(3.0f, normalized3(velocity));
 
             Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
-            velocity = matrix3_map(rot, velocity);
+            velocity = map3(rot, velocity);
 
             rb->velocity.x = velocity.x;
             rb->velocity.z = velocity.z;
@@ -364,7 +364,7 @@ void input_players() {
         if (controller->controller.buttons_pressed[BUTTON_RT]) {
             if (player->grabbed_entity != NULL_ENTITY) {
                 Vector3 dir = look_direction(scene->camera);
-                apply_impulse(player->grabbed_entity, get_position(player->grabbed_entity), mult3(10.0f, dir));
+                apply_impulse(player->grabbed_entity, get_position(player->grabbed_entity), mul3(10.0f, dir));
                 RigidBodyComponent* grabbed_rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
                 if (grabbed_rb) {
                     grabbed_rb->gravity_scale = 1.0f;
@@ -401,20 +401,20 @@ void input_players() {
         }
 
         if (player->grabbed_entity != NULL_ENTITY) {
-            Vector3 target_position = sum3(get_position(camera), mult3(2.0f, look_direction(camera)));
+            Vector3 target_position = add3(get_position(camera), mul3(2.0f, look_direction(camera)));
             Quaternion target_rotation = get_rotation(camera);
 
             // Update grabbed entity position to camera position
             trans = get_component(player->grabbed_entity, COMPONENT_TRANSFORM);
             RigidBodyComponent* rb = get_component(player->grabbed_entity, COMPONENT_RIGIDBODY);
             if (rb) {
-                Vector3 delta = diff3(target_position, get_position(player->grabbed_entity));
-                rb->velocity = mult3(10.0f, delta);
+                Vector3 delta = sub3(target_position, get_position(player->grabbed_entity));
+                rb->velocity = mul3(10.0f, delta);
                 rb->asleep = false;
             } else {
                 player->examine_yaw -= controller->controller.right_stick.x;
 
-                target_position = sum3(get_position(camera), mult3(1.0f, look_direction(camera)));
+                target_position = add3(get_position(camera), mul3(1.0f, look_direction(camera)));
                 trans->position = lerp3(get_position(player->grabbed_entity), target_position, 0.5f);
 
                 Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->examine_yaw));

@@ -12,7 +12,7 @@ typedef struct {
     Entity parent;
     List* children;
     float lifetime;
-    Filename prefab;
+    String prefab;
     struct {
         Vector3 position;
         Quaternion rotation;

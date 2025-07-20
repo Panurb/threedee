@@ -30,9 +30,9 @@
 
 void load_sounds();
 
-void add_sound(int entity, Filename filename, float volume, float pitch);
+void add_sound(int entity, String filename, float volume, float pitch);
 
-void loop_sound(int entity, Filename filename, float volume, float pitch);
+void loop_sound(int entity, String filename, float volume, float pitch);
 
 void stop_loop(int entity);
 

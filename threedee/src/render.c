@@ -1240,9 +1240,9 @@ void render() {
 		render_shadow_maps(command_buffer);
 
 		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
-		Matrix4 view_matrix = transform_inverse(get_transform(scene->camera));
+		Matrix4 view_matrix = inverse_transform(get_transform(scene->camera));
 		Matrix4 projection_matrix = camera->projection_matrix;
-		Matrix4 projection_view_matrix = transpose4(matrix4_mult(projection_matrix, view_matrix));
+		Matrix4 projection_view_matrix = transpose4(matrix4_mul(projection_matrix, view_matrix));
 
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view_matrix, sizeof(Matrix4));
 
@@ -1483,8 +1483,8 @@ void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int materia
 
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 	Vector3 n = cross(
-		diff3(b, a),
-		diff3(c, a)
+		sub3(b, a),
+		sub3(c, a)
 	);
 	Matrix4 transform = {
 		b.x - a.x, c.x - a.x, n.x, a.x,
@@ -1520,7 +1520,7 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 
 
 void render_line(Vector3 start, Vector3 end, float thickness, Color color) {
-	Vector3 direction = diff3(end, start);
+	Vector3 direction = sub3(end, start);
 	if (norm3(direction) < 1e-6f) return; // Avoid zero-length lines
 
 	Vector3 up = {0.0f, 0.0f, 1.0f};
@@ -1528,12 +1528,12 @@ void render_line(Vector3 start, Vector3 end, float thickness, Color color) {
 		up = (Vector3){0.0f, 1.0f, 0.0f}; // Use a different up if parallel
 	}
 	Vector3 perpendicular = normalized3(cross(direction, up));
-	Vector3 half_offset = mult3(thickness / 2.0f, perpendicular);
+	Vector3 half_offset = mul3(thickness / 2.0f, perpendicular);
 
-	Vector3 a = sum3(start, half_offset);
-	Vector3 b = sum3(end, half_offset);
-	Vector3 c = diff3(end, half_offset);
-	Vector3 d = diff3(start, half_offset);
+	Vector3 a = add3(start, half_offset);
+	Vector3 b = add3(end, half_offset);
+	Vector3 c = sub3(end, half_offset);
+	Vector3 d = sub3(start, half_offset);
 
 	render_triangle(a, b, c, color);
 	render_triangle(a, c, d, color);
@@ -1610,14 +1610,14 @@ void render_arrow(Vector3 start, Vector3 end, float thickness, Color color) {
 	float tip_length = 4.0f * thickness;
 	float tip_width = 5.0f * thickness;
 
-	Vector3 direction = diff3(end, start);
+	Vector3 direction = sub3(end, start);
 	float len = norm3(direction);
 	if (len < 1e-6f) return;
 	Vector3 dir = normalized3(direction);
 
 	render_line(
 		start,
-		sum3(start, mult3(fmaxf(len - tip_length, 0.0f), dir)),
+		add3(start, mul3(fmaxf(len - tip_length, 0.0f), dir)),
 		thickness,
 		color
 	);
@@ -1628,9 +1628,9 @@ void render_arrow(Vector3 start, Vector3 end, float thickness, Color color) {
 	}
 	Vector3 perp = normalized3(cross(dir, up));
 
-	Vector3 tip_base = diff3(end, mult3(tip_length, dir));
-	Vector3 left = sum3(tip_base, mult3(tip_width / 2.0f, perp));
-	Vector3 right = diff3(tip_base, mult3(tip_width / 2.0f, perp));
+	Vector3 tip_base = sub3(end, mul3(tip_length, dir));
+	Vector3 left = add3(tip_base, mul3(tip_width / 2.0f, perp));
+	Vector3 right = sub3(tip_base, mul3(tip_width / 2.0f, perp));
 
 	render_triangle(end, left, right, color);
 }
@@ -1646,11 +1646,11 @@ void render_plane(Plane plane, Color color) {
 	Vector3 forward = normalized3(cross(right, plane.normal));
 
 	float size = 100.0f; // Size of the plane
-	Vector3 center = mult3(plane.offset, plane.normal);
-	Vector3 a = sum3(center, mult3(size, right));
-	Vector3 b = sum3(center, mult3(size, forward));
-	Vector3 c = diff3(center, mult3(size, right));
-	Vector3 d = diff3(center, mult3(size, forward));
+	Vector3 center = mul3(plane.offset, plane.normal);
+	Vector3 a = add3(center, mul3(size, right));
+	Vector3 b = add3(center, mul3(size, forward));
+	Vector3 c = sub3(center, mul3(size, right));
+	Vector3 d = sub3(center, mul3(size, forward));
 
 	render_quad(a, b, c, d, color);
 }

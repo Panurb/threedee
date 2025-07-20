@@ -29,12 +29,12 @@ void load_sounds() {
 }
 
 
-int sound_index(Filename filename) {
+int sound_index(String filename) {
     return binary_search_filename(filename, resources.sound_names, resources.sounds_size);
 }
 
 
-void add_sound(int entity, Filename filename, float volume, float pitch) {
+void add_sound(int entity, String filename, float volume, float pitch) {
     SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
     for (int i = 0; i < scomp->size; i++) {
         if (!scomp->events[i]) {
@@ -51,7 +51,7 @@ void add_sound(int entity, Filename filename, float volume, float pitch) {
 }
 
 
-void loop_sound(int entity, Filename filename, float volume, float pitch) {
+void loop_sound(int entity, String filename, float volume, float pitch) {
     SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
     for (int i = 0; i < scomp->size; i++) {
         if (!scomp->events[i]) {
@@ -100,12 +100,12 @@ void play_sounds(int camera) {
         if (!scomp) continue;
 
         Vector3 position = get_position(i);
-        float dist = norm3(diff3(position, get_position(camera)));
+        float dist = norm3(sub3(position, get_position(camera)));
         float max_dist = 10.0f;
 
         Matrix4 camera_transform = get_transform(camera);
 
-        Vector4 position_rel = matrix4_map(transform_inverse(camera_transform), vec4(position.x, position.y, position.z, 1.0f));
+        Vector4 position_rel = map4(inverse_transform(camera_transform), vec4(position.x, position.y, position.z, 1.0f));
 
         float angle = to_degrees(atan2f(position_rel.x, position_rel.z));
 

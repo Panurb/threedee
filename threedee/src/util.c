@@ -294,16 +294,16 @@ bool collides_aabb(Vector2 pos1, float w1, float h1, Vector2 pos2, float w2, flo
 
 bool point_inside_rectangle(Vector2 position, float angle, float width, float height, Vector2 point) {
     Vector2 hw = polar_to_cartesian(0.5f * width, angle);
-    Vector2 hh = mult(height / width, perp(hw));
+    Vector2 hh = mul2(height / width, perp(hw));
 
-    Vector2 a = sum(position, sum(hw, hh));
-    Vector2 b = diff2(a, mult(2, hh));
-    Vector2 c = diff2(b, mult(2, hw));
-    Vector2 d = sum(c, mult(2, hh));
+    Vector2 a = add2(position, add2(hw, hh));
+    Vector2 b = sub2(a, mul2(2, hh));
+    Vector2 c = sub2(b, mul2(2, hw));
+    Vector2 d = add2(c, mul2(2, hh));
 
-    Vector2 am = diff2(point, a);
-    Vector2 ab = diff2(b, a);
-    Vector2 ad = diff2(d, a);
+    Vector2 am = sub2(point, a);
+    Vector2 ab = sub2(b, a);
+    Vector2 ad = sub2(d, a);
 
     if (0.0f < dot2(am, ab) && dot2(am, ab) < dot2(ab, ab) && 0.0f < dot2(am, ad) && dot2(am, ad) < dot2(ad, ad)) {
         return true;
@@ -315,7 +315,7 @@ void get_circle_points(Vector2 position, float radius, int n, Vector2* points) {
     points[0] = position;
     for (int i = 0; i < n - 1; i++) {
         float angle = 2.0f * M_PI * i / (n - 1);
-        points[i + 1] = sum(position, polar_to_cartesian(radius, angle));
+        points[i + 1] = add2(position, polar_to_cartesian(radius, angle));
     }
 }
 
@@ -325,18 +325,18 @@ void get_ellipse_points(Vector2 position, float major, float minor, float angle,
 
     for (int i = 0; i < n - 1; i++) {
         float a = 2.0f * M_PI * i / (n - 1);
-        points[i + 1] = sum(position, matrix_mult(rot, vec2(major * cosf(a), minor * sinf(a))));
+        points[i + 1] = add2(position, map2(rot, vec2(major * cosf(a), minor * sinf(a))));
     }
 }
 
 void get_rect_corners(Vector2 position, float angle, float width, float height, Vector2* corners) {
     Vector2 hw = polar_to_cartesian(0.5f * width, angle);
-    Vector2 hh = mult(height / width, perp(hw));
+    Vector2 hh = mul2(height / width, perp(hw));
 
-    Vector2 a = sum(position, sum(hw, hh));
-    Vector2 b = diff2(a, mult(2, hh));
-    Vector2 c = diff2(b, mult(2, hw));
-    Vector2 d = sum(c, mult(2, hh));
+    Vector2 a = add2(position, add2(hw, hh));
+    Vector2 b = sub2(a, mul2(2, hh));
+    Vector2 c = sub2(b, mul2(2, hw));
+    Vector2 d = add2(c, mul2(2, hh));
 
     corners[0] = a;
     corners[1] = b;

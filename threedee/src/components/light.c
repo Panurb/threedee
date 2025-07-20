@@ -55,7 +55,7 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
             .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
         }
     );
-    light->shadow_map.projection_view_matrix = matrix4_id();
+    light->shadow_map.projection_view_matrix = identity4();
 
     scene->components->light[entity] = light;
 

@@ -93,25 +93,25 @@ Vector2 polar_to_cartesian(float length, float angle);
 
 Vector2 perp(Vector2 v);
 
-Vector2 sum(Vector2 v, Vector2 u);
+Vector2 add2(Vector2 v, Vector2 u);
 
-Vector3 sum3(Vector3 v, Vector3 u);
+Vector3 add3(Vector3 v, Vector3 u);
 
-Vector2 diff2(Vector2 v, Vector2 u);
+Vector2 sub2(Vector2 v, Vector2 u);
 
-Vector3 diff3(Vector3 v, Vector3 u);
+Vector3 sub3(Vector3 v, Vector3 u);
 
-Vector2 mult(float c, Vector2 v);
+Vector2 mul2(float c, Vector2 v);
 
-Vector3 mult3(float c, Vector3 v);
+Vector3 mul3(float c, Vector3 v);
 
-Vector4 mult4(float c, Vector4 v);
+Vector4 mul4(float c, Vector4 v);
 
 Vector3 neg3(Vector3 v);
 
 Vector3 div3(float c, Vector3 v);
 
-Vector2 proj(Vector2 a, Vector2 b);
+Vector2 proj2(Vector2 a, Vector2 b);
 
 Vector3 proj3(Vector3 a, Vector3 b);
 
@@ -125,33 +125,33 @@ float polar_angle(Vector2 v);
 
 Matrix2 rotation_matrix(float angle);
 
-Vector2 matrix_mult(Matrix2 m, Vector2 v);
+Vector2 map2(Matrix2 m, Vector2 v);
 
-Matrix2 transpose(Matrix2 m);
+Matrix2 transpose2(Matrix2 m);
 
 Matrix3 transpose3(Matrix3 m);
 
 Matrix4 transpose4(Matrix4 m);
 
-Matrix2 matrix2_inverse(Matrix2 m);
+Matrix2 inverse2(Matrix2 m);
 
-Matrix3 matrix3_inverse(Matrix3 m);
+Matrix3 inverse3(Matrix3 m);
 
-Matrix4 transform_inverse(Matrix4 m);
+Matrix4 inverse_transform(Matrix4 m);
 
-Matrix3 matrix3_mult(Matrix3 m, Matrix3 n);
+Matrix3 matrix3_mul(Matrix3 m, Matrix3 n);
 
-Matrix4 matrix4_mult(Matrix4 m, Matrix4 n);
+Matrix4 matrix4_mul(Matrix4 m, Matrix4 n);
 
-Matrix3 matrix3_id(void);
+Matrix3 identity3(void);
 
-Matrix4 matrix4_id();
+Matrix4 identity4(void);
 
 Matrix4 transform_matrix(Vector3 position, Quaternion rotation, Vector3 scale);
 
-Vector3 matrix3_map(Matrix3 m, Vector3 v);
+Vector3 map3(Matrix3 m, Vector3 v);
 
-Vector4 matrix4_map(Matrix4 m, Vector4 v);
+Vector4 map4(Matrix4 m, Vector4 v);
 
 Vector3 position_from_transform(Matrix4 m);
 
@@ -161,7 +161,7 @@ Quaternion rotation_from_transform(Matrix4 m);
 
 Vector3 quaternion_forward(Quaternion q);
 
-bool non_zero(Vector2 v);
+bool non_zero2(Vector2 v);
 
 bool non_zero3(Vector3 v);
 
@@ -191,12 +191,12 @@ Vector3 clamp_magnitude3(Vector3 v, float min, float max);
 
 Vector3 clamp3(Vector3 v, Vector3 min, Vector3 max);
 
-Matrix3 matrix3_abs(Matrix3 m);
+Matrix3 mat3_abs(Matrix3 m);
 
-Matrix3 matrix3_add_scalar(Matrix3 m, float c);
+Matrix3 mat3_add_scalar(Matrix3 m, float c);
 
-Vector3 matrix3_row(Matrix3 m, int i);
+Vector3 mat3_row(Matrix3 m, int i);
 
-Vector3 matrix3_column(Matrix3 m, int i);
+Vector3 mat3_column(Matrix3 m, int i);
 
 float mat3_get(Matrix3 m, int i, int j);

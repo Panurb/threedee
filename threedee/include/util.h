@@ -112,11 +112,6 @@ typedef union {
 #define STRING_SIZE 1024
 typedef char String[STRING_SIZE];
 
-typedef char Filename[128];
-
-#define BUTTON_TEXT_SIZE 128
-typedef char ButtonText[BUTTON_TEXT_SIZE];
-
 void fill(int* array, int value, int size);
 
 bool fequal(float a, float b, float epsilon);

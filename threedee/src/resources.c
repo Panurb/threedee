@@ -156,10 +156,10 @@ SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
 
 
 Vector3 calculate_tangent(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 uv0, Vector2 uv1, Vector2 uv2) {
-	Vector3 edge1 = diff3(v1, v0);
-	Vector3 edge2 = diff3(v2, v0);
-	Vector2 delta_uv1 = diff2(uv1, uv0);
-	Vector2 delta_uv2 = diff2(uv2, uv0);
+	Vector3 edge1 = sub3(v1, v0);
+	Vector3 edge2 = sub3(v2, v0);
+	Vector2 delta_uv1 = sub2(uv1, uv0);
+	Vector2 delta_uv2 = sub2(uv2, uv0);
 
 	float f = 1.0f / (delta_uv1.x * delta_uv2.y - delta_uv1.y * delta_uv2.x);
 	Vector3 tangent;
@@ -328,9 +328,9 @@ MeshData load_mesh(String path) {
 			u0, u1, u2,
 			uv0, uv1, uv2
 		);
-		transfer_data[i0].tangent = normalized3(sum3(transfer_data[i0].tangent, tangent));
-		transfer_data[i1].tangent = normalized3(sum3(transfer_data[i1].tangent, tangent));
-		transfer_data[i2].tangent = normalized3(sum3(transfer_data[i2].tangent, tangent));
+		transfer_data[i0].tangent = normalized3(add3(transfer_data[i0].tangent, tangent));
+		transfer_data[i1].tangent = normalized3(add3(transfer_data[i1].tangent, tangent));
+		transfer_data[i2].tangent = normalized3(add3(transfer_data[i2].tangent, tangent));
 	}
 
 	ArrayList_destroy(unique_vertices);

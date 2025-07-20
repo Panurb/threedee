@@ -59,7 +59,7 @@ Shape get_shape(Entity entity) {
         case COLLIDER_PLANE: {
             Vector4 up = { 0.0f, 1.0f, 0.0f, 0.0f };
             Matrix4 transform = get_transform(entity);
-            up = matrix4_map(transform, up);
+            up = map4(transform, up);
             Vector3 plane_normal = (Vector3) { up.x, up.y, up.z };
             float plane_offset = dot3(position, plane_normal) + radius;
 
@@ -176,9 +176,9 @@ void draw_collider(Entity entity) {
         case COLLIDER_CUBOID:
             break;
         case COLLIDER_CAPSULE:
-            Vector3 h = matrix3_map(rot, vec3(0.0f, collider->height / 2.0f, 0.0f));
-            Vector3 p0 = sum3(position, h);
-            Vector3 p1 = sum3(position, neg3(h));
+            Vector3 h = map3(rot, vec3(0.0f, collider->height / 2.0f, 0.0f));
+            Vector3 p0 = add3(position, h);
+            Vector3 p1 = add3(position, neg3(h));
             render_sphere(p0, collider->radius, 16, color);
             render_sphere(p1, collider->radius, 16, color);
             break;

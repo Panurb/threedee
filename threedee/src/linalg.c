@@ -131,7 +131,7 @@ float signed_angle(Vector2 a, Vector2 b) {
 }
 
 Vector2 bisector(Vector2 a, Vector2 b) {
-    return normalized2(sum(normalized2(a), normalized2(b)));
+    return normalized2(add2(normalized2(a), normalized2(b)));
 }
 
 Vector2 polar_to_cartesian(float length, float angle) {
@@ -143,31 +143,31 @@ Vector2 perp(Vector2 v) {
     return (Vector2) { -v.y, v.x };
 }
 
-Vector2 sum(Vector2 v, Vector2 u) {
+Vector2 add2(Vector2 v, Vector2 u) {
     return (Vector2) { v.x + u.x, v.y + u.y };
 }
 
-Vector3 sum3(Vector3 v, Vector3 u) {
+Vector3 add3(Vector3 v, Vector3 u) {
     return (Vector3) { v.x + u.x, v.y + u.y, v.z + u.z };
 }
 
-Vector2 diff2(Vector2 v, Vector2 u) {
+Vector2 sub2(Vector2 v, Vector2 u) {
     return (Vector2) { v.x - u.x, v.y - u.y };
 }
 
-Vector3 diff3(Vector3 v, Vector3 u) {
+Vector3 sub3(Vector3 v, Vector3 u) {
     return (Vector3) { v.x - u.x, v.y - u.y, v.z - u.z };
 }
 
-Vector2 mult(float c, Vector2 v) {
+Vector2 mul2(float c, Vector2 v) {
     return (Vector2) { c * v.x, c * v.y };
 }
 
-Vector3 mult3(float c, Vector3 v) {
+Vector3 mul3(float c, Vector3 v) {
     return (Vector3) { c * v.x, c * v.y, c * v.z };
 }
 
-Vector4 mult4(float c, Vector4 v) {
+Vector4 mul4(float c, Vector4 v) {
     return (Vector4) { c * v.x, c * v.y, c * v.z, c * v.w };
 }
 
@@ -183,18 +183,18 @@ Vector3 div3(float c, Vector3 v) {
     return (Vector3) { v.x / c, v.y / c, v.z / c };
 }
 
-Vector2 proj(Vector2 a, Vector2 b) {
+Vector2 proj2(Vector2 a, Vector2 b) {
     Vector2 b_norm = normalized2(b);
-    return mult(dot2(a, b_norm), b_norm);
+    return mul2(dot2(a, b_norm), b_norm);
 }
 
 Vector3 proj3(Vector3 a, Vector3 b) {
     Vector3 b_norm = normalized3(b);
-    return mult3(dot3(a, b_norm), b_norm);
+    return mul3(dot3(a, b_norm), b_norm);
 }
 
 Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u) {
-    return sum(mult(a, v), mult(b, u));
+    return add2(mul2(a, v), mul2(b, u));
 }
 
 Vector3 cross(Vector3 v, Vector3 u) {
@@ -221,11 +221,11 @@ Matrix2 rotation_matrix(float angle) {
     return (Matrix2) { c, -s, s, c };
 }
 
-Vector2 matrix_mult(Matrix2 m, Vector2 v) {
+Vector2 map2(Matrix2 m, Vector2 v) {
     return (Vector2) { m.a * v.x + m.b * v.y, m.c * v.x + m.d * v.y };
 }
 
-Matrix2 transpose(Matrix2 m) {
+Matrix2 transpose2(Matrix2 m) {
     return (Matrix2) { m.a, m.c, m.b, m.d };
 }
 
@@ -256,17 +256,17 @@ float matrix3_determinant(Matrix3 m) {
            m._13 * (m._21 * m._32 - m._22 * m._31);
 }
 
-Matrix2 matrix2_inverse(Matrix2 m) {
+Matrix2 inverse2(Matrix2 m) {
     float det = matrix2_determinant(m);
     return (Matrix2) { m.d / det, -m.b / det, -m.c / det, m.a / det };
 }
 
-Matrix3 matrix3_inverse(Matrix3 m) {
+Matrix3 inverse3(Matrix3 m) {
     float det = matrix3_determinant(m);
 
     if (fabsf(det) < 1e-6f) {
         LOG_ERROR("Matrix3 is singular, cannot compute inverse");
-        return matrix3_id();
+        return identity3();
     }
 
     float inv_det = 1.0f / det;
@@ -285,7 +285,7 @@ Matrix3 matrix3_inverse(Matrix3 m) {
     return inv;
 }
 
-Matrix4 transform_inverse(Matrix4 m) {
+Matrix4 inverse_transform(Matrix4 m) {
     Matrix3 r = {
         m._11, m._21, m._31,
         m._12, m._22, m._32,
@@ -298,7 +298,7 @@ Matrix4 transform_inverse(Matrix4 m) {
         m._34
     };
 
-    Vector3 rd = matrix3_map(r, d);
+    Vector3 rd = map3(r, d);
 
     Matrix4 m_inv = {
         r._11, r._12, r._13, -rd.x,
@@ -310,7 +310,7 @@ Matrix4 transform_inverse(Matrix4 m) {
     return m_inv;
 }
 
-Matrix3 matrix3_mult(Matrix3 m, Matrix3 n) {
+Matrix3 matrix3_mul(Matrix3 m, Matrix3 n) {
     Matrix3 mn;
     mn._11 = m._11 * n._11 + m._12 * n._21 + m._13 * n._31;
     mn._12 = m._11 * n._12 + m._12 * n._22 + m._13 * n._32;
@@ -325,7 +325,7 @@ Matrix3 matrix3_mult(Matrix3 m, Matrix3 n) {
     return mn;
 }
 
-Matrix4 matrix4_mult(Matrix4 m, Matrix4 n) {
+Matrix4 matrix4_mul(Matrix4 m, Matrix4 n) {
     // Do not assume homogenous matrices
     Matrix4 mn;
     mn._11 = m._11 * n._11 + m._12 * n._21 + m._13 * n._31 + m._14 * n._41;
@@ -347,7 +347,7 @@ Matrix4 matrix4_mult(Matrix4 m, Matrix4 n) {
     return mn;
 }
 
-Matrix3 matrix3_id(void) {
+Matrix3 identity3(void) {
     return (Matrix3) {
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
@@ -355,7 +355,7 @@ Matrix3 matrix3_id(void) {
     };
 }
 
-Matrix4 matrix4_id() {
+Matrix4 identity4(void) {
     return (Matrix4) {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -398,10 +398,10 @@ Matrix4 transform_matrix(Vector3 position, Quaternion rotation, Vector3 scale) {
     };
 
     // Combine: T * R * S
-    return matrix4_mult(trans, matrix4_mult(rot, scl));
+    return matrix4_mul(trans, matrix4_mul(rot, scl));
 }
 
-Vector3 matrix3_map(Matrix3 m, Vector3 v) {
+Vector3 map3(Matrix3 m, Vector3 v) {
     Vector3 result;
     result.x = m._11 * v.x + m._12 * v.y + m._13 * v.z;
     result.y = m._21 * v.x + m._22 * v.y + m._23 * v.z;
@@ -409,7 +409,7 @@ Vector3 matrix3_map(Matrix3 m, Vector3 v) {
     return result;
 }
 
-Vector4 matrix4_map(Matrix4 m, Vector4 v) {
+Vector4 map4(Matrix4 m, Vector4 v) {
     Vector4 result;
     result.x = m._11 * v.x + m._12 * v.y + m._13 * v.z + m._14 * v.w;
     result.y = m._21 * v.x + m._22 * v.y + m._23 * v.z + m._24 * v.w;
@@ -450,7 +450,7 @@ Vector3 quaternion_forward(Quaternion q) {
     };
 }
 
-bool non_zero(Vector2 v) {
+bool non_zero2(Vector2 v) {
     return (v.x != 0.0f || v.y != 0.0f);
 }
 
@@ -461,7 +461,7 @@ bool non_zero3(Vector3 v) {
 Matrix4 perspective_projection_matrix(float fov, float aspect_ratio, float near, float far) {
     // Depth is mapped to [0, 1] range as expected by Vulkan
     float f = 1.0f / tanf(fov / 2.0f);
-    Matrix4 m = matrix4_id();
+    Matrix4 m = identity4();
     m._11 = f / aspect_ratio;
     m._22 = f;
     m._33 = far / (near - far);
@@ -472,7 +472,7 @@ Matrix4 perspective_projection_matrix(float fov, float aspect_ratio, float near,
 }
 
 Matrix4 orthographic_projection_matrix(float left, float right, float bottom, float top, float near, float far) {
-    Matrix4 m = matrix4_id();
+    Matrix4 m = identity4();
     m._11 = 2.0f / (right - left);
     m._22 = 2.0f / (top - bottom);
     m._33 = 1.0f / (far - near);
@@ -483,7 +483,7 @@ Matrix4 orthographic_projection_matrix(float left, float right, float bottom, fl
 }
 
 Matrix4 look_at_matrix(Vector3 position, Vector3 target, Vector3 up) {
-    Vector3 forward = normalized3(diff3(target, position));
+    Vector3 forward = normalized3(sub3(target, position));
     Vector3 right = normalized3(cross(forward, up));
     up = normalized3(cross(right, forward));
     Matrix4 m = {
@@ -614,10 +614,10 @@ Vector3 clamp_magnitude3(Vector3 v, float min, float max) {
         return v;
     }
     if (n < min) {
-        return mult3(min / n, v);
+        return mul3(min / n, v);
     }
     if (n > max) {
-        return mult3(max / n, v);
+        return mul3(max / n, v);
     }
     return v;
 }
@@ -632,7 +632,7 @@ Vector3 clamp3(Vector3 v, Vector3 min, Vector3 max) {
 }
 
 
-Matrix3 matrix3_abs(Matrix3 m) {
+Matrix3 mat3_abs(Matrix3 m) {
     return (Matrix3) {
         fabsf(m._11), fabsf(m._12), fabsf(m._13),
         fabsf(m._21), fabsf(m._22), fabsf(m._23),
@@ -640,7 +640,7 @@ Matrix3 matrix3_abs(Matrix3 m) {
     };
 }
 
-Matrix3 matrix3_add_scalar(Matrix3 m, float c) {
+Matrix3 mat3_add_scalar(Matrix3 m, float c) {
     return (Matrix3) {
         m._11 + c, m._12 + c, m._13 + c,
         m._21 + c, m._22 + c, m._23 + c,
@@ -648,7 +648,7 @@ Matrix3 matrix3_add_scalar(Matrix3 m, float c) {
     };
 }
 
-Vector3 matrix3_row(Matrix3 m, int i) {
+Vector3 mat3_row(Matrix3 m, int i) {
     switch (i) {
         case 0: return (Vector3) { m._11, m._12, m._13 };
         case 1: return (Vector3) { m._21, m._22, m._23 };
@@ -660,7 +660,7 @@ Vector3 matrix3_row(Matrix3 m, int i) {
 }
 
 
-Vector3 matrix3_column(Matrix3 m, int i) {
+Vector3 mat3_column(Matrix3 m, int i) {
     switch (i) {
         case 0: return (Vector3) { m._11, m._21, m._31 };
         case 1: return (Vector3) { m._12, m._22, m._32 };

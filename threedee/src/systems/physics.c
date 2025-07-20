@@ -21,7 +21,7 @@ Quaternion extract_twist(Quaternion q, Vector3 axis) {
     // Project the quaternion's vector part onto the axis
     Vector3 q_vec = { q.x, q.y, q.z };
     float dot = dot3(q_vec, axis);
-    Vector3 proj = mult3(dot, axis);
+    Vector3 proj = mul3(dot, axis);
 
     Quaternion twist = { proj.x, proj.y, proj.z, q.w };
     return quaternion_normalize(twist);
@@ -75,14 +75,14 @@ void apply_impulse(Entity entity, Vector3 point, Vector3 impulse) {
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
 
     // Offset from center of mass to contact point
-    Vector3 r = diff3(point, trans->position);
+    Vector3 r = sub3(point, trans->position);
 
     // Linear velocity update
-    rb->velocity = sum3(rb->velocity, mult3(rb->inv_mass, impulse));
+    rb->velocity = add3(rb->velocity, mul3(rb->inv_mass, impulse));
 
     // Angular velocity update
     Vector3 torque = cross(r, impulse);
-    rb->angular_velocity = sum3(rb->angular_velocity, matrix3_map(rb->inv_inertia, torque));
+    rb->angular_velocity = add3(rb->angular_velocity, map3(rb->inv_inertia, torque));
 
     rb->asleep = false;
 }
@@ -106,7 +106,7 @@ bool resolve_collisions(Entity entity, float bias) {
 
             RigidBodyComponent* rb_other = get_component(collision.entity, COMPONENT_RIGIDBODY);
 
-            Vector3 delta_position = mult3(bias, collision.overlap);
+            Vector3 delta_position = mul3(bias, collision.overlap);
             if (rb) {
                 if (rb->axis_lock.x) {
                     delta_position.x = 0.0f;
@@ -121,23 +121,23 @@ bool resolve_collisions(Entity entity, float bias) {
             Vector3 r = collision.offset;
             Vector3 v_rel = zeros3();
             if (rb) {
-                v_rel = sum3(rb->velocity, cross(rb->angular_velocity, r));
+                v_rel = add3(rb->velocity, cross(rb->angular_velocity, r));
             }
 
             Vector3 r_other = zeros3();
             if (rb_other) {
                 r_other = collision.offset_other;
-                Vector3 v_other = sum3(rb_other->velocity, cross(rb_other->angular_velocity, r_other));
-                v_rel = diff3(v_rel, v_other);
+                Vector3 v_other = add3(rb_other->velocity, cross(rb_other->angular_velocity, r_other));
+                v_rel = sub3(v_rel, v_other);
             }
 
             // If both objects can move, move both halfway
             if (rb && rb_other) {
-                delta_position = mult3(0.5f, delta_position);
+                delta_position = mul3(0.5f, delta_position);
             }
 
             Vector3 v_n = proj3(v_rel, n);
-            Vector3 v_t = diff3(v_rel, v_n);
+            Vector3 v_t = sub3(v_rel, v_n);
             Vector3 t = normalized3(v_t);
 
             if (dot3(v_rel, n) >= 0.0f) {
@@ -162,10 +162,10 @@ bool resolve_collisions(Entity entity, float bias) {
             float j_n = -(1.0f + bounce) * dot3(v_rel, n);
             float denom_n = 0.0f;
             if (rb) {
-                denom_n = rb->inv_mass + dot3(n, cross(matrix3_map(rb->inv_inertia, cross(r, n)), r));
+                denom_n = rb->inv_mass + dot3(n, cross(map3(rb->inv_inertia, cross(r, n)), r));
             }
             if (rb_other) {
-                denom_n += rb_other->inv_mass + dot3(n, cross(matrix3_map(rb_other->inv_inertia, cross(r_other, n)), r_other));
+                denom_n += rb_other->inv_mass + dot3(n, cross(map3(rb_other->inv_inertia, cross(r_other, n)), r_other));
             }
             j_n /= denom_n;
 
@@ -173,10 +173,10 @@ bool resolve_collisions(Entity entity, float bias) {
             float j_t = -dot3(v_t, t);
             float denom_t = 0.0f;
             if (rb) {
-                denom_t = rb->inv_mass + dot3(t, cross(matrix3_map(rb->inv_inertia, cross(r, t)), r));
+                denom_t = rb->inv_mass + dot3(t, cross(map3(rb->inv_inertia, cross(r, t)), r));
             }
             if (rb_other) {
-                denom_t += (rb_other->inv_mass + dot3(t, cross(matrix3_map(rb_other->inv_inertia, cross(r_other, t)), r_other)));
+                denom_t += (rb_other->inv_mass + dot3(t, cross(map3(rb_other->inv_inertia, cross(r_other, t)), r_other)));
             }
             j_t /= denom_t;
 
@@ -192,14 +192,14 @@ bool resolve_collisions(Entity entity, float bias) {
             }
 
             // Total impulse
-            Vector3 j_total = sum3(mult3(j_n, n), mult3(j_t, t));
+            Vector3 j_total = add3(mul3(j_n, n), mul3(j_t, t));
 
             float verticality = dot3(n, vec3(0.0f, 1.0f, 0.0f));
 
             if (rb) {
                 // TODO: What if entity has parent?
-                trans->position = sum3(trans->position, delta_position);
-                apply_impulse(entity, sum3(trans->position, r), j_total);
+                trans->position = add3(trans->position, delta_position);
+                apply_impulse(entity, add3(trans->position, r), j_total);
                 if (verticality > 0.99f) {
                     rb->on_ground = true;
                 }
@@ -208,8 +208,8 @@ bool resolve_collisions(Entity entity, float bias) {
 
             if (rb_other) {
                 TransformComponent* trans_other = get_component(collision.entity, COMPONENT_TRANSFORM);
-                trans_other->position = sum3(trans_other->position, mult3(-1.0f, delta_position));
-                apply_impulse(collision.entity, sum3(trans_other->position, r_other), mult3(-1.0f, j_total));
+                trans_other->position = add3(trans_other->position, mul3(-1.0f, delta_position));
+                apply_impulse(collision.entity, add3(trans_other->position, r_other), mul3(-1.0f, j_total));
                 if (verticality < -0.99f) {
                     rb_other->on_ground = true;
                 }
@@ -227,7 +227,7 @@ void init_physics(void) {
         RigidBodyComponent* rigid_body = get_component(i, COMPONENT_RIGIDBODY);
         if (rigid_body) {
             // TODO: update inverse inertia
-            rigid_body->inv_inertia = matrix3_inverse(inertia_tensor(i));
+            rigid_body->inv_inertia = inverse3(inertia_tensor(i));
         }
     }
 }
@@ -269,9 +269,9 @@ void update_physics(float time_step) {
 
         TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
 
-        rigid_body->acceleration = sum3(rigid_body->acceleration, mult3(rigid_body->gravity_scale, gravity));
-        rigid_body->velocity = sum3(rigid_body->velocity, mult3(time_step, rigid_body->acceleration));
-        Vector3 delta_position = mult3(time_step, rigid_body->velocity);
+        rigid_body->acceleration = add3(rigid_body->acceleration, mul3(rigid_body->gravity_scale, gravity));
+        rigid_body->velocity = add3(rigid_body->velocity, mul3(time_step, rigid_body->acceleration));
+        Vector3 delta_position = mul3(time_step, rigid_body->velocity);
         if (rigid_body->axis_lock.x) {
             delta_position.x = 0.0f;
         } else if (rigid_body->axis_lock.y) {
@@ -279,9 +279,9 @@ void update_physics(float time_step) {
         } else if (rigid_body->axis_lock.z) {
             delta_position.z = 0.0f;
         }
-        trans->position = sum3(trans->position, delta_position);
+        trans->position = add3(trans->position, delta_position);
 
-        rigid_body->angular_velocity = sum3(rigid_body->angular_velocity, mult3(time_step, rigid_body->angular_acceleration));
+        rigid_body->angular_velocity = add3(rigid_body->angular_velocity, mul3(time_step, rigid_body->angular_acceleration));
 
         float angle = norm3(rigid_body->angular_velocity) * time_step;
         Vector3 axis = normalized3(rigid_body->angular_velocity);
@@ -296,8 +296,8 @@ void update_physics(float time_step) {
         rigid_body->angular_velocity = clamp_magnitude3(rigid_body->angular_velocity, 0.0f, rigid_body->max_angular_speed);
 
         // Apply damping
-        rigid_body->velocity = mult3(rigid_body->linear_damping, rigid_body->velocity);
-        rigid_body->angular_velocity = mult3(rigid_body->angular_damping, rigid_body->angular_velocity);
+        rigid_body->velocity = mul3(rigid_body->linear_damping, rigid_body->velocity);
+        rigid_body->angular_velocity = mul3(rigid_body->angular_damping, rigid_body->angular_velocity);
 
         if (rigid_body->can_sleep && norm3(rigid_body->velocity) < 0.001f && norm3(rigid_body->angular_velocity) < 0.01f) {
             rigid_body->velocity = zeros3();
