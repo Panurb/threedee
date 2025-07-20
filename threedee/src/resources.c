@@ -417,8 +417,8 @@ void load_normal_maps() {
 		if (!surface) {
 			LOG_WARNING("Missing normal map: %s", path);
 			// Add a default normal map (flat blue = no perturbation)
-			surface = SDL_CreateSurface(2048, 2048, SDL_PIXELFORMAT_RGBA8888);
-			SDL_FillSurfaceRect(surface, NULL, 0x8080FF);
+			surface = SDL_CreateSurface(2048, 2048, SDL_PIXELFORMAT_ABGR8888);
+			SDL_FillSurfaceRect(surface, NULL, 0xFFFF8080);
 		}
 		ArrayList_add(surfaces, &surface);
 	}

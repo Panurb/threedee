@@ -160,15 +160,25 @@ void create_scene() {
 
     create_lamp(vec3(0.0f, 5.0f, 0.0f));
 
+    // i = create_entity();
+    // TransformComponent_add(i, vec3(0.0f, 2.0f, 0.0f));
+    // MeshComponent_add(i, (MeshParameters) {
+    //     .mesh_filename = "paper",
+    //     .texture_filename = "paper",
+    //     .material_filename = "hidden",
+    //     .visibility = LIGHT_UV
+    // });
+    // ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
+
     i = create_entity();
-    TransformComponent_add(i, vec3(0.0f, 2.0f, 0.0f));
+    TransformComponent_add(i, vec3(1.0f, 0.501f, 1.0f));
+    look_at(i, vec3(1.0f, 2.0f, 1.0f));
     MeshComponent_add(i, (MeshParameters) {
-        .mesh_filename = "paper",
-        .texture_filename = "paper",
+        .mesh_filename = "quad",
+        .texture_filename = "blood",
         .material_filename = "hidden",
         .visibility = LIGHT_UV
     });
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
 
     scene->weather = create_entity();
     WeatherComponent_add(scene->weather, (WeatherParameters) {

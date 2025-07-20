@@ -85,7 +85,12 @@ Output main(Input input)
     float3 world_position = input.world_position;
     float2 texel_size = 1.0 / float2(shadow_map_resolution, shadow_map_resolution);
 
-    float3 base_color = tex.Sample(sampler_tex, float3(tex_coord, input.tex_index)).rgb;
+    float4 sampled_color = tex.Sample(sampler_tex, float3(tex_coord, input.tex_index));
+    float alpha = sampled_color.a;
+    if (alpha == 0.0) {
+        discard;
+    }
+    float3 base_color = sampled_color.rgb;
     base_color = pow(base_color, float3(2.2)); // Convert to linear space
 
     float3 normal_map = normal_tex.Sample(sampler_normal_tex, float3(tex_coord, input.tex_index)).rgb;
@@ -161,6 +166,7 @@ Output main(Input input)
         if (input.ambient == 0.0) {
             diffuse_color = float3(0.2, 5.0, 0.5);
             specular_color = float3(0.2, 5.0, 0.5);
+            base_color = float3(1.0, 1.0, 1.0);
         }
 
         diffuse += base_color * diff * diffuse_color * light_shadow_factor;
@@ -170,9 +176,8 @@ Output main(Input input)
     float3 lit_color = ambient + diffuse + specular;
 
     // Only hidden entities (ambient = 0) should be faded out
-    float alpha = saturate(combined_spot_intensity);
-    if (input.ambient > 0.0) {
-        alpha = 1.0;
+    if (input.ambient == 0.0) {
+        alpha *= saturate(combined_spot_intensity);
     }
 
     float fog_factor = saturate((fog_end - distance) / (fog_end - fog_start));
