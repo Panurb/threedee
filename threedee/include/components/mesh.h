@@ -14,6 +14,7 @@ typedef struct MeshComponent {
     int texture_index;
     int material_index;
     Visibility visibility;
+    Vector2 texture_scale;
 } MeshComponent;
 
 

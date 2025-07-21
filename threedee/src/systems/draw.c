@@ -29,7 +29,8 @@ void draw_entities() {
                 mesh_component->mesh_index,
                 mesh_component->texture_index,
                 mesh_component->material_index,
-                mesh_component->visibility
+                mesh_component->visibility,
+                mesh_component->texture_scale
             );
         }
 

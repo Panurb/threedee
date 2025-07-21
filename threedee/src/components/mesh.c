@@ -12,6 +12,11 @@ MeshComponent* MeshComponent_add(Entity entity, MeshParameters params) {
     mesh->texture_index = -1;
     mesh->material_index = -1;
     mesh->visibility = params.visibility ? params.visibility : LIGHT_ALL;
+    mesh->texture_scale = ones2();
+
+    if (strcmp(params.mesh_filename, "cube") == 0) {
+        mesh->texture_scale = zeros2();
+    }
 
     if (params.mesh_filename[0] != '\0') {
         mesh->mesh_index = binary_search_filename(params.mesh_filename, resources.mesh_names, resources.meshes_size);

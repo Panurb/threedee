@@ -10,6 +10,7 @@
 
 #include "app.h"
 
+#include <time.h>
 #include <systems/draw.h>
 
 #include "resources.h"
@@ -61,6 +62,8 @@ void resize_game_window() {
 
 
 void init() {
+    srand(time(NULL));
+
     setbuf(stdout, NULL);
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_AUDIO);

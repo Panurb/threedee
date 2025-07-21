@@ -92,11 +92,21 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
 }
 
 
+Quaternion random_y_rotation() {
+    return axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), randf(0.0f, 2.0f * M_PI));
+}
+
+
+Quaternion random_z_rotation() {
+    return axis_angle_to_quaternion(vec3(0.0f, 0.0f, 1.0f), randf(0.0f, 2.0f * M_PI));
+}
+
+
 void create_tree(Vector3 position) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
         .position = position,
-        .rotation = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), (float) (rand() % 360)),
+        .rotation = random_y_rotation(),
         .scale = diag3(randf(0.5f, 1.0f))
     });
     MeshComponent_add(i, (MeshParameters) {
@@ -119,6 +129,37 @@ void create_forest(Vector3 position, float width, float depth, float density, fl
             }
         }
     }
+}
+
+
+Entity create_blood(Vector3 position) {
+    Entity i = create_entity();
+    Quaternion rotate_x = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(-90.0f));
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(position.x, position.y + 1e-3f, position.z),
+        .rotation = quaternion_mult(random_y_rotation(), rotate_x),
+        .scale = diag3(randf(1.0f, 2.0f))
+    });
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "quad",
+        .texture_filename = "blood",
+        .material_filename = "glass",
+        .visibility = LIGHT_ALL
+    });
+
+    Entity j = create_entity();
+    TransformComponent_add(j, (TransformParameters) {
+        .position = vec3(0.0f, 0.0f, 1e-3f),
+        .parent = i
+    });
+    MeshComponent_add(j, (MeshParameters) {
+        .mesh_filename = "quad",
+        .texture_filename = "blood",
+        .material_filename = "hidden",
+        .visibility = LIGHT_UV
+    });
+
+    return i;
 }
 
 
@@ -173,18 +214,9 @@ void create_scene() {
     // });
     // ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
 
-    i = create_entity();
-    TransformComponent_add(i, (TransformParameters) {
-        .position = vec3(1.0f, 0.501f, 1.0f),
-        .scale = vec3(2.0f, 2.0f, 2.0f)
-    });
-    look_at(i, vec3(1.0f, 2.0f, 1.0f));
-    MeshComponent_add(i, (MeshParameters) {
-        .mesh_filename = "quad",
-        .texture_filename = "blood",
-        .material_filename = "glass",
-        .visibility = LIGHT_ALL
-    });
+    create_blood(vec3(1.0f, 0.5f, 1.0f));
+    create_blood(vec3(2.0f, 0.5f, 3.0f));
+    create_blood(vec3(-1.0f, 0.5f, -1.0f));
 
     scene->weather = create_entity();
     WeatherComponent_add(scene->weather, (WeatherParameters) {

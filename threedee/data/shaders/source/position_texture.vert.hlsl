@@ -12,6 +12,7 @@ struct InstanceData
     float shininess : packoffset(c4.w);
     int tex_index : packoffset(c5);
     uint visibility : packoffset(c5.y);
+    float2 tex_scale : packoffset(c5.z);
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);
@@ -53,14 +54,20 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     float4x4 transform = instance_data[instance_id].transform_matrix;
     float3 scale = scale_from_transform(transform);
 
-    // Determine tiling axes based on face normal
+    float2 tex_scale = instance_data[instance_id].tex_scale;
+
     float2 tiling;
-    if (abs(input.normal.x) > 0.5)
-        tiling = scale.zy; // YZ face
-    else if (abs(input.normal.y) > 0.5)
-        tiling = scale.xz; // XZ face
-    else
-        tiling = scale.xy; // XY face
+    if (tex_scale.x == 0.0f || tex_scale.y == 0.0f) {
+        // Determine tiling axes based on face normal
+        if (abs(input.normal.x) > 0.5)
+            tiling = scale.zy;
+        else if (abs(input.normal.y) > 0.5)
+            tiling = scale.xz;
+        else
+            tiling = scale.xy;
+    } else {
+        tiling = 1.0f / tex_scale;
+    }
 
     Output output;
     output.tex_coord = input.tex_coord * tiling;

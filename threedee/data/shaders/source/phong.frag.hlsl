@@ -164,8 +164,8 @@ Output main(Input input)
         // Hidden entities light up in different color
         // TODO: parametrize the color
         if (input.ambient == 0.0) {
-            diffuse_color = float3(0.2, 5.0, 0.5);
-            specular_color = float3(0.2, 5.0, 0.5);
+            diffuse_color = float3(0.2, 5.0, 2.0);
+            specular_color = float3(0.2, 5.0, 2.0);
             base_color = float3(1.0, 1.0, 1.0);
         }
 

@@ -1448,7 +1448,14 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 }
 
 
-void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, Visibility visibility) {
+void draw_mesh(
+		Matrix4 transform,
+		int mesh_index,
+		int texture_index,
+		int material_index,
+		Visibility visibility,
+		Vector2 texture_scale
+	) {
 	MeshData* mesh_data = &resources.meshes[mesh_index];
 
 	if (mesh_data->num_instances >= mesh_data->max_instances) {
@@ -1472,6 +1479,7 @@ void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int materia
 		.transform = transpose4(transform),
 		.material = resources.materials[material_index],
 		.texture_index = texture_index,
+		.texture_scale = texture_scale,
 		.visiblity = visibility,
 	};
 	transforms[mesh_data->num_instances] = instance_data;

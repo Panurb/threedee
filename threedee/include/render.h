@@ -46,7 +46,7 @@ typedef struct {
 	Material material;
 	int texture_index;
 	Visibility visiblity;
-	float _pad[2];
+	Vector2 texture_scale;
 } InstanceData;
 
 
@@ -122,7 +122,7 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 
 void add_light(Entity entity);
 
-void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int light_index);
+void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int light_index, Vector2 texture_scale);
 
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 

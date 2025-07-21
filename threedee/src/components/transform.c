@@ -15,11 +15,11 @@ TransformComponent* TransformComponent_add(Entity entity, TransformParameters pa
     trans->previous.rotation = trans->rotation;
     trans->previous.scale = trans->scale;
 
+    scene->components->transform[entity] = trans;
+
     if (params.parent) {
         add_child(params.parent, entity);
     }
-
-    scene->components->transform[entity] = trans;
 
     return trans;
 }
