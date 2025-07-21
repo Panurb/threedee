@@ -45,6 +45,11 @@ bool quaternion_equals(Quaternion a, Quaternion b) {
 }
 
 
+bool quaternion_non_zero(Quaternion q) {
+    return (q.x != 0.0f || q.y != 0.0f || q.z != 0.0f || q.w != 0.0f);
+}
+
+
 Quaternion quaternion_mult(Quaternion a, Quaternion b) {
     Quaternion q;
     q.x = a.x * b.w + a.y * b.z - a.z * b.y + a.w * b.x;

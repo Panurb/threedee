@@ -11,7 +11,7 @@
 
 Entity create_player(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent_add(i, position);
+    TransformComponent_add(i, (TransformParameters) { .position = position });
     RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
     rb->axis_lock.rotation = true;
     rb->bounce = 0.0f;
@@ -32,7 +32,7 @@ Entity create_player(Vector3 position) {
     add_child(i, cam);
 
     Entity j = create_entity();
-    TransformComponent_add(j, vec3(0.0f, -0.5f, 0.1f));
+    TransformComponent_add(j, (TransformParameters) { .position = vec3(0.0f, -0.5f, 0.1f) });
     look_at(j, vec3(0.0f, -0.5f, -1.0f));
     LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_UV, .fov = 50.0f, .visibility_mask = LIGHT_UV });
     add_child(cam, j);
@@ -43,7 +43,7 @@ Entity create_player(Vector3 position) {
 
 Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent_add(i, position);
+    TransformComponent_add(i, (TransformParameters) { .position = position });
     look_at(i, vec3(position.x, position.y - 1.0f, position.z));
     MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "bark" });
     LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = LIGHT_NORMAL });
@@ -54,7 +54,7 @@ Entity create_lamp(Vector3 position) {
 
 Entity create_wall(Vector3 position, float width, float depth, int windows) {
     Entity i = create_entity();
-    TransformComponent* trans = TransformComponent_add(i, position);
+    TransformComponent* trans = TransformComponent_add(i, (TransformParameters) { .position = position });
     trans->position.y = position.y + 1.0f;
     trans->scale = vec3(width, 1.0f, depth);
     MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
@@ -70,11 +70,11 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
         Entity window = create_entity();
         if (width > depth) {
             float x = position.x - 0.5f * width + 0.5f * segment_width + j * (segment_width + window_width);
-            trans = TransformComponent_add(window, vec3(x, position.y + 2.0f, position.z));
+            trans = TransformComponent_add(window, (TransformParameters) { .position = vec3(x, position.y + 2.0f, position.z) });
             trans->scale = vec3(segment_width, 1.0f, depth);
         } else {
             float z = position.z - 0.5f * depth + 0.5f * segment_depth + j * (segment_depth + window_width);
-            trans = TransformComponent_add(window, vec3(position.x, position.y + 2.0f, z));
+            trans = TransformComponent_add(window, (TransformParameters) { .position = vec3(position.x, position.y + 2.0f, z) });
             trans->scale = vec3(width, 1.0f, segment_depth);
         }
         MeshComponent_add(window, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
@@ -82,7 +82,7 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
     }
 
     i = create_entity();
-    trans = TransformComponent_add(i, position);
+    trans = TransformComponent_add(i, (TransformParameters) { .position = position });
     trans->position.y = position.y + 3.0f;
     trans->scale = vec3(width, 1.0f, depth);
     MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
@@ -94,9 +94,11 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
 
 void create_tree(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent* trans = TransformComponent_add(i, position);
-    trans->rotation = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), (float) (rand() % 360));
-    trans->scale = diag3(randf(0.5f, 1.0f));
+    TransformComponent_add(i, (TransformParameters) {
+        .position = position,
+        .rotation = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), (float) (rand() % 360)),
+        .scale = diag3(randf(0.5f, 1.0f))
+    });
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "tree",
         .texture_filename = "bark",
@@ -131,9 +133,10 @@ void create_scene() {
     scene->camera = trans->children->head->value;
 
     Entity i = create_entity();
-    trans = TransformComponent_add(i, vec3(0.0f, -0.01f, 0.0f));
-    trans->scale.x = 100.0f;
-    trans->scale.z = 100.0f;
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(0.0f, -0.01f, 0.0f),
+        .scale = vec3(100.0f, 1.0f, 100.0f)
+    });
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "cube",
         .texture_filename = "gravel",
@@ -141,9 +144,9 @@ void create_scene() {
     });
 
     i = create_entity();
-    trans = TransformComponent_add(i, zeros3());
-    trans->scale.x = 10.0f;
-    trans->scale.z = 10.0f;
+    TransformComponent_add(i, (TransformParameters) {
+        .scale = vec3(10.0f, 1.0f, 10.0f)
+    });
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "cube",
         .texture_filename = "gravel",
@@ -171,13 +174,16 @@ void create_scene() {
     // ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
 
     i = create_entity();
-    TransformComponent_add(i, vec3(1.0f, 0.501f, 1.0f));
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(1.0f, 0.501f, 1.0f),
+        .scale = vec3(2.0f, 2.0f, 2.0f)
+    });
     look_at(i, vec3(1.0f, 2.0f, 1.0f));
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "quad",
         .texture_filename = "blood",
-        .material_filename = "hidden",
-        .visibility = LIGHT_UV
+        .material_filename = "glass",
+        .visibility = LIGHT_ALL
     });
 
     scene->weather = create_entity();

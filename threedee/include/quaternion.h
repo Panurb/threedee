@@ -23,6 +23,8 @@ Quaternion quaternion_normalize(Quaternion q);
 
 bool quaternion_equals(Quaternion a, Quaternion b);
 
+bool quaternion_non_zero(Quaternion q);
+
 Quaternion quaternion_mult(Quaternion a, Quaternion b);
 
 EulerAngles quaternion_to_euler(Quaternion q);

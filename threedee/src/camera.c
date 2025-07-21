@@ -12,7 +12,9 @@ SDL_FColor color_to_fcolor(Color color) {
 
 int create_camera() {
     int i = create_entity();
-    TransformComponent_add(i, vec3(0.0f, 1.0f, 0.0f));
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(0.0f, 1.0f, 0.0f),
+    });
     CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, to_radians(game_settings.fov));
     return i;
 }
@@ -20,7 +22,7 @@ int create_camera() {
 
 int create_screen_camera() {
     int i = create_entity();
-    TransformComponent_add(i, zeros3());
+    TransformComponent_add(i, (TransformParameters) {});
     CameraComponent* cam = CameraComponent_add(i, (Resolution) { game_settings.width, game_settings.height }, 25.0f);
     float aspect_ratio = (float) cam->resolution.w / (float) cam->resolution.h;
     cam->projection_matrix = orthographic_projection_matrix(-aspect_ratio, aspect_ratio, -1.0f, 1.0f, -1.0f, 1.0f);

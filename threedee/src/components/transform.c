@@ -2,18 +2,22 @@
 #include "scene.h"
 
 
-TransformComponent* TransformComponent_add(Entity entity, Vector3 pos) {
+TransformComponent* TransformComponent_add(Entity entity, TransformParameters params) {
     TransformComponent* trans = malloc(sizeof(TransformComponent));
-    trans->position = pos;
-    trans->rotation = (Quaternion) { 0.0f, 0.0f, 0.0f, 1.0f };
-    trans->scale = ones3();
+    trans->position = params.position;
+    trans->rotation = quaternion_non_zero(params.rotation) ? params.rotation : quaternion_id();
+    trans->scale = non_zero3(params.scale) ? params.scale : ones3();
     trans->parent = NULL_ENTITY;
     trans->children = List_create();
     trans->lifetime = -1.0f;
     trans->prefab[0] = '\0';
-    trans->previous.position = pos;
+    trans->previous.position = trans->position;
     trans->previous.rotation = trans->rotation;
-    trans->previous.scale = ones3();
+    trans->previous.scale = trans->scale;
+
+    if (params.parent) {
+        add_child(params.parent, entity);
+    }
 
     scene->components->transform[entity] = trans;
 
