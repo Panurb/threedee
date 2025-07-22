@@ -13,6 +13,8 @@ PlayerComponent* PlayerComponent_add(Entity entity) {
     component->grabbed_entity = NULL_ENTITY;
     component->examine_yaw = 0.0f;
     component->examining = false;
+    component->inventory = ArrayList_create(sizeof(Entity));
+    component->selected_item = -1;
     scene->components->player[entity] = component;
     return component;
 }
@@ -21,6 +23,8 @@ PlayerComponent* PlayerComponent_add(Entity entity) {
 void PlayerComponent_remove(Entity entity) {
     PlayerComponent* component = get_component(entity, COMPONENT_PLAYER);
     if (component) {
+        ArrayList_for_each(component->inventory, destroy_entity);
+        ArrayList_destroy(component->inventory);
         free(component);
         scene->components->player[entity] = NULL;
     }

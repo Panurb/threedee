@@ -15,6 +15,7 @@ typedef struct MeshComponent {
     int material_index;
     Visibility visibility;
     Vector2 texture_scale;
+    bool hidden;
 } MeshComponent;
 
 

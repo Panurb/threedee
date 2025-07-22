@@ -1,5 +1,7 @@
 #pragma once
 
+#include <arraylist.h>
+
 #include "util.h"
 
 
@@ -11,6 +13,8 @@ typedef struct PlayerComponent {
     Quaternion grabbed_rotation;
     bool examining;
     float examine_yaw;
+    ArrayList* inventory;
+    int selected_item;
 } PlayerComponent;
 
 
