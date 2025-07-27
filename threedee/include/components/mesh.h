@@ -5,6 +5,7 @@ typedef struct MeshParameters {
     String mesh_filename;
     String texture_filename;
     String material_filename;
+    String emissive_filename;
     Visibility visibility;
 } MeshParameters;
 
@@ -13,6 +14,7 @@ typedef struct MeshComponent {
     int mesh_index;
     int texture_index;
     int material_index;
+    int emissive_index;
     Visibility visibility;
     Vector2 texture_scale;
     bool hidden;

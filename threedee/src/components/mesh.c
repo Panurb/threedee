@@ -11,6 +11,7 @@ MeshComponent* MeshComponent_add(Entity entity, MeshParameters params) {
     mesh->mesh_index = -1;
     mesh->texture_index = -1;
     mesh->material_index = -1;
+    mesh->emissive_index = -1;
     mesh->visibility = params.visibility ? params.visibility : LIGHT_ALL;
     mesh->texture_scale = ones2();
     mesh->hidden = false;
@@ -42,6 +43,13 @@ MeshComponent* MeshComponent_add(Entity entity, MeshParameters params) {
         }
     } else {
         mesh->material_index = binary_search_filename("default", resources.material_names, resources.materials_size);
+    }
+
+    if (params.emissive_filename[0] != '\0') {
+        mesh->emissive_index = binary_search_filename(params.emissive_filename, resources.emissive_map_names, resources.emissive_maps_size);
+        if (mesh->emissive_index == -1) {
+            LOG_ERROR("Emissive map not found: %s", params.emissive_filename);
+        }
     }
 
     scene->components->mesh[entity] = mesh;

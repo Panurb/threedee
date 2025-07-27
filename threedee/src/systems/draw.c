@@ -24,11 +24,16 @@ void draw_entities() {
 
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
         if (mesh_component) {
+            Material material = resources.materials[mesh_component->material_index];
+            if (light) {
+                material.emissive = 2.0f;
+            }
             draw_mesh(
                 get_transform(entity),
                 mesh_component->mesh_index,
                 mesh_component->texture_index,
-                mesh_component->material_index,
+                material,
+                mesh_component->emissive_index,
                 mesh_component->visibility,
                 mesh_component->texture_scale
             );

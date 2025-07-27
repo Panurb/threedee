@@ -6,14 +6,15 @@ cbuffer TransformBlock : register(b0, space1)
 struct InstanceData
 {
     float4x4 transform_matrix : packoffset(c0);
-    float specular : packoffset(c4);
-    float diffuse : packoffset(c4.y);
-    float ambient : packoffset(c4.z);
-    float shininess : packoffset(c4.w);
-    float emissive : packoffset(c5.x);
-    int tex_index : packoffset(c6);
+    int tex_index : packoffset(c4.x);
+    int emissive_index : packoffset(c4.y);
+    float2 tex_scale : packoffset(c4.z);
+    float specular : packoffset(c5.x);
+    float diffuse : packoffset(c5.y);
+    float ambient : packoffset(c5.z);
+    float shininess : packoffset(c5.w);
+    float emissive : packoffset(c6.x);
     uint visibility : packoffset(c6.y);
-    float2 tex_scale : packoffset(c6.z);
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);
@@ -33,6 +34,7 @@ struct Output
     float3 normal : NORMAL0;
     float3 tangent : TANGENT0;
 	int tex_index : TEXCOORD1;
+    int emissive_index : TEXCOORD2;
     float3 world_position : POSITION0;
     float specular;
     float diffuse;
@@ -74,6 +76,7 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     Output output;
     output.tex_coord = input.tex_coord * tiling;
 	output.tex_index = instance_data[instance_id].tex_index;
+    output.emissive_index = instance_data[instance_id].emissive_index;
     output.position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
     output.normal = normalize(mul((float3x3)transform, input.normal));
     output.tangent = normalize(mul((float3x3)transform, input.tangent));

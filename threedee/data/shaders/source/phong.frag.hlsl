@@ -1,9 +1,11 @@
 Texture2DArray<float4> tex : register(t0, space2);
 Texture2DArray<float3> normal_tex : register(t1, space2);
 Texture2DArray<float> shadow_maps : register(t2, space2);
+Texture2DArray<float> emissive_maps : register(t3, space2);
 SamplerState sampler_tex : register(s0, space2);
 SamplerState sampler_normal_tex : register(s1, space2);
 SamplerState sampler_shadow_maps : register(s2, space2);
+SamplerState sampler_emissive_maps : register(s3, space2);
 
 cbuffer UBO : register(b0, space3)
 {
@@ -42,6 +44,7 @@ struct Input
     float3 normal : NORMAL0;
     float3 tangent : TANGENT0;
     int tex_index : TEXCOORD1;
+    int emissive_index : TEXCOORD2;
     float3 world_position : POSITION0;
     float specular;
     float diffuse;
@@ -176,7 +179,13 @@ Output main(Input input)
         specular += input.specular * spec * specular_color * light_shadow_factor;
     }
 
-    float3 lit_color = ambient + diffuse + specular + input.emissive * base_color;
+    float base_emissive = 1.0;
+    if (input.emissive_index != -1) {
+        base_emissive = emissive_maps.Sample(sampler_emissive_maps, float3(tex_coord, input.emissive_index)).r;
+    }
+    float3 emissive = input.emissive * base_emissive * base_color;
+
+    float3 lit_color = ambient + diffuse + specular + emissive;
 
     // Only hidden entities (ambient = 0) should be faded out
     if (input.ambient == 0.0) {

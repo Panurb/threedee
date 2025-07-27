@@ -43,11 +43,12 @@ typedef struct UniformData {
 
 typedef struct {
 	Matrix4 transform;
-	Material material;
-	float _pad[3];
 	int texture_index;
-	Visibility visiblity;
+	int emissive_index;
 	Vector2 texture_scale;
+	Material material;
+	Visibility visiblity;
+	float _pad[2];
 } InstanceData;
 
 
@@ -123,7 +124,7 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 
 void add_light(Entity entity);
 
-void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int light_index, Vector2 texture_scale);
+void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, Material material, int emissive_index, Visibility visibility, Vector2 texture_scale);
 
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 

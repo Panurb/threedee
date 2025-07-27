@@ -355,7 +355,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 		return NULL;
 	}
 
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "phong.frag", 3, 2, 0, 0);
+	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "phong.frag", 4, 2, 0, 0);
 	if (!fragment_shader) {
 		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
 		return NULL;
@@ -1046,6 +1046,15 @@ void render_mesh(SDL_GPURenderPass* render_pass, MeshData* mesh_data, Pipeline p
 			},
 			1
 		);
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			3,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = resources.emissive_map_array,
+				.sampler = sampler,
+			},
+			1
+		);
 	}
 
 	if (mesh_data->index_buffer) {
@@ -1452,7 +1461,8 @@ void draw_mesh(
 		Matrix4 transform,
 		int mesh_index,
 		int texture_index,
-		int material_index,
+		Material material,
+		int emissive_index,
 		Visibility visibility,
 		Vector2 texture_scale
 	) {
@@ -1477,8 +1487,9 @@ void draw_mesh(
 
 	InstanceData instance_data = {
 		.transform = transpose4(transform),
-		.material = resources.materials[material_index],
+		.material = material,
 		.texture_index = texture_index,
+		.emissive_index = emissive_index,
 		.texture_scale = texture_scale,
 		.visiblity = visibility,
 	};

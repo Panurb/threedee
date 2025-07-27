@@ -394,7 +394,7 @@ void load_textures() {
 		String path;
 		snprintf(path, STRING_SIZE, "%s%s%s", "data/images/", resources.texture_names[i], ".png");
 		SDL_Surface* surface = IMG_Load(path);
-		LOG_INFO("Format: %s, Size: %dx%d", SDL_GetPixelFormatName(surface->format), surface->w, surface->h);
+		LOG_DEBUG("Format: %s, Size: %dx%d", SDL_GetPixelFormatName(surface->format), surface->w, surface->h);
 		if (!surface) {
 			LOG_ERROR("Failed to load image: %s", path);
 			continue;
@@ -432,6 +432,30 @@ void load_normal_maps() {
 }
 
 
+void load_emissive_maps() {
+	resources.emissive_maps_size = list_files_alphabetically("data/emissive_maps/*.png", resources.emissive_map_names);
+	ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
+
+	for (int i = 0; i < resources.emissive_maps_size; i++) {
+		LOG_INFO("Loading emissive map: %s", resources.emissive_map_names[i]);
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/emissive_maps/", resources.emissive_map_names[i], ".png");
+		SDL_Surface* surface = IMG_Load(path);
+		LOG_DEBUG("Format: %s, Size: %dx%d", SDL_GetPixelFormatName(surface->format), surface->w, surface->h);
+		if (!surface) {
+			LOG_ERROR("Failed to load image: %s", path);
+			continue;
+		}
+		ArrayList_add(surfaces, &surface);
+	}
+
+	resources.emissive_map_array = create_texture_array(surfaces->data, surfaces->size);
+
+	ArrayList_for_each(surfaces, SDL_DestroySurface);
+	ArrayList_destroy(surfaces);
+}
+
+
 void load_fonts() {
 	resources.fonts_size = list_files_alphabetically("data/fonts/*.ttf", resources.font_names);
 	for (int i = 0; i < resources.fonts_size; i++) {
@@ -452,6 +476,7 @@ void load_resources() {
 
 	load_textures();
 	load_normal_maps();
+	load_emissive_maps();
 	load_fonts();
 
     resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);

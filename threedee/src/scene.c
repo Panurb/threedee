@@ -48,7 +48,7 @@ Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
     look_at(i, vec3(position.x, position.y - 1.0f, position.z));
-    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "lamp", .texture_filename = "lamp" });
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "lamp", .texture_filename = "lamp", .emissive_filename = "lamp" });
     LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = LIGHT_NORMAL });
 
     return i;
