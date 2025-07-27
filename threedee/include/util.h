@@ -154,6 +154,8 @@ float mod(float x, float y);
 
 Color get_color(float r, float g, float b, float a);
 
+float get_luminance(Color color);
+
 void permute(int* array, int size);
 
 float lerp(float a, float b, float t);

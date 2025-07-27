@@ -15,20 +15,6 @@
 #include "scene.h"
 
 
-void load_sounds() {
-    LOG_INFO("Loading sounds");
-
-    resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
-
-    for (int i = 0; i < resources.sounds_size; i++) {
-        String path;
-        snprintf(path, sizeof(path), "%s%s%s", "data/sfx/", resources.sound_names[i], ".wav");
-
-        resources.sounds[i] = Mix_LoadWAV(path);
-    }
-}
-
-
 int sound_index(String filename) {
     return binary_search_filename(filename, resources.sound_names, resources.sounds_size);
 }

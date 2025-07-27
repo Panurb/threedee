@@ -26,7 +26,7 @@ void draw_entities() {
         if (mesh_component) {
             Material material = resources.materials[mesh_component->material_index];
             if (light) {
-                material.emissive = 2.0f;
+                material.emissive = light->intensity;
             }
             draw_mesh(
                 get_transform(entity),

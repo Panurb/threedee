@@ -17,7 +17,7 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
     light->diffuse_color = params.color;
     light->specular_color = params.color;
     light->range = params.range ? params.range : 10.0f;
-    light->intensity = params.intensity ? params.intensity : 1.0f;
+    light->intensity = params.intensity ? params.intensity : 2.0f;
     float half_size = light->range * tanf(to_radians(light->fov) * 0.5f);
 
     switch (params.shape) {

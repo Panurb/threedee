@@ -167,6 +167,10 @@ Color get_color(float r, float g, float b, float a) {
     return color;
 }
 
+float get_luminance(Color color) {
+    return 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
+}
+
 void permute(int* array, int size) {
     for (int i = 0; i < size; i++) {
         // Warning: skewed distribution

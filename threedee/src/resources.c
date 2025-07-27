@@ -469,26 +469,21 @@ void load_fonts() {
 }
 
 
-void load_resources() {
-    LOG_INFO("Loading resources");
+void load_sounds() {
+	resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
+	for (int i = 0; i < resources.sounds_size; i++) {
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/sfx/", resources.sound_names[i], ".wav");
+		LOG_INFO("Loading sound: %s", resources.sound_names[i]);
+		resources.sounds[i] = Mix_LoadWAV(path);
+		if (!resources.sounds[i]) {
+			LOG_ERROR("Failed to load sound: %s", path);
+		}
+	}
+}
 
-	resources = (Resources) { 0 };
 
-	load_textures();
-	load_normal_maps();
-	load_emissive_maps();
-	load_fonts();
-
-    resources.sounds_size = list_files_alphabetically("data/sfx/*.wav", resources.sound_names);
-    for (int i = 0; i < resources.sounds_size; i++) {
-        String path;
-        snprintf(path, STRING_SIZE, "%s%s%s", "data/sfx/", resources.sound_names[i], ".wav");
-        resources.sounds[i] = Mix_LoadWAV(path);
-        if (!resources.sounds[i]) {
-            LOG_ERROR("Failed to load sound: %s", path);
-        }
-    }
-
+void load_meshes() {
 	resources.meshes_size = list_files_alphabetically("data/meshes/*.obj", resources.mesh_names);
 	for (int i = 0; i < resources.meshes_size; i++) {
 		String path;
@@ -498,7 +493,10 @@ void load_resources() {
 			LOG_ERROR("Failed to load mesh: %s", path);
 		}
 	}
+}
 
+
+void load_materials() {
 	// Keep in alphabetical order
 	// TODO: read from json files
 	resources.materials[0] = (Material) {0.3f, 0.3f, 0.3f, 8.0f};
@@ -512,6 +510,21 @@ void load_resources() {
 	resources.materials[4] = (Material) {0.1f, 0.1f, 0.1f, 16.0f};
 	strcpy(resources.material_names[4], "plastic");
 	resources.materials_size = 5;
+}
+
+
+void load_resources() {
+    LOG_INFO("Loading resources");
+
+	resources = (Resources) { 0 };
+
+	load_textures();
+	load_normal_maps();
+	load_emissive_maps();
+	load_fonts();
+	load_sounds();
+	load_meshes();
+	load_materials();
 
     LOG_INFO("Resources loaded");
 }
