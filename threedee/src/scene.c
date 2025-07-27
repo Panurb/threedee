@@ -232,9 +232,9 @@ void create_scene() {
     // });
     // ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
 
-    create_blood(vec3(1.0f, 0.5f, 1.0f), false);
-    create_blood(vec3(2.0f, 0.5f, 3.0f), false);
-    create_blood(vec3(-1.0f, 0.5f, -1.0f), true);
+    // create_blood(vec3(1.0f, 0.5f, 1.0f), false);
+    // create_blood(vec3(2.0f, 0.5f, 3.0f), false);
+    // create_blood(vec3(-1.0f, 0.5f, -1.0f), true);
 
     scene->weather = create_entity();
     WeatherComponent_add(scene->weather, (WeatherParameters) {

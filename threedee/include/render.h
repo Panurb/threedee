@@ -44,6 +44,7 @@ typedef struct UniformData {
 typedef struct {
 	Matrix4 transform;
 	Material material;
+	float _pad[3];
 	int texture_index;
 	Visibility visiblity;
 	Vector2 texture_scale;

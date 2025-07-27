@@ -47,6 +47,7 @@ struct Input
     float diffuse;
     float ambient;
     float shininess;
+    float emissive;
     uint visibility;
 };
 
@@ -144,6 +145,8 @@ Output main(Input input)
         float4 shadow_coord = mul(light_data[i].projection_view_matrix, float4(world_position, 1.0));
         shadow_coord.xyz /= shadow_coord.w;
         float2 shadow_uv = shadow_coord.xy * 0.5 + 0.5;
+
+        // Need to flip Y coordinate, origin is top left in Vulkan
         shadow_uv.y = 1.0 - shadow_uv.y;
         float shadow_depth = shadow_coord.z;
 
@@ -173,7 +176,7 @@ Output main(Input input)
         specular += input.specular * spec * specular_color * light_shadow_factor;
     }
 
-    float3 lit_color = ambient + diffuse + specular;
+    float3 lit_color = ambient + diffuse + specular + input.emissive * base_color;
 
     // Only hidden entities (ambient = 0) should be faded out
     if (input.ambient == 0.0) {

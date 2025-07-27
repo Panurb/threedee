@@ -212,6 +212,8 @@ MeshData load_mesh(String path) {
 				LOG_ERROR("Invalid UV format in line: %s", line);
 				continue;
 			}
+			// Flip Y since Vulkan origin is top-left
+			uv.y = 1.0f - uv.y;
 			ArrayList_add(uvs, &uv);
 		} else if (line[0] == 'v') {
 			Vector3 position;
