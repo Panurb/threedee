@@ -250,7 +250,7 @@ void update_physics(float time_step) {
             SoundComponent* sound = get_component(i, COMPONENT_SOUND);
             // Approximate impulse with overlap length
             float volume = clamp(5.0f * norm3(collision.overlap), 0.0f, 1.0f);
-            if (sound && volume > 0.1f) {
+            if (sound && volume > 0.1f && sound->hit_sound[0] != '\0') {
                 add_sound(i, sound->hit_sound, volume, 1.0f);
             }
         }

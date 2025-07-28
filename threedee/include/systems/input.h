@@ -54,6 +54,6 @@ char* action_to_keybind(char* action);
 
 void replace_actions(String output, String input);
 
-void input_players();
+void update_controllers();
 
 void input_game(SDL_Event sdl_event);

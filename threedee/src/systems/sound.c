@@ -20,7 +20,7 @@ int sound_index(String filename) {
 }
 
 
-void add_sound(int entity, String filename, float volume, float pitch) {
+void add_sound(Entity entity, String filename, float volume, float pitch) {
     SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
     for (int i = 0; i < scomp->size; i++) {
         if (!scomp->events[i]) {

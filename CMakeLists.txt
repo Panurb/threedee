@@ -39,6 +39,7 @@ set(SOURCES
     threedee/src/systems/collision.c
     threedee/src/systems/draw.c
     threedee/src/systems/physics.c
+    threedee/src/systems/player.c
     threedee/src/systems/input.c
     threedee/src/util.c
     threedee/src/threedee.c

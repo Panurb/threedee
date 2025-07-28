@@ -6,14 +6,14 @@
 // https://freesound.org/people/Ali_6868/sounds/384889/
 
 
-void add_sound(int entity, String filename, float volume, float pitch);
+void add_sound(Entity entity, String filename, float volume, float pitch);
 
-void loop_sound(int entity, String filename, float volume, float pitch);
+void loop_sound(Entity entity, String filename, float volume, float pitch);
 
-void stop_loop(int entity);
+void stop_loop(Entity entity);
 
-void play_sounds(int camera);
+void play_sounds(Entity camera);
 
-void clear_sounds(int entity);
+void clear_sounds(Entity entity);
 
 void clear_all_sounds();

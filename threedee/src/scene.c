@@ -28,7 +28,16 @@ Entity create_player(Vector3 position) {
     );
     ControllerComponent_add(i, -1);
     PlayerComponent* player = PlayerComponent_add(i);
-    Entity cam = create_camera();
+    SoundComponent_add(i, (SoundParameters) {});
+
+    Entity cam = create_entity();
+    TransformComponent_add(cam, (TransformParameters) {
+        .position = vec3(0.0f, player->head_height, 0.0f),
+    });
+    CameraComponent_add(cam,
+        (Resolution) { game_settings.width, game_settings.height },
+        to_radians(game_settings.fov)
+    );
     add_child(i, cam);
 
     Entity j = create_entity();

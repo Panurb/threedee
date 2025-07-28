@@ -23,6 +23,7 @@
 #include "render.h"
 #include "scene.h"
 #include "systems/physics.h"
+#include "systems/player.h"
 #include "raycast.h"
 #include "camera.h"
 
@@ -156,6 +157,8 @@ void input() {
                 break;
         }
     }
+
+    update_controllers();
 }
 
 
@@ -165,8 +168,11 @@ void update(float time_step) {
     AppState state = app.state;
 
     input_players();
+
+
     update_collisions();
     update_physics(time_step);
+    update_players(time_step);
 
     if (state != app.state) {
         previous_state = state;

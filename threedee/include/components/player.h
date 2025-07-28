@@ -15,6 +15,9 @@ typedef struct PlayerComponent {
     float examine_yaw;
     ArrayList* inventory;
     int selected_item;
+    float footstep_timer;
+    float head_height;
+    float view_bobbing;
 } PlayerComponent;
 
 
