@@ -89,6 +89,13 @@ float dist2(Vector2 a, Vector2 b) {
     return sqrtf(x * x + y * y);
 }
 
+float dist3(Vector3 a, Vector3 b) {
+    float x = a.x - b.x;
+    float y = a.y - b.y;
+    float z = a.z - b.z;
+    return sqrtf(x * x + y * y + z * z);
+}
+
 Vector2 normalized2(Vector2 v) {
     float n = norm2(v);
     if (n == 0.0) {

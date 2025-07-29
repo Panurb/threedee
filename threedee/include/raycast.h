@@ -14,6 +14,7 @@ typedef struct {
 typedef struct {
     Vector3 origin;
     Vector3 direction;
+    float range;
 } Ray;
 
 typedef struct {

@@ -136,6 +136,8 @@ Intersection intersection_capsule_ray(Capsule capsule, Ray ray) {
 
 
 Hit raycast(Ray ray, ColliderGroup group) {
+    // TODO: use range
+
     Hit hit = {
         .entity = NULL_ENTITY,
         .distance = INFINITY,

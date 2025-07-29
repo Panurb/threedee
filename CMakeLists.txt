@@ -24,6 +24,7 @@ set(SOURCES
     threedee/src/components/rigidbody.c
     threedee/src/components/sound.c
     threedee/src/components/transform.c
+    threedee/src/components/waypoint.c
     threedee/src/components/weather.c
     threedee/src/heap.c
     threedee/src/interface.c
@@ -38,9 +39,10 @@ set(SOURCES
     threedee/src/systems/sound.c
     threedee/src/systems/collision.c
     threedee/src/systems/draw.c
+    threedee/src/systems/input.c
+    threedee/src/systems/navigation.c
     threedee/src/systems/physics.c
     threedee/src/systems/player.c
-    threedee/src/systems/input.c
     threedee/src/util.c
     threedee/src/threedee.c
     threedee/src/render.c

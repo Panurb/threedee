@@ -73,6 +73,8 @@ float normsqr3(Vector3 v);
 
 float dist2(Vector2 a, Vector2 b);
 
+float dist3(Vector3 a, Vector3 b);
+
 Vector2 normalized2(Vector2 v);
 
 Vector3 normalized3(Vector3 v);

@@ -64,6 +64,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->weather[entity];
         case COMPONENT_PLAYER:
             return scene->components->player[entity];
+        case COMPONENT_WAYPOINT:
+            return scene->components->waypoint[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;

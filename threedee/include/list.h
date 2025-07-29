@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #define FOREACH(node, list) for (node = list->head; node != NULL; node = node->next)
 
 typedef struct ListNode {
