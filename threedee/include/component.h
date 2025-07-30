@@ -8,6 +8,7 @@
 #include "components/camera.h"
 #include "components/collider.h"
 #include "components/controller.h"
+#include "components/enemy.h"
 #include "components/light.h"
 #include "components/mesh.h"
 #include "components/player.h"
@@ -34,6 +35,7 @@ typedef struct ComponentData {
     WeatherComponent* weather[MAX_ENTITIES];
     PlayerComponent* player[MAX_ENTITIES];
     WaypointComponent* waypoint[MAX_ENTITIES];
+    EnemyComponent* enemy[MAX_ENTITIES];
 } ComponentData;
 
 typedef enum ComponentType {
@@ -48,6 +50,7 @@ typedef enum ComponentType {
     COMPONENT_WEATHER,
     COMPONENT_PLAYER,
     COMPONENT_WAYPOINT,
+    COMPONENT_ENEMY
 } ComponentType;
 
 ComponentData* ComponentData_create();
@@ -73,6 +76,7 @@ void set_transform(Entity entity, Matrix4 transform);
 Vector3 get_position(Entity entity);
 Vector2 get_xy(Entity entity);
 Quaternion get_rotation(Entity entity);
+float get_yaw(Entity entity);
 Vector3 get_scale(Entity entity);
 
 Vector2 get_position_interpolated(int entity, float delta);
@@ -87,3 +91,4 @@ List* get_children(Entity entity);
 Vector3 get_entities_center(List* entities);
 
 void look_at(Entity entity, Vector3 target);
+void turn_to(Entity entity, Vector3 direction, float delta_angle);

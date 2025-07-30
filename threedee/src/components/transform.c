@@ -5,7 +5,11 @@
 TransformComponent* TransformComponent_add(Entity entity, TransformParameters params) {
     TransformComponent* trans = malloc(sizeof(TransformComponent));
     trans->position = params.position;
-    trans->rotation = quaternion_non_zero(params.rotation) ? params.rotation : quaternion_id();
+    if (params.yaw != 0.0f) {
+        trans->rotation = axis_angle_to_quaternion((Vector3){0.0f, 1.0f, 0.0f}, to_radians(params.yaw));
+    } else {
+        trans->rotation = quaternion_non_zero(params.rotation) ? params.rotation : quaternion_id();
+    }
     trans->scale = non_zero3(params.scale) ? params.scale : ones3();
     trans->parent = NULL_ENTITY;
     trans->children = List_create();

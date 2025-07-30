@@ -50,6 +50,16 @@ bool quaternion_non_zero(Quaternion q) {
 }
 
 
+float quaternion_angle(Quaternion q, Quaternion p) {
+    // Calculate the angle between two quaternions
+    float dot = q.x * p.x + q.y * p.y + q.z * p.z + q.w * p.w;
+    if (dot < 0.0f) {
+        dot = -dot; // Ensure dot product is non-negative
+    }
+    return 2.0f * acosf(dot);
+}
+
+
 Quaternion quaternion_mult(Quaternion a, Quaternion b) {
     Quaternion q;
     q.x = a.x * b.w + a.y * b.z - a.z * b.y + a.w * b.x;

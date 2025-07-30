@@ -10,6 +10,7 @@ typedef struct TransformParameters {
     Quaternion rotation;
     Vector3 scale;
     Entity parent;
+    float yaw;
 } TransformParameters;
 
 

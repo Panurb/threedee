@@ -61,6 +61,8 @@ Vector2 vec2(float x, float y);
 
 Vector3 vec3(float x, float y, float z);
 
+Vector3 vec3_up();
+
 Vector4 vec4(float x, float y, float z, float w);
 
 float norm2(Vector2 v);
@@ -188,6 +190,8 @@ Matrix3 quaternion_to_rotation_matrix(Quaternion q);
 Quaternion rotation_matrix_to_quaternion(Matrix3 m);
 
 Quaternion axis_angle_to_quaternion(Vector3 axis, float angle);
+
+Quaternion quaternion_from_forward(Vector3 forward, Vector3 up);
 
 Vector3 clamp_magnitude3(Vector3 v, float min, float max);
 

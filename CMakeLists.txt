@@ -18,6 +18,7 @@ set(SOURCES
     threedee/src/components/camera.c
     threedee/src/components/collider.c
     threedee/src/components/controller.c
+    threedee/src/components/enemy.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
     threedee/src/components/player.c
@@ -39,6 +40,7 @@ set(SOURCES
     threedee/src/systems/sound.c
     threedee/src/systems/collision.c
     threedee/src/systems/draw.c
+    threedee/src/systems/enemy.c
     threedee/src/systems/input.c
     threedee/src/systems/navigation.c
     threedee/src/systems/physics.c

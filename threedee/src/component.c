@@ -235,6 +235,13 @@ Quaternion get_rotation(Entity entity) {
 }
 
 
+float get_yaw(Entity entity) {
+    Quaternion rotation = get_rotation(entity);
+    Vector3 forward = quaternion_forward(rotation);
+    return atan2f(forward.y, forward.z);
+}
+
+
 Vector3 get_scale(Entity entity) {
     Matrix4 transform = get_transform(entity);
     return scale_from_transform(transform);
@@ -321,4 +328,29 @@ void look_at(Entity entity, Vector3 target) {
     Matrix4 transform = look_at_matrix(position, target, up);
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
     trans->rotation = rotation_from_transform(transform);
+}
+
+
+void turn_to(Entity entity, Vector3 target, float delta_angle) {
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+
+    Vector3 position = get_position(entity);
+    Vector3 direction = sub3(target, position);
+    Quaternion current_rotation = get_rotation(entity);
+    Quaternion target_rotation = quaternion_from_forward(direction, vec3_up());
+
+    // Calculate the angle difference
+    float angle_diff = quaternion_angle(current_rotation, target_rotation);
+
+    // If the angle difference is small enough, set the rotation directly
+    if (angle_diff < delta_angle) {
+        trans->rotation = target_rotation;
+    } else {
+        // Calculate the rotation axis
+        Vector3 axis = normalized3(cross(quaternion_forward(current_rotation), quaternion_forward(target_rotation)));
+        // Create a rotation quaternion for the delta angle
+        Quaternion delta_rotation = axis_angle_to_quaternion(axis, delta_angle);
+        // Apply the rotation
+        trans->rotation = quaternion_mult(delta_rotation, delta_rotation);
+    }
 }

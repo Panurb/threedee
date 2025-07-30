@@ -21,9 +21,13 @@ Quaternion quaternion_id();
 
 Quaternion quaternion_normalize(Quaternion q);
 
+Quaternion quaternion_conjugate(Quaternion q);
+
 bool quaternion_equals(Quaternion a, Quaternion b);
 
 bool quaternion_non_zero(Quaternion q);
+
+float quaternion_angle(Quaternion q, Quaternion p);
 
 Quaternion quaternion_mult(Quaternion a, Quaternion b);
 

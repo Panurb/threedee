@@ -63,6 +63,10 @@ Vector3 vec3(float x, float y, float z) {
     return (Vector3) { x, y, z };
 }
 
+Vector3 vec3_up() {
+    return (Vector3) { 0.0f, 1.0f, 0.0f };
+}
+
 Vector4 vec4(float x, float y, float z, float w) {
     return (Vector4) { x, y, z, w };
 }
@@ -613,6 +617,34 @@ Quaternion axis_angle_to_quaternion(Vector3 axis, float angle) {
     float half_angle = angle / 2.0f;
     float s = sinf(half_angle);
     return (Quaternion) { norm_axis.x * s, norm_axis.y * s, norm_axis.z * s, cosf(half_angle) };
+}
+
+Quaternion quaternion_from_forward(Vector3 forward, Vector3 up) {
+    // Ensure forward is normalized
+    forward = normalized3(forward);
+    up = normalized3(up);
+
+    // Calculate right vector
+    Vector3 right = cross(up, forward);
+    if (norm3(right) < 1e-6f) {
+        // If right is zero, it means up and forward are aligned or opposite
+        if (dot3(up, forward) > 0.0f) {
+            return quaternion_id(); // Identity quaternion
+        } else {
+            return (Quaternion) { 0.0f, 1.0f, 0.0f, 0.0f }; // 180-degree rotation around right axis
+        }
+    }
+
+    // Recalculate up vector to ensure orthogonality
+    up = cross(forward, right);
+
+    Matrix3 rot_matrix = {
+        right.x, up.x, forward.x,
+        right.y, up.y, forward.y,
+        right.z, up.z, forward.z,
+    };
+
+    return rotation_matrix_to_quaternion(rot_matrix);
 }
 
 Vector3 clamp_magnitude3(Vector3 v, float min, float max) {
