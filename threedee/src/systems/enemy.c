@@ -23,7 +23,8 @@ Entity create_enemy(Vector3 pos, float yaw) {
     MeshComponent_add(i, (MeshParameters) {
        .mesh_filename = "teapot"
     });
-    RigidBodyComponent_add(i, 1.0f);
+    RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
+    rb->axis_lock.rotation = true;
     EnemyComponent_add(i);
     WaypointComponent_add(i);
     SoundComponent_add(i, (SoundParameters) {});

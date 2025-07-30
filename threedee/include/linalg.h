@@ -175,6 +175,8 @@ Matrix4 orthographic_projection_matrix(float left, float right, float bottom, fl
 
 Matrix4 look_at_matrix(Vector3 position, Vector3 target, Vector3 up);
 
+Matrix3 look_at_rotation_matrix(Vector3 position, Vector3 target, Vector3 up);
+
 void vector2_print(void* ptr);
 
 void vector3_print(void* ptr);

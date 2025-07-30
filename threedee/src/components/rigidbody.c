@@ -27,7 +27,7 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, float mass) {
     rigid_body->axis_lock.y = false;
     rigid_body->axis_lock.z = false;
     rigid_body->axis_lock.rotation = false;
-    rigid_body->axis_lock.rotation_axis = vec3(0.0f, 1.0f, 0.0f);
+    rigid_body->axis_lock.rotation_axis = vec3_up();
 
     scene->components->rigid_body[entity] = rigid_body;
 

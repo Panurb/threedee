@@ -66,6 +66,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->player[entity];
         case COMPONENT_WAYPOINT:
             return scene->components->waypoint[entity];
+        case COMPONENT_ENEMY:
+            return scene->components->enemy[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;
@@ -325,9 +327,9 @@ void look_at(Entity entity, Vector3 target) {
         // If the direction is almost vertical, use a different up vector
         up = vec3(0.0f, 0.0f, 1.0f);
     }
-    Matrix4 transform = look_at_matrix(position, target, up);
+    Matrix3 rot = look_at_rotation_matrix(position, target, up);
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
-    trans->rotation = rotation_from_transform(transform);
+    trans->rotation = rotation_matrix_to_quaternion(rot);
 }
 
 
@@ -339,18 +341,12 @@ void turn_to(Entity entity, Vector3 target, float delta_angle) {
     Quaternion current_rotation = get_rotation(entity);
     Quaternion target_rotation = quaternion_from_forward(direction, vec3_up());
 
-    // Calculate the angle difference
     float angle_diff = quaternion_angle(current_rotation, target_rotation);
 
     // If the angle difference is small enough, set the rotation directly
     if (angle_diff < delta_angle) {
         trans->rotation = target_rotation;
     } else {
-        // Calculate the rotation axis
-        Vector3 axis = normalized3(cross(quaternion_forward(current_rotation), quaternion_forward(target_rotation)));
-        // Create a rotation quaternion for the delta angle
-        Quaternion delta_rotation = axis_angle_to_quaternion(axis, delta_angle);
-        // Apply the rotation
-        trans->rotation = quaternion_mult(delta_rotation, delta_rotation);
+        trans->rotation = slerp(current_rotation, target_rotation, delta_angle / angle_diff);
     }
 }

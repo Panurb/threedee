@@ -175,6 +175,7 @@ void update(float time_step) {
     update_collisions();
     update_physics(time_step);
     update_players(time_step);
+    update_enemies(time_step);
 
     if (state != app.state) {
         previous_state = state;

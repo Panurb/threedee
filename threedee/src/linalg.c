@@ -506,6 +506,18 @@ Matrix4 look_at_matrix(Vector3 position, Vector3 target, Vector3 up) {
     return transpose4(m);
 }
 
+Matrix3 look_at_rotation_matrix(Vector3 position, Vector3 target, Vector3 up) {
+    Vector3 forward = normalized3(sub3(target, position));
+    Vector3 right = normalized3(cross(forward, up));
+    up = normalized3(cross(right, forward));
+    Matrix3 m = {
+        right.x, up.x, -forward.x,
+        right.y, up.y, -forward.y,
+        right.z, up.z, -forward.z
+    };
+    return m;
+}
+
 void vector2_print(void* ptr) {
     Vector2* v = ptr;
     printf("Vector2(%.2f, %.2f)\n", v->x, v->y);
@@ -620,8 +632,8 @@ Quaternion axis_angle_to_quaternion(Vector3 axis, float angle) {
 }
 
 Quaternion quaternion_from_forward(Vector3 forward, Vector3 up) {
-    // Ensure forward is normalized
-    forward = normalized3(forward);
+    // Negate since -Z is forward
+    forward = neg3(normalized3(forward));
     up = normalized3(up);
 
     // Calculate right vector

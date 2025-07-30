@@ -236,7 +236,7 @@ void create_scene() {
     create_waypoint(vec3(0.0f, 1.0f, 0.0f));
     create_waypoint(vec3(2.0f, 1.0f, 2.0f));
 
-    create_lamp(vec3(0.0f, 4.0f, 0.0f));
+    scene->lamp =  create_lamp(vec3(0.0f, 4.0f, 0.0f));
 
     // i = create_entity();
     // TransformComponent_add(i, vec3(0.0f, 2.0f, 0.0f));
