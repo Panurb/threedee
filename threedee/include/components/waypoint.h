@@ -7,7 +7,6 @@
 
 typedef struct WaypointComponent {
     List* neighbors;
-    List* new_neighbors;
     int came_from;
     float f_score;
     float g_score;

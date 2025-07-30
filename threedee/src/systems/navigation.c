@@ -20,7 +20,7 @@ int create_waypoint(Vector3 pos) {
     ColliderComponent_add(i, (ColliderParameters) {
         .type = COLLIDER_SPHERE,
         .radius = 0.25f,
-        .group = GROUP_WALLS | GROUP_PLAYERS | GROUP_PROPS | GROUP_ITEMS,
+        .group = GROUP_WAYPOINTS,
     });
 
     return i;
@@ -120,6 +120,7 @@ float connection_distance(int i, int j) {
     Hit info_a = raycast(ray, GROUP_WALLS);
 
     if (info_a.entity != NULL_ENTITY) {
+        LOG_INFO("Connection between %d and %d blocked by entity %d", i, j, info_a.entity);
         return 0.0f;
     }
 
@@ -128,14 +129,16 @@ float connection_distance(int i, int j) {
 
 
 void update_connection(int i, int n) {
+    LOG_INFO("Updating connection between %d and %d", i, n);
     float d = connection_distance(i, n);
+    LOG_INFO("Distance between %d and %d: %f", i, n, d);
     if (d > 0.0f) {
         WaypointComponent* waypoint = get_component(i, COMPONENT_WAYPOINT);
         WaypointComponent* neighbor = get_component(n, COMPONENT_WAYPOINT);
-        List_add(waypoint->new_neighbors, n);
+        List_add(waypoint->neighbors, n);
 
-        if (!List_find(neighbor->new_neighbors, i)) {
-            List_add(neighbor->new_neighbors, i);
+        if (!List_find(neighbor->neighbors, i)) {
+            List_add(neighbor->neighbors, i);
         }
     }
 }
@@ -170,7 +173,7 @@ void draw_waypoints(bool draw_neighbors) {
             for (ListNode* node = waypoint->neighbors->head; node; node = node->next) {
                 int k = node->value;
                 Color color = COLOR_WHITE;
-                color.a = 64;
+                color.a = 0.25f;
                 render_line(pos, get_position(k), 0.04f, color);
             }
         }

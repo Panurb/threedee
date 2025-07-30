@@ -1,4 +1,7 @@
 #include "systems/draw.h"
+
+#include <systems/navigation.h>
+
 #include "app.h"
 #include "render.h"
 #include "scene.h"
@@ -38,6 +41,8 @@ void draw_entities() {
                 mesh_component->texture_scale
             );
         }
+
+        draw_waypoints(true);
 
         if (app.debug_level == 0) {
             continue;

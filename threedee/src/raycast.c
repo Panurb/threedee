@@ -136,8 +136,6 @@ Intersection intersection_capsule_ray(Capsule capsule, Ray ray) {
 
 
 Hit raycast(Ray ray, ColliderGroup group) {
-    // TODO: use range
-
     Hit hit = {
         .entity = NULL_ENTITY,
         .distance = INFINITY,
@@ -171,11 +169,18 @@ Hit raycast(Ray ray, ColliderGroup group) {
             case COLLIDER_CAPSULE:
                 intersection = intersection_capsule_ray(shape.capsule, ray);
                 break;
+            case COLLIDER_AABB:
+                intersection = intersection_cuboid_ray((Cuboid) {
+                    .center = shape.aabb.center,
+                    .half_extents = shape.aabb.half_extents,
+                    .rotation = quaternion_id()
+                }, ray);
+                break;
             default:
                 LOG_ERROR("Unknown collider type: %d", collider->type);
         }
 
-        if (intersection.distance < hit.distance) {
+        if (intersection.distance < hit.distance && intersection.distance < ray.range) {
             hit.entity = i;
             hit.distance = intersection.distance;
             hit.point = intersection.point;

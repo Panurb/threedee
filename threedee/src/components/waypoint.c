@@ -11,7 +11,6 @@ WaypointComponent* WaypointComponent_add(Entity entity) {
     waypoint->g_score = INFINITY;
     waypoint->f_score = INFINITY;
     waypoint->neighbors = List_create();
-    waypoint->new_neighbors = List_create();
     waypoint->range = 10.0f;
 
     scene->components->waypoint[entity] = waypoint;
@@ -32,15 +31,6 @@ void WaypointComponent_remove(Entity entity) {
             }
         }
         List_delete(waypoint->neighbors);
-
-        FOREACH(node, waypoint->new_neighbors) {
-            int n = node->value;
-            WaypointComponent* neighbor = get_component(n, COMPONENT_WAYPOINT);
-            if (neighbor) {
-                List_remove(neighbor->new_neighbors, entity);
-            }
-        }
-        List_delete(waypoint->new_neighbors);
 
         free(waypoint);
         scene->components->waypoint[entity] = NULL;

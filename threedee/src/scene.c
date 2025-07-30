@@ -5,6 +5,9 @@
 #include <stdlib.h>
 
 #include "scene.h"
+
+#include <systems/navigation.h>
+
 #include "util.h"
 #include "component.h"
 
@@ -202,7 +205,7 @@ void create_scene() {
 
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
-        .position = vec3(0.0f, -0.01f, 0.0f),
+        .position = vec3(0.0f, -0.51f, 0.0f),
         .scale = vec3(100.0f, 1.0f, 100.0f)
     });
     MeshComponent_add(i, (MeshParameters) {
@@ -213,6 +216,7 @@ void create_scene() {
 
     i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(0.0f, -0.5f, 0.0f),
         .scale = vec3(10.0f, 1.0f, 10.0f)
     });
     MeshComponent_add(i, (MeshParameters) {
@@ -224,10 +228,13 @@ void create_scene() {
 
     create_forest(zeros3(), 50.0f, 50.0f, 3.0f, 10.0f);
 
-    create_wall(vec3(0.0f, 0.5f, -5.25f), 10.0f, 0.5f, 3);
-    create_wall(vec3(0.0f, 0.5f, 5.25f), 10.0f, 0.5f, 3);
-    create_wall(vec3(5.25f, 0.5f, 0.0f), 0.5f, 10.0f, 3);
-    create_wall(vec3(-5.25f, 0.5f, 0.0f), 0.5f, 10.0f, 3);
+    create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 3);
+    create_wall(vec3(0.0f, 0.0f, 5.25f), 10.0f, 0.5f, 3);
+    create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
+    create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
+
+    create_waypoint(vec3(0.0f, 1.0f, 0.0f));
+    create_waypoint(vec3(2.0f, 1.0f, 2.0f));
 
     create_lamp(vec3(0.0f, 4.0f, 0.0f));
 

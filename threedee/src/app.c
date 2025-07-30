@@ -12,6 +12,7 @@
 
 #include <time.h>
 #include <systems/draw.h>
+#include <systems/navigation.h>
 
 #include "resources.h"
 #include "../include/systems/sound.h"
@@ -108,6 +109,7 @@ void init() {
     create_scene();
 
     init_physics();
+    init_waypoints();
 }
 
 

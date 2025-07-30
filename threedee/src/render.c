@@ -1529,7 +1529,7 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 	InstanceColorData* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, triangle_mesh.instance_transfer_buffer, false);
 	InstanceColorData instance_data = {
 		.transform = transpose4(transform),
-		.color = { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f }
+		.color = color
 	};
 	instance_datas[triangle_mesh.num_instances] = instance_data;
 	triangle_mesh.num_instances++;

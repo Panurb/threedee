@@ -20,6 +20,8 @@ typedef enum {
     GROUP_PLAYERS = 1 << 1,
     GROUP_PROPS = 1 << 2,
     GROUP_ITEMS = 1 << 3,
+    GROUP_WAYPOINTS = 1 << 4,
+    GROUP_ALL = GROUP_WALLS | GROUP_PLAYERS | GROUP_PROPS | GROUP_ITEMS | GROUP_WAYPOINTS
 } ColliderGroup;
 
 
