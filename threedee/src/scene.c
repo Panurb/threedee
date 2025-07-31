@@ -116,6 +116,59 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
 }
 
 
+Entity create_wall_with_door(Vector3 position, float width, float depth, float door_width) {
+    float wall_height = 3.0f;
+    float door_height = 2.5f;
+
+    float wall_width = (width > depth) ? (width - door_width) * 0.5f : width;
+    float wall_depth = (width > depth) ? depth : (depth - door_width) * 0.5f;
+
+    float x_offset = (width > depth) ? 0.5f * wall_width + 0.5f * door_width : 0.0f;
+    float z_offset = (width > depth) ? 0.0f : 0.5f * wall_depth + 0.5f * door_width;
+
+    float door_x_scale = (width > depth) ? door_width : wall_width;
+    float door_z_scale = (width > depth) ? wall_depth : door_width;
+
+    Entity left_wall = create_entity();
+    TransformComponent_add(left_wall, (TransformParameters) {
+        .position = vec3(position.x - x_offset, position.y + wall_height * 0.5f, position.z - z_offset),
+        .scale = vec3(wall_width, wall_height, wall_depth)
+    });
+    MeshComponent_add(left_wall, (MeshParameters) {
+        .mesh_filename = "cube",
+        .texture_filename = "tiles",
+        .material_filename = "glass"
+    });
+    ColliderComponent_add(left_wall, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+
+    Entity right_wall = create_entity();
+    TransformComponent_add(right_wall, (TransformParameters) {
+        .position = vec3(position.x + x_offset, position.y + wall_height * 0.5f, position.z + z_offset),
+        .scale = vec3(wall_width, wall_height, wall_depth)
+    });
+    MeshComponent_add(right_wall, (MeshParameters) {
+        .mesh_filename = "cube",
+        .texture_filename = "tiles",
+        .material_filename = "glass"
+    });
+    ColliderComponent_add(right_wall, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+
+    Entity door_top = create_entity();
+    TransformComponent_add(door_top, (TransformParameters) {
+        .position = vec3(position.x, position.y + wall_height - 0.5f * (wall_height - door_height), position.z),
+        .scale = vec3(door_x_scale, wall_height - door_height, door_z_scale)
+    });
+    MeshComponent_add(door_top, (MeshParameters) {
+        .mesh_filename = "cube",
+        .texture_filename = "tiles",
+        .material_filename = "glass"
+    });
+    ColliderComponent_add(door_top, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+
+    return door_top;
+}
+
+
 Quaternion random_y_rotation() {
     return axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), randf(0.0f, 2.0f * M_PI));
 }
@@ -230,10 +283,15 @@ void create_scene() {
 
     create_forest(zeros3(), 50.0f, 50.0f, 3.0f, 10.0f);
 
-    create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 3);
-    create_wall(vec3(0.0f, 0.0f, 5.25f), 10.0f, 0.5f, 3);
-    create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
-    create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
+    // create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 3);
+    // create_wall(vec3(0.0f, 0.0f, 5.25f), 10.0f, 0.5f, 3);
+    // create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
+    // create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
+
+    create_wall_with_door(vec3(0.0f, 0.0f, -2.5f), 5.0f, 0.5f, 1.0f);
+    create_wall_with_door(vec3(-2.5f, 0.0f, 0.0f), 0.5f, 5.0f, 1.0f);
+    create_wall_with_door(vec3(2.5f, 0.0f, 0.0f), 0.5f, 5.0f, 1.0f);
+    create_wall_with_door(vec3(0.0f, 0.0f, 2.5f), 5.0f, 0.5f, 1.0f);
 
     // create_waypoint(vec3(0.0f, 1.0f, 0.0f));
     // create_waypoint(vec3(2.0f, 1.0f, 2.0f));

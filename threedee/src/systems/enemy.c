@@ -18,9 +18,8 @@ Entity create_enemy(Vector3 pos, float yaw) {
         .yaw = yaw
     });
     ColliderComponent_add(i, (ColliderParameters) {
-        .type = COLLIDER_CAPSULE,
-        .radius = 0.5f,
-        .height = 1.0f,
+        .type = COLLIDER_SPHERE,
+        .radius = 1.0f,
         .group = GROUP_ENEMIES
     });
 
@@ -29,6 +28,7 @@ Entity create_enemy(Vector3 pos, float yaw) {
     });
     RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
     rb->axis_lock.rotation = true;
+    rb->friction = 1.0f;
     EnemyComponent_add(i);
     WaypointComponent_add(i);
     SoundComponent_add(i, (SoundParameters) {});
@@ -63,8 +63,6 @@ void update_enemies(float time_step) {
 
         RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
         Vector3 pos = get_position(i);
-
-        LOG_INFO("Pos: %f %f %f", pos.x, pos.y, pos.z);
 
         if (enemy->state != ENEMY_ATTACK && enemy->state != ENEMY_DEAD) {
             update_vision(i);

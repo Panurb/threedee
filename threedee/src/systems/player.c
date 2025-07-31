@@ -56,15 +56,17 @@ void input_players() {
             player->pitch += controller->controller.right_stick.y;
             player->pitch = clamp(player->pitch, -89.0f, 89.0f);
 
-            Vector2 v = controller->controller.left_stick;
-            Vector3 velocity = vec3(v.x, 0.0f, -v.y);
-            velocity = mul3(3.0f, normalized3(velocity));
+            if (rb->on_ground) {
+                Vector2 v = controller->controller.left_stick;
+                Vector3 velocity = vec3(v.x, 0.0f, -v.y);
+                velocity = mul3(3.0f, normalized3(velocity));
 
-            Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
-            velocity = map3(rot, velocity);
+                Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
+                velocity = map3(rot, velocity);
 
-            rb->velocity.x = velocity.x;
-            rb->velocity.z = velocity.z;
+                rb->velocity.x = velocity.x;
+                rb->velocity.z = velocity.z;
+            }
 
             Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->yaw));
             Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(player->pitch));
@@ -81,7 +83,7 @@ void input_players() {
 
         if (controller->controller.buttons_pressed[BUTTON_A]) {
             if (rb->on_ground) {
-                rb->velocity.y += 4.0f;
+                rb->velocity.y += 3.0f;
             }
         }
 

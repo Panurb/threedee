@@ -10,7 +10,10 @@
 static const unsigned int COLLISION_MASKS[] = {
     [GROUP_WALLS] = 0,
     [GROUP_PLAYERS] = GROUP_WALLS,
-    [GROUP_PROPS] = GROUP_WALLS | GROUP_PLAYERS | GROUP_PROPS
+    [GROUP_PROPS] = GROUP_WALLS | GROUP_PROPS,
+    [GROUP_ITEMS] = GROUP_WALLS,
+    [GROUP_WAYPOINTS] = 0,
+    [GROUP_ENEMIES] = GROUP_WALLS | GROUP_PLAYERS,
 };
 
 
@@ -550,6 +553,38 @@ Penetration penetration_capsule_aabb(Capsule capsule, AABB aabb) {
 }
 
 
+Penetration penetration_capsule_sphere(Capsule capsule, Sphere sphere) {
+    Penetration penetration = {
+        .valid = false
+    };
+
+    Matrix3 rot = quaternion_to_rotation_matrix(capsule.rotation);
+    Vector3 h = map3(rot, vec3(0.0f, capsule.height / 2.0f, 0.0f));
+    Vector3 p0 = add3(capsule.center, h);
+    Vector3 p1 = add3(capsule.center, neg3(h));
+
+    // Step 1: Find closest point on segment to sphere center
+    Vector3 closest_on_segment = closest_point_on_segment(p0, p1, sphere.center);
+
+    // Step 2: Distance and direction
+    Vector3 diff = sub3(closest_on_segment, sphere.center);
+    float dist = norm3(diff);
+
+    if (dist < capsule.radius + sphere.radius) {
+        float depth = capsule.radius + sphere.radius - dist;
+        Vector3 direction = normalized3(diff);
+        penetration.valid = true;
+        penetration.overlap = mul3(depth, direction);
+        penetration.contact_point = add3(
+            closest_on_segment,
+            mul3(-sphere.radius, direction)
+        );
+    }
+
+    return penetration;
+}
+
+
 Penetration get_penetration(Entity i, Entity j) {
     ColliderComponent* collider = scene->components->collider[i];
     ColliderComponent* other_collider = scene->components->collider[j];
@@ -626,6 +661,16 @@ Penetration get_penetration(Entity i, Entity j) {
 
     if (collider->type == COLLIDER_AABB && other_collider->type == COLLIDER_CAPSULE) {
         Penetration penetration = penetration_capsule_aabb(shape_other.capsule, shape.aabb);
+        penetration.overlap = neg3(penetration.overlap);
+        return penetration;
+    }
+
+    if (collider->type == COLLIDER_CAPSULE && other_collider->type == COLLIDER_SPHERE) {
+        return penetration_capsule_sphere(shape.capsule, shape_other.sphere);
+    }
+
+    if (collider->type == COLLIDER_SPHERE && other_collider->type == COLLIDER_CAPSULE) {
+        Penetration penetration = penetration_capsule_sphere(shape_other.capsule, shape.sphere);
         penetration.overlap = neg3(penetration.overlap);
         return penetration;
     }
