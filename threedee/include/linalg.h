@@ -165,6 +165,8 @@ Quaternion rotation_from_transform(Matrix4 m);
 
 Vector3 quaternion_forward(Quaternion q);
 
+Vector3 quaternion_to_rotation_vector(Quaternion q);
+
 bool non_zero2(Vector2 v);
 
 bool non_zero3(Vector3 v);

@@ -461,6 +461,16 @@ Vector3 quaternion_forward(Quaternion q) {
     };
 }
 
+
+Vector3 quaternion_to_rotation_vector(Quaternion q) {
+    float angle = 2.0f * acosf(q.w);
+    float s = sqrtf(1.0f - q.w * q.w);
+    if (s < 1e-6f) {
+        return vec3(1.0f, 0.0f, 0.0f);
+    }
+    return vec3(q.x / s * angle, q.y / s * angle, q.z / s * angle);
+}
+
 bool non_zero2(Vector2 v) {
     return (v.x != 0.0f || v.y != 0.0f);
 }

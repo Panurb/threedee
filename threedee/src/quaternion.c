@@ -56,7 +56,7 @@ float quaternion_angle(Quaternion q, Quaternion p) {
     if (dot < 0.0f) {
         dot = -dot; // Ensure dot product is non-negative
     }
-    return 2.0f * acosf(dot);
+    return 2.0f * acosf(clamp(dot, -1.0f, 1.0f));
 }
 
 

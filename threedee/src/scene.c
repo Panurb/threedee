@@ -7,6 +7,7 @@
 #include "scene.h"
 
 #include <systems/navigation.h>
+#include <systems/enemy.h>
 
 #include "util.h"
 #include "component.h"
@@ -32,6 +33,7 @@ Entity create_player(Vector3 position) {
     ControllerComponent_add(i, -1);
     PlayerComponent* player = PlayerComponent_add(i);
     SoundComponent_add(i, (SoundParameters) {});
+    WaypointComponent_add(i);
 
     Entity cam = create_entity();
     TransformComponent_add(cam, (TransformParameters) {
@@ -233,10 +235,12 @@ void create_scene() {
     create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
     create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
 
-    create_waypoint(vec3(0.0f, 1.0f, 0.0f));
-    create_waypoint(vec3(2.0f, 1.0f, 2.0f));
+    // create_waypoint(vec3(0.0f, 1.0f, 0.0f));
+    // create_waypoint(vec3(2.0f, 1.0f, 2.0f));
 
     scene->lamp =  create_lamp(vec3(0.0f, 4.0f, 0.0f));
+
+    create_enemy(vec3(2.0f, 0.0f, 2.0f), 0.0f);
 
     // i = create_entity();
     // TransformComponent_add(i, vec3(0.0f, 2.0f, 0.0f));

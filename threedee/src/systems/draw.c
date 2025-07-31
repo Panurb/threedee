@@ -1,5 +1,6 @@
 #include "systems/draw.h"
 
+#include <systems/enemy.h>
 #include <systems/navigation.h>
 
 #include "app.h"
@@ -47,6 +48,8 @@ void draw_entities() {
         if (app.debug_level == 0) {
             continue;
         }
+
+        debug_draw_enemies();
 
         ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
         RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);

@@ -167,7 +167,7 @@ void draw_waypoints(bool draw_neighbors) {
 
         Vector3 pos = get_position(i);
         float radius = get_radius(i);
-        render_circle(pos, radius, 32, COLOR_WHITE);
+        render_sphere(pos, 0.1f, 8, COLOR_WHITE);
 
         if (draw_neighbors) {
             for (ListNode* node = waypoint->neighbors->head; node; node = node->next) {

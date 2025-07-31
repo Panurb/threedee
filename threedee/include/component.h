@@ -91,4 +91,4 @@ List* get_children(Entity entity);
 Vector3 get_entities_center(List* entities);
 
 void look_at(Entity entity, Vector3 target);
-void turn_to(Entity entity, Vector3 direction, float delta_angle);
+void turn_to(Entity entity, Vector3 direction, float turn_speed);

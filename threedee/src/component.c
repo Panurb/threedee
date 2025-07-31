@@ -343,10 +343,18 @@ void turn_to(Entity entity, Vector3 target, float delta_angle) {
 
     float angle_diff = quaternion_angle(current_rotation, target_rotation);
 
+    if (angle_diff == 0.0f) {
+        return;
+    }
+
     // If the angle difference is small enough, set the rotation directly
     if (angle_diff < delta_angle) {
         trans->rotation = target_rotation;
+        LOG_INFO("Setting rotation directly");
     } else {
         trans->rotation = slerp(current_rotation, target_rotation, delta_angle / angle_diff);
+        LOG_INFO("Slerping rotation: %f", angle_diff);
     }
+
+    LOG_INFO("rotation: %f %f %f %f", trans->rotation.x, trans->rotation.y, trans->rotation.z, trans->rotation.w);
 }
