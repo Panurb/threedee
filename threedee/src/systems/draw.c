@@ -43,11 +43,11 @@ void draw_entities() {
             );
         }
 
-        draw_waypoints(true);
-
         if (app.debug_level == 0) {
             continue;
         }
+
+        draw_waypoints(true);
 
         debug_draw_enemies();
 

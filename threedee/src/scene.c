@@ -69,7 +69,35 @@ Entity create_lamp(Vector3 position) {
 }
 
 
-Entity create_wall(Vector3 position, float width, float depth, int windows) {
+Entity create_floor(Vector3 position, float width, float depth) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(position.x, position.y - 0.5f, position.z),
+        .scale = vec3(width, 1.0f, depth)
+    });
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+
+    return i;
+}
+
+
+Entity create_wall_empty(Vector3 position, float width, float depth) {
+    float wall_height = 3.5f;
+
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(position.x, position.y + wall_height * 0.5f, position.z),
+        .scale = vec3(width, wall_height, depth)
+    });
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+
+    return i;
+}
+
+
+Entity create_wall_with_windows(Vector3 position, float width, float depth, int windows) {
     float wall_height = 1.0f;
     float window_height = 1.5f;
 
@@ -117,7 +145,7 @@ Entity create_wall(Vector3 position, float width, float depth, int windows) {
 
 
 Entity create_wall_with_door(Vector3 position, float width, float depth, float door_width) {
-    float wall_height = 3.0f;
+    float wall_height = 3.5f;
     float door_height = 2.5f;
 
     float wall_width = (width > depth) ? (width - door_width) * 0.5f : width;
@@ -164,6 +192,21 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
         .material_filename = "glass"
     });
     ColliderComponent_add(door_top, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+
+    float wp_x_offset = sign(z_offset);
+    float wp_z_offset = sign(x_offset);
+
+    Entity waypoint1 = create_entity();
+    TransformComponent_add(waypoint1, (TransformParameters) {
+        .position = vec3(position.x - wp_x_offset, position.y + 1.0f, position.z - wp_z_offset)
+    });
+    WaypointComponent_add(waypoint1);
+
+    Entity waypoint2 = create_entity();
+    TransformComponent_add(waypoint2, (TransformParameters) {
+        .position = vec3(position.x + wp_x_offset, position.y + 1.0f, position.z + wp_z_offset)
+    });
+    WaypointComponent_add(waypoint2);
 
     return door_top;
 }
@@ -248,6 +291,127 @@ Entity create_blood(Vector3 position, bool hidden) {
 }
 
 
+Entity create_wall(Vector3 position, float width, float depth, Wall type) {
+    LOG_INFO("Creating wall at (%f, %f, %f) with type %d", position.x, position.y, position.z, type);
+
+    switch (type) {
+        case WALL_PLAIN:
+            return create_wall_empty(position, width, depth);
+        case WALL_DOOR:
+            return create_wall_with_door(position, width, depth, 1.0f);
+        case WALL_WINDOWS:
+            return create_wall_with_windows(position, width, depth, 3);
+        default:
+            return NULL_ENTITY;
+    }
+}
+
+
+Coordinates direction_offset(Direction direction) {
+    switch (direction) {
+        case DIRECTION_FRONT:
+            return (Coordinates) { 0, -1 };
+        case DIRECTION_BACK:
+            return (Coordinates) { 0, 1 };
+        case DIRECTION_LEFT:
+            return (Coordinates) { -1, 0 };
+        case DIRECTION_RIGHT:
+            return (Coordinates) { -1, 0 };
+    }
+
+    return (Coordinates) { 0, 0 };
+}
+
+
+void generate_level(Level* level, int x, int z) {
+    if (x < 0 || x >= level->width || z < 0 || z >= level->depth) {
+        return;
+    }
+
+    LOG_INFO("Generating level at (%d, %d)", x, z);
+
+    Room* room = &level->rooms[x][z];
+
+    room->floor = true;
+
+    int available_directions[4];
+    int available_count = 0;
+
+    for (int i = 0; i < 4; i++) {
+        Wall wall = room->walls[i];
+        if (wall == WALL_UNSET) {
+            available_directions[available_count] = i;
+            available_count++;
+        }
+    }
+
+    if (available_count == 0) {
+        return;
+    }
+
+    permute(available_directions, available_count);
+
+    for (int i = 0; i < available_count; i++) {
+        Direction direction = available_directions[i];
+        Direction opposite_direction = (direction + 2) % 4;
+        Coordinates offset = direction_offset(direction);
+
+        if (i == 0) {
+            room->walls[direction] = WALL_PLAIN;
+            level->rooms[x + offset.x][z + offset.z].walls[opposite_direction] = WALL_PLAIN;
+            continue;
+        }
+
+        room->walls[direction] = WALL_DOOR;
+        level->rooms[x + offset.x][z + offset.z].walls[opposite_direction] = WALL_DOOR;
+        generate_level(level, x + offset.x, z + offset.z);
+    }
+}
+
+
+void create_level() {
+    Level level = {
+        .width = 3,
+        .depth = 3,
+        .room_width = 10.0f,
+        .room_depth = 10.0f,
+    };
+
+    generate_level(&level, level.width / 2, level.depth / 2);
+
+    for (int i = 0; i < level.width; i++) {
+        for (int j = 0; j < level.depth; j++) {
+            Room room = level.rooms[i][j];
+            float x_offset = (i - level.width / 2) * level.room_width;
+            float z_offset = (j - level.depth / 2) * level.room_depth;
+            Vector3 pos = vec3(x_offset, 0.0f, z_offset);
+
+            if (room.floor) {
+                create_floor(pos, level.room_width, level.room_depth);
+            }
+
+            if (i == level.width / 2 && j == level.depth / 2)
+                create_lamp(vec3(pos.x, 4.0f, pos.z));
+
+            for (Direction d = 0; d < 4; d++) {
+                Coordinates offset = direction_offset(d);
+
+                Vector3 wall_pos = vec3(
+                    pos.x + offset.x * 0.5f * level.room_width,
+                    pos.y,
+                    pos.z + offset.z * 0.5f * level.room_depth
+                );
+
+                float width = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? level.room_width : 0.5f;
+                float depth = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? 0.5f : level.room_width;
+
+                create_wall(wall_pos, width, depth, room.walls[d]);
+            }
+        }
+    }
+}
+
+
 void create_scene() {
     LOG_INFO("Creating scene");
 
@@ -269,36 +433,23 @@ void create_scene() {
         .material_filename = "concrete"
     });
 
-    i = create_entity();
-    TransformComponent_add(i, (TransformParameters) {
-        .position = vec3(0.0f, -0.5f, 0.0f),
-        .scale = vec3(10.0f, 1.0f, 10.0f)
-    });
-    MeshComponent_add(i, (MeshParameters) {
-        .mesh_filename = "cube",
-        .texture_filename = "gravel",
-        .material_filename = "concrete"
-    });
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+    create_forest(zeros3(), 50.0f, 50.0f, 2.0f, 10.0f);
 
-    create_forest(zeros3(), 50.0f, 50.0f, 3.0f, 10.0f);
+    create_level();
 
-    // create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 3);
-    // create_wall(vec3(0.0f, 0.0f, 5.25f), 10.0f, 0.5f, 3);
-    // create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
-    // create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f, 3);
-
-    create_wall_with_door(vec3(0.0f, 0.0f, -2.5f), 5.0f, 0.5f, 1.0f);
-    create_wall_with_door(vec3(-2.5f, 0.0f, 0.0f), 0.5f, 5.0f, 1.0f);
-    create_wall_with_door(vec3(2.5f, 0.0f, 0.0f), 0.5f, 5.0f, 1.0f);
-    create_wall_with_door(vec3(0.0f, 0.0f, 2.5f), 5.0f, 0.5f, 1.0f);
-
-    // create_waypoint(vec3(0.0f, 1.0f, 0.0f));
-    // create_waypoint(vec3(2.0f, 1.0f, 2.0f));
-
-    scene->lamp =  create_lamp(vec3(0.0f, 4.0f, 0.0f));
-
-    create_enemy(vec3(2.0f, 0.0f, 2.0f), 0.0f);
+    // create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f);
+    // create_wall(vec3(0.0f, 0.0f, 5.25f), 10.0f, 0.5);
+    // create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f);
+    // create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f);
+    //
+    // create_wall_with_door(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 1.0f);
+    //
+    // // create_waypoint(vec3(0.0f, 1.0f, 0.0f));
+    // // create_waypoint(vec3(2.0f, 1.0f, 2.0f));
+    //
+    // scene->lamp =  create_lamp(vec3(0.0f, 4.0f, 0.0f));
+    //
+    // create_enemy(vec3(2.0f, 0.0f, 2.0f), 0.0f);
 
     // i = create_entity();
     // TransformComponent_add(i, vec3(0.0f, 2.0f, 0.0f));
