@@ -310,16 +310,45 @@ Entity create_wall(Vector3 position, float width, float depth, Wall type) {
 Coordinates direction_offset(Direction direction) {
     switch (direction) {
         case DIRECTION_FRONT:
-            return (Coordinates) { 0, -1 };
-        case DIRECTION_BACK:
             return (Coordinates) { 0, 1 };
-        case DIRECTION_LEFT:
-            return (Coordinates) { -1, 0 };
         case DIRECTION_RIGHT:
+            return (Coordinates) { 1, 0 };
+        case DIRECTION_BACK:
+            return (Coordinates) { 0, -1 };
+        case DIRECTION_LEFT:
             return (Coordinates) { -1, 0 };
     }
 
     return (Coordinates) { 0, 0 };
+}
+
+
+void print_level(Level level) {
+    char wall_types[] = " NPDW";
+
+    for (int i = 0; i < level.depth; i++) {
+        for (int j = 0; j < level.width; j++) {
+            Room room = level.rooms[i][j];
+            printf(" %c |", wall_types[room.walls[DIRECTION_BACK]]);
+        }
+        printf("\n");
+
+        for (int j = 0; j < level.width; j++) {
+            Room room = level.rooms[i][j];
+            printf(
+                "%c %c|",
+                wall_types[room.walls[DIRECTION_LEFT]],
+                wall_types[room.walls[DIRECTION_RIGHT]]
+            );
+        }
+        printf("\n");
+
+        for (int j = 0; j < level.width; j++) {
+            Room room = level.rooms[i][j];
+            printf(" %c |", wall_types[room.walls[DIRECTION_FRONT]]);
+        }
+        printf("\n-----------------\n");
+    }
 }
 
 
@@ -330,17 +359,19 @@ void generate_level(Level* level, int x, int z) {
 
     LOG_INFO("Generating level at (%d, %d)", x, z);
 
-    Room* room = &level->rooms[x][z];
+    print_level(*level);
+
+    Room* room = &level->rooms[z][x];
 
     room->floor = true;
 
     int available_directions[4];
     int available_count = 0;
 
-    for (int i = 0; i < 4; i++) {
-        Wall wall = room->walls[i];
+    for (Direction d = 0; d < 4; d++) {
+        Wall wall = room->walls[d];
         if (wall == WALL_UNSET) {
-            available_directions[available_count] = i;
+            available_directions[available_count] = d;
             available_count++;
         }
     }
@@ -351,19 +382,30 @@ void generate_level(Level* level, int x, int z) {
 
     permute(available_directions, available_count);
 
+    int blocked_count = randi(1, 2);
+
     for (int i = 0; i < available_count; i++) {
         Direction direction = available_directions[i];
         Direction opposite_direction = (direction + 2) % 4;
         Coordinates offset = direction_offset(direction);
 
-        if (i == 0) {
+        bool out_of_bounds = (z + offset.z < 0 || z + offset.z >= level->depth ||
+                            x + offset.x < 0 || x + offset.x >= level->width);
+
+        if (out_of_bounds) {
             room->walls[direction] = WALL_PLAIN;
-            level->rooms[x + offset.x][z + offset.z].walls[opposite_direction] = WALL_PLAIN;
             continue;
         }
 
-        room->walls[direction] = WALL_DOOR;
-        level->rooms[x + offset.x][z + offset.z].walls[opposite_direction] = WALL_DOOR;
+        if (i < blocked_count) {
+            room->walls[direction] = WALL_PLAIN;
+            level->rooms[z + offset.z][x + offset.x].walls[opposite_direction] = WALL_PLAIN;
+            continue;
+        }
+
+        Wall wall_type = randf(0.0f, 1.0f) < 0.5f ? WALL_DOOR : WALL_NONE;
+        room->walls[direction] = wall_type;
+        level->rooms[z + offset.z][x + offset.x].walls[opposite_direction] = wall_type;
         generate_level(level, x + offset.x, z + offset.z);
     }
 }
@@ -371,8 +413,8 @@ void generate_level(Level* level, int x, int z) {
 
 void create_level() {
     Level level = {
-        .width = 3,
-        .depth = 3,
+        .width = 5,
+        .depth = 5,
         .room_width = 10.0f,
         .room_depth = 10.0f,
     };
@@ -381,7 +423,8 @@ void create_level() {
 
     for (int i = 0; i < level.width; i++) {
         for (int j = 0; j < level.depth; j++) {
-            Room room = level.rooms[i][j];
+            Room room = level.rooms[j][i];
+
             float x_offset = (i - level.width / 2) * level.room_width;
             float z_offset = (j - level.depth / 2) * level.room_depth;
             Vector3 pos = vec3(x_offset, 0.0f, z_offset);
@@ -393,7 +436,10 @@ void create_level() {
             if (i == level.width / 2 && j == level.depth / 2)
                 create_lamp(vec3(pos.x, 4.0f, pos.z));
 
-            for (Direction d = 0; d < 4; d++) {
+            // Only create back-left walls for the first row and column
+            Direction max_direction = (i == 0 || j == 0) ? 4 : 2;
+
+            for (Direction d = 0; d < max_direction; d++) {
                 Coordinates offset = direction_offset(d);
 
                 Vector3 wall_pos = vec3(
@@ -433,7 +479,7 @@ void create_scene() {
         .material_filename = "concrete"
     });
 
-    create_forest(zeros3(), 50.0f, 50.0f, 2.0f, 10.0f);
+    create_forest(zeros3(), 50.0f, 50.0f, 2.0f, 30.0f);
 
     create_level();
 

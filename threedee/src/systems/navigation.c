@@ -120,7 +120,7 @@ float connection_distance(int i, int j) {
     Hit info_a = raycast(ray, GROUP_WALLS);
 
     if (info_a.entity != NULL_ENTITY) {
-        LOG_INFO("Connection between %d and %d blocked by entity %d", i, j, info_a.entity);
+        LOG_DEBUG("Connection between %d and %d blocked by entity %d", i, j, info_a.entity);
         return 0.0f;
     }
 
@@ -129,9 +129,9 @@ float connection_distance(int i, int j) {
 
 
 void update_connection(int i, int n) {
-    LOG_INFO("Updating connection between %d and %d", i, n);
+    LOG_DEBUG("Updating connection between %d and %d", i, n);
     float d = connection_distance(i, n);
-    LOG_INFO("Distance between %d and %d: %f", i, n, d);
+    LOG_DEBUG("Distance between %d and %d: %f", i, n, d);
     if (d > 0.0f) {
         WaypointComponent* waypoint = get_component(i, COMPONENT_WAYPOINT);
         WaypointComponent* neighbor = get_component(n, COMPONENT_WAYPOINT);

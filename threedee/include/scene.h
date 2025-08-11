@@ -29,9 +29,9 @@ typedef struct Coordinates {
 
 typedef enum Direction {
     DIRECTION_FRONT,
-    DIRECTION_LEFT,
-    DIRECTION_BACK,
     DIRECTION_RIGHT,
+    DIRECTION_BACK,
+    DIRECTION_LEFT,
 } Direction;
 
 
