@@ -69,6 +69,19 @@ Entity create_lamp(Vector3 position) {
 }
 
 
+Entity create_ground(float width, float depth) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(0.0f, -0.51f, 0.0f),
+        .scale = vec3(width, 1.0f, depth)
+    });
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "gravel", .material_filename = "glass" });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .group = GROUP_WALLS, .height = 0.5f });
+
+    return i;
+}
+
+
 Entity create_floor(Vector3 position, float width, float depth) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
@@ -76,7 +89,6 @@ Entity create_floor(Vector3 position, float width, float depth) {
         .scale = vec3(width, 1.0f, depth)
     });
     MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     return i;
 }
@@ -292,8 +304,6 @@ Entity create_blood(Vector3 position, bool hidden) {
 
 
 Entity create_wall(Vector3 position, float width, float depth, Wall type) {
-    LOG_INFO("Creating wall at (%f, %f, %f) with type %d", position.x, position.y, position.z, type);
-
     switch (type) {
         case WALL_PLAIN:
             return create_wall_empty(position, width, depth);
@@ -320,6 +330,21 @@ Coordinates direction_offset(Direction direction) {
     }
 
     return (Coordinates) { 0, 0 };
+}
+
+
+void set_wall_type(Level* level, int x, int z, Direction direction, Wall wall_type) {
+    if (x < 0 || x >= level->width || z < 0 || z >= level->depth) {
+        return;
+    }
+
+    Room* room = &level->rooms[z][x];
+    room->walls[direction] = wall_type;
+
+    Direction opposite_direction = (direction + 2) % 4;
+    Coordinates offset = direction_offset(direction);
+    Room* adjacent_room = &level->rooms[z + offset.z][x + offset.x];
+    adjacent_room->walls[opposite_direction] = wall_type;
 }
 
 
@@ -393,13 +418,12 @@ void generate_level(Level* level, int x, int z) {
                             x + offset.x < 0 || x + offset.x >= level->width);
 
         if (out_of_bounds) {
-            room->walls[direction] = WALL_PLAIN;
+            room->walls[direction] = WALL_WINDOWS;
             continue;
         }
 
         if (i < blocked_count) {
-            room->walls[direction] = WALL_PLAIN;
-            level->rooms[z + offset.z][x + offset.x].walls[opposite_direction] = WALL_PLAIN;
+            set_wall_type(level, x, z, direction, WALL_PLAIN);
             continue;
         }
 
@@ -420,6 +444,25 @@ void create_level() {
     };
 
     generate_level(&level, level.width / 2, level.depth / 2);
+
+    LOG_INFO("Make outside walls windows");
+    for (int i = 0; i < level.width; i++) {
+        for (int j = 0; j < level.depth; j++) {
+            if (level.rooms[j][i].floor) continue;
+
+            for (Direction d = 0; d < 4; d++) {
+                if (level.rooms[j][i].walls[d] == WALL_PLAIN) {
+                    if (randf(0.0f, 1.0f) < 0.5f) {
+                        set_wall_type(&level, i, j, d, WALL_WINDOWS);
+                    }
+                }
+            }
+        }
+    }
+
+    print_level(level);
+
+    create_ground(100.0f, 100.0f);
 
     for (int i = 0; i < level.width; i++) {
         for (int j = 0; j < level.depth; j++) {
@@ -479,7 +522,7 @@ void create_scene() {
         .material_filename = "concrete"
     });
 
-    create_forest(zeros3(), 50.0f, 50.0f, 2.0f, 30.0f);
+    create_forest(zeros3(), 100.0f, 100.0f, 2.0f, 30.0f);
 
     create_level();
 
