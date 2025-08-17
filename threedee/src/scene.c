@@ -15,7 +15,9 @@
 
 Entity create_player(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent_add(i, (TransformParameters) { .position = position });
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(position.x, position.y + 1.0f, position.z),
+    });
     RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
     rb->axis_lock.rotation = true;
     rb->bounce = 0.0f;
@@ -506,7 +508,7 @@ void create_scene() {
     scene = malloc(sizeof(Scene));
     scene->components = ComponentData_create();
     scene->screen_camera = create_screen_camera();
-    scene->player = create_player(vec3(0.0f, 2.0f, 0.0f));
+    scene->player = create_player(zeros3());
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
 
@@ -547,7 +549,8 @@ void create_scene() {
     WeatherComponent_add(scene->weather, (WeatherParameters) {
         .fog_color = COLOR_SKY,
         .fog_start = 10.0f,
-        .fog_end = 50.0f
+        .fog_end = 50.0f,
+        .ambient_light = 0.05f,
     });
 
     LOG_INFO("Scene created");

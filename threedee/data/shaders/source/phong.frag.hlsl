@@ -134,8 +134,9 @@ Output main(Input input)
         float spot_cos = dot(-l, light_data[i].direction);
         float spot_intensity = saturate((spot_cos - light_data[i].cutoff_cos) / (1.0 - light_data[i].cutoff_cos));
 
-        float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
-        float fade = smoothstep(light_data[i].range, 0.8 * light_data[i].range, distance);
+        float light_distance = length(light_data[i].position - world_position);
+        float attenuation = 1.0 / (1.0 + 0.1 * light_distance + 0.01 * light_distance * light_distance);
+        float fade = smoothstep(light_data[i].range, 0.8 * light_data[i].range, light_distance);
         attenuation *= fade;
         spot_intensity *= attenuation;
 

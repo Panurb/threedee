@@ -7,6 +7,7 @@ WeatherComponent* WeatherComponent_add(int entity, WeatherParameters parameters)
     weather->fog_color = parameters.fog_color;
     weather->fog_start = parameters.fog_start;
     weather->fog_end = parameters.fog_end;
+    weather->ambient_light = parameters.ambient_light;
 
     scene->components->weather[entity] = weather;
 

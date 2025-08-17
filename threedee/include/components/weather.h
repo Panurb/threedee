@@ -7,6 +7,7 @@ typedef struct {
     Color fog_color;
     float fog_start;
     float fog_end;
+    float ambient_light;
 } WeatherParameters;
 
 
@@ -14,6 +15,7 @@ typedef struct {
     Color fog_color;
     float fog_start;
     float fog_end;
+    float ambient_light;
 } WeatherComponent;
 
 
