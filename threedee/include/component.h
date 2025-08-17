@@ -84,6 +84,7 @@ float get_angle_interpolated(int entity, float delta);
 Vector2 get_scale_interpolated(int entity, float delta);
 
 bool entity_exists(Entity entity);
+bool entity_is_dynamic(Entity entity);
 
 int get_parent(Entity entity);
 List* get_children(Entity entity);

@@ -289,6 +289,15 @@ bool entity_exists(Entity entity) {
 }
 
 
+bool entity_is_dynamic(Entity entity) {
+    RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+    if (rb && rb->inv_mass > 0.0f) {
+        return true;
+    }
+    return false;
+}
+
+
 int get_parent(Entity entity) {
     TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
     return coord->parent;

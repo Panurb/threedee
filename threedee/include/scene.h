@@ -37,6 +37,7 @@ typedef enum Direction {
 
 typedef struct Room {
     bool floor;
+    bool lamp;
     Wall walls[4]; // front, left, back, right
 } Room;
 

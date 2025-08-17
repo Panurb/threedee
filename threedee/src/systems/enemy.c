@@ -18,8 +18,9 @@ Entity create_enemy(Vector3 pos, float yaw) {
         .yaw = yaw
     });
     ColliderComponent_add(i, (ColliderParameters) {
-        .type = COLLIDER_SPHERE,
-        .radius = 1.0f,
+        .type = COLLIDER_CAPSULE,
+        .radius = 0.5f,
+        .height = 1.5f,
         .group = GROUP_ENEMIES
     });
 

@@ -20,13 +20,11 @@
 
 #include "settings.h"
 #include "interface.h"
-#include "linalg.h"
 #include "render.h"
 #include "scene.h"
 #include "systems/physics.h"
 #include "systems/player.h"
-#include "raycast.h"
-#include "camera.h"
+#include "systems/enemy.h"
 
 
 App app;
@@ -176,6 +174,7 @@ void update(float time_step) {
     update_physics(time_step);
     update_players(time_step);
     update_enemies(time_step);
+    update_waypoints();
 
     if (state != app.state) {
         previous_state = state;

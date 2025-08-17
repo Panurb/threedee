@@ -60,7 +60,7 @@ Entity create_player(Vector3 position) {
 
 Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent_add(i, (TransformParameters) { .position = position });
+    TransformComponent_add(i, (TransformParameters) { .position = position, .scale = vec3(0.5f, 0.5f, 0.5f) });
     look_at(i, vec3(position.x, position.y - 1.0f, position.z));
     MeshComponent_add(i, (MeshParameters) { .mesh_filename = "lamp", .texture_filename = "lamp", .emissive_filename = "lamp" });
     LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = LIGHT_NORMAL });
@@ -130,6 +130,7 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
         Entity window = create_entity();
         if (width > depth) {
             float x = position.x - 0.5f * width + 0.5f * segment_width + j * (segment_width + window_width);
+
             trans = TransformComponent_add(window, (TransformParameters) {
                 .position = vec3(x, position.y + wall_height + 0.5f * window_height, position.z)
             });
@@ -208,17 +209,8 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
     float wp_x_offset = sign(z_offset);
     float wp_z_offset = sign(x_offset);
 
-    Entity waypoint1 = create_entity();
-    TransformComponent_add(waypoint1, (TransformParameters) {
-        .position = vec3(position.x - wp_x_offset, position.y + 1.0f, position.z - wp_z_offset)
-    });
-    WaypointComponent_add(waypoint1);
-
-    Entity waypoint2 = create_entity();
-    TransformComponent_add(waypoint2, (TransformParameters) {
-        .position = vec3(position.x + wp_x_offset, position.y + 1.0f, position.z + wp_z_offset)
-    });
-    WaypointComponent_add(waypoint2);
+    create_waypoint(vec3(position.x - wp_x_offset, position.y, position.z - wp_z_offset));
+    create_waypoint(vec3(position.x + wp_x_offset, position.y, position.z + wp_z_offset));
 
     return door_top;
 }
@@ -361,8 +353,9 @@ void print_level(Level level) {
         for (int j = 0; j < level.width; j++) {
             Room room = level.rooms[i][j];
             printf(
-                "%c %c|",
+                "%c%c%c|",
                 wall_types[room.walls[DIRECTION_LEFT]],
+                room.lamp ? 'L' : ' ',
                 wall_types[room.walls[DIRECTION_RIGHT]]
             );
         }
@@ -389,6 +382,7 @@ void generate_level(Level* level, int x, int z) {
     Room* room = &level->rooms[z][x];
 
     room->floor = true;
+    room->lamp = randf(0.0f, 1.0f) < 0.5f;
 
     int available_directions[4];
     int available_count = 0;
@@ -435,7 +429,7 @@ void generate_level(Level* level, int x, int z) {
 }
 
 
-void create_level() {
+Level create_level() {
     Level level = {
         .width = 5,
         .depth = 5,
@@ -474,10 +468,13 @@ void create_level() {
 
             if (room.floor) {
                 create_floor(pos, level.room_width, level.room_depth);
+                create_floor(vec3(pos.x, 4.0f, pos.z), level.room_width, level.room_depth);
+                create_waypoint(pos);
             }
 
-            if (i == level.width / 2 && j == level.depth / 2)
-                create_lamp(vec3(pos.x, 4.0f, pos.z));
+            if (room.lamp) {
+                create_lamp(vec3(pos.x, 2.5f, pos.z));
+            }
 
             // Only create back-left walls for the first row and column
             Direction max_direction = (i == 0 || j == 0) ? 4 : 2;
@@ -498,6 +495,8 @@ void create_level() {
             }
         }
     }
+
+    return level;
 }
 
 
@@ -524,35 +523,25 @@ void create_scene() {
 
     create_forest(zeros3(), 100.0f, 100.0f, 2.0f, 30.0f);
 
-    create_level();
+    Level level = create_level();
 
-    // create_wall(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f);
-    // create_wall(vec3(0.0f, 0.0f, 5.25f), 10.0f, 0.5);
-    // create_wall(vec3(5.25f, 0.0f, 0.0f), 0.5f, 10.0f);
-    // create_wall(vec3(-5.25f, 0.0f, 0.0f), 0.5f, 10.0f);
-    //
-    // create_wall_with_door(vec3(0.0f, 0.0f, -5.25f), 10.0f, 0.5f, 1.0f);
-    //
-    // // create_waypoint(vec3(0.0f, 1.0f, 0.0f));
-    // // create_waypoint(vec3(2.0f, 1.0f, 2.0f));
-    //
-    // scene->lamp =  create_lamp(vec3(0.0f, 4.0f, 0.0f));
-    //
-    // create_enemy(vec3(2.0f, 0.0f, 2.0f), 0.0f);
+    while (true) {
+        int x = randi(0, level.width - 1);
+        int z = randi(0, level.depth - 1);
 
-    // i = create_entity();
-    // TransformComponent_add(i, vec3(0.0f, 2.0f, 0.0f));
-    // MeshComponent_add(i, (MeshParameters) {
-    //     .mesh_filename = "paper",
-    //     .texture_filename = "paper",
-    //     .material_filename = "hidden",
-    //     .visibility = LIGHT_UV
-    // });
-    // ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_SPHERE, .group = GROUP_ITEMS });
+        if (x == 0 && z == 0) {
+            continue; // Skip the starting room
+        }
 
-    // create_blood(vec3(1.0f, 0.5f, 1.0f), false);
-    // create_blood(vec3(2.0f, 0.5f, 3.0f), false);
-    // create_blood(vec3(-1.0f, 0.5f, -1.0f), true);
+        if (level.rooms[z][x].floor) {
+            create_enemy(vec3(
+                (x - level.width / 2) * level.room_width,
+                0.0f,
+                (z - level.depth / 2) * level.room_depth
+            ), randf(0.0f, 360.0f));
+            break;
+        }
+    }
 
     scene->weather = create_entity();
     WeatherComponent_add(scene->weather, (WeatherParameters) {

@@ -1292,7 +1292,7 @@ void render() {
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,
 			.far_plane = camera->far_plane,
-			.ambient_light = num_lights * 0.05f,
+			.ambient_light = 0.1f,
 			.num_lights = num_lights,
 			.camera_position = get_position(scene->camera),
 			.shadow_map_resolution = SHADOW_MAP_RESOLUTION,

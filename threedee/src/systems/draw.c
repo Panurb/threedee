@@ -47,7 +47,7 @@ void draw_entities() {
             continue;
         }
 
-        draw_waypoints(true);
+        draw_waypoints();
 
         debug_draw_enemies();
 

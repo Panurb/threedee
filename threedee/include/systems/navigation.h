@@ -15,4 +15,4 @@ void init_waypoints();
 
 void update_waypoints();
 
-void draw_waypoints(bool draw_neighbors);
+void draw_waypoints();

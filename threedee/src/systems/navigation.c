@@ -14,14 +14,9 @@
 int create_waypoint(Vector3 pos) {
     int i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
-        .position = pos,
+        .position = vec3(pos.x, pos.y + 1.0f, pos.z),
     });
     WaypointComponent_add(i);
-    ColliderComponent_add(i, (ColliderParameters) {
-        .type = COLLIDER_SPHERE,
-        .radius = 0.25f,
-        .group = GROUP_WAYPOINTS,
-    });
 
     return i;
 }
@@ -160,21 +155,54 @@ void init_waypoints() {
 }
 
 
-void draw_waypoints(bool draw_neighbors) {
+void update_waypoints() {
+    for (int i = 0; i < scene->components->entities; i++) {
+        WaypointComponent* waypoint = get_component(i, COMPONENT_WAYPOINT);
+        if (!waypoint) continue;
+
+        ListNode* node;
+        FOREACH(node, waypoint->neighbors) {
+            int n = node->value;
+            if (entity_is_dynamic(n)) {
+                List_remove(waypoint->neighbors, n);
+                WaypointComponent* neighbor = get_component(n, COMPONENT_WAYPOINT);
+                if (neighbor) {
+                    List_remove(neighbor->neighbors, i);
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < scene->components->entities; i++) {
+        WaypointComponent* waypoint = get_component(i, COMPONENT_WAYPOINT);
+        if (!waypoint) continue;
+
+        for (int j = 0; j < scene->components->entities; j++) {
+            if (i == j) continue;
+            WaypointComponent* n = get_component(j, COMPONENT_WAYPOINT);
+            if (!n) continue;
+            if (!entity_is_dynamic(j)) continue;
+
+            update_connection(i, j);
+        }
+    }
+}
+
+
+void draw_waypoints() {
     for (int i = 0; i < scene->components->entities; i++) {
         WaypointComponent* waypoint = get_component(i, COMPONENT_WAYPOINT);
         if (!waypoint) continue;
 
         Vector3 pos = get_position(i);
+
         render_circle(pos, 0.1f, 8, COLOR_WHITE);
 
-        if (draw_neighbors) {
-            for (ListNode* node = waypoint->neighbors->head; node; node = node->next) {
-                int k = node->value;
-                Color color = COLOR_WHITE;
-                color.a = 0.25f;
-                render_line(pos, get_position(k), 0.04f, color);
-            }
+        for (ListNode* node = waypoint->neighbors->head; node; node = node->next) {
+            int k = node->value;
+            Color color = COLOR_WHITE;
+            color.a = 0.25f;
+            render_line(pos, get_position(k), 0.04f, color);
         }
     }
 }
