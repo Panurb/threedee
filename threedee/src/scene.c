@@ -111,6 +111,51 @@ Entity create_wall_empty(Vector3 position, float width, float depth) {
 }
 
 
+void create_frame(Vector3 position, float width, float height, float depth) {
+    float thickness = 0.05f;
+    float lip = 0.1f;
+
+    MeshParameters mesh_params = {
+        .mesh_filename = "cube",
+        .texture_filename = "bark",
+        .material_filename = "concrete"
+    };
+
+    for (int i = 0; i < 2; i++) {
+        Entity horizontal = create_entity();
+        Vector3 scale;
+        if (width > depth) {
+            scale = vec3(width, thickness, depth + lip);
+        } else {
+            scale = vec3(width + lip, thickness, depth);
+        }
+        TransformComponent_add(horizontal, (TransformParameters) {
+            .position = vec3(position.x, position.y + i * (height - thickness) + 0.5f * thickness, position.z),
+            .scale = scale
+        });
+        MeshComponent_add(horizontal, mesh_params);
+    }
+
+    for (int i = -1; i < 2; i += 2) {
+        Entity vertical = create_entity();
+        Vector3 pos;
+        Vector3 scale;
+        if (width > depth) {
+            pos = vec3(position.x + i * 0.5f * (width - thickness), position.y + height * 0.5f, position.z);
+            scale = vec3(thickness, height - 2.0f * thickness, depth + lip);
+        } else {
+            pos = vec3(position.x, position.y + height * 0.5f, position.z + i * 0.5f * (depth - thickness));
+            scale = vec3(width + lip, height - 2.0f * thickness, thickness);
+        }
+        TransformComponent_add(vertical, (TransformParameters) {
+            .position = pos,
+            .scale = scale
+        });
+        MeshComponent_add(vertical, mesh_params);
+    }
+}
+
+
 Entity create_wall_with_windows(Vector3 position, float width, float depth, int windows) {
     float wall_height = 1.0f;
     float window_height = 1.5f;
@@ -132,20 +177,71 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
         Entity window = create_entity();
         if (width > depth) {
             float x = position.x - 0.5f * width + 0.5f * segment_width + j * (segment_width + window_width);
-
-            trans = TransformComponent_add(window, (TransformParameters) {
-                .position = vec3(x, position.y + wall_height + 0.5f * window_height, position.z)
+            TransformComponent_add(window, (TransformParameters) {
+                .position = vec3(x, position.y + wall_height + 0.5f * window_height, position.z),
+                .scale = vec3(segment_width, window_height, depth)
             });
-            trans->scale = vec3(segment_width, window_height, depth);
         } else {
             float z = position.z - 0.5f * depth + 0.5f * segment_depth + j * (segment_depth + window_width);
-            trans = TransformComponent_add(window, (TransformParameters) {
-                .position = vec3(position.x, position.y + wall_height + 0.5f * window_height, z)
+            TransformComponent_add(window, (TransformParameters) {
+                .position = vec3(position.x, position.y + wall_height + 0.5f * window_height, z),
+                .scale = vec3(width, window_height, segment_depth)
             });
-            trans->scale = vec3(width, window_height, segment_depth);
         }
         MeshComponent_add(window, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
         ColliderComponent_add(window, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+    }
+
+    for (int j = 0; j < windows; j++) {
+        if (width > depth) {
+            create_frame(
+                vec3(
+                    position.x - 0.5f * width + (segment_width + window_width) * (j + 1) - 0.5f * window_width,
+                    position.y + wall_height,
+                    position.z
+                ),
+                window_width,
+                window_height,
+                depth
+            );
+        } else {
+            create_frame(
+                vec3(
+                    position.x,
+                    position.y + wall_height,
+                    position.z - 0.5f * depth + (segment_depth + window_width) * (j + 1) - 0.5f * window_width
+                ),
+                width,
+                window_height,
+                window_width
+            );
+        }
+
+        // Entity window_sill = create_entity();
+        // if (width > depth) {
+        //     TransformComponent_add(window_sill, (TransformParameters) {
+        //         .position = vec3(
+        //             position.x - 0.5f * width + (segment_width + window_width) * (j + 1) - 0.5f * window_width,
+        //             position.y + wall_height + 0.05f,
+        //             position.z
+        //         ),
+        //         .scale = vec3(window_width + 0.01f, 0.1f, depth + 0.1f)
+        //     });
+        // } else {
+        //     TransformComponent_add(window_sill, (TransformParameters) {
+        //       .position = vec3(
+        //           position.x,
+        //           position.y + wall_height + 0.05f,
+        //           position.z - 0.5f * depth + (segment_depth + window_width) * (j + 1) - 0.5f * window_width
+        //       ),
+        //       .scale = vec3(width + 0.1f, 0.1f, window_width + 0.01f)
+        //     });
+        // }
+        // MeshComponent_add(window_sill, (MeshParameters) {
+        //     .mesh_filename = "cube",
+        //     .texture_filename = "bark",
+        //     .material_filename = "concrete",
+        // });
     }
 
     i = create_entity();
@@ -210,6 +306,13 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
 
     float wp_x_offset = sign(z_offset);
     float wp_z_offset = sign(x_offset);
+
+    create_frame(
+        vec3(position.x, position.y, position.z),
+        (width > depth) ? door_width : wall_width,
+        door_height,
+        (width > depth) ? wall_depth : door_width
+    );
 
     create_waypoint(vec3(position.x - wp_x_offset, position.y, position.z - wp_z_offset));
     create_waypoint(vec3(position.x + wp_x_offset, position.y, position.z + wp_z_offset));
@@ -302,7 +405,7 @@ Entity create_wall(Vector3 position, float width, float depth, Wall type) {
         case WALL_PLAIN:
             return create_wall_empty(position, width, depth);
         case WALL_DOOR:
-            return create_wall_with_door(position, width, depth, 1.0f);
+            return create_wall_with_door(position, width, depth, 1.2f);
         case WALL_WINDOWS:
             return create_wall_with_windows(position, width, depth, 3);
         default:
