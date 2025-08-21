@@ -24,15 +24,21 @@ Entity create_enemy(Vector3 pos, float yaw) {
         .group = GROUP_ENEMIES
     });
 
-    MeshComponent_add(i, (MeshParameters) {
-       .mesh_filename = "cube"
-    });
     RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
     rb->axis_lock.rotation = true;
     rb->friction = 1.0f;
     EnemyComponent_add(i);
     WaypointComponent_add(i);
     SoundComponent_add(i, (SoundParameters) {});
+
+    Entity mesh = create_entity();
+    TransformComponent_add(mesh, (TransformParameters) {
+        .position = vec3(0.0f, -(0.5f + 0.75f), 0.0f),
+        .parent = i
+    });
+    MeshComponent_add(mesh, (MeshParameters) {
+       .mesh_filename = "enemy"
+    });
 
     return i;
 }
@@ -47,7 +53,7 @@ void update_vision(int entity) {
     float angle = dot3(normalized3(r), quaternion_forward(get_rotation(entity)));
 
     float d = norm3(r);
-    if (d < enemy->vision_range && angle < 0.5f * cosf(enemy->fov)) {
+    if (d < enemy->vision_range && angle > cosf(0.5f * enemy->fov)) {
         Hit info = raycast((Ray) { pos, r, enemy->vision_range }, GROUP_PLAYERS | GROUP_WALLS);
         if (info.entity == scene->player) {
             enemy->target = scene->player;

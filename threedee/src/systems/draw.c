@@ -9,6 +9,52 @@
 #include "util.h"
 
 
+void draw_axes(Entity entity) {
+    if (!get_component(entity, COMPONENT_TRANSFORM)) {
+        return; // No transform component, skip drawing axes
+    }
+    Vector3 pos = get_position(entity);
+
+    if (dist3(pos, get_position(scene->camera)) < 0.1f) {
+        return;
+    }
+
+    float thickness = 0.01f;
+    float length = 0.2f;
+
+    Vector3 x = vec3(length, 0.0f, 0.0f);
+    Vector3 y = vec3(0.0f, length, 0.0f);
+    Vector3 z = vec3(0.0f, 0.0f, length);
+
+    Matrix3 rot = quaternion_to_rotation_matrix(get_rotation(entity));
+
+    x = map3(rot, x);
+    y = map3(rot, y);
+    z = map3(rot, z);
+
+    render_arrow(
+        pos,
+        add3(pos, x),
+        thickness,
+        COLOR_RED
+    );
+
+    render_arrow(
+        pos,
+        add3(pos, y),
+        thickness,
+        COLOR_GREEN
+    );
+
+    render_arrow(
+        pos,
+        add3(pos, z),
+        thickness,
+        COLOR_BLUE
+    );
+}
+
+
 void draw_entities() {
     draw_circle_2d(
         zeros2(),
@@ -47,9 +93,9 @@ void draw_entities() {
             continue;
         }
 
-        draw_waypoints();
+        draw_axes(entity);
 
-        debug_draw_enemies();
+        // debug_draw_enemies();
 
         ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
         RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
@@ -68,6 +114,12 @@ void draw_entities() {
         }
 
         if (app.debug_level < 2) {
+            continue;
+        }
+
+        draw_waypoints();
+
+        if (app.debug_level < 3) {
             continue;
         }
 
