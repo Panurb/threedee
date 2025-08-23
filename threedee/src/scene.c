@@ -117,7 +117,7 @@ void create_frame(Vector3 position, float width, float height, float depth) {
 
     MeshParameters mesh_params = {
         .mesh_filename = "cube",
-        .texture_filename = "bark",
+        .texture_filename = "white",
         .material_filename = "concrete"
     };
 
@@ -575,6 +575,12 @@ Level create_level() {
                 create_floor(pos, level.room_width, level.room_depth);
                 create_floor(vec3(pos.x, 4.0f, pos.z), level.room_width, level.room_depth);
                 create_waypoint(pos);
+
+                if (chance(0.25f)) {
+                    float dx = randf(-0.5f * level.room_width + 1.0f, 0.5f * level.room_width - 1.0f);
+                    float dz = randf(-0.5f * level.room_depth + 1.0f, 0.5f * level.room_depth - 1.0f);
+                    create_blood(vec3(pos.x + dx, pos.y, pos.z + dz), false);
+                }
             }
 
             if (room.lamp) {

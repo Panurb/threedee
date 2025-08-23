@@ -37,7 +37,10 @@ Entity create_enemy(Vector3 pos, float yaw) {
         .parent = i
     });
     MeshComponent_add(mesh, (MeshParameters) {
-       .mesh_filename = "enemy"
+        .mesh_filename = "enemy",
+        .texture_filename = "white",
+        .material_filename = "hidden",
+        .visibility = LIGHT_UV
     });
 
     return i;

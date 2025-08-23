@@ -11,19 +11,28 @@
 * Phong shading with multiple light sources
 * Impulse-based collision resolution
     - Supported shapes: plane, sphere, cuboid, capsule, AABB
-    - Supported collisions: sphere-plane, sphere-sphere, sphere-cuboid, cuboid-plane, cuboid-cuboid, capsule-AABB
+    - Supported collisions: 
+        * sphere-plane
+        * sphere-sphere 
+        * sphere-cuboid 
+        * cuboid-plane 
+        * cuboid-cuboid (buggy)
+        * capsule-plane
+        * capsule-AABB
 * Importing of 3D models in OBJ format
 * Normal maps
+* Emissive maps
 * Dynamic shadows using shadow mapping
+* HDR lighting
+* Depth of field post-processing effect
+* 2D and text rendering
 * Sound effects
 
 ### TODO ###
-* 2D and text rendering
 * Data serialization for saving/loading game state
 * Particles
 * PCSS for soft shadows?
 * Skybox
-* Proper HDR lighting
 * 3D audio using OpenAL
 * Broad-phase collision detection for optimization
 

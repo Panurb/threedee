@@ -142,6 +142,8 @@ Vector2 rand_vector();
 
 int rand_choice(float* probs, int size);
 
+bool chance(float probability);
+
 int find(int value, int* array, int size);
 
 int replace(int old, int new, int* array, int size);

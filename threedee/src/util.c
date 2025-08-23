@@ -128,6 +128,10 @@ int rand_choice(float* probs, int size) {
     return size - 1;
 }
 
+bool chance(float probability) {
+    return randf(0.0f, 1.0f) < probability;
+}
+
 int find(int value, int* array, int size) {
     for (int i = 0; i < size; i++) {
         if (array[i] == value) {
