@@ -35,7 +35,15 @@ typedef enum Direction {
 } Direction;
 
 
+typedef enum RoomType {
+    ROOM_BATHROOM,
+    ROOM_HALLWAY,
+    ROOM_BEDROOM,
+} RoomType;
+
+
 typedef struct Room {
+    RoomType type;
     bool floor;
     bool lamp;
     Wall walls[4]; // front, left, back, right

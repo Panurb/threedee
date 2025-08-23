@@ -84,13 +84,18 @@ Entity create_ground(float width, float depth) {
 }
 
 
-Entity create_floor(Vector3 position, float width, float depth) {
+Entity create_floor(Vector3 position, float width, float depth, String texture_filename) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
         .position = vec3(position.x, position.y - 0.5f, position.z),
         .scale = vec3(width, 1.0f, depth)
     });
-    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
+    MeshParameters params = {
+        .mesh_filename = "cube",
+        .material_filename = "glass"
+    };
+    strcpy(params.texture_filename, texture_filename);
+    MeshComponent_add(i, params);
 
     return i;
 }
@@ -216,32 +221,6 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
                 window_width
             );
         }
-
-        // Entity window_sill = create_entity();
-        // if (width > depth) {
-        //     TransformComponent_add(window_sill, (TransformParameters) {
-        //         .position = vec3(
-        //             position.x - 0.5f * width + (segment_width + window_width) * (j + 1) - 0.5f * window_width,
-        //             position.y + wall_height + 0.05f,
-        //             position.z
-        //         ),
-        //         .scale = vec3(window_width + 0.01f, 0.1f, depth + 0.1f)
-        //     });
-        // } else {
-        //     TransformComponent_add(window_sill, (TransformParameters) {
-        //       .position = vec3(
-        //           position.x,
-        //           position.y + wall_height + 0.05f,
-        //           position.z - 0.5f * depth + (segment_depth + window_width) * (j + 1) - 0.5f * window_width
-        //       ),
-        //       .scale = vec3(width + 0.1f, 0.1f, window_width + 0.01f)
-        //     });
-        // }
-        // MeshComponent_add(window_sill, (MeshParameters) {
-        //     .mesh_filename = "cube",
-        //     .texture_filename = "bark",
-        //     .material_filename = "concrete",
-        // });
     }
 
     i = create_entity();
@@ -486,6 +465,7 @@ void generate_level(Level* level, int x, int z) {
 
     Room* room = &level->rooms[z][x];
 
+    room->type = ROOM_BATHROOM;
     room->floor = true;
     room->lamp = randf(0.0f, 1.0f) < 0.5f;
 
@@ -572,8 +552,8 @@ Level create_level() {
             Vector3 pos = vec3(x_offset, 0.0f, z_offset);
 
             if (room.floor) {
-                create_floor(pos, level.room_width, level.room_depth);
-                create_floor(vec3(pos.x, 4.0f, pos.z), level.room_width, level.room_depth);
+                create_floor(pos, level.room_width, level.room_depth, "tiles");
+                create_floor(vec3(pos.x, 4.0f, pos.z), level.room_width, level.room_depth, "tiles");
                 create_waypoint(pos);
 
                 if (chance(0.25f)) {
