@@ -56,11 +56,11 @@ char* ACTIONS[] = {
     "MOVE_RIGHT",
     "ATTACK",
     "ENTER",
-    "PICK_UP",
+    "NEXT_ITEM",
     "RELOAD",
     "ATTACHMENT",
     "INVENTORY",
-    "AMMO"
+    "PREV_ITEM"
 };
 
 int ACTIONS_SIZE = LENGTH(ACTIONS);
@@ -211,7 +211,7 @@ void update_controller(Entity entity) {
         player->controller.right_stick = mouse_motion;
         mouse_motion = zeros2();
         player->controller.left_trigger = keybind_pressed(ACTION_ATTACK) ? 1.0f : 0.0f;
-        player->controller.right_trigger = keybind_pressed(ACTION_PICKUP) ? 1.0f : 0.0f;
+        player->controller.right_trigger = keybind_pressed(ACTION_NEXT_ITEM) ? 1.0f : 0.0f;
 
         for (ControllerButton b = BUTTON_A; b <= BUTTON_R; b++) {
             bool down = false;
@@ -228,10 +228,10 @@ void update_controller(Entity entity) {
                     down = keybind_pressed(ACTION_ATTACHMENT);
                     break;
                 case BUTTON_LB:
-                    down = keybind_pressed(ACTION_AMMO);
+                    down = keybind_pressed(ACTION_PREV_ITEM);
                     break;
                 case BUTTON_RB:
-                    down = keybind_pressed(ACTION_PICKUP);
+                    down = keybind_pressed(ACTION_NEXT_ITEM);
                     break;
                 case BUTTON_START:
                     break;

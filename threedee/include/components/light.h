@@ -27,6 +27,7 @@ typedef struct {
 
 
 typedef struct {
+    bool disabled;
     LightShape shape;
     Visibility visibility_mask;
     float fov;
@@ -37,6 +38,7 @@ typedef struct {
 
 
 typedef struct {
+    bool disabled;
     Visibility visibility_mask;
     float fov;
     Color diffuse_color;

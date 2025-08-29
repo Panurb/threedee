@@ -35,12 +35,23 @@ typedef enum {
     ACTION_RIGHT,
     ACTION_ATTACK,
     ACTION_JUMP,
-    ACTION_PICKUP,
+    ACTION_NEXT_ITEM,
     ACTION_RELOAD,
     ACTION_ATTACHMENT,
     ACTION_INVENTORY,
-    ACTION_AMMO
+    ACTION_PREV_ITEM
 } PlayerAction;
+
+
+typedef struct KeyboardState {
+    bool key_down[SDL_SCANCODE_COUNT];
+    bool key_pressed[SDL_SCANCODE_COUNT];
+    bool key_released[SDL_SCANCODE_COUNT];
+} KeyboardState;
+
+
+KeyboardState keyboard;
+
 
 Vector2 get_mouse_position();
 

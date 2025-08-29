@@ -32,12 +32,11 @@ void main_loop() {
     float delta_time = get_delta_time();
     time_since_last_update += delta_time;
 
-    input();
-
     if (app.focus) {
         while (elapsed_time > app.time_step) {
             elapsed_time -= app.time_step;
             time_since_last_update = 0.0f;
+            input();
             update(app.time_step);
         }
 

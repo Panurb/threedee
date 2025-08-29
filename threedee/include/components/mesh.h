@@ -17,7 +17,7 @@ typedef struct MeshComponent {
     int emissive_index;
     Visibility visibility;
     Vector2 texture_scale;
-    bool hidden;
+    bool visible;
 } MeshComponent;
 
 

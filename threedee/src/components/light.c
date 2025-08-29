@@ -12,6 +12,7 @@
 
 LightComponent* LightComponent_add(Entity entity, LightParameters params) {
     LightComponent* light = malloc(sizeof(LightComponent));
+    light->disabled = params.disabled;
     light->visibility_mask = params.visibility_mask ? params.visibility_mask : LIGHT_NORMAL;
     light->fov = params.fov ? params.fov : 90.0f;
     light->diffuse_color = params.color;

@@ -11,6 +11,76 @@
 #include "scene.h"
 
 
+Entity create_player(Vector3 position) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(position.x, position.y + 1.0f, position.z),
+    });
+    RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
+    rb->axis_lock.rotation = true;
+    rb->bounce = 0.0f;
+    rb->friction = 0.0f;
+    rb->can_sleep = false;
+    // MeshComponent_add(i, "cube", "tiles", "default");
+    ColliderComponent_add(i,
+        (ColliderParameters) {
+            .type = COLLIDER_CAPSULE,
+            .group = GROUP_PLAYERS,
+            .radius = 0.4f,
+            .height = 1.0f
+        }
+    );
+    ControllerComponent_add(i, -1);
+    PlayerComponent* player = PlayerComponent_add(i);
+    SoundComponent_add(i, (SoundParameters) {});
+    WaypointComponent_add(i);
+
+    Entity cam = create_entity();
+    TransformComponent_add(cam, (TransformParameters) {
+        .position = vec3(0.0f, player->head_height, 0.0f),
+    });
+    CameraComponent_add(cam,
+        (Resolution) { game_settings.width, game_settings.height },
+        to_radians(game_settings.fov)
+    );
+    add_child(i, cam);
+
+    Entity j = create_entity();
+    TransformComponent_add(j, (TransformParameters) {
+        .position = vec3(0.0f, -0.5f, 0.1f)
+    });
+    look_at(j, vec3(0.0f, -0.5f, -1.0f));
+    LightComponent_add(j, (LightParameters) {
+        .disabled = true,
+        .shape = LIGHT_SPOT,
+        .color = COLOR_WHITE,
+        .fov = 50.0f,
+        .visibility_mask = LIGHT_NORMAL
+    });
+    add_child(cam, j);
+    ArrayList_add(player->inventory, &j);
+
+    Entity k = create_entity();
+    TransformComponent_add(k, (TransformParameters) {
+        .position = vec3(0.0f, -0.5f, 0.1f)
+    });
+    look_at(k, vec3(0.0f, -0.5f, -1.0f));
+    LightComponent_add(k, (LightParameters) {
+        .disabled = false,
+        .shape = LIGHT_SPOT,
+        .color = COLOR_UV,
+        .fov = 50.0f,
+        .visibility_mask = LIGHT_UV
+    });
+    add_child(cam, k);
+    ArrayList_add(player->inventory, &k);
+
+    player->selected_item = 1;
+
+    return i;
+}
+
+
 void update_players(float time_step) {
     for (int i = 0; i < scene->components->entities; i++) {
         PlayerComponent* player = get_component(i, COMPONENT_PLAYER);
@@ -32,6 +102,30 @@ void update_players(float time_step) {
             player->footstep_timer = 0.0f;
         }
     }
+}
+
+
+void toggle_visibility(Entity entity) {
+    if (entity == NULL_ENTITY) return;
+
+    LOG_INFO("Toggling visibility of entity %d", entity);
+
+    MeshComponent* mesh = get_component(entity, COMPONENT_MESH);
+    if (mesh) {
+        mesh->visible = !mesh->visible;
+    }
+    LightComponent* light = get_component(entity, COMPONENT_LIGHT);
+    if (light) {
+        light->disabled = !light->disabled;
+    }
+}
+
+
+Entity get_current_item(Entity player) {
+    PlayerComponent* p = get_component(player, COMPONENT_PLAYER);
+    if (!p || p->inventory->size == 0) return NULL_ENTITY;
+    Entity i = *(Entity*)ArrayList_get(p->inventory, p->selected_item);
+    return i;
 }
 
 
@@ -85,6 +179,18 @@ void input_players() {
             if (rb->on_ground) {
                 rb->velocity.y += 3.0f;
             }
+        }
+
+        if (controller->controller.buttons_pressed[BUTTON_RB]) {
+            toggle_visibility(get_current_item(i));
+            player->selected_item = (player->selected_item + 1) % player->inventory->size;
+            toggle_visibility(get_current_item(i));
+        }
+
+        if (controller->controller.buttons_pressed[BUTTON_LB]) {
+            toggle_visibility(get_current_item(i));
+            player->selected_item = (player->selected_item - 1 + player->inventory->size) % player->inventory->size;
+            toggle_visibility(get_current_item(i));
         }
 
         if (controller->controller.buttons_pressed[BUTTON_RT]) {

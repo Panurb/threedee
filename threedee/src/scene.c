@@ -5,59 +5,11 @@
 #include <stdlib.h>
 
 #include "scene.h"
-
-#include <systems/navigation.h>
-#include <systems/enemy.h>
-
+#include "systems/navigation.h"
+#include "systems/enemy.h"
+#include "systems/player.h"
 #include "util.h"
 #include "component.h"
-
-
-Entity create_player(Vector3 position) {
-    Entity i = create_entity();
-    TransformComponent_add(i, (TransformParameters) {
-        .position = vec3(position.x, position.y + 1.0f, position.z),
-    });
-    RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
-    rb->axis_lock.rotation = true;
-    rb->bounce = 0.0f;
-    rb->friction = 0.0f;
-    rb->can_sleep = false;
-    // MeshComponent_add(i, "cube", "tiles", "default");
-    ColliderComponent_add(i,
-        (ColliderParameters) {
-            .type = COLLIDER_CAPSULE,
-            .group = GROUP_PLAYERS,
-            .radius = 0.4f,
-            .height = 1.0f
-        }
-    );
-    ControllerComponent_add(i, -1);
-    PlayerComponent* player = PlayerComponent_add(i);
-    SoundComponent_add(i, (SoundParameters) {});
-    WaypointComponent_add(i);
-
-    Entity cam = create_entity();
-    TransformComponent_add(cam, (TransformParameters) {
-        .position = vec3(0.0f, player->head_height, 0.0f),
-    });
-    CameraComponent_add(cam,
-        (Resolution) { game_settings.width, game_settings.height },
-        to_radians(game_settings.fov)
-    );
-    add_child(i, cam);
-
-    Entity j = create_entity();
-    TransformComponent_add(j, (TransformParameters) { .position = vec3(0.0f, -0.5f, 0.1f) });
-    look_at(j, vec3(0.0f, -0.5f, -1.0f));
-    LightComponent_add(j, (LightParameters) { .shape = LIGHT_SPOT, .color = COLOR_UV, .fov = 50.0f, .visibility_mask = LIGHT_UV });
-    add_child(cam, j);
-
-    ArrayList_add(player->inventory, &j);
-    player->selected_item = 0;
-
-    return i;
-}
 
 
 Entity create_lamp(Vector3 position) {

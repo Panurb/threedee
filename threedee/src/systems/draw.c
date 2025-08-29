@@ -64,7 +64,7 @@ void draw_entities() {
 
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
-        if (light) {
+        if (light && !light->disabled) {
             Matrix4 view_matrix = inverse_transform(get_transform(entity));
             Matrix4 projection_matrix = light->projection_matrix;
             light->shadow_map.projection_view_matrix = matrix4_mul(projection_matrix, view_matrix);

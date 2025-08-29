@@ -169,7 +169,6 @@ void update(float time_step) {
 
     input_players();
 
-
     update_collisions();
     update_physics(time_step);
     update_players(time_step);
