@@ -14,9 +14,9 @@ typedef enum {
 
 
 typedef enum {
-    LIGHT_NORMAL = 1 << 0,
-    LIGHT_UV = 1 << 1,
-    LIGHT_ALL = LIGHT_NORMAL | LIGHT_UV,
+    VISIBILITY_NORMAL = 1 << 0,
+    VISIBILITY_UV = 1 << 1,
+    VISIBILITY_ALL = VISIBILITY_NORMAL | VISIBILITY_UV,
 } Visibility;
 
 

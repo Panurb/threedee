@@ -55,7 +55,7 @@ Entity create_player(Vector3 position) {
         .shape = LIGHT_SPOT,
         .color = COLOR_WHITE,
         .fov = 50.0f,
-        .visibility_mask = LIGHT_NORMAL
+        .visibility_mask = VISIBILITY_NORMAL
     });
     add_child(cam, j);
     ArrayList_add(player->inventory, &j);
@@ -69,8 +69,8 @@ Entity create_player(Vector3 position) {
         .disabled = false,
         .shape = LIGHT_SPOT,
         .color = COLOR_UV,
-        .fov = 50.0f,
-        .visibility_mask = LIGHT_UV
+        .fov = 35.0f,
+        .visibility_mask = VISIBILITY_UV
     });
     add_child(cam, k);
     ArrayList_add(player->inventory, &k);

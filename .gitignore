@@ -359,3 +359,7 @@ build/
 .VSCodeCounter/
 *.bak
 *.a
+
+# Blender
+*.blend1
+*.mtl

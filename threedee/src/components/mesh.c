@@ -12,7 +12,7 @@ MeshComponent* MeshComponent_add(Entity entity, MeshParameters params) {
     mesh->texture_index = -1;
     mesh->material_index = -1;
     mesh->emissive_index = -1;
-    mesh->visibility = params.visibility ? params.visibility : LIGHT_ALL;
+    mesh->visibility = params.visibility ? params.visibility : VISIBILITY_ALL;
     mesh->texture_scale = ones2();
     mesh->visible = false;
 

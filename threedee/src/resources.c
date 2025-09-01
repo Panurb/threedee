@@ -507,9 +507,11 @@ void load_materials() {
 	strcpy(resources.material_names[2], "glass");
 	resources.materials[3] = (Material) { 2.0f, 0.1f, 0.0f, 128.0f };
 	strcpy(resources.material_names[3], "hidden");
-	resources.materials[4] = (Material) {0.1f, 0.1f, 0.1f, 16.0f};
-	strcpy(resources.material_names[4], "plastic");
-	resources.materials_size = 5;
+	resources.materials[4] = (Material) {0.96f, 0.04f, 0.04f, 256.0f};
+	strcpy(resources.material_names[4], "metal");
+	resources.materials[5] = (Material) {0.1f, 0.1f, 0.1f, 16.0f};
+	strcpy(resources.material_names[5], "plastic");
+	resources.materials_size = 6;
 }
 
 

@@ -40,7 +40,7 @@ Entity create_enemy(Vector3 pos, float yaw) {
         .mesh_filename = "enemy",
         .texture_filename = "white",
         .material_filename = "hidden",
-        .visibility = LIGHT_UV
+        .visibility = VISIBILITY_UV
     });
 
     return i;

@@ -1128,6 +1128,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 	for (Entity i = 0; i < scene->components->entities; i++) {
 		LightComponent* light = get_component(i, COMPONENT_LIGHT);
 		if (!light) continue;
+		if (light->disabled) continue;
 
 		ShadowUniformData shadow_uniform_data = {
 			.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
@@ -1165,6 +1166,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 	for (Entity i = 0; i < scene->components->entities; i++) {
 		LightComponent* light = get_component(i, COMPONENT_LIGHT);
 		if (!light) continue;
+		if (light->disabled) continue;
 
 		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 		SDL_CopyGPUTextureToTexture(

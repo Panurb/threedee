@@ -16,8 +16,13 @@ Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position, .scale = vec3(0.5f, 0.5f, 0.5f) });
     look_at(i, vec3(position.x, position.y - 1.0f, position.z));
-    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "lamp", .texture_filename = "lamp", .emissive_filename = "lamp" });
-    LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = LIGHT_NORMAL });
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "lamp",
+        .texture_filename = "lamp",
+        .material_filename = "metal",
+        .emissive_filename = "lamp"
+    });
+    LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = VISIBILITY_NORMAL });
 
     return i;
 }
@@ -304,7 +309,7 @@ Entity create_blood(Vector3 position, bool hidden) {
         .mesh_filename = "quad",
         .texture_filename = "blood",
         .material_filename = "glass",
-        .visibility = hidden ? LIGHT_UV : LIGHT_ALL
+        .visibility = hidden ? VISIBILITY_UV : VISIBILITY_ALL
     };
     if (hidden) {
         strcpy(params.material_filename, "hidden");
@@ -324,7 +329,7 @@ Entity create_blood(Vector3 position, bool hidden) {
         .mesh_filename = "quad",
         .texture_filename = "blood",
         .material_filename = "hidden",
-        .visibility = LIGHT_UV
+        .visibility = VISIBILITY_UV
     });
 
     return i;
