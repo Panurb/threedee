@@ -386,13 +386,13 @@ MeshData load_mesh(String path) {
 
 
 void load_textures() {
-	resources.textures_size = list_files_alphabetically("data/images/*.png", resources.texture_names);
+	resources.textures_size = list_files_alphabetically("data/textures/*.png", resources.texture_names);
 	ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
 
 	for (int i = 0; i < resources.textures_size; i++) {
 		LOG_INFO("Loading texture: %s", resources.texture_names[i]);
 		String path;
-		snprintf(path, STRING_SIZE, "%s%s%s", "data/images/", resources.texture_names[i], ".png");
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/textures/", resources.texture_names[i], ".png");
 		SDL_Surface* surface = IMG_Load(path);
 		LOG_DEBUG("Format: %s, Size: %dx%d", SDL_GetPixelFormatName(surface->format), surface->w, surface->h);
 		if (!surface) {

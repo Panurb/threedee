@@ -57,7 +57,6 @@ Entity create_player(Vector3 position) {
         .fov = 50.0f,
         .visibility_mask = VISIBILITY_NORMAL
     });
-    add_child(cam, j);
     ArrayList_add(player->inventory, &j);
 
     Entity k = create_entity();
@@ -72,7 +71,6 @@ Entity create_player(Vector3 position) {
         .fov = 35.0f,
         .visibility_mask = VISIBILITY_UV
     });
-    add_child(cam, k);
     ArrayList_add(player->inventory, &k);
 
     player->selected_item = 1;
@@ -101,14 +99,33 @@ void update_players(float time_step) {
         } else {
             player->footstep_timer = 0.0f;
         }
+
+        Vector3 position = get_position(i);
+        Vector3 direction = look_direction(scene->camera);
+        Vector3 item_pos = add3(position, mul3(0.1f, direction));
+        item_pos.y += 0.5f;
+
+        Vector3 item_dir = add3(position, mul3(10.0f, direction));
+        item_dir = add3(item_dir, vec3(0.0f, 1.0f, 0.0f));
+
+        Quaternion camera_rotation = get_rotation(scene->camera);
+
+        for (int j = 0; j < player->inventory->size; j++) {
+            Entity item = *(Entity*)ArrayList_get(player->inventory, j);
+
+            TransformComponent* trans_item = get_component(item, COMPONENT_TRANSFORM);
+
+            move_to(item, item_pos, 5.0f, time_step);
+            // turn_to(item, item_dir, 5.0f, time_step);
+
+            trans_item->rotation = slerp(trans_item->rotation, camera_rotation, 0.1f);
+        }
     }
 }
 
 
 void toggle_visibility(Entity entity) {
     if (entity == NULL_ENTITY) return;
-
-    LOG_INFO("Toggling visibility of entity %d", entity);
 
     MeshComponent* mesh = get_component(entity, COMPONENT_MESH);
     if (mesh) {

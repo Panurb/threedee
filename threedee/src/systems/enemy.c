@@ -77,7 +77,7 @@ void update_enemies(float time_step) {
         if (enemy->state != ENEMY_ATTACK && enemy->state != ENEMY_DEAD) {
             update_vision(i);
             Vector3 dir = vec3(enemy->desired_direction.x, pos.y, enemy->desired_direction.z);
-            turn_to(i, dir, enemy->turn_speed * time_step);
+            turn_to(i, dir, enemy->turn_speed, time_step);
         }
 
         switch (enemy->state) {

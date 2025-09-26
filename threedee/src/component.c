@@ -328,6 +328,23 @@ Vector3 get_entities_center(List* entities) {
 }
 
 
+void move_to(Entity entity, Vector3 target, float speed, float time_step) {
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+    Vector3 position = get_position(entity);
+    Vector3 direction = sub3(target, position);
+    float distance = norm3(direction);
+    if (distance < 0.01f) {
+        return;
+    }
+    direction = normalized3(direction);
+    float move_distance = speed * time_step;
+    if (move_distance > distance) {
+        move_distance = distance;
+    }
+    trans->position  = add3(position, mul3(move_distance, direction));
+}
+
+
 void look_at(Entity entity, Vector3 target) {
     Vector3 position = get_position(entity);
     Vector3 direction = sub3(target, position);
@@ -342,24 +359,18 @@ void look_at(Entity entity, Vector3 target) {
 }
 
 
-void turn_to(Entity entity, Vector3 target, float delta_angle) {
+void turn_to(Entity entity, Vector3 target, float turn_speed, float time_step) {
+    // FIXME: turns at different speed for yaw/pitch
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
 
-    Vector3 position = get_position(entity);
+    Vector3 position = trans->position;
     Vector3 direction = sub3(target, position);
-    Quaternion current_rotation = get_rotation(entity);
+    Quaternion current_rotation = trans->rotation;
     Quaternion target_rotation = quaternion_from_forward(direction, vec3_up());
 
     float angle_diff = quaternion_angle(current_rotation, target_rotation);
 
-    if (angle_diff == 0.0f) {
-        return;
-    }
-
-    // If the angle difference is small enough, set the rotation directly
-    if (angle_diff < delta_angle) {
-        trans->rotation = target_rotation;
-    } else {
-        trans->rotation = slerp(current_rotation, target_rotation, delta_angle / angle_diff);
-    }
+    float delta_angle = turn_speed * time_step;
+    float t = fminf(1.0f, delta_angle / angle_diff);
+    trans->rotation = slerp(current_rotation, target_rotation, t);
 }
