@@ -10,7 +10,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 endif()
 
 set(SOURCES
-#    cJSON/src/cJSON.c
+    cJSON/src/cJSON.c
     threedee/src/app.c
     threedee/src/arraylist.c
     threedee/src/camera.c
@@ -69,7 +69,7 @@ else()
     add_executable(threedee ${SOURCES})
 endif()
 
-#include_directories(cJSON/include)
+include_directories(cJSON/include)
 target_include_directories(threedee PRIVATE threedee/include)
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")

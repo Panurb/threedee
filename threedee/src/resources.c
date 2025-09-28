@@ -1,6 +1,7 @@
 #include <render.h>
 #include <stdio.h>
 #include <SDL3_image/SDL_image.h>
+#include <cJSON.h>
 
 #include "util.h"
 #include "app.h"
@@ -496,22 +497,52 @@ void load_meshes() {
 }
 
 
+cJSON* load_json(String path) {
+	LOG_DEBUG("Loading json %s/%s", directory, filename);
+
+	FILE* file = fopen(path, "r");
+	if (!file) {
+		LOG_WARNING("Could not open file: %s", path);
+		return NULL;
+	}
+
+	fseek(file, 0, SEEK_END);
+	long fsize = ftell(file);
+	rewind(file);
+
+	char* string = malloc(fsize + 1);
+	fread(string, fsize, 1, file);
+	fclose(file);
+
+	string[fsize] = 0;
+
+	cJSON* json = cJSON_Parse(string);
+	free(string);
+
+	LOG_DEBUG("Loaded json");
+
+	return json;
+}
+
+
 void load_materials() {
-	// Keep in alphabetical order
-	// TODO: read from json files
-	resources.materials[0] = (Material) {0.3f, 0.3f, 0.3f, 8.0f};
-	strcpy(resources.material_names[0], "concrete");
-	resources.materials[1] = (Material) {0.5f, 0.5f, 0.5f, 32.0f};
-	strcpy(resources.material_names[1], "default");
-	resources.materials[2] = (Material) {0.9f, 0.9f, 0.9f, 64.0f};
-	strcpy(resources.material_names[2], "glass");
-	resources.materials[3] = (Material) { 2.0f, 0.1f, 0.0f, 128.0f };
-	strcpy(resources.material_names[3], "hidden");
-	resources.materials[4] = (Material) {0.96f, 0.04f, 0.04f, 256.0f};
-	strcpy(resources.material_names[4], "metal");
-	resources.materials[5] = (Material) {0.1f, 0.1f, 0.1f, 16.0f};
-	strcpy(resources.material_names[5], "plastic");
-	resources.materials_size = 6;
+	resources.materials_size = list_files_alphabetically("data/materials/*.json", resources.material_names);
+	for (int i = 0; i < resources.materials_size; i++) {
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/materials/", resources.material_names[i], ".json");
+		cJSON* json = load_json(path);
+		if (!json) {
+			LOG_ERROR("Failed to load material: %s", path);
+			continue;
+		}
+		Material material = {
+			.specular = cJSON_GetObjectItem(json, "specular")->valuedouble,
+			.diffuse = cJSON_GetObjectItem(json, "diffuse")->valuedouble,
+			.ambient = cJSON_GetObjectItem(json, "ambient")->valuedouble,
+			.shininess = cJSON_GetObjectItem(json, "shininess")->valuedouble,
+		};
+		resources.materials[i] = material;
+	}
 }
 
 
