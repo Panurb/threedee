@@ -39,13 +39,14 @@ typedef enum RoomType {
     ROOM_BATHROOM,
     ROOM_HALLWAY,
     ROOM_BEDROOM,
+    ROOM_LIVINGROOM,
+    ROOM_KITCHEN
 } RoomType;
 
 
 typedef struct Room {
     RoomType type;
     bool floor;
-    bool lamp;
     Wall walls[4]; // front, left, back, right
 } Room;
 

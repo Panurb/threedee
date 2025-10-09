@@ -50,8 +50,19 @@ Entity create_player(Vector3 position) {
         .position = vec3(0.0f, -0.5f, 0.1f)
     });
     look_at(j, vec3(0.0f, -0.5f, -1.0f));
-    LightComponent_add(j, (LightParameters) {
-        .disabled = true,
+    MeshComponent_add(j, (MeshParameters) {
+        .mesh_filename = "flashlight",
+        .texture_filename = "black",
+        .material_filename = "plastic",
+        .visibility = VISIBILITY_ALL
+    });
+    Entity light = create_entity();
+    TransformComponent_add(light, (TransformParameters) {
+        .position = vec3(0.0f, 0.0f, -0.1f),
+        .parent = j
+    });
+    LightComponent_add(light, (LightParameters) {
+        .disabled = false,
         .shape = LIGHT_SPOT,
         .color = COLOR_WHITE,
         .fov = 50.0f,
@@ -61,11 +72,17 @@ Entity create_player(Vector3 position) {
 
     Entity k = create_entity();
     TransformComponent_add(k, (TransformParameters) {
-        .position = vec3(0.0f, -0.5f, 0.1f)
+        .position = vec3(0.0f, -0.5f, 0.15f)
     });
     look_at(k, vec3(0.0f, -0.5f, -1.0f));
+    MeshComponent_add(k, (MeshParameters) {
+        .mesh_filename = "flashlight",
+        .texture_filename = "black",
+        .material_filename = "plastic",
+        .visibility = VISIBILITY_ALL
+    });
     LightComponent_add(k, (LightParameters) {
-        .disabled = false,
+        .disabled = true,
         .shape = LIGHT_SPOT,
         .color = COLOR_UV,
         .fov = 35.0f,
@@ -73,7 +90,7 @@ Entity create_player(Vector3 position) {
     });
     ArrayList_add(player->inventory, &k);
 
-    player->selected_item = 1;
+    player->selected_item = 0;
 
     return i;
 }
@@ -115,9 +132,11 @@ void update_players(float time_step) {
 
             TransformComponent* trans_item = get_component(item, COMPONENT_TRANSFORM);
 
-            move_to(item, item_pos, 5.0f, time_step);
+            // move_to(item, item_pos, 1.0f, time_step);
             // turn_to(item, item_dir, 5.0f, time_step);
 
+            // trans_item->position = lerp3(trans_item->position, item_pos, 0.1f);
+            trans_item->position = item_pos;
             trans_item->rotation = slerp(trans_item->rotation, camera_rotation, 0.1f);
         }
     }

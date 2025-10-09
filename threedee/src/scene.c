@@ -12,9 +12,41 @@
 #include "component.h"
 
 
+Vector3 wall_direction(Direction direction) {
+    switch (direction) {
+        case DIRECTION_FRONT:
+            return vec3(0.0f, 0.0f, 1.0f);
+        case DIRECTION_RIGHT:
+            return vec3(1.0f, 0.0f, 0.0f);
+        case DIRECTION_BACK:
+            return vec3(0.0f, 0.0f, -1.0f);
+        case DIRECTION_LEFT:
+            return vec3(-1.0f, 0.0f, 0.0f);
+        default:
+            return zeros3();
+    }
+}
+
+
+float wall_angle(Direction direction) {
+    switch (direction) {
+        case DIRECTION_FRONT:
+            return 0.0f;
+        case DIRECTION_RIGHT:
+            return -90.0f;
+        case DIRECTION_BACK:
+            return 180.0f;
+        case DIRECTION_LEFT:
+            return 90.0f;
+        default:
+            return 0.0f;
+    }
+}
+
+
 Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent_add(i, (TransformParameters) { .position = position, .scale = vec3(0.5f, 0.5f, 0.5f) });
+    TransformComponent_add(i, (TransformParameters) { .position = position, .scale = vec3(1.0f, 1.0f, 1.0f) });
     look_at(i, vec3(position.x, position.y - 1.0f, position.z));
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "lamp",
@@ -23,6 +55,36 @@ Entity create_lamp(Vector3 position) {
         .emissive_filename = "lamp"
     });
     LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = VISIBILITY_NORMAL });
+
+    return i;
+}
+
+
+Entity create_television(Vector3 position, float yaw) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = position,
+        .yaw = yaw
+    });
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "television",
+        .texture_filename = "television",
+        .material_filename = "plastic",
+        .emissive_filename = "television"
+    });
+    ColliderComponent_add(i, (ColliderParameters) {
+        .type = COLLIDER_CUBOID,
+        .group = GROUP_WALLS,
+        .width = 4.0f,
+        .height = 2.0f,
+        .depth = 0.2f
+    });
+    LightComponent_add(i, (LightParameters) {
+        .color = COLOR_WHITE,
+        .fov = 90.0f,
+        .range = 5.0f,
+        .intensity = 0.25f
+    });
 
     return i;
 }
@@ -394,9 +456,8 @@ void print_level(Level level) {
         for (int j = 0; j < level.width; j++) {
             Room room = level.rooms[i][j];
             printf(
-                "%c%c%c|",
+                "%c %c|",
                 wall_types[room.walls[DIRECTION_LEFT]],
-                room.lamp ? 'L' : ' ',
                 wall_types[room.walls[DIRECTION_RIGHT]]
             );
         }
@@ -416,15 +477,18 @@ void generate_level(Level* level, int x, int z) {
         return;
     }
 
-    LOG_INFO("Generating level at (%d, %d)", x, z);
+    LOG_DEBUG("Generating level at (%d, %d)", x, z);
 
-    print_level(*level);
+    if (LOGGING_LEVEL > 3) {
+        print_level(*level);
+    }
 
     Room* room = &level->rooms[z][x];
 
-    room->type = ROOM_BATHROOM;
+    RoomType room_types[] = { ROOM_BATHROOM, ROOM_HALLWAY, ROOM_BEDROOM, ROOM_LIVINGROOM, ROOM_KITCHEN };
+    float probs[] = { 0.1f, 0.4f, 0.25f, 0.25f, 0.2f };
+    room->type = room_types[rand_choice(probs, LENGTH(probs))];
     room->floor = true;
-    room->lamp = randf(0.0f, 1.0f) < 0.5f;
 
     int available_directions[4];
     int available_count = 0;
@@ -520,10 +584,6 @@ Level create_level() {
                 }
             }
 
-            if (room.lamp) {
-                create_lamp(vec3(pos.x, 2.5f, pos.z));
-            }
-
             // Only create back-left walls for the first row and column
             Direction max_direction = (i == 0 || j == 0) ? 4 : 2;
 
@@ -540,6 +600,35 @@ Level create_level() {
                 float depth = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? 0.5f : level.room_width;
 
                 create_wall(wall_pos, width, depth, room.walls[d]);
+            }
+
+            switch (room.type) {
+                case ROOM_BATHROOM:
+                    break;
+                case ROOM_HALLWAY:
+                    break;
+                case ROOM_BEDROOM:
+                    break;
+                case ROOM_LIVINGROOM:
+                    for (int w = 0; w < 3; w++) {
+                        Wall wall = room.walls[w];
+                        Vector3 dir = wall_direction(w);
+                        if (wall == WALL_PLAIN) {
+                            create_television(
+                                vec3(
+                                    pos.x + dir.x * (0.5f * level.room_width - 0.5f),
+                                    pos.y + 0.5f,
+                                    pos.z + dir.z * (0.5f * level.room_depth - 0.5f)
+                                ),
+                                -wall_angle(w)
+                            );
+                            break;
+                        }
+                    }
+                    break;
+                case ROOM_KITCHEN:
+                    create_lamp(vec3(pos.x, 3.0f, pos.z));
+                    break;
             }
         }
     }
@@ -573,7 +662,7 @@ void create_scene() {
 
     Level level = create_level();
 
-    while (true) {
+    while (false) {
         int x = randi(0, level.width - 1);
         int z = randi(0, level.depth - 1);
 

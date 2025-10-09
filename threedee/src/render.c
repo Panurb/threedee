@@ -918,6 +918,13 @@ void init_render() {
 	app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
 	SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
 
+	SDL_SetGPUSwapchainParameters(
+		app.gpu_device,
+		app.window,
+		SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+		SDL_GPU_PRESENTMODE_VSYNC
+	);
+
 	pipelines = malloc(sizeof(SDL_GPUGraphicsPipeline*) * PIPELINE_COUNT);
 	pipelines[PIPELINE_2D] = create_render_pipeline_2d();
 	pipelines[PIPELINE_TEXT] = create_render_pipeline_text();
@@ -1388,7 +1395,7 @@ void render() {
 		SDL_EndGPURenderPass(render_pass);
 	}
 
-	SDL_SubmitGPUCommandBuffer(command_buffer);
+	SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(command_buffer);
 	command_buffer = NULL;
 
 	// Reset instance counts for next frame
@@ -1400,6 +1407,11 @@ void render() {
 	triangle_2d_mesh.num_instances = 0;
 	ArrayList_for_each(texts, destroy_mesh);
 	ArrayList_clear(texts);
+
+	// Wait for the GPU to finish rendering before we start the next frame
+	// This is necessary because we reuse the same buffers every frame
+	// TODO: Implement triple buffering
+	SDL_WaitForGPUFences(app.gpu_device, true, &fence, 1);
 }
 
 

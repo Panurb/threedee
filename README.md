@@ -35,6 +35,7 @@
 * Skybox
 * 3D audio using OpenAL
 * Broad-phase collision detection for optimization
+* Triple buffering
 
 ### How do I get set up? ###
 
