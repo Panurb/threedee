@@ -59,9 +59,6 @@ int main(int argc, char* argv[]) {
 
     init();
 
-    // load_resources();
-    // create_game();
-
     #ifdef __EMSCRIPTEN__
         emscripten_set_main_loop(main_loop, 0, true);
         LOG_INFO("Emscripten main loop started");

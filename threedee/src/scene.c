@@ -627,7 +627,7 @@ Level create_level() {
                     }
                     break;
                 case ROOM_KITCHEN:
-                    create_lamp(vec3(pos.x, 3.0f, pos.z));
+                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
             }
         }

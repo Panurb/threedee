@@ -27,6 +27,9 @@ typedef enum {
 } Pipeline;
 
 
+static int frame_index = 0;
+SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
+
 static SDL_GPUGraphicsPipeline** pipelines = NULL;
 static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
@@ -620,17 +623,19 @@ MeshData create_mesh_triangle() {
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(InstanceColorData) * mesh_data.max_instances,
+            .size = sizeof(InstanceColorData) * mesh_data.max_instances * FRAMES_IN_FLIGHT,
         }
     );
 
-    mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(InstanceColorData) * mesh_data.max_instances,
-        }
-    );
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		mesh_data.instance_transfer_buffer[i] = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = sizeof(InstanceColorData) * mesh_data.max_instances,
+			}
+		);
+	}
 
     Vector3* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
 
@@ -696,17 +701,19 @@ MeshData create_mesh_triangle_2d() {
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
+            .size = sizeof(InstanceColorData2D) * mesh_data.max_instances * FRAMES_IN_FLIGHT,
         }
     );
 
-    mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-        app.gpu_device,
-        &(SDL_GPUTransferBufferCreateInfo){
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
-        }
-    );
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		mesh_data.instance_transfer_buffer[i] = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
+			}
+		);
+	}
 
     Vector2* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
 
@@ -793,17 +800,19 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
+			.size = sizeof(InstanceColorData2D) * mesh_data.max_instances * FRAMES_IN_FLIGHT,
 		}
 	);
 
-	mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-		app.gpu_device,
-		&(SDL_GPUTransferBufferCreateInfo){
-			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
-		}
-	);
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		mesh_data.instance_transfer_buffer[i] = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = sizeof(InstanceColorData2D) * mesh_data.max_instances,
+			}
+		);
+	}
 
     SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
         app.gpu_device,
@@ -922,7 +931,7 @@ void init_render() {
 		app.gpu_device,
 		app.window,
 		SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
-		SDL_GPU_PRESENTMODE_VSYNC
+		game_settings.vsync ? SDL_GPU_PRESENTMODE_VSYNC : SDL_GPU_PRESENTMODE_IMMEDIATE
 	);
 
 	pipelines = malloc(sizeof(SDL_GPUGraphicsPipeline*) * PIPELINE_COUNT);
@@ -986,7 +995,9 @@ void destroy_mesh(MeshData* mesh_data) {
 
 	SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->vertex_buffer);
 	SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->instance_buffer);
-	SDL_ReleaseGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer);
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		SDL_ReleaseGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer[i]);
+	}
 
 	if (mesh_data->index_buffer) {
 		SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->index_buffer);
@@ -1069,9 +1080,22 @@ void render_mesh(SDL_GPURenderPass* render_pass, MeshData* mesh_data, Pipeline p
 			render_pass, &(SDL_GPUBufferBinding) { .buffer = mesh_data->index_buffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT
 		);
 
-		SDL_DrawGPUIndexedPrimitives(render_pass, mesh_data->num_indices, mesh_data->num_instances, 0, 0, 0);
+		SDL_DrawGPUIndexedPrimitives(
+			render_pass,
+			mesh_data->num_indices,
+			mesh_data->num_instances,
+			0,
+			0,
+			frame_index * mesh_data->max_instances
+		);
 	} else {
-		SDL_DrawGPUPrimitives(render_pass, mesh_data->num_vertices, mesh_data->num_instances, 0, 0);
+		SDL_DrawGPUPrimitives(
+			render_pass,
+			mesh_data->num_vertices,
+			mesh_data->num_instances,
+			0,
+			frame_index * mesh_data->max_instances
+		);
 	}
 }
 
@@ -1091,12 +1115,12 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 	SDL_UploadToGPUBuffer(
 		copy_pass,
 		&(SDL_GPUTransferBufferLocation) {
-			.transfer_buffer = mesh_data->instance_transfer_buffer,
+			.transfer_buffer = mesh_data->instance_transfer_buffer[frame_index],
 			.offset = 0
 		},
 		&(SDL_GPUBufferRegion) {
 			.buffer = mesh_data->instance_buffer,
-			.offset = 0,
+			.offset = frame_index * mesh_data->max_instances * mesh_data->instance_size,
 			.size = mesh_data->instance_size * mesh_data->num_instances
 		},
 		true
@@ -1244,7 +1268,19 @@ void render_depth_of_field(SDL_GPUCommandBuffer* command_buffer, SDL_GPUTexture*
 }
 
 
+void pre_render() {
+	LOG_DEBUG("Pre-rendering frame %d", frame_index);
+
+	if (fences[frame_index]) {
+		LOG_DEBUG("Waiting for GPU fence for frame %d", frame_index);
+		SDL_WaitForGPUFences(app.gpu_device, true, &fences[frame_index], 1);
+	}
+}
+
+
 void render() {
+	LOG_DEBUG("Rendering frame %d", frame_index);
+
 	command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
 	if (!command_buffer) {
 		LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
@@ -1395,8 +1431,10 @@ void render() {
 		SDL_EndGPURenderPass(render_pass);
 	}
 
-	SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(command_buffer);
+	fences[frame_index] = SDL_SubmitGPUCommandBufferAndAcquireFence(command_buffer);
 	command_buffer = NULL;
+
+	LOG_DEBUG("Submitted frame %d", frame_index);
 
 	// Reset instance counts for next frame
 	num_lights = 0;
@@ -1408,10 +1446,7 @@ void render() {
 	ArrayList_for_each(texts, destroy_mesh);
 	ArrayList_clear(texts);
 
-	// Wait for the GPU to finish rendering before we start the next frame
-	// This is necessary because we reuse the same buffers every frame
-	// TODO: Implement triple buffering
-	SDL_WaitForGPUFences(app.gpu_device, true, &fence, 1);
+	frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
 }
 
 
@@ -1471,33 +1506,51 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 }
 
 
+void wait_for_fences() {
+	LOG_DEBUG("Waiting for GPU fences");
+	if (!fences[FRAMES_IN_FLIGHT - 1]) {
+		SDL_WaitForGPUFences(app.gpu_device, true, fences, frame_index);
+	} else {
+		SDL_WaitForGPUFences(app.gpu_device, true, fences, FRAMES_IN_FLIGHT);
+	}
+}
+
+
 void draw_mesh(
-		Matrix4 transform,
-		int mesh_index,
-		int texture_index,
-		Material material,
-		int emissive_index,
-		Visibility visibility,
-		Vector2 texture_scale
-	) {
+	Matrix4 transform,
+	int mesh_index,
+	int texture_index,
+	Material material,
+	int emissive_index,
+	Visibility visibility,
+	Vector2 texture_scale
+) {
+	LOG_DEBUG("Drawing mesh %d with texture %d", mesh_index, texture_index);
+
 	MeshData* mesh_data = &resources.meshes[mesh_index];
 
 	if (mesh_data->num_instances >= mesh_data->max_instances) {
+		wait_for_fences();
+
 		LOG_INFO("Buffer %s full, resizing...", mesh_data->name);
 		mesh_data->instance_buffer = double_buffer_size(
 			mesh_data->instance_buffer,
-			sizeof(InstanceData) * mesh_data->max_instances
+			sizeof(InstanceData) * mesh_data->max_instances * FRAMES_IN_FLIGHT
 		);
-		mesh_data->instance_transfer_buffer = double_transfer_buffer_size(
-			mesh_data->instance_transfer_buffer,
-			sizeof(InstanceData) * mesh_data->max_instances
-		);
+		for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+			mesh_data->instance_transfer_buffer[i] = double_transfer_buffer_size(
+				mesh_data->instance_transfer_buffer[i],
+				sizeof(InstanceData) * mesh_data->max_instances
+			);
+		}
 		mesh_data->max_instances *= 2;
 		LOG_INFO("New buffer size: %d", mesh_data->max_instances);
 	}
 
 	// TODO: Map the transfer buffer only once per frame
-	InstanceData* transforms = SDL_MapGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer, false);
+	InstanceData* transforms = SDL_MapGPUTransferBuffer(
+		app.gpu_device, mesh_data->instance_transfer_buffer[frame_index], false
+	);
 
 	InstanceData instance_data = {
 		.transform = transpose4(transform),
@@ -1510,7 +1563,7 @@ void draw_mesh(
 	transforms[mesh_data->num_instances] = instance_data;
 	mesh_data->num_instances++;
 
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer);
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer[frame_index]);
 }
 
 
@@ -1527,20 +1580,26 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 	};
 
 	if (triangle_mesh.num_instances >= triangle_mesh.max_instances) {
+		wait_for_fences();
+
 		LOG_INFO("Buffer full, resizing...");
 		triangle_mesh.instance_buffer = double_buffer_size(
 			triangle_mesh.instance_buffer,
-			sizeof(InstanceColorData) * triangle_mesh.max_instances
+			sizeof(InstanceColorData) * triangle_mesh.max_instances * FRAMES_IN_FLIGHT
 		);
-		triangle_mesh.instance_transfer_buffer = double_transfer_buffer_size(
-			triangle_mesh.instance_transfer_buffer,
-			sizeof(InstanceColorData) * triangle_mesh.max_instances
-		);
+		for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+			triangle_mesh.instance_transfer_buffer[i] = double_transfer_buffer_size(
+				triangle_mesh.instance_transfer_buffer[i],
+				sizeof(InstanceColorData) * triangle_mesh.max_instances
+			);
+		}
 		triangle_mesh.max_instances *= 2;
 		LOG_INFO("New buffer size: %d", triangle_mesh.max_instances);
 	}
 
-	InstanceColorData* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, triangle_mesh.instance_transfer_buffer, false);
+	InstanceColorData* instance_datas = SDL_MapGPUTransferBuffer(
+		app.gpu_device, triangle_mesh.instance_transfer_buffer[frame_index], false
+	);
 	InstanceColorData instance_data = {
 		.transform = transpose4(transform),
 		.color = color
@@ -1548,7 +1607,7 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 	instance_datas[triangle_mesh.num_instances] = instance_data;
 	triangle_mesh.num_instances++;
 
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, triangle_mesh.instance_transfer_buffer);
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, triangle_mesh.instance_transfer_buffer[frame_index]);
 }
 
 
@@ -1690,21 +1749,27 @@ void render_plane(Plane plane, Color color) {
 
 
 void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
+	LOG_DEBUG("Drawing 2D triangle at (%.2f, %.2f), (%.2f, %.2f), (%.2f, %.2f)", a.x, a.y, b.x, b.y, c.x, c.y);
+
 	if (triangle_2d_mesh.num_instances >= triangle_2d_mesh.max_instances) {
 		LOG_INFO("Buffer full, resizing...");
 		triangle_2d_mesh.instance_buffer = double_buffer_size(
 			triangle_2d_mesh.instance_buffer,
-			sizeof(InstanceColorData2D) * triangle_2d_mesh.max_instances
+			sizeof(InstanceColorData2D) * triangle_2d_mesh.max_instances * FRAMES_IN_FLIGHT
 		);
-		triangle_2d_mesh.instance_transfer_buffer = double_transfer_buffer_size(
-			triangle_2d_mesh.instance_transfer_buffer,
-			sizeof(InstanceColorData2D) * triangle_2d_mesh.max_instances
-		);
+		for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+			triangle_2d_mesh.instance_transfer_buffer[i] = double_transfer_buffer_size(
+				triangle_2d_mesh.instance_transfer_buffer[i],
+				sizeof(InstanceColorData2D) * triangle_2d_mesh.max_instances
+			);
+		}
 		triangle_2d_mesh.max_instances *= 2;
 		LOG_INFO("New buffer size: %d", triangle_2d_mesh.max_instances);
 	}
 
-	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, triangle_2d_mesh.instance_transfer_buffer, false);
+	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(
+		app.gpu_device, triangle_2d_mesh.instance_transfer_buffer[frame_index], false
+	);
 	InstanceColorData2D instance_data = {
 		.transform = {
 			b.x - a.x, c.x - a.x, a.x, 0.0f,
@@ -1715,7 +1780,9 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
 	instance_datas[triangle_2d_mesh.num_instances] = instance_data;
 	triangle_2d_mesh.num_instances++;
 
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, triangle_2d_mesh.instance_transfer_buffer);
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, triangle_2d_mesh.instance_transfer_buffer[frame_index]);
+
+	LOG_DEBUG("2D triangle drawn");
 }
 
 
@@ -1752,7 +1819,9 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 	// Match text pixel size to screen coordinates
 	float scale = size / 216.0f;
 
-	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(app.gpu_device, mesh_data.instance_transfer_buffer, false);
+	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(
+		app.gpu_device, mesh_data.instance_transfer_buffer[frame_index], false
+	);
 	InstanceColorData2D instance_data = {
 		.transform = {
 			scale * cosf(angle), -scale * sinf(angle), position.x, 0.0f,
@@ -1763,7 +1832,7 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 	instance_datas[mesh_data.num_instances] = instance_data;
 	mesh_data.num_instances++;
 
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data.instance_transfer_buffer);
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data.instance_transfer_buffer[frame_index]);
 
 	ArrayList_add(texts, &mesh_data);
 }

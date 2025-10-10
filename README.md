@@ -27,6 +27,7 @@
 * Depth of field post-processing effect
 * 2D and text rendering
 * Sound effects
+* Triple buffering
 
 ### TODO ###
 * Data serialization for saving/loading game state
@@ -35,7 +36,6 @@
 * Skybox
 * 3D audio using OpenAL
 * Broad-phase collision detection for optimization
-* Triple buffering
 
 ### How do I get set up? ###
 

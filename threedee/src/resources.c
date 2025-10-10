@@ -277,17 +277,19 @@ MeshData load_mesh(String path) {
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = sizeof(InstanceData) * mesh_data.max_instances,
+			.size = sizeof(InstanceData) * mesh_data.max_instances * FRAMES_IN_FLIGHT,
 		}
 	);
 
-	mesh_data.instance_transfer_buffer = SDL_CreateGPUTransferBuffer(
-		app.gpu_device,
-		&(SDL_GPUTransferBufferCreateInfo){
-			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = sizeof(InstanceData) * mesh_data.max_instances,
-		}
-	);
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		mesh_data.instance_transfer_buffer[i] = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = sizeof(InstanceData) * mesh_data.max_instances,
+			}
+		);
+	}
 
 	SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
 		app.gpu_device,
@@ -498,7 +500,7 @@ void load_meshes() {
 
 
 cJSON* load_json(String path) {
-	LOG_DEBUG("Loading json %s/%s", directory, filename);
+	LOG_DEBUG("Loading json %s", path);
 
 	FILE* file = fopen(path, "r");
 	if (!file) {

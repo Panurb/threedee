@@ -182,6 +182,8 @@ void update(float time_step) {
 
 
 void draw() {
+    LOG_DEBUG("Drawing frame");
+    pre_render();
     draw_entities();
     FPSCounter_draw(app.fps);
     render();

@@ -3,6 +3,7 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <SDL3_mixer/SDL_mixer.h>
 
+#include "settings.h"
 #include "util.h"
 
 
@@ -31,7 +32,7 @@ typedef struct MeshData {
     SDL_GPUBuffer* instance_buffer;
     int num_instances;
     int max_instances;
-    SDL_GPUTransferBuffer* instance_transfer_buffer;
+    SDL_GPUTransferBuffer* instance_transfer_buffer[FRAMES_IN_FLIGHT];
     int instance_size;
     SDL_GPUTexture* texture;
 } MeshData;

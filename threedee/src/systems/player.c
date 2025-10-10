@@ -49,7 +49,6 @@ Entity create_player(Vector3 position) {
     TransformComponent_add(j, (TransformParameters) {
         .position = vec3(0.0f, -0.5f, 0.1f)
     });
-    look_at(j, vec3(0.0f, -0.5f, -1.0f));
     MeshComponent_add(j, (MeshParameters) {
         .mesh_filename = "flashlight",
         .texture_filename = "black",
@@ -74,14 +73,18 @@ Entity create_player(Vector3 position) {
     TransformComponent_add(k, (TransformParameters) {
         .position = vec3(0.0f, -0.5f, 0.15f)
     });
-    look_at(k, vec3(0.0f, -0.5f, -1.0f));
     MeshComponent_add(k, (MeshParameters) {
         .mesh_filename = "flashlight",
         .texture_filename = "black",
         .material_filename = "plastic",
         .visibility = VISIBILITY_ALL
     });
-    LightComponent_add(k, (LightParameters) {
+    light = create_entity();
+    TransformComponent_add(light, (TransformParameters) {
+        .position = vec3(0.0f, 0.0f, -0.1f),
+        .parent = k
+    });
+    LightComponent_add(light, (LightParameters) {
         .disabled = true,
         .shape = LIGHT_SPOT,
         .color = COLOR_UV,
@@ -146,6 +149,8 @@ void update_players(float time_step) {
 void toggle_visibility(Entity entity) {
     if (entity == NULL_ENTITY) return;
 
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+
     MeshComponent* mesh = get_component(entity, COMPONENT_MESH);
     if (mesh) {
         mesh->visible = !mesh->visible;
@@ -153,6 +158,11 @@ void toggle_visibility(Entity entity) {
     LightComponent* light = get_component(entity, COMPONENT_LIGHT);
     if (light) {
         light->disabled = !light->disabled;
+    }
+
+    ListNode* node;
+    FOREACH(node, trans->children) {
+        toggle_visibility(node->value);
     }
 }
 

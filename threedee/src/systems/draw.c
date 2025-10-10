@@ -1,5 +1,6 @@
 #include "systems/draw.h"
 
+#include <stdio.h>
 #include <systems/enemy.h>
 #include <systems/navigation.h>
 
@@ -56,6 +57,8 @@ void draw_axes(Entity entity) {
 
 
 void draw_entities() {
+    LOG_DEBUG("Drawing entities");
+
     draw_circle_2d(
         zeros2(),
         0.007f,

@@ -116,6 +116,8 @@ void init_render();
 
 void apply_render_settings();
 
+void pre_render();
+
 void render();
 
 SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size);

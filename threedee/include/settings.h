@@ -1,6 +1,10 @@
 #pragma once
 
 
+// triple buffering
+#define FRAMES_IN_FLIGHT 3
+
+
 typedef enum {
     DEVICE_UNBOUND,
     DEVICE_KEYBOARD,
