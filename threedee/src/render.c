@@ -1274,6 +1274,8 @@ void pre_render() {
 	if (fences[frame_index]) {
 		LOG_DEBUG("Waiting for GPU fence for frame %d", frame_index);
 		SDL_WaitForGPUFences(app.gpu_device, true, &fences[frame_index], 1);
+		SDL_ReleaseGPUFence(app.gpu_device, fences[frame_index]);
+		fences[frame_index] = NULL;
 	}
 }
 
@@ -1508,10 +1510,12 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 
 void wait_for_fences() {
 	LOG_DEBUG("Waiting for GPU fences");
-	if (!fences[FRAMES_IN_FLIGHT - 1]) {
-		SDL_WaitForGPUFences(app.gpu_device, true, fences, frame_index);
-	} else {
-		SDL_WaitForGPUFences(app.gpu_device, true, fences, FRAMES_IN_FLIGHT);
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		if (!fences[i]) continue;
+
+		SDL_WaitForGPUFences(app.gpu_device, true, &fences[i], 1);
+		SDL_ReleaseGPUFence(app.gpu_device, fences[i]);
+		fences[i] = NULL;
 	}
 }
 
