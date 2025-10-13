@@ -297,7 +297,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 				}
 			}},
 			.has_depth_stencil_target = true,
-			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
+			.depth_stencil_format = DEPTH_FORMAT
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
 			.num_vertex_buffers = 1,
@@ -383,7 +383,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 				}
 			}},
 			.has_depth_stencil_target = true,
-			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
+			.depth_stencil_format = DEPTH_FORMAT
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
 			.num_vertex_buffers = 1,
@@ -464,18 +464,18 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_shadow_depth() {
 
 	bool valid = SDL_GPUTextureSupportsFormat(
 		app.gpu_device,
-		SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+		DEPTH_FORMAT,
 		SDL_GPU_TEXTURETYPE_2D,
 		SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET
 	);
-	LOG_INFO("Depth format D24_UNORM_S8_UINT supported for depth-stencil target: %s", valid ? "yes" : "no");
+	LOG_INFO("Depth format supported for depth-stencil target: %s", valid ? "yes" : "no");
 
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 0,
 			.color_target_descriptions = NULL,
 			.has_depth_stencil_target = true,
-			.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT
+			.depth_stencil_format = DEPTH_FORMAT
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
 			.num_vertex_buffers = 1,
@@ -985,7 +985,7 @@ void init_render() {
 		app.gpu_device,
 		&(SDL_GPUTextureCreateInfo){
 			.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
-			.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+			.format = DEPTH_FORMAT,
 			.width = SHADOW_MAP_RESOLUTION,
 			.height = SHADOW_MAP_RESOLUTION,
 			.layer_count_or_depth = MAX_LIGHTS,

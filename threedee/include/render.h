@@ -1,11 +1,12 @@
 #pragma once
 
-#include <SDL3/SDL_gpu.h>
-
 #include "resources.h"
 #include "components/light.h"
 #include "linalg.h"
 #include "util.h"
+
+
+#define DEPTH_FORMAT SDL_GPU_TEXTUREFORMAT_D32_FLOAT
 
 
 typedef struct PositionColorVertex {

@@ -4,6 +4,7 @@
 #include "components/light.h"
 
 #include <app.h>
+#include <render.h>
 #include <stdio.h>
 
 #include "scene.h"
@@ -48,7 +49,7 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
         app.gpu_device,
         &(SDL_GPUTextureCreateInfo) {
             .type = SDL_GPU_TEXTURETYPE_2D,
-            .format = SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+            .format = DEPTH_FORMAT,
             .width = SHADOW_MAP_RESOLUTION,
             .height = SHADOW_MAP_RESOLUTION,
             .layer_count_or_depth = 1,
