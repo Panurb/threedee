@@ -33,6 +33,7 @@ typedef struct MeshData {
     int num_instances;
     int max_instances;
     SDL_GPUTransferBuffer* instance_transfer_buffer[FRAMES_IN_FLIGHT];
+    void* instance_data[FRAMES_IN_FLIGHT];  // Mapped pointer for each frame
     int instance_size;
     SDL_GPUTexture* texture;
 } MeshData;

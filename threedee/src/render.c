@@ -1110,6 +1110,12 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 		LOG_ERROR("Instance size is zero");
 	}
 
+	if (mesh_data->instance_data[frame_index]) {
+		LOG_DEBUG("Mesh %s has instance data still mapped, unmapping now", mesh_data->name);
+		SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer[frame_index]);
+		mesh_data->instance_data[frame_index] = NULL;
+	}
+
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 
 	SDL_UploadToGPUBuffer(
@@ -1452,6 +1458,19 @@ void render() {
 }
 
 
+void* get_instance_data(MeshData* mesh_data) {
+	if (mesh_data->instance_data[frame_index]) {
+		return mesh_data->instance_data[frame_index];
+	}
+
+	LOG_DEBUG("Mapping instance data for mesh %s, frame %d", mesh_data->name, frame_index);
+	mesh_data->instance_data[frame_index] = SDL_MapGPUTransferBuffer(
+		app.gpu_device, mesh_data->instance_transfer_buffer[frame_index], false
+	);
+	return mesh_data->instance_data[frame_index];
+}
+
+
 SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size) {
 	SDL_GPUBuffer* new_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
@@ -1483,8 +1502,18 @@ SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size) {
 }
 
 
-SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transfer_buffer, int size) {
-	SDL_GPUTransferBuffer* new_transfer_buffer = SDL_CreateGPUTransferBuffer(
+void double_instance_buffer_sizes(MeshData* mesh_data) {
+	int size = mesh_data->instance_size * mesh_data->max_instances;
+
+	// Instance buffer
+	mesh_data->instance_buffer = double_buffer_size(
+		mesh_data->instance_buffer,
+		size * FRAMES_IN_FLIGHT
+	);
+
+	// Instance transfer buffers
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		SDL_GPUTransferBuffer* new_transfer_buffer = SDL_CreateGPUTransferBuffer(
 			app.gpu_device,
 			&(SDL_GPUTransferBufferCreateInfo){
 				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
@@ -1492,19 +1521,27 @@ SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transf
 			}
 		);
 
-	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+		// Only need to copy buffer data for the current frame
+		if (i == frame_index) {
+			LOG_DEBUG("Copying instance transfer buffer data for mesh %s, frame %d", mesh_data->name, i);
+			SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 
-	void* data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
-	void* new_data = SDL_MapGPUTransferBuffer(app.gpu_device, new_transfer_buffer, false);
-	SDL_memcpy(new_data, data, size);
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, new_transfer_buffer);
+			void* data = get_instance_data(mesh_data);
+			mesh_data->instance_data[i] = SDL_MapGPUTransferBuffer(app.gpu_device, new_transfer_buffer, false);
 
-	SDL_EndGPUCopyPass(copy_pass);
+			SDL_memcpy(mesh_data->instance_data[i], data, size);
 
-	SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+			// Unmap old transfer buffer, keep new one mapped
+			SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer[i]);
 
-	return new_transfer_buffer;
+			SDL_EndGPUCopyPass(copy_pass);
+		}
+
+		SDL_ReleaseGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer[i]);
+		mesh_data->instance_transfer_buffer[i] = new_transfer_buffer;
+	}
+
+	mesh_data->max_instances *= 2;
 }
 
 
@@ -1537,24 +1574,11 @@ void draw_mesh(
 		wait_for_fences();
 
 		LOG_INFO("Buffer %s full, resizing...", mesh_data->name);
-		mesh_data->instance_buffer = double_buffer_size(
-			mesh_data->instance_buffer,
-			sizeof(InstanceData) * mesh_data->max_instances * FRAMES_IN_FLIGHT
-		);
-		for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-			mesh_data->instance_transfer_buffer[i] = double_transfer_buffer_size(
-				mesh_data->instance_transfer_buffer[i],
-				sizeof(InstanceData) * mesh_data->max_instances
-			);
-		}
-		mesh_data->max_instances *= 2;
+		double_instance_buffer_sizes(mesh_data);
 		LOG_INFO("New buffer size: %d", mesh_data->max_instances);
 	}
 
-	// TODO: Map the transfer buffer only once per frame
-	InstanceData* transforms = SDL_MapGPUTransferBuffer(
-		app.gpu_device, mesh_data->instance_transfer_buffer[frame_index], false
-	);
+	InstanceData* transforms = get_instance_data(mesh_data);
 
 	InstanceData instance_data = {
 		.transform = transpose4(transform),
@@ -1566,8 +1590,6 @@ void draw_mesh(
 	};
 	transforms[mesh_data->num_instances] = instance_data;
 	mesh_data->num_instances++;
-
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data->instance_transfer_buffer[frame_index]);
 }
 
 
@@ -1587,31 +1609,17 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 		wait_for_fences();
 
 		LOG_INFO("Buffer full, resizing...");
-		triangle_mesh.instance_buffer = double_buffer_size(
-			triangle_mesh.instance_buffer,
-			sizeof(InstanceColorData) * triangle_mesh.max_instances * FRAMES_IN_FLIGHT
-		);
-		for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-			triangle_mesh.instance_transfer_buffer[i] = double_transfer_buffer_size(
-				triangle_mesh.instance_transfer_buffer[i],
-				sizeof(InstanceColorData) * triangle_mesh.max_instances
-			);
-		}
-		triangle_mesh.max_instances *= 2;
+		double_instance_buffer_sizes(&triangle_mesh);
 		LOG_INFO("New buffer size: %d", triangle_mesh.max_instances);
 	}
 
-	InstanceColorData* instance_datas = SDL_MapGPUTransferBuffer(
-		app.gpu_device, triangle_mesh.instance_transfer_buffer[frame_index], false
-	);
+	InstanceColorData* instance_datas = get_instance_data(&triangle_mesh);
 	InstanceColorData instance_data = {
 		.transform = transpose4(transform),
 		.color = color
 	};
 	instance_datas[triangle_mesh.num_instances] = instance_data;
 	triangle_mesh.num_instances++;
-
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, triangle_mesh.instance_transfer_buffer[frame_index]);
 }
 
 
@@ -1756,24 +1764,14 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
 	LOG_DEBUG("Drawing 2D triangle at (%.2f, %.2f), (%.2f, %.2f), (%.2f, %.2f)", a.x, a.y, b.x, b.y, c.x, c.y);
 
 	if (triangle_2d_mesh.num_instances >= triangle_2d_mesh.max_instances) {
+		wait_for_fences();
+
 		LOG_INFO("Buffer full, resizing...");
-		triangle_2d_mesh.instance_buffer = double_buffer_size(
-			triangle_2d_mesh.instance_buffer,
-			sizeof(InstanceColorData2D) * triangle_2d_mesh.max_instances * FRAMES_IN_FLIGHT
-		);
-		for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-			triangle_2d_mesh.instance_transfer_buffer[i] = double_transfer_buffer_size(
-				triangle_2d_mesh.instance_transfer_buffer[i],
-				sizeof(InstanceColorData2D) * triangle_2d_mesh.max_instances
-			);
-		}
-		triangle_2d_mesh.max_instances *= 2;
+		double_instance_buffer_sizes(&triangle_2d_mesh);
 		LOG_INFO("New buffer size: %d", triangle_2d_mesh.max_instances);
 	}
 
-	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(
-		app.gpu_device, triangle_2d_mesh.instance_transfer_buffer[frame_index], false
-	);
+	InstanceColorData2D* instance_datas = get_instance_data(&triangle_2d_mesh);
 	InstanceColorData2D instance_data = {
 		.transform = {
 			b.x - a.x, c.x - a.x, a.x, 0.0f,
@@ -1783,8 +1781,6 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
 	};
 	instance_datas[triangle_2d_mesh.num_instances] = instance_data;
 	triangle_2d_mesh.num_instances++;
-
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, triangle_2d_mesh.instance_transfer_buffer[frame_index]);
 
 	LOG_DEBUG("2D triangle drawn");
 }

@@ -120,10 +120,6 @@ void pre_render();
 
 void render();
 
-SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size);
-
-SDL_GPUTransferBuffer* double_transfer_buffer_size(SDL_GPUTransferBuffer* transfer_buffer, int size);
-
 void add_light(Entity entity);
 
 void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, Material material, int emissive_index, Visibility visibility, Vector2 texture_scale);
