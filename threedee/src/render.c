@@ -462,6 +462,14 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_shadow_depth() {
 		return NULL;
 	}
 
+	bool valid = SDL_GPUTextureSupportsFormat(
+		app.gpu_device,
+		SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+		SDL_GPU_TEXTURETYPE_2D,
+		SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET
+	);
+	LOG_INFO("Depth format D24_UNORM_S8_UINT supported for depth-stencil target: %s", valid ? "yes" : "no");
+
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 0,
