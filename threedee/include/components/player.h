@@ -27,6 +27,9 @@ typedef struct PlayerComponent {
     Foot foot;
     float head_height;
     float view_bobbing;
+    bool sprinting;
+    float walk_speed;
+    float sprint_speed;
 } PlayerComponent;
 
 

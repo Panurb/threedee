@@ -222,7 +222,7 @@ void update_controller(Entity entity) {
                 case BUTTON_B:
                     break;
                 case BUTTON_X:
-                    down = keybind_pressed(ACTION_RELOAD);
+                    down = keybind_pressed(ACTION_SPRINT);
                     break;
                 case BUTTON_Y:
                     down = keybind_pressed(ACTION_ATTACHMENT);

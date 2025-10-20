@@ -15,7 +15,7 @@ Settings game_settings = {
     .antialiasing = 4,
     .anisotropic_filtering = 16,
     .fullscreen = false,
-    .vsync = false,
+    .vsync = true,
     .max_fps = 0,
     .volume = 100,
     .music = 100,
@@ -29,10 +29,10 @@ Settings game_settings = {
         { DEVICE_MOUSE, SDL_BUTTON_LEFT },
         { DEVICE_KEYBOARD, SDL_SCANCODE_LALT },
         { DEVICE_MOUSE, SDL_BUTTON_RIGHT },
-        { DEVICE_KEYBOARD, SDL_SCANCODE_R },
+        { DEVICE_KEYBOARD, SDL_SCANCODE_LSHIFT },
         { DEVICE_KEYBOARD, SDL_SCANCODE_F },
         { DEVICE_KEYBOARD, SDL_SCANCODE_E },
-        { DEVICE_KEYBOARD, SDL_SCANCODE_LSHIFT }
+        { DEVICE_KEYBOARD, SDL_SCANCODE_Q }
     },
     .mouse_sensitivity = 1.0f,
     .fov = 70.0f

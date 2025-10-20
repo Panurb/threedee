@@ -99,10 +99,10 @@ Entity create_player(Vector3 position) {
 }
 
 
-float get_bobbing_height(Entity player) {
+float get_bobbing_height(Entity player, float offset) {
     PlayerComponent* p = get_component(player, COMPONENT_PLAYER);
     if (!p) return 0.0f;
-    return p->view_bobbing * sinf(0.5f * p->footstep_timer * 2.0f * M_PI);
+    return p->view_bobbing * sinf(0.5f * (p->footstep_timer + offset) * 2.0f * M_PI);
 }
 
 
@@ -118,7 +118,7 @@ void update_players(float time_step) {
 
         if (rb->on_ground) {
             if (player->footstep_timer > 0.0f) {
-                player->footstep_timer -= time_step * speed;
+                player->footstep_timer -= time_step * speed * (1.0f - 0.5f * player->sprinting);
             } else {
                 player->footstep_timer = player->footstep_interval;
                 add_sound(i, "footstep", 0.1f, 1.0f);
@@ -135,25 +135,30 @@ void update_players(float time_step) {
         Vector3 up = cross(right, forward);
 
         Vector3 item_pos = add3(position, mul3(0.12f, forward));
-        item_pos = add3(item_pos, mul3(0.15f + 0.25f * player->foot * player->view_bobbing * cosf(0.5f * player->footstep_timer * 2.0f * M_PI), right));
-        item_pos = add3(item_pos, mul3(-0.1f + 0.15f * get_bobbing_height(i), up));
+        float item_x = 0.25f * player->foot * get_bobbing_height(i, 0.5f);
+        if (player->sprinting) {
+            item_x *= 2.0f;
+        }
+        float item_y = -0.1f + 0.15f * get_bobbing_height(i, 0.0f);
 
-        Vector3 item_dir = add3(position, mul3(10.0f, forward));
-        item_dir = add3(item_dir, vec3(0.0f, 1.0f, 0.0f));
+        item_pos = add3(item_pos, mul3(0.15f + item_x, right));
+        item_pos = add3(item_pos, mul3(item_y, up));
 
-        Quaternion camera_rotation = get_rotation(scene->camera);
+        Vector3 item_dir = forward;
+        if (player->sprinting) {
+            item_dir = sub3(item_dir, mul3(0.75f, up));
+            item_dir = sub3(item_dir, mul3(0.25f, right));
+        }
+        Quaternion item_rotation = quaternion_from_forward(item_dir, vec3_up());
 
         for (int j = 0; j < player->inventory->size; j++) {
             Entity item = *(Entity*)ArrayList_get(player->inventory, j);
 
             TransformComponent* trans_item = get_component(item, COMPONENT_TRANSFORM);
 
-            // move_to(item, item_pos, 1.0f, time_step);
-            // turn_to(item, item_dir, 5.0f, time_step);
-
-            // trans_item->position = lerp3(trans_item->position, item_pos, 0.5f);
+            // trans_item->position = lerp3(trans_item->position, item_pos, 0.9f);
             trans_item->position = item_pos;
-            trans_item->rotation = slerp(trans_item->rotation, camera_rotation, 0.1f);
+            trans_item->rotation = slerp(trans_item->rotation, item_rotation, 0.1f);
         }
     }
 }
@@ -188,6 +193,13 @@ Entity get_current_item(Entity player) {
 }
 
 
+float get_player_speed(Entity player) {
+    PlayerComponent* p = get_component(player, COMPONENT_PLAYER);
+    if (!p) return 0.0f;
+    return p->sprinting ? p->sprint_speed : p->walk_speed;
+}
+
+
 void input_players() {
     for (int i = 0; i < scene->components->entities; i++) {
         PlayerComponent* player = get_component(i, COMPONENT_PLAYER);
@@ -202,7 +214,9 @@ void input_players() {
         CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
 
         TransformComponent* trans_cam = get_component(camera, COMPONENT_TRANSFORM);
-        trans_cam->position.y = player->head_height + get_bobbing_height(i);
+        trans_cam->position.y = player->head_height + get_bobbing_height(i, 0.0f);
+
+        player->sprinting = controller->controller.buttons_down[BUTTON_X];
 
         if (!player->examining) {
             player->yaw += controller->controller.right_stick.x;
@@ -212,7 +226,7 @@ void input_players() {
             if (rb->on_ground) {
                 Vector2 v = controller->controller.left_stick;
                 Vector3 velocity = vec3(v.x, 0.0f, -v.y);
-                velocity = mul3(3.0f, normalized3(velocity));
+                velocity = mul3(get_player_speed(i), normalized3(velocity));
 
                 Matrix3 rot = quaternion_to_rotation_matrix(trans->rotation);
                 velocity = map3(rot, velocity);
