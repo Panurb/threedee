@@ -30,6 +30,8 @@ typedef struct PlayerComponent {
     bool sprinting;
     float walk_speed;
     float sprint_speed;
+    float sprint_timer;
+    float max_sprint;
 } PlayerComponent;
 
 

@@ -19,10 +19,12 @@ PlayerComponent* PlayerComponent_add(Entity entity) {
     component->footstep_interval = 1.0f;
     component->foot = FOOT_BOTH;
     component->head_height = 1.0f;
-    component->view_bobbing = 0.05f;
+    component->view_bobbing = 0.03f;
     component->sprinting = false;
     component->walk_speed = 3.0f;
     component->sprint_speed = 5.0f;
+    component->max_sprint = 2.0f;
+    component->sprint_timer = component->max_sprint;
     scene->components->player[entity] = component;
     return component;
 }

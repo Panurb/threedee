@@ -102,7 +102,13 @@ Entity create_player(Vector3 position) {
 float get_bobbing_height(Entity player, float offset) {
     PlayerComponent* p = get_component(player, COMPONENT_PLAYER);
     if (!p) return 0.0f;
-    return p->view_bobbing * sinf(0.5f * (p->footstep_timer + offset) * 2.0f * M_PI);
+
+    float scale = 1.0f;
+    if (p->sprinting) {
+        scale = 3.0f;
+    }
+
+    return p->view_bobbing * scale * sinf(0.5f * (p->footstep_timer + offset) * 2.0f * M_PI);
 }
 
 
@@ -115,6 +121,12 @@ void update_players(float time_step) {
 
         Vector2 velocity = vec2(rb->velocity.x, rb->velocity.z);
         float speed = norm2(velocity);
+
+        if (player->sprinting) {
+            player->sprint_timer = fmaxf(player->sprint_timer - time_step, 0.0f);
+        } else {
+            player->sprint_timer = fminf(player->sprint_timer + 0.5f * time_step, player->max_sprint);
+        }
 
         if (rb->on_ground) {
             if (player->footstep_timer > 0.0f) {
@@ -216,7 +228,12 @@ void input_players() {
         TransformComponent* trans_cam = get_component(camera, COMPONENT_TRANSFORM);
         trans_cam->position.y = player->head_height + get_bobbing_height(i, 0.0f);
 
-        player->sprinting = controller->controller.buttons_down[BUTTON_X];
+        if (controller->controller.buttons_down[BUTTON_X] && player->sprint_timer > 0.5f * player->max_sprint) {
+            player->sprinting = true;
+        }
+        if (controller->controller.buttons_released[BUTTON_X] || player->sprint_timer <= 0.0f) {
+            player->sprinting = false;
+        }
 
         if (!player->examining) {
             player->yaw += controller->controller.right_stick.x;
