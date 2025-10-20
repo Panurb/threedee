@@ -41,7 +41,7 @@ Vector3 look_direction(Entity camera) {
     Matrix4 transform = get_transform(camera);
     Vector4 forward = vec4(0.0f, 0.0f, -1.0f, 0.0f);
     forward = map4(transform, forward);
-    return vec3(forward.x, forward.y, forward.z);
+    return normalized3(vec3(forward.x, forward.y, forward.z));
 }
 
 

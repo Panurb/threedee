@@ -99,6 +99,13 @@ Entity create_player(Vector3 position) {
 }
 
 
+float get_bobbing_height(Entity player) {
+    PlayerComponent* p = get_component(player, COMPONENT_PLAYER);
+    if (!p) return 0.0f;
+    return p->view_bobbing * sinf(0.5f * p->footstep_timer * 2.0f * M_PI);
+}
+
+
 void update_players(float time_step) {
     for (int i = 0; i < scene->components->entities; i++) {
         PlayerComponent* player = get_component(i, COMPONENT_PLAYER);
@@ -113,19 +120,25 @@ void update_players(float time_step) {
             if (player->footstep_timer > 0.0f) {
                 player->footstep_timer -= time_step * speed;
             } else {
-                player->footstep_timer = 1.0f;
+                player->footstep_timer = player->footstep_interval;
                 add_sound(i, "footstep", 0.1f, 1.0f);
+                player->foot = (player->foot == FOOT_LEFT) ? FOOT_RIGHT : FOOT_LEFT;
             }
         } else {
             player->footstep_timer = 0.0f;
+            player->foot = FOOT_BOTH;
         }
 
-        Vector3 position = get_position(i);
-        Vector3 direction = look_direction(scene->camera);
-        Vector3 item_pos = add3(position, mul3(0.1f, direction));
-        item_pos.y += 0.5f;
+        Vector3 position = get_position(scene->camera);
+        Vector3 forward = look_direction(scene->camera);
+        Vector3 right = normalized3(cross(forward, vec3_up()));
+        Vector3 up = cross(right, forward);
 
-        Vector3 item_dir = add3(position, mul3(10.0f, direction));
+        Vector3 item_pos = add3(position, mul3(0.12f, forward));
+        item_pos = add3(item_pos, mul3(0.15f + 0.25f * player->foot * player->view_bobbing * cosf(0.5f * player->footstep_timer * 2.0f * M_PI), right));
+        item_pos = add3(item_pos, mul3(-0.1f + 0.15f * get_bobbing_height(i), up));
+
+        Vector3 item_dir = add3(position, mul3(10.0f, forward));
         item_dir = add3(item_dir, vec3(0.0f, 1.0f, 0.0f));
 
         Quaternion camera_rotation = get_rotation(scene->camera);
@@ -138,7 +151,7 @@ void update_players(float time_step) {
             // move_to(item, item_pos, 1.0f, time_step);
             // turn_to(item, item_dir, 5.0f, time_step);
 
-            // trans_item->position = lerp3(trans_item->position, item_pos, 0.1f);
+            // trans_item->position = lerp3(trans_item->position, item_pos, 0.5f);
             trans_item->position = item_pos;
             trans_item->rotation = slerp(trans_item->rotation, camera_rotation, 0.1f);
         }
@@ -189,7 +202,7 @@ void input_players() {
         CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
 
         TransformComponent* trans_cam = get_component(camera, COMPONENT_TRANSFORM);
-        trans_cam->position.y = player->head_height + player->view_bobbing * sinf(0.5f * player->footstep_timer * 2.0f * M_PI);
+        trans_cam->position.y = player->head_height + get_bobbing_height(i);
 
         if (!player->examining) {
             player->yaw += controller->controller.right_stick.x;

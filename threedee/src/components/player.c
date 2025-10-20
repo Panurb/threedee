@@ -16,6 +16,8 @@ PlayerComponent* PlayerComponent_add(Entity entity) {
     component->inventory = ArrayList_create(sizeof(Entity));
     component->selected_item = 0;
     component->footstep_timer = 0.0f;
+    component->footstep_interval = 1.0f;
+    component->foot = FOOT_BOTH;
     component->head_height = 1.0f;
     component->view_bobbing = 0.05f;
     scene->components->player[entity] = component;

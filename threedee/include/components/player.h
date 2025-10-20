@@ -5,6 +5,13 @@
 #include "util.h"
 
 
+typedef enum Foot {
+    FOOT_LEFT = -1,
+    FOOT_BOTH = 0,
+    FOOT_RIGHT = 1
+} Foot;
+
+
 typedef struct PlayerComponent {
     float yaw;
     float pitch;
@@ -16,6 +23,8 @@ typedef struct PlayerComponent {
     ArrayList* inventory;
     int selected_item;
     float footstep_timer;
+    float footstep_interval;
+    Foot foot;
     float head_height;
     float view_bobbing;
 } PlayerComponent;
