@@ -24,9 +24,13 @@ Entity create_enemy(Vector3 pos, float yaw) {
         .group = GROUP_ENEMIES
     });
 
-    RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
-    rb->axis_lock.rotation = true;
-    rb->friction = 1.0f;
+    RigidBodyComponent_add(i, (RigidBodyParameters) {
+        .mass = 80.0f,
+        .friction = 1.0f,
+        .bounce = 0.0f,
+        .axis_lock.rotation = true,
+        .dont_sleep = true
+    });
     EnemyComponent_add(i);
     WaypointComponent_add(i);
     SoundComponent_add(i, (SoundParameters) {});
@@ -39,8 +43,8 @@ Entity create_enemy(Vector3 pos, float yaw) {
     MeshComponent_add(mesh, (MeshParameters) {
         .mesh_filename = "enemy",
         .texture_filename = "white",
-        .material_filename = "hidden",
-        .visibility = VISIBILITY_UV
+        .material_filename = "default",
+        .visibility = VISIBILITY_ALL
     });
 
     return i;

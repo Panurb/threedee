@@ -41,6 +41,18 @@ typedef struct {
     float _41, _42, _43, _44;
 } Matrix4;
 
+typedef struct Axes {
+    Vector3 x;
+    Vector3 y;
+    Vector3 z;
+    Vector3 right;
+    Vector3 up;
+    Vector3 forward;
+    Vector3 left;
+    Vector3 down;
+    Vector3 back;
+} Axes;
+
 float vec3_get(Vector3 v, int i);
 
 void vec3_set(Vector3* v, int i, float x);
@@ -62,6 +74,8 @@ Vector2 vec2(float x, float y);
 Vector3 vec3(float x, float y, float z);
 
 Vector3 vec3_up();
+
+Vector3 vec3_down();
 
 Vector4 vec4(float x, float y, float z, float w);
 

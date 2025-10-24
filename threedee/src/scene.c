@@ -596,10 +596,19 @@ Level create_level() {
                     pos.z + offset.z * 0.5f * level.room_depth
                 );
 
-                float width = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? level.room_width : 0.5f;
-                float depth = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? 0.5f : level.room_width;
+                float width = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? level.room_width - 0.5f : 0.5f;
+                float depth = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? 0.5f : level.room_width - 0.5f;
 
                 create_wall(wall_pos, width, depth, room.walls[d]);
+
+                Vector3 corner = vec3(
+                    pos.x + offset.x * 0.5f * level.room_width - offset.z * 0.5f * level.room_width,
+                    pos.y,
+                    pos.z + offset.z * 0.5f * level.room_depth - offset.x * 0.5f * level.room_depth
+                );
+                if (room.walls[d] != WALL_NONE && room.walls[d] != WALL_UNSET) {
+                    create_wall_empty(corner, 0.5f, 0.5f);
+                }
             }
 
             switch (room.type) {
@@ -662,7 +671,7 @@ void create_scene() {
 
     Level level = create_level();
 
-    while (false) {
+    while (true) {
         int x = randi(0, level.width - 1);
         int z = randi(0, level.depth - 1);
 

@@ -91,6 +91,8 @@ List* get_children(Entity entity);
 
 Vector3 get_entities_center(List* entities);
 
+Axes get_axes(Entity entity);
+
 void move_to(Entity entity, Vector3 target, float speed, float time_stamp);
 void look_at(Entity entity, Vector3 target);
 void turn_to(Entity entity, Vector3 direction, float turn_speed, float time_step);

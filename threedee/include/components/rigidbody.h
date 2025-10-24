@@ -12,6 +12,16 @@ typedef struct {
 } AxisLock;
 
 
+typedef struct RigidBodyParameters {
+    float mass;
+    float friction;
+    float bounce;
+    float gravity_scale;
+    AxisLock axis_lock;
+    bool dont_sleep;
+} RigidBodyParameters;
+
+
 typedef struct {
     Vector3 velocity;
     Vector3 acceleration;
@@ -33,6 +43,6 @@ typedef struct {
 } RigidBodyComponent;
 
 
-RigidBodyComponent* RigidBodyComponent_add(Entity entity, float mass);
+RigidBodyComponent* RigidBodyComponent_add(Entity entity, RigidBodyParameters params);
 
 void RigidBodyComponent_remove(Entity entity);

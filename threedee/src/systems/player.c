@@ -16,11 +16,14 @@ Entity create_player(Vector3 position) {
     TransformComponent_add(i, (TransformParameters) {
         .position = vec3(position.x, position.y + 1.0f, position.z),
     });
-    RigidBodyComponent* rb = RigidBodyComponent_add(i, 1.0f);
-    rb->axis_lock.rotation = true;
-    rb->bounce = 0.0f;
-    rb->friction = 0.0f;
-    rb->can_sleep = false;
+    RigidBodyComponent* rb = RigidBodyComponent_add(i, (RigidBodyParameters) {
+        .mass = 80.0f,
+        .friction = 0.0f,
+        .bounce = 0.0f,
+        .axis_lock.rotation = true,
+        .dont_sleep = true
+    });
+    rb->linear_damping = 0.99f;
     // MeshComponent_add(i, "cube", "tiles", "default");
     ColliderComponent_add(i,
         (ColliderParameters) {
@@ -71,13 +74,15 @@ Entity create_player(Vector3 position) {
 
     Entity k = create_entity();
     TransformComponent_add(k, (TransformParameters) {
-        .position = vec3(0.0f, -0.5f, 0.15f)
+        .position = vec3(0.0f, -0.5f, 0.15f),
+        .scale = diag3(0.5f),
     });
     MeshComponent_add(k, (MeshParameters) {
         .mesh_filename = "flashlight",
         .texture_filename = "black",
         .material_filename = "plastic",
-        .visibility = VISIBILITY_ALL
+        .visibility = VISIBILITY_ALL,
+        .invisible = true
     });
     light = create_entity();
     TransformComponent_add(light, (TransformParameters) {
@@ -88,7 +93,8 @@ Entity create_player(Vector3 position) {
         .disabled = true,
         .shape = LIGHT_SPOT,
         .color = COLOR_UV,
-        .fov = 35.0f,
+        .fov = 70.0f,
+        .range = 4.0f,
         .visibility_mask = VISIBILITY_UV
     });
     ArrayList_add(player->inventory, &k);
@@ -109,6 +115,14 @@ float get_bobbing_height(Entity player, float offset) {
     }
 
     return p->view_bobbing * scale * sinf(0.5f * (p->footstep_timer + offset) * 2.0f * M_PI);
+}
+
+
+Entity get_current_item(Entity player) {
+    PlayerComponent* p = get_component(player, COMPONENT_PLAYER);
+    if (!p || p->inventory->size == 0) return NULL_ENTITY;
+    Entity i = *(Entity*)ArrayList_get(p->inventory, p->selected_item);
+    return i;
 }
 
 
@@ -159,7 +173,7 @@ void update_players(float time_step) {
         Vector3 item_dir = forward;
         if (player->sprinting) {
             item_dir = sub3(item_dir, mul3(0.75f, up));
-            item_dir = sub3(item_dir, mul3(0.25f, right));
+            item_dir = sub3(item_dir, mul3(-5.0f * item_x, right));
         }
         Quaternion item_rotation = quaternion_from_forward(item_dir, vec3_up());
 
@@ -194,14 +208,6 @@ void toggle_visibility(Entity entity) {
     FOREACH(node, trans->children) {
         toggle_visibility(node->value);
     }
-}
-
-
-Entity get_current_item(Entity player) {
-    PlayerComponent* p = get_component(player, COMPONENT_PLAYER);
-    if (!p || p->inventory->size == 0) return NULL_ENTITY;
-    Entity i = *(Entity*)ArrayList_get(p->inventory, p->selected_item);
-    return i;
 }
 
 
@@ -271,15 +277,23 @@ void input_players() {
             }
         }
 
+        int item_switch = 0;
+
         if (controller->controller.buttons_pressed[BUTTON_RB]) {
-            toggle_visibility(get_current_item(i));
-            player->selected_item = (player->selected_item + 1) % player->inventory->size;
-            toggle_visibility(get_current_item(i));
+            item_switch = 1;
         }
 
         if (controller->controller.buttons_pressed[BUTTON_LB]) {
+            item_switch = -1;
+        }
+
+        if (item_switch) {
+            Vector3 camera_pos = get_position(camera);
+            Axes camera_axes = get_axes(camera);
+
             toggle_visibility(get_current_item(i));
-            player->selected_item = (player->selected_item - 1 + player->inventory->size) % player->inventory->size;
+            player->selected_item = (player->selected_item + item_switch) % player->inventory->size;
+            look_at(get_current_item(i), add3(camera_pos, add3(camera_axes.down, camera_axes.forward)));
             toggle_visibility(get_current_item(i));
         }
 

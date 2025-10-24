@@ -7,6 +7,7 @@ typedef struct MeshParameters {
     String material_filename;
     String emissive_filename;
     Visibility visibility;
+    bool invisible;
 } MeshParameters;
 
 

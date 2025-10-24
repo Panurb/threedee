@@ -76,7 +76,7 @@ void draw_entities() {
         }
 
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
-        if (mesh_component) {
+        if (mesh_component && mesh_component->visible) {
             Material material = resources.materials[mesh_component->material_index];
             if (light) {
                 material.emissive = light->intensity;

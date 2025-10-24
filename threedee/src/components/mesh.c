@@ -14,7 +14,7 @@ MeshComponent* MeshComponent_add(Entity entity, MeshParameters params) {
     mesh->emissive_index = -1;
     mesh->visibility = params.visibility ? params.visibility : VISIBILITY_ALL;
     mesh->texture_scale = ones2();
-    mesh->visible = false;
+    mesh->visible = !params.invisible;
 
     if (strcmp(params.mesh_filename, "cube") == 0) {
         mesh->texture_scale = zeros2();

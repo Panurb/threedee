@@ -328,6 +328,22 @@ Vector3 get_entities_center(List* entities) {
 }
 
 
+Axes get_axes(Entity entity) {
+    Matrix4 transform = get_transform(entity);
+    Axes axes;
+    axes.x = vec3(transform._11, transform._21, transform._31);
+    axes.y = vec3(transform._12, transform._22, transform._32);
+    axes.z = vec3(transform._13, transform._23, transform._33);
+    axes.right = axes.x;
+    axes.up = axes.y;
+    axes.forward = neg3(axes.z);
+    axes.left = neg3(axes.x);
+    axes.down = neg3(axes.y);
+    axes.back = axes.z;
+    return axes;
+}
+
+
 void move_to(Entity entity, Vector3 target, float speed, float time_step) {
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
     Vector3 position = get_position(entity);
@@ -346,7 +362,8 @@ void move_to(Entity entity, Vector3 target, float speed, float time_step) {
 
 
 void look_at(Entity entity, Vector3 target) {
-    Vector3 position = get_position(entity);
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+    Vector3 position = trans->position;
     Vector3 direction = sub3(target, position);
     Vector3 up = vec3(0.0f, 1.0f, 0.0f);
     if (fabsf(dot3(direction, up)) > 0.99f) {
@@ -354,7 +371,6 @@ void look_at(Entity entity, Vector3 target) {
         up = vec3(0.0f, 0.0f, 1.0f);
     }
     Matrix3 rot = look_at_rotation_matrix(position, target, up);
-    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
     trans->rotation = rotation_matrix_to_quaternion(rot);
 }
 

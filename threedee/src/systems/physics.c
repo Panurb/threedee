@@ -131,6 +131,11 @@ bool resolve_collisions(Entity entity, float bias) {
                 v_rel = sub3(v_rel, v_other);
             }
 
+            if (dot3(v_rel, n) >= 0.0f) {
+                // Rigid bodies are separating
+                continue;
+            }
+
             // If both objects can move, move both halfway
             if (rb && rb_other) {
                 delta_position = mul3(0.5f, delta_position);
@@ -139,11 +144,6 @@ bool resolve_collisions(Entity entity, float bias) {
             Vector3 v_n = proj3(v_rel, n);
             Vector3 v_t = sub3(v_rel, v_n);
             Vector3 t = normalized3(v_t);
-
-            if (dot3(v_rel, n) >= 0.0f) {
-                // Rigid bodies are separating
-                continue;
-            }
 
             // Take the minimum bounce factor, and maximum friction factor.
             // Static objects have bounce 1 and friction 0.
@@ -182,9 +182,7 @@ bool resolve_collisions(Entity entity, float bias) {
 
             // Clamp according to Coulomb's law of friction
             float j_t_max = friction * fabsf(j_n);
-            if (fabsf(j_t) > j_t_max) {
-                j_t = j_t_max * sign(j_t);
-            }
+            j_t = clamp(j_t, -j_t_max, j_t_max);
 
             if (fabsf(j_n) < 0.01f && fabsf(j_t) < 0.01f) {
                 // If impulse is negligible, skip the collision resolution
