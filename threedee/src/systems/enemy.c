@@ -24,13 +24,14 @@ Entity create_enemy(Vector3 pos, float yaw) {
         .group = GROUP_ENEMIES
     });
 
-    RigidBodyComponent_add(i, (RigidBodyParameters) {
+    RigidBodyComponent* rb = RigidBodyComponent_add(i, (RigidBodyParameters) {
         .mass = 80.0f,
         .friction = 1.0f,
         .bounce = 0.0f,
         .axis_lock.rotation = true,
         .dont_sleep = true
     });
+    rb->linear_damping = 0.99f;
     EnemyComponent_add(i);
     WaypointComponent_add(i);
     SoundComponent_add(i, (SoundParameters) {});
