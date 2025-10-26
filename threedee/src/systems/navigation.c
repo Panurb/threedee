@@ -160,17 +160,7 @@ void update_waypoints() {
         WaypointComponent* waypoint = get_component(i, COMPONENT_WAYPOINT);
         if (!waypoint) continue;
 
-        ListNode* node;
-        FOREACH(node, waypoint->neighbors) {
-            int n = node->value;
-            if (entity_is_dynamic(n)) {
-                List_remove(waypoint->neighbors, n);
-                WaypointComponent* neighbor = get_component(n, COMPONENT_WAYPOINT);
-                if (neighbor) {
-                    List_remove(neighbor->neighbors, i);
-                }
-            }
-        }
+        List_clear(waypoint->neighbors);
     }
 
     for (int i = 0; i < scene->components->entities; i++) {

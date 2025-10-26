@@ -31,6 +31,7 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, RigidBodyParameters pa
     if (non_zero3(params.axis_lock.rotation_axis)) {
         rigid_body->axis_lock.rotation_axis = normalized3(params.axis_lock.rotation_axis);
     }
+    rigid_body->springs = ArrayList_create(sizeof(Spring));
 
     scene->components->rigid_body[entity] = rigid_body;
 
@@ -41,7 +42,16 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, RigidBodyParameters pa
 void RigidBodyComponent_remove(Entity entity) {
     RigidBodyComponent* ridig_body = scene->components->rigid_body[entity];
     if (ridig_body) {
+        ArrayList_destroy(ridig_body->springs);
         free(ridig_body);
         scene->components->rigid_body[entity] = NULL;
     }
+}
+
+
+void add_spring(Entity entity, Spring spring) {
+    RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+    if (!rb) return;
+
+    ArrayList_add(rb->springs, &spring);
 }

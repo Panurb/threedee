@@ -18,7 +18,7 @@
 #include "components/waypoint.h"
 #include "components/weather.h"
 
-#define MAX_ENTITIES 2000
+#define MAX_ENTITIES 5000
 
 
 typedef struct ComponentData {
@@ -92,6 +92,7 @@ List* get_children(Entity entity);
 Vector3 get_entities_center(List* entities);
 
 Axes get_axes(Entity entity);
+Vector3 local_to_world(Entity entity, Vector3 local);
 
 void move_to(Entity entity, Vector3 target, float speed, float time_stamp);
 void look_at(Entity entity, Vector3 target);

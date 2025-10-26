@@ -96,7 +96,7 @@ void draw_entities() {
             continue;
         }
 
-        draw_axes(entity);
+        // draw_axes(entity);
 
         // debug_draw_enemies();
 
@@ -114,6 +114,18 @@ void draw_entities() {
             }
 
             draw_collider(entity);
+        }
+
+        if (rb) {
+            for (int i = 0; i < rb->springs->size; i++) {
+                Spring spring = *(Spring*)ArrayList_get(rb->springs, i);
+                Vector3 start = local_to_world(entity, spring.local_anchor);
+                Vector3 end = spring.other_local_anchor;
+                if (spring.entity != NULL_ENTITY) {
+                    end = local_to_world(spring.entity, spring.other_local_anchor);
+                }
+                render_line(start, end, 0.02f, COLOR_ORANGE);
+            }
         }
 
         if (app.debug_level < 2) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "util.h"
+#include "arraylist.h"
 
 
 typedef struct {
@@ -10,6 +11,16 @@ typedef struct {
     bool rotation;
     Vector3 rotation_axis;
 } AxisLock;
+
+
+typedef struct Spring {
+    Entity entity;
+    Vector3 local_anchor;
+    Vector3 other_local_anchor;
+    float rest_length;
+    float stiffness;
+    float damping;
+} Spring;
 
 
 typedef struct RigidBodyParameters {
@@ -40,9 +51,12 @@ typedef struct {
     float max_speed;
     float max_angular_speed;
     AxisLock axis_lock;
+    ArrayList* springs;
 } RigidBodyComponent;
 
 
 RigidBodyComponent* RigidBodyComponent_add(Entity entity, RigidBodyParameters params);
 
 void RigidBodyComponent_remove(Entity entity);
+
+void add_spring(Entity entity, Spring spring);

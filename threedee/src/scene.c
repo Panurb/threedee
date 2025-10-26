@@ -55,6 +55,24 @@ Entity create_lamp(Vector3 position) {
         .emissive_filename = "lamp"
     });
     LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = VISIBILITY_NORMAL });
+    RigidBodyComponent_add(i, (RigidBodyParameters) {
+        .mass = 1.0f,
+        .friction = 0.5f,
+        .bounce = 0.5f
+    });
+    ColliderComponent_add(i, (ColliderParameters) {
+        .type = COLLIDER_SPHERE,
+        .group = GROUP_PROPS,
+        .radius = 0.25f
+    });
+    add_spring(i, (Spring) {
+        .entity = NULL_ENTITY,
+        .local_anchor = vec3(0.0f, 0.0f, 0.25f),
+        .other_local_anchor = add3(position, vec3(0.0f, 0.5f, 0.0f)),
+        .rest_length = 0.0f,
+        .stiffness = 50.0f,
+        .damping = 1.0f
+    });
 
     return i;
 }
@@ -98,6 +116,26 @@ Entity create_ground(float width, float depth) {
     });
     MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "gravel", .material_filename = "glass" });
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_PLANE, .group = GROUP_WALLS, .height = 0.5f });
+
+    return i;
+}
+
+
+Entity create_ceiling(Vector3 position, float width, float depth) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = vec3(position.x, position.y - 0.5f, position.z),
+        .scale = vec3(width, 1.0f, depth)
+    });
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "cube",
+        .material_filename = "glass",
+        .texture_filename = "white"
+    });
+    ColliderComponent_add(i, (ColliderParameters) {
+        .type = COLLIDER_AABB,
+        .group = GROUP_WALLS
+    });
 
     return i;
 }
@@ -574,7 +612,7 @@ Level create_level() {
 
             if (room.floor) {
                 create_floor(pos, level.room_width, level.room_depth, "tiles");
-                create_floor(vec3(pos.x, 4.0f, pos.z), level.room_width, level.room_depth, "tiles");
+                create_ceiling(vec3(pos.x, 4.0f, pos.z), level.room_width, level.room_depth);
                 create_waypoint(pos);
 
                 if (chance(0.25f)) {
@@ -611,6 +649,7 @@ Level create_level() {
                 }
             }
 
+            create_lamp(vec3(pos.x, 2.5f, pos.z));
             switch (room.type) {
                 case ROOM_BATHROOM:
                     break;
@@ -636,7 +675,6 @@ Level create_level() {
                     }
                     break;
                 case ROOM_KITCHEN:
-                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
             }
         }
@@ -671,11 +709,11 @@ void create_scene() {
 
     Level level = create_level();
 
-    while (true) {
+    while (false) {
         int x = randi(0, level.width - 1);
         int z = randi(0, level.depth - 1);
 
-        if (x == 0 && z == 0) {
+        if (x == level.width / 2 && z == level.depth / 2) {
             continue; // Skip the starting room
         }
 

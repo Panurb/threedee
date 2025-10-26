@@ -94,11 +94,24 @@ void remove_component(Entity entity, ComponentType component_type) {
             break;
         case COMPONENT_RIGIDBODY:
             RigidBodyComponent_remove(entity);
+            break;
         case COMPONENT_COLLIDER:
             ColliderComponent_remove(entity);
             break;
         case COMPONENT_CONTROLLER:
             ControllerComponent_remove(entity);
+            break;
+        case COMPONENT_WEATHER:
+            WeatherComponent_remove(entity);
+            break;
+        case COMPONENT_PLAYER:
+            PlayerComponent_remove(entity);
+            break;
+        case COMPONENT_WAYPOINT:
+            WaypointComponent_remove(entity);
+            break;
+        case COMPONENT_ENEMY:
+            EnemyComponent_remove(entity);
             break;
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
@@ -291,7 +304,7 @@ bool entity_exists(Entity entity) {
 
 bool entity_is_dynamic(Entity entity) {
     RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
-    if (rb && rb->inv_mass > 0.0f) {
+    if (rb && !rb->asleep && rb->inv_mass > 0.0f) {
         return true;
     }
     return false;
@@ -341,6 +354,13 @@ Axes get_axes(Entity entity) {
     axes.down = neg3(axes.y);
     axes.back = axes.z;
     return axes;
+}
+
+
+Vector3 local_to_world(Entity entity, Vector3 local_point) {
+    Matrix4 transform = get_transform(entity);
+    Vector4 v = map4(transform, vec4(local_point.x, local_point.y, local_point.z, 1.0f));
+    return vec3(v.x, v.y, v.z);
 }
 
 

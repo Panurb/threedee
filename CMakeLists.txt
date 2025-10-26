@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W4")
 
 project(threedee C)
 

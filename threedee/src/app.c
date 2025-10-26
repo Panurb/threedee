@@ -76,7 +76,7 @@ void init() {
 
     int controllers = 0;
     SDL_JoystickID* joysticks = SDL_GetGamepads(&controllers);
-    free(joysticks);
+    SDL_free(joysticks);
 
     for (int i = 0; i < controllers; i++) {
         if (SDL_IsGamepad(i)) {

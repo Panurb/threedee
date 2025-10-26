@@ -88,6 +88,72 @@ void apply_impulse(Entity entity, Vector3 point, Vector3 impulse) {
 }
 
 
+void apply_force(Entity entity, Vector3 point, Vector3 force) {
+    RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+    if (!rb) return;
+
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+
+    // Offset from center of mass to contact point
+    Vector3 r = sub3(point, trans->position);
+
+    // Linear acceleration update
+    rb->acceleration = add3(rb->acceleration, mul3(rb->inv_mass, force));
+
+    // Angular acceleration update
+    Vector3 torque = cross(r, force);
+    rb->angular_acceleration = add3(rb->angular_acceleration, map3(rb->inv_inertia, torque));
+
+    rb->asleep = false;
+}
+
+
+void update_springs(Entity entity) {
+    RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+    if (!rb) return;
+    if (rb->asleep) return;
+
+    for (int i = 0; i < rb->springs->size; i++) {
+        Spring spring = *(Spring*)ArrayList_get(rb->springs, i);
+
+        // TODO: apply force to parent if exists
+        TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+
+        Vector3 world_anchor = add3(trans->position, map3(quaternion_to_rotation_matrix(trans->rotation), spring.local_anchor));
+        Vector3 world_anchor_other = spring.other_local_anchor;
+
+        Vector3 v_rel = rb->velocity;
+        float m_eff = 1.0f / rb->inv_mass;
+
+        if (spring.entity != NULL_ENTITY) {
+            TransformComponent* trans_other = get_component(spring.entity, COMPONENT_TRANSFORM);
+            world_anchor_other = add3(trans_other->position, map3(quaternion_to_rotation_matrix(trans_other->rotation), spring.other_local_anchor));
+        }
+
+        RigidBodyComponent* rb_other = get_component(spring.entity, COMPONENT_RIGIDBODY);
+        if (rb_other) {
+            v_rel = sub3(rb->velocity, rb_other->velocity);
+            m_eff = 1.0f / (rb->inv_mass + rb_other->inv_mass);
+        }
+
+        Vector3 delta = sub3(world_anchor, world_anchor_other);
+        float dist = norm3(delta);
+        if (dist == 0.0f) continue;
+
+        Vector3 dir = div3(dist, delta);
+
+        // Hooke's law: F = -k * (x - x0)
+        float spring_force = -spring.stiffness * (dist - spring.rest_length);
+
+        // Damping force
+        float critical_damping = 2.0f * sqrtf(spring.stiffness * m_eff);
+        spring_force -= spring.damping * critical_damping * dot3(v_rel, dir);
+
+        apply_force(entity, world_anchor, mul3(spring_force, dir));
+    }
+}
+
+
 bool resolve_collisions(Entity entity, float bias) {
     // Collisions are solved sequentially, updating positions and velocities of both bodies before moving
     // to the next collision.
@@ -237,6 +303,10 @@ void update_physics(float time_step) {
         if (rb) {
             rb->on_ground = false;
         }
+    }
+
+    for (Entity i = 0; i < scene->components->entities; i++) {
+        update_springs(i);
     }
 
     for (Entity i = 0; i < scene->components->entities; i++) {
