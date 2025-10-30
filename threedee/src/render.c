@@ -15,6 +15,21 @@
 #include "util.h"
 
 
+typedef enum Shader {
+	SHADER_VERTEX_POSITION_COLOR_2D,
+	SHADER_VERTEX_POSITION_COLOR,
+	SHADER_VERTEX_POSITION_TEXTURE,
+	SHADER_FRAGMENT_SOLID_COLOR,
+	SHADER_FRAGMENT_SOLID_COLOR_DEPTH,
+	SHADER_FRAGMENT_PHONG,
+	SHADER_FRAGMENT_SHADOW_DEPTH,
+	SHADER_FRAGMENT_TEXT,
+	SHADER_FRAGMENT_POST_PROCESSING,
+	SHADER_FRAGMENT_DEPTH_OF_FIELD,
+	SHADER_COUNT
+} Shader;
+
+
 typedef enum {
 	PIPELINE_2D,
 	PIPELINE_TEXT,
@@ -30,6 +45,7 @@ typedef enum {
 static int frame_index = 0;
 SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
 
+static ShaderData shaders[SHADER_COUNT] = { 0 };
 static SDL_GPUGraphicsPipeline** pipelines = NULL;
 static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
@@ -134,6 +150,20 @@ SDL_GPUShader* load_shader(
 
 	SDL_free(code);
 	return shader;
+}
+
+
+void load_shaders() {
+	shaders[SHADER_VERTEX_POSITION_COLOR_2D].shader = load_shader(app.gpu_device, "position_color_2d.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_POSITION_COLOR].shader = load_shader(app.gpu_device, "position_color.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_POSITION_TEXTURE].shader = load_shader(app.gpu_device, "position_texture.vert", 0, 1, 1, 0);
+	shaders[SHADER_FRAGMENT_SOLID_COLOR].shader = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
+	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH].shader = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 1, 0, 0);
+	shaders[SHADER_FRAGMENT_PHONG].shader = load_shader(app.gpu_device, "phong.frag", 4, 2, 0, 0);
+	shaders[SHADER_FRAGMENT_SHADOW_DEPTH].shader = load_shader(app.gpu_device, "shadow_depth.frag", 0, 0, 0, 0);
+	shaders[SHADER_FRAGMENT_TEXT].shader = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
+	shaders[SHADER_FRAGMENT_POST_PROCESSING].shader = load_shader(app.gpu_device, "post_processing.frag", 2, 1, 0, 0);
+	shaders[SHADER_FRAGMENT_DEPTH_OF_FIELD].shader = load_shader(app.gpu_device, "depth_of_field.frag", 2, 1, 0, 0);
 }
 
 
@@ -941,6 +971,8 @@ void init_render() {
 		SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
 		game_settings.vsync ? SDL_GPU_PRESENTMODE_VSYNC : SDL_GPU_PRESENTMODE_IMMEDIATE
 	);
+
+	load_shaders();
 
 	pipelines = malloc(sizeof(SDL_GPUGraphicsPipeline*) * PIPELINE_COUNT);
 	pipelines[PIPELINE_2D] = create_render_pipeline_2d();

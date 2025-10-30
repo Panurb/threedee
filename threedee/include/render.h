@@ -9,6 +9,12 @@
 #define DEPTH_FORMAT SDL_GPU_TEXTUREFORMAT_D32_FLOAT
 
 
+typedef struct ShaderData {
+	SDL_GPUShader* shader;
+	SDL_GPUVertexInputState vertex_input_state;
+} ShaderData;
+
+
 typedef struct PositionColorVertex {
     Vector3 position;
     Color color;
