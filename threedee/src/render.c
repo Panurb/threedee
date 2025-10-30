@@ -19,6 +19,9 @@ typedef enum Shader {
 	SHADER_VERTEX_POSITION_COLOR_2D,
 	SHADER_VERTEX_POSITION_COLOR,
 	SHADER_VERTEX_POSITION_TEXTURE,
+	SHADER_VERTEX_TEXT,
+	SHADER_VERTEX_SHADOW_DEPTH,
+	SHADER_VERTEX_POST_PROCESSING,
 	SHADER_FRAGMENT_SOLID_COLOR,
 	SHADER_FRAGMENT_SOLID_COLOR_DEPTH,
 	SHADER_FRAGMENT_PHONG,
@@ -157,6 +160,9 @@ void load_shaders() {
 	shaders[SHADER_VERTEX_POSITION_COLOR_2D].shader = load_shader(app.gpu_device, "position_color_2d.vert", 0, 1, 1, 0);
 	shaders[SHADER_VERTEX_POSITION_COLOR].shader = load_shader(app.gpu_device, "position_color.vert", 0, 1, 1, 0);
 	shaders[SHADER_VERTEX_POSITION_TEXTURE].shader = load_shader(app.gpu_device, "position_texture.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_TEXT].shader = load_shader(app.gpu_device, "text.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_SHADOW_DEPTH].shader = load_shader(app.gpu_device, "shadow_depth.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_POST_PROCESSING].shader = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR].shader = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH].shader = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 1, 0, 0);
 	shaders[SHADER_FRAGMENT_PHONG].shader = load_shader(app.gpu_device, "phong.frag", 4, 2, 0, 0);
@@ -168,18 +174,6 @@ void load_shaders() {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "position_color_2d.vert", 0, 1, 1, 0);
-	if (!vertex_shader) {
-		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
-		return NULL;
-	}
-
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
-	if (!fragment_shader) {
-		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
-		return NULL;
-	}
-
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
@@ -213,14 +207,11 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 			}}
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-		.vertex_shader = vertex_shader,
-		.fragment_shader = fragment_shader,
+		.vertex_shader = shaders[SHADER_VERTEX_POSITION_COLOR_2D].shader,
+		.fragment_shader = shaders[SHADER_FRAGMENT_SOLID_COLOR].shader,
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
-
-	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
-	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
 
 	if (!pipeline) {
 		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
@@ -231,18 +222,6 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_text() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "text.vert", 0, 1, 1, 0);
-	if (!vertex_shader) {
-		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
-		return NULL;
-	}
-
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
-	if (!fragment_shader) {
-		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
-		return NULL;
-	}
-
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
@@ -281,14 +260,11 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_text() {
 			}}
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-		.vertex_shader = vertex_shader,
-		.fragment_shader = fragment_shader,
+		.vertex_shader = shaders[SHADER_VERTEX_TEXT].shader,
+		.fragment_shader = shaders[SHADER_FRAGMENT_TEXT].shader,
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
-
-	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
-	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
 
 	if (!pipeline) {
 		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
@@ -299,18 +275,6 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_text() {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "position_color.vert", 0, 1, 1, 0);
-	if (!vertex_shader) {
-		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
-		return NULL;
-	}
-
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 1, 0, 0);
-	if (!fragment_shader) {
-		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
-		return NULL;
-	}
-
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
@@ -364,14 +328,11 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 			.compare_op = SDL_GPU_COMPAREOP_LESS
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-		.vertex_shader = vertex_shader,
-		.fragment_shader = fragment_shader,
+		.vertex_shader = shaders[SHADER_VERTEX_POSITION_COLOR].shader,
+		.fragment_shader = shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH].shader,
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
-
-	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
-	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
 
 	if (!pipeline) {
 		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
@@ -382,18 +343,6 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "position_texture.vert", 0, 1, 1, 0);
-	if (!vertex_shader) {
-		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
-		return NULL;
-	}
-
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "phong.frag", 4, 2, 0, 0);
-	if (!fragment_shader) {
-		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
-		return NULL;
-	}
-
 	SDL_PropertiesID props = SDL_CreateProperties();
 	SDL_SetStringProperty(props, SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING, "3d textured");
 
@@ -460,15 +409,13 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 			.compare_op = SDL_GPU_COMPAREOP_LESS
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-		.vertex_shader = vertex_shader,
-		.fragment_shader = fragment_shader,
+		.vertex_shader = shaders[SHADER_VERTEX_POSITION_TEXTURE].shader,
+		.fragment_shader = shaders[SHADER_FRAGMENT_PHONG].shader,
 		.props = props
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
 
-	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
-	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
 	SDL_DestroyProperties(props);
 
 	if (!pipeline) {
@@ -480,18 +427,6 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_shadow_depth() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "shadow_depth.vert", 0, 1, 1, 0);
-	if (!vertex_shader) {
-		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
-		return NULL;
-	}
-
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "shadow_depth.frag", 0, 0, 0, 0);
-	if (!fragment_shader) {
-		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
-		return NULL;
-	}
-
 	bool valid = SDL_GPUTextureSupportsFormat(
 		app.gpu_device,
 		DEPTH_FORMAT,
@@ -549,14 +484,11 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_shadow_depth() {
 			.compare_op = SDL_GPU_COMPAREOP_LESS
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-		.vertex_shader = vertex_shader,
-		.fragment_shader = fragment_shader,
+		.vertex_shader = shaders[SHADER_VERTEX_SHADOW_DEPTH].shader,
+		.fragment_shader = shaders[SHADER_FRAGMENT_SHADOW_DEPTH].shader,
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
-
-	SDL_ReleaseGPUShader(app.gpu_device, vertex_shader);
-	SDL_ReleaseGPUShader(app.gpu_device, fragment_shader);
 
 	if (!pipeline) {
 		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
@@ -567,18 +499,6 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_shadow_depth() {
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_post_processing() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
-	if (!vertex_shader) {
-		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
-		return NULL;
-	}
-
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "post_processing.frag", 2, 1, 0, 0);
-	if (!fragment_shader) {
-		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
-		return NULL;
-	}
-
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
@@ -588,29 +508,21 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_post_processing() {
 			.has_depth_stencil_target = false
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
-		.vertex_shader = vertex_shader,
-		.fragment_shader = fragment_shader,
+		.vertex_shader = shaders[SHADER_VERTEX_POST_PROCESSING].shader,
+		.fragment_shader = shaders[SHADER_FRAGMENT_POST_PROCESSING].shader,
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
 
 	return pipeline;
 }
 
 
 SDL_GPUGraphicsPipeline* create_render_pipeline_depth_of_field() {
-	SDL_GPUShader* vertex_shader = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
-	if (!vertex_shader) {
-		LOG_ERROR("Failed to load vertex shader: %s", SDL_GetError());
-		return NULL;
-	}
-
-	SDL_GPUShader* fragment_shader = load_shader(app.gpu_device, "depth_of_field.frag", 2, 1, 0, 0);
-	if (!fragment_shader) {
-		LOG_ERROR("Failed to load fragment shader: %s", SDL_GetError());
-		return NULL;
-	}
-
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
@@ -620,11 +532,15 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_depth_of_field() {
 			.has_depth_stencil_target = false
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
-		.vertex_shader = vertex_shader,
-		.fragment_shader = fragment_shader,
+		.vertex_shader = shaders[SHADER_VERTEX_POST_PROCESSING].shader,
+		.fragment_shader = shaders[SHADER_FRAGMENT_DEPTH_OF_FIELD].shader,
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
 
 	return pipeline;
 }
@@ -1468,9 +1384,8 @@ void render() {
 		);
 
 		CameraComponent* screen_camera = get_component(scene->screen_camera, COMPONENT_CAMERA);
-		camera_data.projection_matrix = transpose4(screen_camera->projection_matrix);
-		camera_data.view_matrix = transpose4(inverse_transform(get_transform(scene->screen_camera)));
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &camera_data, sizeof(Matrix4));
+		Matrix4 projection_matrix = transpose4(screen_camera->projection_matrix);
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_matrix, sizeof(Matrix4));
 
 		render_instances(command_buffer, render_pass, &triangle_2d_mesh, PIPELINE_2D);
 
