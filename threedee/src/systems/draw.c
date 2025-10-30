@@ -56,6 +56,24 @@ void draw_axes(Entity entity) {
 }
 
 
+void draw_springs(Entity entity) {
+    RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+    if (!rb) return;
+
+    for (int i = 0; i < rb->springs->size; i++) {
+        Spring spring = *(Spring*)ArrayList_get(rb->springs, i);
+        if (spring.thickness == 0.0f) continue;
+
+        Vector3 start = local_to_world(entity, spring.local_anchor);
+        Vector3 end = spring.other_local_anchor;
+        if (spring.entity != NULL_ENTITY) {
+            end = local_to_world(spring.entity, spring.other_local_anchor);
+        }
+        render_line(start, end, spring.thickness, spring.color);
+    }
+}
+
+
 void draw_entities() {
     LOG_DEBUG("Drawing entities");
 
@@ -92,6 +110,8 @@ void draw_entities() {
             );
         }
 
+        draw_springs(entity);
+
         if (app.debug_level == 0) {
             continue;
         }
@@ -100,8 +120,8 @@ void draw_entities() {
 
         // debug_draw_enemies();
 
-        ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
         RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+        ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
         if (entity != scene->player && collider && rb) {
             Vector3 start = get_position(entity);
             for (int i = 0; i < collider->collisions->size; i++) {
@@ -119,6 +139,8 @@ void draw_entities() {
         if (rb) {
             for (int i = 0; i < rb->springs->size; i++) {
                 Spring spring = *(Spring*)ArrayList_get(rb->springs, i);
+                if (spring.thickness != 0.0f) continue;
+
                 Vector3 start = local_to_world(entity, spring.local_anchor);
                 Vector3 end = spring.other_local_anchor;
                 if (spring.entity != NULL_ENTITY) {

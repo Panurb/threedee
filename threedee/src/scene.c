@@ -67,11 +67,13 @@ Entity create_lamp(Vector3 position) {
     });
     add_spring(i, (Spring) {
         .entity = NULL_ENTITY,
-        .local_anchor = vec3(0.0f, 0.0f, 0.25f),
+        .local_anchor = vec3(0.0f, 0.0f, 0.2f),
         .other_local_anchor = add3(position, vec3(0.0f, 0.5f, 0.0f)),
         .rest_length = 0.0f,
         .stiffness = 50.0f,
-        .damping = 1.0f
+        .damping = 1.0f,
+        .thickness = 0.025f,
+        .color = COLOR_BLACK
     });
 
     return i;

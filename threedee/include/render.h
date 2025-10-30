@@ -29,6 +29,12 @@ typedef struct PositionTextureVertex2D {
 } PositionTextureVertex2D;
 
 
+typedef struct CameraData {
+	Matrix4 projection_matrix;
+	Matrix4 view_matrix;
+} CameraData;
+
+
 typedef struct UniformData {
 	float near_plane;
 	float far_plane;
@@ -51,12 +57,14 @@ typedef struct {
 	Visibility visiblity;
 	float _pad[2];
 } InstanceData;
+static_assert(sizeof(InstanceData) % 16 == 0);
 
 
 typedef struct {
 	Matrix4 transform;
 	Color color;
 } InstanceColorData;
+static_assert(sizeof(InstanceColorData) % 16 == 0);
 
 
 typedef struct Matrix2x3 {

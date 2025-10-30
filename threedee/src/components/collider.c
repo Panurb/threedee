@@ -171,7 +171,7 @@ void draw_collider(Entity entity) {
             break;
         }
         case COLLIDER_SPHERE:
-            render_circle(position, collider->radius * scale.x, 32, color);
+            render_sphere(position, collider->radius, 32, color);
             break;
         case COLLIDER_CUBOID:
             break;

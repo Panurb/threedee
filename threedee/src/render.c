@@ -1311,10 +1311,12 @@ void render() {
 
 		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
 		Matrix4 view_matrix = inverse_transform(get_transform(scene->camera));
-		Matrix4 projection_matrix = camera->projection_matrix;
-		Matrix4 projection_view_matrix = transpose4(matrix4_mul(projection_matrix, view_matrix));
+		CameraData camera_data = {
+			.projection_matrix = transpose4(camera->projection_matrix),
+			.view_matrix = transpose4(view_matrix),
+		};
 
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_view_matrix, sizeof(Matrix4));
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &camera_data, sizeof(CameraData));
 
 		SDL_GPUColorTargetInfo color_target_info = {
 			.texture = screen_texture,
@@ -1434,8 +1436,9 @@ void render() {
 		);
 
 		CameraComponent* screen_camera = get_component(scene->screen_camera, COMPONENT_CAMERA);
-		projection_matrix = transpose4(screen_camera->projection_matrix);
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_matrix, sizeof(Matrix4));
+		camera_data.projection_matrix = transpose4(screen_camera->projection_matrix);
+		camera_data.view_matrix = transpose4(inverse_transform(get_transform(scene->screen_camera)));
+		SDL_PushGPUVertexUniformData(command_buffer, 0, &camera_data, sizeof(Matrix4));
 
 		render_instances(command_buffer, render_pass, &triangle_2d_mesh, PIPELINE_2D);
 

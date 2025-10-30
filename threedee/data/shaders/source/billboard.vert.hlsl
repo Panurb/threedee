@@ -14,10 +14,11 @@ struct Material {
 
 struct InstanceData
 {
-    float4x4 transform_matrix;
+    float3 position;
+    float width;
+    float height;
     int tex_index;
     int emissive_index;
-    float2 tex_scale;
     Material material;
     uint visibility;
 };
@@ -45,45 +46,30 @@ struct Output
     uint visiblity;
 };
 
-float3 scale_from_transform(float4x4 transform)
-{
-    return float3(
-        length(float3(transform._11, transform._21, transform._31)),
-        length(float3(transform._12, transform._22, transform._32)),
-        length(float3(transform._13, transform._23, transform._33))
-    );
-}
 
 Output main(Input input, uint instance_id : SV_InstanceID)
 {
-    float4x4 transform = instance_data[instance_id].transform_matrix;
-    float3 scale = scale_from_transform(transform);
-
-    float2 tex_scale = instance_data[instance_id].tex_scale;
-
-    float2 tiling;
-    if (tex_scale.x == 0.0f || tex_scale.y == 0.0f) {
-        // Determine tiling axes based on face normal
-        if (abs(input.normal.x) > 0.5)
-            tiling = scale.zy;
-        else if (abs(input.normal.y) > 0.5)
-            tiling = scale.xz;
-        else
-            tiling = scale.xy;
-    } else {
-        tiling = 1.0f / tex_scale;
-    }
-
     float4x4 projection_view_matrix = mul(projection_matrix, view_matrix);
 
+    float3 position = instance_data[instance_id].position;
+    float width = instance_data[instance_id].width;
+    float height = instance_data[instance_id].height;
+
+    float3 camera_right = normalize(float3(view_matrix._11, view_matrix._21, view_matrix._31));
+    float3 camera_up = normalize(float3(view_matrix._12, view_matrix._22, view_matrix._32));
+
+    float3 world_position = position
+        + (input.position.x - 0.5f) * width * camera_right
+        + (input.position.y - 0.5f) * height * camera_up;
+
     Output output;
-    output.tex_coord = input.tex_coord * tiling;
+    output.tex_coord = input.tex_coord;
 	output.tex_index = instance_data[instance_id].tex_index;
     output.emissive_index = instance_data[instance_id].emissive_index;
-    output.position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
-    output.normal = normalize(mul((float3x3)transform, input.normal));
-    output.tangent = normalize(mul((float3x3)transform, input.tangent));
-    output.world_position = mul(transform, float4(input.position, 1.0f)).xyz;
+    output.position = mul(projection_view_matrix, float4(world_position, 1.0f));
+    output.normal = input.normal;
+    output.tangent = input.tangent;
+    output.world_position = world_position;
 
     output.material = instance_data[instance_id].material;
     output.visiblity = instance_data[instance_id].visibility;

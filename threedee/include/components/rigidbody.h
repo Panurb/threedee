@@ -20,6 +20,8 @@ typedef struct Spring {
     float rest_length;
     float stiffness;
     float damping;
+    Color color;
+    float thickness;
 } Spring;
 
 

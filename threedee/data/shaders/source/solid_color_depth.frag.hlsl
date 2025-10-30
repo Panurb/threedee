@@ -10,16 +10,10 @@ struct Output
     float depth : SV_Depth;
 };
 
-float linearize_depth(float depth, float near, float far)
-{
-    float z = depth * 2.0 - 1.0;
-    return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
-}
-
 Output main(float4 color : TEXCOORD0, float4 position : SV_Position)
 {
     Output result;
     result.color = color;
-    result.depth = linearize_depth(position.z, near_plane, far_plane);
+    result.depth = position.z;
     return result;
 }

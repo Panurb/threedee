@@ -1,12 +1,13 @@
 cbuffer TransformBlock : register(b0, space1)
 {
-    float4x4 projection_view_matrix : packoffset(c0);
+    float4x4 projection_matrix : packoffset(c0);
+    float4x4 view_matrix : packoffset(c4);
 };
 
 struct InstanceData
 {
-    float4x4 transform_matrix : packoffset(c0);
-    float4 color : packoffset(c4);
+    float4x4 transform_matrix;
+    float4 color;
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);
@@ -24,6 +25,8 @@ struct Output
 
 Output main(Input input, uint instance_id : SV_InstanceID)
 {
+    float4x4 projection_view_matrix = mul(projection_matrix, view_matrix);
+
     Output output;
     output.color = instance_data[instance_id].color;
     float4x4 transform = instance_data[instance_id].transform_matrix;
