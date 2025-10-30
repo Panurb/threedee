@@ -49,7 +49,7 @@ static int frame_index = 0;
 SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
 
 static ShaderData shaders[SHADER_COUNT] = { 0 };
-static SDL_GPUGraphicsPipeline** pipelines = NULL;
+static SDL_GPUGraphicsPipeline* pipelines[PIPELINE_COUNT] = { 0 };
 static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
@@ -65,6 +65,50 @@ static int num_lights = 0;
 static MeshData triangle_mesh;
 static MeshData triangle_2d_mesh;
 static ArrayList* texts;
+
+
+static const SDL_GPUVertexInputState VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX = {
+	.num_vertex_buffers = 1,
+	.vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+		.slot = 0,
+		.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+		.instance_step_rate = 0,
+		.pitch = sizeof(PositionTextureVertex)
+	}},
+	.num_vertex_attributes = 4,
+	.vertex_attributes = (SDL_GPUVertexAttribute[]){{
+		.buffer_slot = 0,
+		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+		.location = 0,
+		.offset = 0
+	}, {
+		.buffer_slot = 0,
+		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+		.location = 1,
+		.offset = sizeof(float) * 3
+	}, {
+		.buffer_slot = 0,
+		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+		.location = 2,
+		.offset = sizeof(float) * 5
+	}, {
+		.buffer_slot = 0,
+		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+		.location = 3,
+		.offset = sizeof(float) * 8
+	}}
+};
+
+
+static const SDL_GPUColorTargetBlendState BLEND_STATE = {
+	.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+	.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+	.color_blend_op = SDL_GPU_BLENDOP_ADD,
+	.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+	.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+	.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+	.enable_blend = true
+};
 
 
 SDL_GPUSampleCount get_sample_count() {
@@ -179,15 +223,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = (SDL_GPUColorTargetBlendState) {
-					.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-					.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-					.color_blend_op = SDL_GPU_BLENDOP_ADD,
-					.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-					.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
-					.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-					.enable_blend = true
-				}
+				.blend_state = BLEND_STATE
 			}},
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
@@ -227,15 +263,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_text() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = (SDL_GPUColorTargetBlendState) {
-					.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-					.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-					.color_blend_op = SDL_GPU_BLENDOP_ADD,
-					.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-					.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
-					.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-					.enable_blend = true
-				}
+				.blend_state = BLEND_STATE
 			}},
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
@@ -280,15 +308,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = (SDL_GPUColorTargetBlendState) {
-					.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-					.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-					.color_blend_op = SDL_GPU_BLENDOP_ADD,
-					.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-					.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
-					.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-					.enable_blend = true
-				}
+				.blend_state = BLEND_STATE
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = DEPTH_FORMAT
@@ -299,7 +319,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 				.slot = 0,
 				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
 				.instance_step_rate = 0,
-				.pitch = sizeof(Vector3)
+				.pitch = sizeof(PositionColorVertex)
 			}},
 			.num_vertex_attributes = 2,
 			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
@@ -351,50 +371,12 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = (SDL_GPUColorTargetBlendState) {
-					.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-					.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-					.color_blend_op = SDL_GPU_BLENDOP_ADD,
-					.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-					.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
-					.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-					.enable_blend = true
-				}
+				.blend_state = BLEND_STATE
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = DEPTH_FORMAT
 		},
-		.vertex_input_state = (SDL_GPUVertexInputState){
-			.num_vertex_buffers = 1,
-			.vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
-				.slot = 0,
-				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
-				.instance_step_rate = 0,
-				.pitch = sizeof(PositionTextureVertex)
-			}},
-			.num_vertex_attributes = 4,
-			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
-				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-				.location = 0,
-				.offset = 0
-			}, {
-				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-				.location = 1,
-				.offset = sizeof(float) * 3
-			}, {
-				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-				.location = 2,
-				.offset = sizeof(float) * 5
-			}, {
-				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-				.location = 3,
-				.offset = sizeof(float) * 8
-			}}
-		},
+		.vertex_input_state = VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX,
 		.rasterizer_state = (SDL_GPURasterizerState){
 			.cull_mode = SDL_GPU_CULLMODE_BACK,
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
@@ -442,37 +424,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_shadow_depth() {
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = DEPTH_FORMAT
 		},
-		.vertex_input_state = (SDL_GPUVertexInputState){
-			.num_vertex_buffers = 1,
-			.vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
-				.slot = 0,
-				.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
-				.instance_step_rate = 0,
-				.pitch = sizeof(PositionTextureVertex)
-			}},
-			.num_vertex_attributes = 4,
-			.vertex_attributes = (SDL_GPUVertexAttribute[]){{
-				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-				.location = 0,
-				.offset = 0
-			}, {
-				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-				.location = 1,
-				.offset = sizeof(float) * 3
-			}, {
-				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-				.location = 2,
-				.offset = sizeof(float) * 5
-			}, {
-				.buffer_slot = 0,
-				.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-				.location = 3,
-				.offset = sizeof(float) * 8
-			}}
-		},
+		.vertex_input_state = VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX,
 		.rasterizer_state = (SDL_GPURasterizerState){
 			.cull_mode = SDL_GPU_CULLMODE_BACK,
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
@@ -890,7 +842,6 @@ void init_render() {
 
 	load_shaders();
 
-	pipelines = malloc(sizeof(SDL_GPUGraphicsPipeline*) * PIPELINE_COUNT);
 	pipelines[PIPELINE_2D] = create_render_pipeline_2d();
 	pipelines[PIPELINE_TEXT] = create_render_pipeline_text();
 	pipelines[PIPELINE_3D] = create_render_pipeline_3d();
