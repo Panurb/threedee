@@ -36,6 +36,8 @@
 * Skybox
 * 3D audio using OpenAL
 * Broad-phase collision detection for optimization
+* Ambient occlusion
+* Bloom
 
 ### How do I get set up? ###
 

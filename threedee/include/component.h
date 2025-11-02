@@ -14,6 +14,7 @@
 #include "components/player.h"
 #include "components/rigidbody.h"
 #include "components/sound.h"
+#include "components/sprite.h"
 #include "components/transform.h"
 #include "components/waypoint.h"
 #include "components/weather.h"
@@ -36,6 +37,7 @@ typedef struct ComponentData {
     PlayerComponent* player[MAX_ENTITIES];
     WaypointComponent* waypoint[MAX_ENTITIES];
     EnemyComponent* enemy[MAX_ENTITIES];
+    SpriteComponent* sprite[MAX_ENTITIES];
 } ComponentData;
 
 typedef enum ComponentType {
@@ -50,7 +52,8 @@ typedef enum ComponentType {
     COMPONENT_WEATHER,
     COMPONENT_PLAYER,
     COMPONENT_WAYPOINT,
-    COMPONENT_ENEMY
+    COMPONENT_ENEMY,
+    COMPONENT_SPRITE,
 } ComponentType;
 
 ComponentData* ComponentData_create();

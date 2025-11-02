@@ -371,7 +371,7 @@ void update_physics(float time_step) {
             rigid_body->velocity = zeros3();
             rigid_body->angular_velocity = zeros3();
             rigid_body->asleep = true;
-            LOG_INFO("Rigid body %d is asleep", i);
+            LOG_DEBUG("Rigid body %d is asleep", i);
         }
 
         rigid_body->acceleration = zeros3();

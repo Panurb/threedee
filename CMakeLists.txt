@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W4")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W1")
 
 project(threedee C)
 
@@ -24,6 +24,7 @@ set(SOURCES
     threedee/src/components/player.c
     threedee/src/components/rigidbody.c
     threedee/src/components/sound.c
+    threedee/src/components/sprite.c
     threedee/src/components/transform.c
     threedee/src/components/waypoint.c
     threedee/src/components/weather.c

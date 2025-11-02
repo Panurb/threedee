@@ -110,7 +110,7 @@ typedef union {
 #define COLOR_SKY get_color(0.1f, 0.1f, 0.1f, 1.0f)
 #define COLOR_UV get_color(0.8f, 0.0f, 5.0f, 1.0f)
 
-#define STRING_SIZE 1024
+#define STRING_SIZE 512
 typedef char String[STRING_SIZE];
 
 void fill(int* array, int value, int size);

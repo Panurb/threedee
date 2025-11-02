@@ -18,7 +18,6 @@ struct InstanceData
     float width;
     float height;
     int tex_index;
-    int emissive_index;
     Material material;
     uint visibility;
 };
@@ -55,17 +54,17 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     float width = instance_data[instance_id].width;
     float height = instance_data[instance_id].height;
 
-    float3 camera_right = normalize(float3(view_matrix._11, view_matrix._21, view_matrix._31));
-    float3 camera_up = normalize(float3(view_matrix._12, view_matrix._22, view_matrix._32));
+    float3 camera_right = normalize(float3(view_matrix._11, view_matrix._12, view_matrix._13));
+    float3 camera_up = normalize(float3(view_matrix._21, view_matrix._22, view_matrix._23));
 
     float3 world_position = position
-        + (input.position.x - 0.5f) * width * camera_right
-        + (input.position.y - 0.5f) * height * camera_up;
+        + input.position.x * width * camera_right
+        + input.position.y * height * camera_up;
 
     Output output;
     output.tex_coord = input.tex_coord;
 	output.tex_index = instance_data[instance_id].tex_index;
-    output.emissive_index = instance_data[instance_id].emissive_index;
+    output.emissive_index = -1;
     output.position = mul(projection_view_matrix, float4(world_position, 1.0f));
     output.normal = input.normal;
     output.tangent = input.tangent;

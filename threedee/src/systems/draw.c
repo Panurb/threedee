@@ -83,6 +83,13 @@ void draw_entities() {
         get_color(1.0f, 1.0f, 1.0f, 0.5f)
     );
 
+    draw_sprite(
+        vec3(0.0f, 1.0f, 0.0f),
+        1.0f,
+        1.0f,
+        8
+    );
+
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
         if (light && !light->disabled) {
@@ -107,6 +114,16 @@ void draw_entities() {
                 mesh_component->emissive_index,
                 mesh_component->visibility,
                 mesh_component->texture_scale
+            );
+        }
+
+        SpriteComponent* sprite = get_component(entity, COMPONENT_SPRITE);
+        if (sprite) {
+            draw_sprite(
+                get_position(entity),
+                1.0f,
+                1.0f,
+                sprite->texture_index
             );
         }
 

@@ -9,12 +9,6 @@
 #define DEPTH_FORMAT SDL_GPU_TEXTUREFORMAT_D32_FLOAT
 
 
-typedef struct ShaderData {
-	SDL_GPUShader* shader;
-	SDL_GPUVertexInputState vertex_input_state;
-} ShaderData;
-
-
 typedef struct PositionColorVertex {
     Vector3 position;
     Color color;
@@ -71,6 +65,17 @@ typedef struct {
 	Color color;
 } InstanceColorData;
 static_assert(sizeof(InstanceColorData) % 16 == 0);
+
+
+typedef struct BillboardInstanceData {
+	Vector3 position;
+	float width;
+	float height;
+	int texture_index;
+	Material material;
+	Visibility visiblity;
+} BillboardInstanceData;
+static_assert(sizeof(BillboardInstanceData) % 16 == 0);
 
 
 typedef struct Matrix2x3 {
@@ -138,6 +143,8 @@ void render();
 void add_light(Entity entity);
 
 void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, Material material, int emissive_index, Visibility visibility, Vector2 texture_scale);
+
+void draw_sprite(Vector3 position, float width, float height, int texture_index);
 
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 
