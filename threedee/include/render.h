@@ -32,6 +32,7 @@ typedef struct PositionTextureVertex2D {
 typedef struct CameraData {
 	Matrix4 projection_matrix;
 	Matrix4 view_matrix;
+	Vector3 position;
 } CameraData;
 
 
@@ -67,6 +68,13 @@ typedef struct {
 static_assert(sizeof(InstanceColorData) % 16 == 0);
 
 
+typedef enum BillboardType {
+	BILLBOARD_SPHERICAL,
+	BILLBOARD_CYLINDRICAL,
+	BILLBOARD_SCREEN_ALIGNED
+} BillboardType;
+
+
 typedef struct BillboardInstanceData {
 	Vector3 position;
 	float width;
@@ -74,6 +82,8 @@ typedef struct BillboardInstanceData {
 	int texture_index;
 	Material material;
 	Visibility visiblity;
+	BillboardType type;
+	float _pad[3];
 } BillboardInstanceData;
 static_assert(sizeof(BillboardInstanceData) % 16 == 0);
 

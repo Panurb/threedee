@@ -1367,6 +1367,7 @@ void render() {
 		CameraData camera_data = {
 			.projection_matrix = transpose4(camera->projection_matrix),
 			.view_matrix = transpose4(view_matrix),
+			.position = get_position(scene->camera),
 		};
 
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &camera_data, sizeof(CameraData));
@@ -1677,7 +1678,8 @@ void draw_sprite(Vector3 position, float width, float height, int texture_index)
 		.height = height,
 		.texture_index = texture_index,
 		.material = resources.materials[1],
-		.visiblity = VISIBILITY_ALL
+		.visiblity = VISIBILITY_ALL,
+		.type = BILLBOARD_SPHERICAL
 	};
 	instances[quad_mesh.num_instances] = instance_data;
 	quad_mesh.num_instances++;

@@ -2,6 +2,7 @@ cbuffer TransformBlock : register(b0, space1)
 {
     float4x4 projection_matrix : packoffset(c0);
     float4x4 view_matrix : packoffset(c4);
+    float3 camera_position : packoffset(c8);
 };
 
 struct Material {
