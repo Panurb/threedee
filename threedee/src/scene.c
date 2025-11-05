@@ -384,6 +384,20 @@ void create_tree(Vector3 position) {
 }
 
 
+Entity create_shrub(Vector3 position) {
+    Entity i = create_entity();
+    float scale = randf(0.5f, 1.5f);
+    TransformComponent_add(i, (TransformParameters) {
+        .position = add3(position, vec3(0.0f, 0.5f, 0.0f)),
+        .scale = diag3(scale)
+    });
+    SpriteComponent_add(i, (SpriteParameters) {
+        .texture_filename = "shrub",
+    });
+    return i;
+}
+
+
 void create_forest(Vector3 position, float width, float depth, float density, float min_distance) {
     for (float x = -width / 2.0f; x < width / 2.0f; x += density) {
         for (float z = -depth / 2.0f; z < depth / 2.0f; z += density) {
@@ -393,6 +407,10 @@ void create_forest(Vector3 position, float width, float depth, float density, fl
 
             if (rand() % 100 < 10) {
                 create_tree(vec3(position.x + x, position.y, position.z + z));
+            }
+
+            if (rand() % 100 < 50) {
+                create_shrub(vec3(position.x + x, position.y, position.z + z));
             }
         }
     }
@@ -651,13 +669,15 @@ Level create_level() {
                 }
             }
 
-            create_lamp(vec3(pos.x, 2.5f, pos.z));
             switch (room.type) {
                 case ROOM_BATHROOM:
+                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
                 case ROOM_HALLWAY:
+                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
                 case ROOM_BEDROOM:
+                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
                 case ROOM_LIVINGROOM:
                     for (int w = 0; w < 3; w++) {
@@ -675,8 +695,10 @@ Level create_level() {
                             break;
                         }
                     }
+                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
                 case ROOM_KITCHEN:
+                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
             }
         }

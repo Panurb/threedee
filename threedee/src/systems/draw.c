@@ -83,13 +83,6 @@ void draw_entities() {
         get_color(1.0f, 1.0f, 1.0f, 0.5f)
     );
 
-    draw_sprite(
-        vec3(0.0f, 1.0f, 0.0f),
-        1.0f,
-        1.0f,
-        8
-    );
-
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
         if (light && !light->disabled) {

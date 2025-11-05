@@ -9,12 +9,6 @@
 #define DEPTH_FORMAT SDL_GPU_TEXTUREFORMAT_D32_FLOAT
 
 
-typedef struct PositionColorVertex {
-    Vector3 position;
-    Color color;
-} PositionColorVertex;
-
-
 typedef struct PositionTextureVertex {
 	Vector3 position;
 	Vector2 uv;

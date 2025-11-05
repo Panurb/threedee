@@ -6,7 +6,6 @@ typedef struct SpriteComponent {
     float height;
     Vector2 uv_top_left;
     Vector2 uv_bottom_right;
-    float rotation;
     int texture_index;
 } SpriteComponent;
 
@@ -16,7 +15,6 @@ typedef struct SpriteParameters {
     float height;
     Vector2 uv_top_left;
     Vector2 uv_bottom_right;
-    float rotation;
     String texture_filename;
 } SpriteParameters;
 

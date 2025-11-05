@@ -9,6 +9,10 @@
 
 SpriteComponent* SpriteComponent_add(Entity entity, SpriteParameters params) {
     SpriteComponent* sprite = malloc(sizeof(SpriteComponent));
+    sprite->width = params.width ? params.width : 1.0f;
+    sprite->height = params.height ? params.height : 1.0f;
+    sprite->uv_top_left = params.uv_top_left;
+    sprite->uv_bottom_right = non_zero2(params.uv_bottom_right) ? params.uv_bottom_right : ones2();
     sprite->texture_index = -1;
 
     if (params.texture_filename[0] != '\0') {

@@ -52,7 +52,6 @@ SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
 
 static SDL_GPUShader* shaders[SHADER_COUNT] = { 0 };
 static SDL_GPUGraphicsPipeline* pipelines[PIPELINE_COUNT] = { 0 };
-static SDL_GPUCommandBuffer* command_buffer = NULL;
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
 static SDL_GPUTexture* shadow_maps = NULL;
@@ -510,7 +509,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_billboard() {
 		},
 		.vertex_input_state = VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX,
 		.rasterizer_state = (SDL_GPURasterizerState){
-			.cull_mode = SDL_GPU_CULLMODE_BACK,
+			.cull_mode = SDL_GPU_CULLMODE_NONE,
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
 			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
 		},
@@ -519,7 +518,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_billboard() {
 		},
 		.depth_stencil_state = (SDL_GPUDepthStencilState){
 			.enable_depth_test = true,
-			.enable_depth_write = true,
+			.enable_depth_write = false,
 			.compare_op = SDL_GPU_COMPAREOP_LESS
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
@@ -723,7 +722,7 @@ MeshData create_mesh_quad() {
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = sizeof(BillboardInstanceData) * mesh_data.max_instances * FRAMES_IN_FLIGHT,
+			.size = mesh_data.instance_size * mesh_data.max_instances * FRAMES_IN_FLIGHT,
 		}
 	);
 
@@ -732,7 +731,7 @@ MeshData create_mesh_quad() {
 			app.gpu_device,
 			&(SDL_GPUTransferBufferCreateInfo){
 				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-				.size = sizeof(BillboardInstanceData) * mesh_data.max_instances,
+				.size = mesh_data.instance_size * mesh_data.max_instances,
 			}
 		);
 	}
@@ -748,25 +747,25 @@ MeshData create_mesh_quad() {
 	PositionTextureVertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
 	transfer_data[0] = (PositionTextureVertex) {
 		.position = { -0.5f, -0.5f, 0.0f },
-		.uv = { 0.0f, 0.0f },
+		.uv = { 0.0f, 1.0f },
 		.normal = { 0.0f, 0.0f, 1.0f },
 		.tangent = { 1.0f, 0.0f, 0.0f },
 	};
 	transfer_data[1] = (PositionTextureVertex) {
 		.position = { 0.5f, -0.5f, 0.0f },
-		.uv = { 1.0f, 0.0f },
+		.uv = { 1.0f, 1.0f },
 		.normal = { 0.0f, 0.0f, 1.0f },
 		.tangent = { 1.0f, 0.0f, 0.0f },
 	};
 	transfer_data[2] = (PositionTextureVertex) {
 		.position = { 0.5f, 0.5f, 0.0f },
-		.uv = { 1.0f, 1.0f },
+		.uv = { 1.0f, 0.0f },
 		.normal = { 0.0f, 0.0f, 1.0f },
 		.tangent = { 1.0f, 0.0f, 0.0f },
 	};
 	transfer_data[3] = (PositionTextureVertex) {
 		.position = { -0.5f, 0.5f, 0.0f },
-		.uv = { 0.0f, 1.0f },
+		.uv = { 0.0f, 0.0f },
 		.normal = { 0.0f, 0.0f, 1.0f },
 		.tangent = { 1.0f, 0.0f, 0.0f },
 	};
@@ -793,7 +792,21 @@ MeshData create_mesh_quad() {
 		&(SDL_GPUBufferRegion) {
 			.buffer = mesh_data.vertex_buffer,
 			.offset = 0,
-			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices
+			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices
+		},
+		false
+	);
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = transfer_buffer,
+			.offset = sizeof(PositionTextureVertex) * mesh_data.num_vertices
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = mesh_data.index_buffer,
+			.offset = 0,
+			.size = sizeof(Uint16) * mesh_data.num_indices
 		},
 		false
 	);
@@ -1350,7 +1363,7 @@ void pre_render() {
 void render() {
 	LOG_DEBUG("Rendering frame %d", frame_index);
 
-	command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+	SDL_GPUCommandBuffer* command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
 	if (!command_buffer) {
 		LOG_ERROR("Failed to acquire GPU command buffer: %s", SDL_GetError());
 		return;
@@ -1423,8 +1436,8 @@ void render() {
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_instances(command_buffer, render_pass, &resources.meshes[i], PIPELINE_3D_TEXTURED);
 		}
-		render_instances(command_buffer, render_pass, &quad_mesh, PIPELINE_BILLBOARD);
 		render_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
+		render_instances(command_buffer, render_pass, &quad_mesh, PIPELINE_BILLBOARD);
 
 		SDL_EndGPURenderPass(render_pass);
 
@@ -1505,7 +1518,6 @@ void render() {
 	}
 
 	fences[frame_index] = SDL_SubmitGPUCommandBufferAndAcquireFence(command_buffer);
-	command_buffer = NULL;
 
 	LOG_DEBUG("Submitted frame %d", frame_index);
 
@@ -1537,7 +1549,7 @@ void* get_instance_data(MeshData* mesh_data) {
 }
 
 
-SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size) {
+SDL_GPUBuffer* double_buffer_size(SDL_GPUCommandBuffer* command_buffer, SDL_GPUBuffer* buffer, int size) {
 	SDL_GPUBuffer* new_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
@@ -1569,10 +1581,13 @@ SDL_GPUBuffer* double_buffer_size(SDL_GPUBuffer* buffer, int size) {
 
 
 void double_instance_buffer_sizes(MeshData* mesh_data) {
+	SDL_GPUCommandBuffer* command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+
 	int size = mesh_data->instance_size * mesh_data->max_instances;
 
 	// Instance buffer
 	mesh_data->instance_buffer = double_buffer_size(
+		command_buffer,
 		mesh_data->instance_buffer,
 		size * FRAMES_IN_FLIGHT
 	);
@@ -1679,7 +1694,7 @@ void draw_sprite(Vector3 position, float width, float height, int texture_index)
 		.texture_index = texture_index,
 		.material = resources.materials[1],
 		.visiblity = VISIBILITY_ALL,
-		.type = BILLBOARD_SPHERICAL
+		.type = BILLBOARD_CYLINDRICAL
 	};
 	instances[quad_mesh.num_instances] = instance_data;
 	quad_mesh.num_instances++;
