@@ -23,6 +23,7 @@ typedef enum Shader {
 	SHADER_VERTEX_SHADOW_DEPTH,
 	SHADER_VERTEX_POST_PROCESSING,
 	SHADER_VERTEX_BILLBOARD,
+	SHADER_VERTEX_LINE,
 	SHADER_FRAGMENT_SOLID_COLOR,
 	SHADER_FRAGMENT_SOLID_COLOR_DEPTH,
 	SHADER_FRAGMENT_PHONG,
@@ -43,6 +44,7 @@ typedef enum {
 	PIPELINE_POST_PROCESSING,
 	PIPELINE_DEPTH_OF_FIELD,
 	PIPELINE_BILLBOARD,
+	PIPELINE_LINE,
 	PIPELINE_COUNT
 } Pipeline;
 
@@ -66,6 +68,7 @@ static int num_lights = 0;
 static MeshData triangle_mesh;
 static MeshData triangle_2d_mesh;
 static MeshData quad_mesh;
+static MeshData line_mesh;
 static ArrayList* texts;
 
 
@@ -210,6 +213,7 @@ void load_shaders() {
 	shaders[SHADER_VERTEX_SHADOW_DEPTH] = load_shader(app.gpu_device, "shadow_depth.vert", 0, 1, 1, 0);
 	shaders[SHADER_VERTEX_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
 	shaders[SHADER_VERTEX_BILLBOARD] = load_shader(app.gpu_device, "billboard.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_LINE] = load_shader(app.gpu_device, "line.vert", 0, 1, 1, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 1, 0, 0);
 	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 2, 0, 0);
@@ -509,7 +513,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_billboard() {
 		},
 		.vertex_input_state = VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX,
 		.rasterizer_state = (SDL_GPURasterizerState){
-			.cull_mode = SDL_GPU_CULLMODE_NONE,
+			.cull_mode = SDL_GPU_CULLMODE_BACK,
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
 			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
 		},
@@ -524,6 +528,45 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_billboard() {
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
 		.vertex_shader = shaders[SHADER_VERTEX_BILLBOARD],
 		.fragment_shader = shaders[SHADER_FRAGMENT_PHONG],
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
+SDL_GPUGraphicsPipeline* create_render_pipeline_line() {
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+				.blend_state = BLEND_STATE
+			}},
+			.has_depth_stencil_target = true,
+			.depth_stencil_format = DEPTH_FORMAT
+		},
+		.rasterizer_state = (SDL_GPURasterizerState){
+			.cull_mode = SDL_GPU_CULLMODE_NONE,
+			.fill_mode = SDL_GPU_FILLMODE_FILL,
+			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
+		},
+		.multisample_state = (SDL_GPUMultisampleState) {
+			.sample_count = get_sample_count()
+		},
+		.depth_stencil_state = (SDL_GPUDepthStencilState){
+			.enable_depth_test = true,
+			.enable_depth_write = false,
+			.compare_op = SDL_GPU_COMPAREOP_LESS
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+		.vertex_shader = shaders[SHADER_VERTEX_LINE],
+		.fragment_shader = shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH],
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
@@ -819,6 +862,38 @@ MeshData create_mesh_quad() {
 }
 
 
+MeshData create_mesh_line() {
+	MeshData mesh_data = {
+		.name = "line",
+		.num_vertices = 4,
+		.num_indices = 0,
+		.num_instances = 0,
+		.max_instances = 256,
+		.instance_size = sizeof(LineInstanceData),
+	};
+
+	mesh_data.instance_buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+			.size = mesh_data.instance_size * mesh_data.max_instances * FRAMES_IN_FLIGHT,
+		}
+	);
+
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		mesh_data.instance_transfer_buffer[i] = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = mesh_data.instance_size * mesh_data.max_instances,
+			}
+		);
+	}
+
+	return mesh_data;
+}
+
+
 Vector2 get_text_center(TTF_GPUAtlasDrawSequence data) {
 	float min_x = INFINITY;
 	float min_y = INFINITY;
@@ -1015,10 +1090,12 @@ void init_render() {
 	pipelines[PIPELINE_POST_PROCESSING] = create_render_pipeline_post_processing();
 	pipelines[PIPELINE_DEPTH_OF_FIELD] = create_render_pipeline_depth_of_field();
 	pipelines[PIPELINE_BILLBOARD] = create_render_pipeline_billboard();
+	pipelines[PIPELINE_LINE] = create_render_pipeline_line();
 
 	triangle_mesh = create_mesh_triangle();
 	triangle_2d_mesh = create_mesh_triangle_2d();
 	quad_mesh = create_mesh_quad();
+	line_mesh = create_mesh_line();
 	texts = ArrayList_create(sizeof(MeshData));
 
 	sampler = SDL_CreateGPUSampler(
@@ -1096,7 +1173,17 @@ void apply_render_settings() {
 
 void render_mesh(SDL_GPURenderPass* render_pass, MeshData* mesh_data, Pipeline pipeline) {
 	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[pipeline]);
-	SDL_BindGPUVertexBuffers(render_pass, 0, &(SDL_GPUBufferBinding) { .buffer = mesh_data->vertex_buffer, .offset = 0 }, 1);
+	if (mesh_data->vertex_buffer) {
+		SDL_BindGPUVertexBuffers(
+			render_pass,
+			0,
+			&(SDL_GPUBufferBinding) {
+				.buffer = mesh_data->vertex_buffer,
+				.offset = 0
+			},
+			1
+		);
+	}
 
 	if (mesh_data->texture) {
 		SDL_BindGPUFragmentSamplers(
@@ -1438,6 +1525,7 @@ void render() {
 		}
 		render_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
 		render_instances(command_buffer, render_pass, &quad_mesh, PIPELINE_BILLBOARD);
+		render_instances(command_buffer, render_pass, &line_mesh, PIPELINE_LINE);
 
 		SDL_EndGPURenderPass(render_pass);
 
@@ -1529,6 +1617,7 @@ void render() {
 	triangle_mesh.num_instances = 0;
 	triangle_2d_mesh.num_instances = 0;
 	quad_mesh.num_instances = 0;
+	line_mesh.num_instances = 0;
 	ArrayList_for_each(texts, destroy_mesh);
 	ArrayList_clear(texts);
 
@@ -1732,23 +1821,26 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 
 
 void render_line(Vector3 start, Vector3 end, float thickness, Color color) {
-	Vector3 direction = sub3(end, start);
-	if (norm3(direction) < 1e-6f) return; // Avoid zero-length lines
+	LOG_DEBUG("Drawing line from (%f, %f, %f) to (%f, %f, %f)", start.x, start.y, start.z, end.x, end.y, end.z);
 
-	Vector3 up = {0.0f, 0.0f, 1.0f};
-	if (fabsf(dot3(normalized3(direction), up)) > 0.99f) {
-		up = (Vector3){0.0f, 1.0f, 0.0f}; // Use a different up if parallel
+	if (line_mesh.num_instances >= line_mesh.max_instances) {
+		wait_for_fences();
+
+		LOG_INFO("Buffer %s full, resizing...", line_mesh.name);
+		double_instance_buffer_sizes(&line_mesh);
+		LOG_INFO("New buffer size: %d", line_mesh.max_instances);
 	}
-	Vector3 perpendicular = normalized3(cross(direction, up));
-	Vector3 half_offset = mul3(thickness / 2.0f, perpendicular);
 
-	Vector3 a = add3(start, half_offset);
-	Vector3 b = add3(end, half_offset);
-	Vector3 c = sub3(end, half_offset);
-	Vector3 d = sub3(start, half_offset);
+	LineInstanceData* instances = get_instance_data(&line_mesh);
 
-	render_triangle(a, b, c, color);
-	render_triangle(a, c, d, color);
+	LineInstanceData instance_data = {
+		.start = start,
+		.end = end,
+		.thickness = thickness,
+		.color = color
+	};
+	instances[line_mesh.num_instances] = instance_data;
+	line_mesh.num_instances++;
 }
 
 

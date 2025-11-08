@@ -107,6 +107,16 @@ typedef struct {
 } LightData;
 
 
+typedef struct LineInstanceData {
+	Vector3 start;
+	float _pad1;
+	Vector3 end;
+	float thickness;
+	Color color;
+} LineInstanceData;
+static_assert(sizeof(LineInstanceData) % 16 == 0);
+
+
 typedef struct TextData {
 	MeshData mesh;
 	Color color;
