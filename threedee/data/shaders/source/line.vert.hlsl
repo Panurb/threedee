@@ -34,7 +34,8 @@ Output main(uint vertex_id : SV_VertexID, uint instance_id : SV_InstanceID)
     float2 dir = normalize(clip_end.xy / clip_end.w - clip_start.xy / clip_start.w);
     float2 perp = float2(-dir.y, dir.x);
 
-    float thickness = instance_data[instance_id].thickness;
+    // TODO: thickness in pixels rather than clip space units
+    float thickness = instance_data[instance_id].thickness * 0.1f;
 
     float2 offset = perp * ((vertex_id == 0 || vertex_id == 2) ? -1.0f : 1.0f) * (thickness / 2.0f);
 

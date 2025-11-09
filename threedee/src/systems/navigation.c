@@ -192,7 +192,7 @@ void draw_waypoints() {
             int k = node->value;
             Color color = COLOR_WHITE;
             color.a = 0.25f;
-            render_line(pos, get_position(k), 0.04f, color);
+            draw_line(pos, get_position(k), 0.04f, color);
         }
     }
 }

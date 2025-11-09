@@ -1820,7 +1820,7 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 }
 
 
-void render_line(Vector3 start, Vector3 end, float thickness, Color color) {
+void draw_line(Vector3 start, Vector3 end, float thickness, Color color) {
 	LOG_DEBUG("Drawing line from (%f, %f, %f) to (%f, %f, %f)", start.x, start.y, start.z, end.x, end.y, end.z);
 
 	if (line_mesh.num_instances >= line_mesh.max_instances) {
@@ -1919,7 +1919,7 @@ void render_arrow(Vector3 start, Vector3 end, float thickness, Color color) {
 	if (len < 1e-6f) return;
 	Vector3 dir = normalized3(direction);
 
-	render_line(
+	draw_line(
 		start,
 		add3(start, mul3(fmaxf(len - tip_length, 0.0f), dir)),
 		thickness,

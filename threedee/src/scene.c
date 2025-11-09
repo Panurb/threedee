@@ -54,7 +54,6 @@ Entity create_lamp(Vector3 position) {
         .material_filename = "metal",
         .emissive_filename = "lamp"
     });
-    LightComponent_add(i, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = VISIBILITY_NORMAL });
     RigidBodyComponent_add(i, (RigidBodyParameters) {
         .mass = 1.0f,
         .friction = 0.5f,
@@ -67,13 +66,29 @@ Entity create_lamp(Vector3 position) {
     });
     add_spring(i, (Spring) {
         .entity = NULL_ENTITY,
-        .local_anchor = vec3(0.0f, 0.0f, 0.2f),
+        .local_anchor = vec3(0.0f, 0.2f, 0.0f),
         .other_local_anchor = add3(position, vec3(0.0f, 0.5f, 0.0f)),
         .rest_length = 0.0f,
         .stiffness = 50.0f,
-        .damping = 1.0f,
-        .thickness = 0.025f,
-        .color = COLOR_BLACK
+        .damping = 1.0f
+    });
+
+    Entity light = create_entity();
+    TransformComponent_add(light, (TransformParameters) {
+        .rotation = quaternion_from_forward(vec3_down(), vec3_forward()),
+        .parent = i
+    });
+    LightComponent_add(light, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = VISIBILITY_NORMAL });
+
+    Entity rope = create_entity();
+    TransformComponent_add(rope, (TransformParameters) {
+        .position = vec3(0.0f, 0.5f, 0.0f),
+        .scale = vec3(0.01f, 0.5f, 0.01f),
+        .parent = i
+    });
+    MeshComponent_add(rope, (MeshParameters) {
+        .mesh_filename = "rope",
+        .texture_filename = "black",
     });
 
     return i;

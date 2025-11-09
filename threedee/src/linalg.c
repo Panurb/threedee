@@ -71,6 +71,22 @@ Vector3 vec3_down() {
     return (Vector3) { 0.0f, -1.0f, 0.0f };
 }
 
+Vector3 vec3_right() {
+    return (Vector3) { 1.0f, 0.0f, 0.0f };
+}
+
+Vector3 vec3_left() {
+    return (Vector3) { -1.0f, 0.0f, 0.0f };
+}
+
+Vector3 vec3_forward() {
+    return (Vector3) { 0.0f, 0.0f, -1.0f };
+}
+
+Vector3 vec3_back() {
+    return (Vector3) { 0.0f, 0.0f, 1.0f };
+}
+
 Vector4 vec4(float x, float y, float z, float w) {
     return (Vector4) { x, y, z, w };
 }

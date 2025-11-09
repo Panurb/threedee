@@ -69,8 +69,25 @@ void draw_springs(Entity entity) {
         if (spring.entity != NULL_ENTITY) {
             end = local_to_world(spring.entity, spring.other_local_anchor);
         }
-        render_line(start, end, spring.thickness, spring.color);
+        draw_line(start, end, spring.thickness, spring.color);
     }
+}
+
+
+float get_emissive(Entity entity) {
+    LightComponent* light = get_component(entity, COMPONENT_LIGHT);
+    if (light && !light->disabled) {
+        return light->intensity;
+    }
+
+    float emissive = 0.0f;
+    TransformComponent* transform = get_component(entity, COMPONENT_TRANSFORM);
+    ListNode* node;
+    FOREACH(node, transform->children) {
+        Entity child = node->value;
+        emissive = fmax(emissive, get_emissive(child));
+    }
+    return emissive;
 }
 
 
@@ -96,9 +113,7 @@ void draw_entities() {
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
         if (mesh_component && mesh_component->visible) {
             Material material = resources.materials[mesh_component->material_index];
-            if (light) {
-                material.emissive = light->intensity;
-            }
+            material.emissive = get_emissive(entity);
             draw_mesh(
                 get_transform(entity),
                 mesh_component->mesh_index,
@@ -156,7 +171,7 @@ void draw_entities() {
                 if (spring.entity != NULL_ENTITY) {
                     end = local_to_world(spring.entity, spring.other_local_anchor);
                 }
-                render_line(start, end, 0.02f, COLOR_ORANGE);
+                draw_line(start, end, 0.02f, COLOR_ORANGE);
             }
         }
 

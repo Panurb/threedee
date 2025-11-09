@@ -150,8 +150,8 @@ void debug_draw_enemies() {
         RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
 
         Vector3 pos = get_position(i);
-        render_line(pos, add3(pos, enemy->desired_direction), 0.1f, COLOR_GREEN);
+        draw_line(pos, add3(pos, enemy->desired_direction), 0.1f, COLOR_GREEN);
 
-        render_line(pos, add3(pos, rb->angular_velocity), 0.1f, COLOR_RED);
+        draw_line(pos, add3(pos, rb->angular_velocity), 0.1f, COLOR_RED);
     }
 }

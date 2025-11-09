@@ -149,6 +149,10 @@ void update_springs(Entity entity) {
         float critical_damping = 2.0f * sqrtf(spring.stiffness * m_eff);
         spring_force -= spring.damping * critical_damping * dot3(v_rel, dir);
 
+        if (rb_other) {
+            spring_force *= 0.5f;
+            apply_force(spring.entity, world_anchor_other, mul3(-spring_force, dir));
+        }
         apply_force(entity, world_anchor, mul3(spring_force, dir));
     }
 }

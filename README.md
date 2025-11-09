@@ -28,8 +28,11 @@
 * 2D and text rendering
 * Sound effects
 * Triple buffering
+* Billboarding
+* Spring constraints
 
 ### TODO ###
+* Frustrum culling
 * Data serialization for saving/loading game state
 * Particles
 * PCSS for soft shadows?
@@ -38,6 +41,9 @@
 * Broad-phase collision detection for optimization
 * Ambient occlusion
 * Bloom
+* Oren-Nayar diffuse shading
+* Screen-space ambient occlusion (SSAO)
+* Soft body physics
 
 ### How do I get set up? ###
 
@@ -53,4 +59,4 @@ MSVC:
 
     cmake . -B build -G "Visual Studio 17 2022" -A x64
     cd build
-    cmake --build . --target install --config Release
+    cmake --build . --target install --config Release --parallel 8

@@ -77,6 +77,14 @@ Vector3 vec3_up();
 
 Vector3 vec3_down();
 
+Vector3 vec3_right();
+
+Vector3 vec3_left();
+
+Vector3 vec3_forward();
+
+Vector3 vec3_back();
+
 Vector4 vec4(float x, float y, float z, float w);
 
 float norm2(Vector2 v);

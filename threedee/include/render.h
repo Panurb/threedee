@@ -162,7 +162,7 @@ void draw_sprite(Vector3 position, float width, float height, int texture_index)
 
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 
-void render_line(Vector3 start, Vector3 end, float thickness, Color color);
+void draw_line(Vector3 start, Vector3 end, float thickness, Color color);
 
 void render_circle(Vector3 center, float radius, int segments, Color color);
 
