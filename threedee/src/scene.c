@@ -44,6 +44,14 @@ float wall_angle(Direction direction) {
 }
 
 
+Entity create_rope(Vector3 position, float length, int segments) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) { .position = position });
+    float segment_length = length / (float) segments;
+
+}
+
+
 Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position, .scale = vec3(1.0f, 1.0f, 1.0f) });
@@ -70,7 +78,8 @@ Entity create_lamp(Vector3 position) {
         .other_local_anchor = add3(position, vec3(0.0f, 0.5f, 0.0f)),
         .rest_length = 0.0f,
         .stiffness = 50.0f,
-        .damping = 1.0f
+        .damping = 1.0f,
+        .thickness = 0.015f
     });
 
     Entity light = create_entity();
@@ -80,16 +89,16 @@ Entity create_lamp(Vector3 position) {
     });
     LightComponent_add(light, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = VISIBILITY_NORMAL });
 
-    Entity rope = create_entity();
-    TransformComponent_add(rope, (TransformParameters) {
-        .position = vec3(0.0f, 0.5f, 0.0f),
-        .scale = vec3(0.01f, 0.5f, 0.01f),
-        .parent = i
-    });
-    MeshComponent_add(rope, (MeshParameters) {
-        .mesh_filename = "rope",
-        .texture_filename = "black",
-    });
+    // Entity rope = create_entity();
+    // TransformComponent_add(rope, (TransformParameters) {
+    //     .position = vec3(0.0f, 0.5f, 0.0f),
+    //     .scale = vec3(0.01f, 0.5f, 0.01f),
+    //     .parent = i
+    // });
+    // MeshComponent_add(rope, (MeshParameters) {
+    //     .mesh_filename = "rope",
+    //     .texture_filename = "black",
+    // });
 
     return i;
 }
@@ -147,7 +156,7 @@ Entity create_ceiling(Vector3 position, float width, float depth) {
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "cube",
         .material_filename = "glass",
-        .texture_filename = "white"
+        .texture_filename = "plaster"
     });
     ColliderComponent_add(i, (ColliderParameters) {
         .type = COLLIDER_AABB,

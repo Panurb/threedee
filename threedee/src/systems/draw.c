@@ -60,6 +60,11 @@ void draw_springs(Entity entity) {
     RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
     if (!rb) return;
 
+    // TODO: optimize
+    int mesh_index = binary_search_filename("rope", resources.mesh_names, resources.meshes_size);
+    int texture_index = binary_search_filename("black", resources.texture_names, resources.textures_size);
+    int material_index = binary_search_filename("metal", resources.material_names, resources.materials_size);
+
     for (int i = 0; i < rb->springs->size; i++) {
         Spring spring = *(Spring*)ArrayList_get(rb->springs, i);
         if (spring.thickness == 0.0f) continue;
@@ -69,7 +74,23 @@ void draw_springs(Entity entity) {
         if (spring.entity != NULL_ENTITY) {
             end = local_to_world(spring.entity, spring.other_local_anchor);
         }
-        draw_line(start, end, spring.thickness, spring.color);
+
+        Vector3 dir = sub3(end, start);
+        float length = norm3(dir);
+        Vector3 pos = mul3(0.5f, add3(start, end));
+        Quaternion rotation = quaternion_from_forward(div3(length, dir), vec3_up());
+        Vector3 scale = vec3(spring.thickness, spring.thickness, 0.5f * length);
+        Matrix4 transform = transform_matrix(pos, rotation, scale);
+
+        draw_mesh(
+            transform,
+            mesh_index,
+            texture_index,
+            resources.materials[material_index],
+            -1,
+            VISIBILITY_ALL,
+            ones2()
+        );
     }
 }
 
