@@ -156,7 +156,7 @@ Entity create_ceiling(Vector3 position, float width, float depth) {
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "cube",
         .material_filename = "glass",
-        .texture_filename = "white"
+        .texture_filename = "plaster"
     });
     ColliderComponent_add(i, (ColliderParameters) {
         .type = COLLIDER_AABB,

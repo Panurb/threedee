@@ -86,7 +86,7 @@ void draw_springs(Entity entity) {
             transform,
             mesh_index,
             texture_index,
-            resources.materials[material_index],
+            material_index,
             -1,
             VISIBILITY_ALL,
             ones2()
@@ -139,7 +139,7 @@ void draw_entities() {
                 get_transform(entity),
                 mesh_component->mesh_index,
                 mesh_component->texture_index,
-                material,
+                mesh_component->material_index,
                 mesh_component->emissive_index,
                 mesh_component->visibility,
                 mesh_component->texture_scale

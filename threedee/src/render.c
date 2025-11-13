@@ -216,7 +216,7 @@ void load_shaders() {
 	shaders[SHADER_VERTEX_LINE] = load_shader(app.gpu_device, "line.vert", 0, 1, 1, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 1, 0, 0);
-	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 2, 0, 0);
+	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 2, 1, 0);
 	shaders[SHADER_FRAGMENT_SHADOW_DEPTH] = load_shader(app.gpu_device, "shadow_depth.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_TEXT] = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.frag", 2, 1, 0, 0);
@@ -1520,6 +1520,13 @@ void render() {
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
 		SDL_PushGPUFragmentUniformData(command_buffer, 1, &lights, sizeof(LightData) * num_lights);
 
+		SDL_BindGPUFragmentStorageBuffers(
+			render_pass,
+			0,
+			&resources.materials_buffer,
+			1
+		);
+
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_instances(command_buffer, render_pass, &resources.meshes[i], PIPELINE_3D_TEXTURED);
 		}
@@ -1731,7 +1738,7 @@ void draw_mesh(
 	Matrix4 transform,
 	int mesh_index,
 	int texture_index,
-	Material material,
+	int material_index,
 	int emissive_index,
 	Visibility visibility,
 	Vector2 texture_scale
@@ -1752,7 +1759,7 @@ void draw_mesh(
 
 	InstanceData instance_data = {
 		.transform = transpose4(transform),
-		.material = material,
+		.material_index = material_index,
 		.texture_index = texture_index,
 		.emissive_index = emissive_index,
 		.texture_scale = texture_scale,

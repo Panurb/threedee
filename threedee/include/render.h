@@ -48,11 +48,20 @@ typedef struct {
 	int texture_index;
 	int emissive_index;
 	Vector2 texture_scale;
-	Material material;
+	int material_index;
 	Visibility visiblity;
 	float _pad[2];
 } InstanceData;
 static_assert(sizeof(InstanceData) % 16 == 0);
+
+
+typedef struct CubeInstanceData {
+	Matrix4 transform;
+	int texture_index[6];
+	Material material;
+	Visibility visiblity;
+} CubeInstanceData;
+static_assert(sizeof(CubeInstanceData) % 16 == 0);
 
 
 typedef struct {
@@ -156,7 +165,7 @@ void render();
 
 void add_light(Entity entity);
 
-void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, Material material, int emissive_index, Visibility visibility, Vector2 texture_scale);
+void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int emissive_index, Visibility visibility, Vector2 texture_scale);
 
 void draw_sprite(Vector3 position, float width, float height, int texture_index);
 

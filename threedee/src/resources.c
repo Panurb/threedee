@@ -156,6 +156,50 @@ SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
 }
 
 
+SDL_GPUBuffer* create_materials_buffer(Material* materials, int size) {
+	SDL_GPUBuffer* buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+			.size = sizeof(Material) * size,
+		}
+	);
+
+	SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
+		app.gpu_device,
+		&(SDL_GPUTransferBufferCreateInfo){
+			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+			.size = sizeof(Material) * size,
+		}
+	);
+
+	Material* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+	memcpy(transfer_data, materials, sizeof(Material) * size);
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+	SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = transfer_buffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = buffer,
+			.offset = 0,
+			.size = sizeof(Material) * size,
+		},
+		false
+	);
+	SDL_EndGPUCopyPass(copy_pass);
+	SDL_SubmitGPUCommandBuffer(upload_command_buffer);
+	SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+	return buffer;
+}
+
+
 Vector3 calculate_tangent(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 uv0, Vector2 uv1, Vector2 uv2) {
 	Vector3 edge1 = sub3(v1, v0);
 	Vector3 edge2 = sub3(v2, v0);
@@ -550,6 +594,8 @@ void load_materials() {
 		};
 		resources.materials[i] = material;
 	}
+
+	resources.materials_buffer = create_materials_buffer(resources.materials, resources.materials_size);
 }
 
 

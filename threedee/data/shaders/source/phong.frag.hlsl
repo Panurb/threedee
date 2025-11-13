@@ -37,6 +37,16 @@ cbuffer LightBuffer : register(b1, space3)
     LightData light_data[32];  // Should match MAX_LIGHTS
 };
 
+struct Material {
+    float specular;
+    float diffuse;
+    float ambient;
+    float shininess;
+    float emissive;
+};
+
+StructuredBuffer<Material> materials : register(t4, space2);
+
 struct Input
 {
     float2 tex_coord : TEXCOORD0;
@@ -46,11 +56,7 @@ struct Input
     int tex_index : TEXCOORD1;
     int emissive_index : TEXCOORD2;
     float3 world_position : POSITION0;
-    float specular;
-    float diffuse;
-    float ambient;
-    float shininess;
-    float emissive;
+    int material_index : TEXCOORD3;
     uint visibility;
 };
 
@@ -82,6 +88,7 @@ float shadow_pcf(float2 uv, int light_index, float shadow_depth, float2 texel_si
 
 Output main(Input input)
 {
+    Material material = materials[0];
     float2 tex_coord = input.tex_coord;
     float4 position = input.position;
     float3 normal = input.normal;
@@ -115,7 +122,7 @@ Output main(Input input)
     float distance = length(view_direction);
     float3 v = view_direction / distance;
 
-    float3 ambient = input.ambient * ambient_light * base_color;
+    float3 ambient = material.ambient * ambient_light * base_color;
     float3 diffuse = float3(0.0, 0.0, 0.0);
     float3 specular = float3(0.0, 0.0, 0.0);
     float combined_spot_intensity = 0.0;
@@ -144,7 +151,7 @@ Output main(Input input)
             continue;
         }
 
-        float spec = pow(max(dot(r, v), 0.0), input.shininess);
+        float spec = pow(max(dot(r, v), 0.0), material.shininess);
 
         float4 shadow_coord = mul(light_data[i].projection_view_matrix, float4(world_position, 1.0));
         shadow_coord.xyz /= shadow_coord.w;
@@ -170,26 +177,26 @@ Output main(Input input)
 
         // Hidden entities light up in different color
         // TODO: parametrize the color
-        if (input.ambient == 0.0) {
+        if (material.ambient == 0.0) {
             diffuse_color = float3(0.2, 5.0, 2.0);
             specular_color = float3(0.2, 5.0, 2.0);
             base_color = float3(1.0, 1.0, 1.0);
         }
 
         diffuse += base_color * diff * diffuse_color * light_shadow_factor;
-        specular += input.specular * spec * specular_color * light_shadow_factor;
+        specular += material.specular * spec * specular_color * light_shadow_factor;
     }
 
     float base_emissive = 1.0;
     if (input.emissive_index != -1) {
         base_emissive = emissive_maps.Sample(sampler_emissive_maps, float3(tex_coord, input.emissive_index)).r;
     }
-    float3 emissive = input.emissive * base_emissive * base_color;
+    float3 emissive = material.emissive * base_emissive * base_color;
 
     float3 lit_color = ambient + diffuse + specular + emissive;
 
     // Only hidden entities (ambient = 0) should be faded out
-    if (input.ambient == 0.0) {
+    if (material.ambient == 0.0) {
         alpha *= saturate(combined_spot_intensity);
     }
 
