@@ -397,11 +397,16 @@ void load_textures() {
 		String path;
 		snprintf(path, STRING_SIZE, "%s%s%s", "data/textures/", resources.texture_names[i], ".png");
 		SDL_Surface* surface = IMG_Load(path);
-		LOG_DEBUG("Format: %s, Size: %dx%d", SDL_GetPixelFormatName(surface->format), surface->w, surface->h);
+		LOG_INFO("Format: %s, Size: %dx%d", SDL_GetPixelFormatName(surface->format), surface->w, surface->h);
 		if (!surface) {
 			LOG_ERROR("Failed to load image: %s", path);
 			continue;
 		}
+		// Fill alpha channel with 255
+		SDL_Surface* alpha_surface = SDL_CreateSurface(surface->w, surface->h, SDL_PIXELFORMAT_ABGR8888);
+		SDL_BlitSurface(surface, NULL, alpha_surface, NULL);
+		SDL_DestroySurface(surface);
+		surface = alpha_surface;
 		ArrayList_add(surfaces, &surface);
 	}
 

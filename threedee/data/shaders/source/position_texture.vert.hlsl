@@ -77,14 +77,21 @@ Output main(Input input, uint instance_id : SV_InstanceID)
 
     float4x4 projection_view_matrix = mul(projection_matrix, view_matrix);
 
+	float4 world_position = mul(transform, float4(input.position, 1.0f));
+	// Snap to grid to avoid floating point precision issues
+	// world_position.xyz = round(world_position.xyz * 100.0f) / 100.0f;
+
+	// Add slight overlap
+	// world_position.xyz += normalize(input.normal) * 0.0001f;
+
     Output output;
     output.tex_coord = input.tex_coord * tiling;
 	output.tex_index = instance_data[instance_id].tex_index;
     output.emissive_index = instance_data[instance_id].emissive_index;
-    output.position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
+    output.position = mul(projection_view_matrix, world_position);
     output.normal = normalize(mul((float3x3)transform, input.normal));
     output.tangent = normalize(mul((float3x3)transform, input.tangent));
-    output.world_position = mul(transform, float4(input.position, 1.0f)).xyz;
+    output.world_position = world_position.xyz;
 
     output.material = instance_data[instance_id].material;
     output.visiblity = instance_data[instance_id].visibility;

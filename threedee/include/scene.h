@@ -36,6 +36,7 @@ typedef enum Direction {
 
 
 typedef enum RoomType {
+    ROOM_EMPTY,
     ROOM_BATHROOM,
     ROOM_HALLWAY,
     ROOM_BEDROOM,

@@ -156,7 +156,7 @@ Entity create_ceiling(Vector3 position, float width, float depth) {
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "cube",
         .material_filename = "glass",
-        .texture_filename = "plaster"
+        .texture_filename = "white"
     });
     ColliderComponent_add(i, (ColliderParameters) {
         .type = COLLIDER_AABB,
@@ -192,7 +192,7 @@ Entity create_wall_empty(Vector3 position, float width, float depth) {
         .position = vec3(position.x, position.y + wall_height * 0.5f, position.z),
         .scale = vec3(width, wall_height, depth)
     });
-    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     return i;
@@ -252,7 +252,7 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
     TransformComponent* trans = TransformComponent_add(i, (TransformParameters) { .position = position });
     trans->position.y = position.y + wall_height * 0.5f;
     trans->scale = vec3(width, wall_height, depth);
-    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     float window_width = 1.0f;
@@ -276,7 +276,7 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
                 .scale = vec3(width, window_height, segment_depth)
             });
         }
-        MeshComponent_add(window, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
+        MeshComponent_add(window, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
         ColliderComponent_add(window, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
     }
 
@@ -310,7 +310,7 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
     trans = TransformComponent_add(i, (TransformParameters) { .position = position });
     trans->position.y = position.y + wall_height * 1.5f + window_height;
     trans->scale = vec3(width, 1.0f, depth);
-    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "tiles", .material_filename = "glass" });
+    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
     ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
 
     return i;
@@ -337,7 +337,7 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
     });
     MeshComponent_add(left_wall, (MeshParameters) {
         .mesh_filename = "cube",
-        .texture_filename = "tiles",
+        .texture_filename = "plaster",
         .material_filename = "glass"
     });
     ColliderComponent_add(left_wall, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
@@ -349,7 +349,7 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
     });
     MeshComponent_add(right_wall, (MeshParameters) {
         .mesh_filename = "cube",
-        .texture_filename = "tiles",
+        .texture_filename = "plaster",
         .material_filename = "glass"
     });
     ColliderComponent_add(right_wall, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
@@ -361,7 +361,7 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
     });
     MeshComponent_add(door_top, (MeshParameters) {
         .mesh_filename = "cube",
-        .texture_filename = "tiles",
+        .texture_filename = "plaster",
         .material_filename = "glass"
     });
     ColliderComponent_add(door_top, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
@@ -695,10 +695,8 @@ Level create_level() {
 
             switch (room.type) {
                 case ROOM_BATHROOM:
-                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
                 case ROOM_HALLWAY:
-                    create_lamp(vec3(pos.x, 2.5f, pos.z));
                     break;
                 case ROOM_BEDROOM:
                     create_lamp(vec3(pos.x, 2.5f, pos.z));
@@ -723,6 +721,8 @@ Level create_level() {
                     break;
                 case ROOM_KITCHEN:
                     create_lamp(vec3(pos.x, 2.5f, pos.z));
+                    break;
+                default:
                     break;
             }
         }
