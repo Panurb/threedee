@@ -24,6 +24,7 @@ typedef enum Shader {
 	SHADER_VERTEX_POST_PROCESSING,
 	SHADER_VERTEX_BILLBOARD,
 	SHADER_VERTEX_LINE,
+	SHADER_VERTEX_CUBE,
 	SHADER_FRAGMENT_SOLID_COLOR,
 	SHADER_FRAGMENT_SOLID_COLOR_DEPTH,
 	SHADER_FRAGMENT_PHONG,
@@ -45,6 +46,7 @@ typedef enum {
 	PIPELINE_DEPTH_OF_FIELD,
 	PIPELINE_BILLBOARD,
 	PIPELINE_LINE,
+	PIPELINE_CUBE,
 	PIPELINE_COUNT
 } Pipeline;
 
@@ -214,6 +216,7 @@ void load_shaders() {
 	shaders[SHADER_VERTEX_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
 	shaders[SHADER_VERTEX_BILLBOARD] = load_shader(app.gpu_device, "billboard.vert", 0, 1, 1, 0);
 	shaders[SHADER_VERTEX_LINE] = load_shader(app.gpu_device, "line.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_CUBE] = load_shader(app.gpu_device, "cube.vert", 0, 1, 1, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 1, 0, 0);
 	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 2, 1, 0);
@@ -567,6 +570,46 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_line() {
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
 		.vertex_shader = shaders[SHADER_VERTEX_LINE],
 		.fragment_shader = shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH],
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
+SDL_GPUGraphicsPipeline* create_render_pipeline_cube() {
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
+				.blend_state = BLEND_STATE
+			}},
+			.has_depth_stencil_target = true,
+			.depth_stencil_format = DEPTH_FORMAT
+		},
+		.vertex_input_state = VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX,
+		.rasterizer_state = (SDL_GPURasterizerState){
+			.cull_mode = SDL_GPU_CULLMODE_BACK,
+			.fill_mode = SDL_GPU_FILLMODE_FILL,
+			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
+		},
+		.multisample_state = (SDL_GPUMultisampleState) {
+			.sample_count = get_sample_count()
+		},
+		.depth_stencil_state = (SDL_GPUDepthStencilState){
+			.enable_depth_test = true,
+			.enable_depth_write = true,
+			.compare_op = SDL_GPU_COMPAREOP_LESS
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+		.vertex_shader = shaders[SHADER_VERTEX_CUBE],
+		.fragment_shader = shaders[SHADER_FRAGMENT_PHONG],
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
@@ -1171,8 +1214,38 @@ void apply_render_settings() {
 }
 
 
-void render_mesh(SDL_GPURenderPass* render_pass, MeshData* mesh_data, Pipeline pipeline) {
+void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[pipeline]);
+
+	if (pipeline == PIPELINE_3D_TEXTURED) {
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			0,
+			(SDL_GPUTextureSamplerBinding[]) {
+				{
+					.texture = resources.texture_array,
+					.sampler = sampler,
+				},
+				{
+					.texture = resources.normal_map_array,
+					.sampler = sampler,
+				},
+				{
+					.texture = shadow_maps,
+					.sampler = sampler,
+				},
+				{
+					.texture = resources.emissive_map_array,
+					.sampler = sampler,
+				}
+			},
+			4
+		);
+	}
+}
+
+
+void render_mesh(SDL_GPURenderPass* render_pass, MeshData* mesh_data) {
 	if (mesh_data->vertex_buffer) {
 		SDL_BindGPUVertexBuffers(
 			render_pass,
@@ -1191,45 +1264,6 @@ void render_mesh(SDL_GPURenderPass* render_pass, MeshData* mesh_data, Pipeline p
 			0,
 			&(SDL_GPUTextureSamplerBinding){
 				.texture = mesh_data->texture,
-				.sampler = sampler,
-			},
-			1
-		);
-	}
-
-	if (pipeline == PIPELINE_3D_TEXTURED) {
-		SDL_BindGPUFragmentSamplers(
-			render_pass,
-			0,
-			&(SDL_GPUTextureSamplerBinding){
-				.texture = resources.texture_array,
-				.sampler = sampler,
-			},
-			1
-		);
-		SDL_BindGPUFragmentSamplers(
-			render_pass,
-			1,
-			&(SDL_GPUTextureSamplerBinding){
-				.texture = resources.normal_map_array,
-				.sampler = sampler,
-			},
-			1
-		);
-		SDL_BindGPUFragmentSamplers(
-			render_pass,
-			2,
-			&(SDL_GPUTextureSamplerBinding){
-				.texture = shadow_maps,
-				.sampler = sampler,
-			},
-			1
-		);
-		SDL_BindGPUFragmentSamplers(
-			render_pass,
-			3,
-			&(SDL_GPUTextureSamplerBinding){
-				.texture = resources.emissive_map_array,
 				.sampler = sampler,
 			},
 			1
@@ -1277,6 +1311,8 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 		mesh_data->instance_data[frame_index] = NULL;
 	}
 
+	bind_pipeline(render_pass, pipeline);
+
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 
 	SDL_UploadToGPUBuffer(
@@ -1297,7 +1333,7 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 
 	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh_data->instance_buffer, 1);
 
-	render_mesh(render_pass, mesh_data, pipeline);
+	render_mesh(render_pass, mesh_data);
 }
 
 
@@ -1403,20 +1439,17 @@ void render_depth_of_field(SDL_GPUCommandBuffer* command_buffer, SDL_GPUTexture*
 	SDL_BindGPUFragmentSamplers(
 		render_pass,
 		0,
-		&(SDL_GPUTextureSamplerBinding){
-			.texture = source,
-			.sampler = screen_sampler,
+		(SDL_GPUTextureSamplerBinding[]){
+			{
+				.texture = source,
+				.sampler = screen_sampler,
+			},
+			{
+				.texture = depth_stencil_texture,
+				.sampler = screen_sampler,
+			}
 		},
-		1
-	);
-	SDL_BindGPUFragmentSamplers(
-		render_pass,
-		1,
-		&(SDL_GPUTextureSamplerBinding){
-			.texture = depth_stencil_texture,
-			.sampler = screen_sampler,
-		},
-		1
+		2
 	);
 
 	CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
@@ -1559,20 +1592,17 @@ void render() {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			0,
-			&(SDL_GPUTextureSamplerBinding){
-				.texture = source_texture,
-				.sampler = screen_sampler,
+			(SDL_GPUTextureSamplerBinding[]) {
+				{
+					.texture = source_texture,
+					.sampler = screen_sampler,
+				},
+				{
+					.texture = depth_stencil_texture,
+					.sampler = screen_sampler,
+				}
 			},
-			1
-		);
-		SDL_BindGPUFragmentSamplers(
-			render_pass,
-			1,
-			&(SDL_GPUTextureSamplerBinding){
-				.texture = depth_stencil_texture,
-				.sampler = screen_sampler,
-			},
-			1
+			2
 		);
 		SDL_PushGPUFragmentUniformData(
 			command_buffer,

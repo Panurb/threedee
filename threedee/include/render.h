@@ -58,8 +58,9 @@ static_assert(sizeof(InstanceData) % 16 == 0);
 typedef struct CubeInstanceData {
 	Matrix4 transform;
 	int texture_index[6];
-	Material material;
+	int material_index[6];
 	Visibility visiblity;
+	float _pad[3];
 } CubeInstanceData;
 static_assert(sizeof(CubeInstanceData) % 16 == 0);
 

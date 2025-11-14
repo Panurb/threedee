@@ -5,19 +5,11 @@ cbuffer TransformBlock : register(b0, space1)
     float3 camera_position : packoffset(c8);
 };
 
-struct Material {
-    float specular;
-    float diffuse;
-    float ambient;
-    float shininess;
-    float emissive;
-};
-
 struct InstanceData
 {
     float4x4 transform_matrix;
     int tex_index[6];
-    Material material;
+    int material_index[6];
     uint visibility;
 };
 
@@ -40,7 +32,7 @@ struct Output
 	int tex_index : TEXCOORD1;
     int emissive_index : TEXCOORD2;
     float3 world_position : POSITION0;
-    Material material;
+    int material_index : TEXCOORD3;
     uint visiblity;
 };
 
