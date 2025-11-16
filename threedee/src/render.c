@@ -36,21 +36,6 @@ typedef enum Shader {
 } Shader;
 
 
-typedef enum {
-	PIPELINE_2D,
-	PIPELINE_TEXT,
-	PIPELINE_3D,
-	PIPELINE_3D_TEXTURED,
-	PIPELINE_SHADOW_DEPTH,
-	PIPELINE_POST_PROCESSING,
-	PIPELINE_DEPTH_OF_FIELD,
-	PIPELINE_BILLBOARD,
-	PIPELINE_LINE,
-	PIPELINE_CUBE,
-	PIPELINE_COUNT
-} Pipeline;
-
-
 static int frame_index = 0;
 SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
 
@@ -73,6 +58,7 @@ static MeshData quad_mesh;
 static MeshData line_mesh;
 static ArrayList* texts;
 
+static Batch batches[MAX_MESHES] = { 0 };
 
 static const SDL_GPUVertexInputState VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX = {
 	.num_vertex_buffers = 1,
@@ -1112,8 +1098,37 @@ void create_screen_textures() {
 }
 
 
+Batch create_batch(int mesh_index, int instance_size) {
+	Batch batch = {
+		.mesh_index = mesh_index,
+		.instance_size = instance_size,
+		.num_instances = 0,
+		.max_instances = 256,
+	};
+
+	batch.instance_buffer = SDL_CreateGPUBuffer(
+		app.gpu_device,
+		&(SDL_GPUBufferCreateInfo){
+			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+			.size = batch.instance_size * batch.max_instances * FRAMES_IN_FLIGHT,
+		}
+	);
+
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		batch.instance_transfer_buffer[i] = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = batch.instance_size * batch.max_instances,
+			}
+		);
+	}
+
+	return batch;
+}
+
+
 void init_render() {
-	app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
 	SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
 
 	SDL_SetGPUSwapchainParameters(
@@ -1140,6 +1155,10 @@ void init_render() {
 	quad_mesh = create_mesh_quad();
 	line_mesh = create_mesh_line();
 	texts = ArrayList_create(sizeof(MeshData));
+
+	for (int i = 0; i < resources.meshes_size; i++) {
+		batches[i] = create_batch(i, sizeof(InstanceData));
+	}
 
 	sampler = SDL_CreateGPUSampler(
 		app.gpu_device,
@@ -1337,6 +1356,99 @@ void render_instances(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPas
 }
 
 
+void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, Batch* batch, Pipeline pipeline) {
+	if (batch->num_instances == 0) {
+		return;
+	}
+
+	if (batch->instance_size == 0) {
+		LOG_ERROR("Instance size is zero");
+	}
+
+	MeshData mesh_data = resources.meshes[batch->mesh_index];
+
+	if (batch->instance_data[frame_index]) {
+		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", mesh_data.name);
+		SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[frame_index]);
+		batch->instance_data[frame_index] = NULL;
+	}
+
+	bind_pipeline(render_pass, pipeline);
+
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = batch->instance_transfer_buffer[frame_index],
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = batch->instance_buffer,
+			.offset = frame_index * batch->max_instances * batch->instance_size,
+			.size = batch->instance_size * batch->num_instances
+		},
+		true
+	);
+
+	SDL_EndGPUCopyPass(copy_pass);
+
+	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &batch->instance_buffer, 1);
+
+	if (mesh_data.vertex_buffer) {
+		SDL_BindGPUVertexBuffers(
+			render_pass,
+			0,
+			&(SDL_GPUBufferBinding) {
+				.buffer = mesh_data.vertex_buffer,
+				.offset = 0
+			},
+			1
+		);
+	}
+
+	if (mesh_data.texture) {
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			0,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = mesh_data.texture,
+				.sampler = sampler,
+			},
+			1
+		);
+	}
+
+	if (mesh_data.index_buffer) {
+		SDL_BindGPUIndexBuffer(
+			render_pass,
+			&(SDL_GPUBufferBinding) {
+				.buffer = mesh_data.index_buffer,
+				.offset = 0
+			},
+			SDL_GPU_INDEXELEMENTSIZE_16BIT
+		);
+
+		SDL_DrawGPUIndexedPrimitives(
+			render_pass,
+			mesh_data.num_indices,
+			batch->num_instances,
+			0,
+			0,
+			frame_index * batch->max_instances
+		);
+	} else {
+		SDL_DrawGPUPrimitives(
+			render_pass,
+			mesh_data.num_vertices,
+			batch->num_instances,
+			0,
+			frame_index * batch->max_instances
+		);
+	}
+}
+
+
 void add_light(Entity entity) {
 	LightComponent* light = get_component(entity, COMPONENT_LIGHT);
 	Color diffuse_color = light->diffuse_color;
@@ -1390,7 +1502,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		);
 
 		for (int j = 0; j < resources.meshes_size; j++) {
-			render_instances(command_buffer, render_pass, &resources.meshes[j], PIPELINE_SHADOW_DEPTH);
+			render_batch(command_buffer, render_pass, &batches[j], PIPELINE_SHADOW_DEPTH);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
@@ -1560,8 +1672,11 @@ void render() {
 			1
 		);
 
+		// for (int i = 0; i < resources.meshes_size; i++) {
+		// 	render_instances(command_buffer, render_pass, &resources.meshes[i], PIPELINE_3D_TEXTURED);
+		// }
 		for (int i = 0; i < resources.meshes_size; i++) {
-			render_instances(command_buffer, render_pass, &resources.meshes[i], PIPELINE_3D_TEXTURED);
+			render_batch(command_buffer, render_pass, &batches[i], PIPELINE_3D_TEXTURED);
 		}
 		render_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
 		render_instances(command_buffer, render_pass, &quad_mesh, PIPELINE_BILLBOARD);
@@ -1651,6 +1766,9 @@ void render() {
 	for (int i = 0; i < resources.meshes_size; i++) {
 		resources.meshes[i].num_instances = 0;
 	}
+	for (int i = 0; i < resources.meshes_size; i++) {
+		batches[i].num_instances = 0;
+	}
 	triangle_mesh.num_instances = 0;
 	triangle_2d_mesh.num_instances = 0;
 	quad_mesh.num_instances = 0;
@@ -1675,7 +1793,20 @@ void* get_instance_data(MeshData* mesh_data) {
 }
 
 
+void* get_batch_instance_data(Batch* batch) {
+	if (batch->instance_data[frame_index]) {
+		return batch->instance_data[frame_index];
+	}
+
+	LOG_DEBUG("Mapping instance data for batch %d, frame %d", batch->mesh_index, frame_index);
+	batch->instance_data[frame_index] = SDL_MapGPUTransferBuffer(
+		app.gpu_device, batch->instance_transfer_buffer[frame_index], false
+	);
+	return batch->instance_data[frame_index];
+}
+
 SDL_GPUBuffer* double_buffer_size(SDL_GPUCommandBuffer* command_buffer, SDL_GPUBuffer* buffer, int size) {
+	LOG_INFO("Doubling buffer size from %d to %d", size, 2 * size);
 	SDL_GPUBuffer* new_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
@@ -1701,6 +1832,8 @@ SDL_GPUBuffer* double_buffer_size(SDL_GPUCommandBuffer* command_buffer, SDL_GPUB
 	SDL_EndGPUCopyPass(copy_pass);
 
 	SDL_ReleaseGPUBuffer(app.gpu_device, buffer);
+
+	LOG_INFO("Buffer size doubled successfully");
 
 	return new_buffer;
 }
@@ -1752,6 +1885,52 @@ void double_instance_buffer_sizes(MeshData* mesh_data) {
 }
 
 
+void double_batch_buffer_sizes(Batch* batch) {
+	SDL_GPUCommandBuffer* command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+
+	int size = batch->instance_size * batch->max_instances;
+
+	// Instance buffer
+	batch->instance_buffer = double_buffer_size(
+		command_buffer,
+		batch->instance_buffer,
+		size * FRAMES_IN_FLIGHT
+	);
+
+	// Instance transfer buffers
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		SDL_GPUTransferBuffer* new_transfer_buffer = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = 2 * size,
+			}
+		);
+
+		// Only need to copy buffer data for the current frame
+		if (i == frame_index) {
+			LOG_DEBUG("Copying instance transfer buffer data for batch %d, frame %d", batch->mesh_index, i);
+			SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+
+			void* data = get_batch_instance_data(batch);
+			batch->instance_data[i] = SDL_MapGPUTransferBuffer(app.gpu_device, new_transfer_buffer, false);
+
+			SDL_memcpy(batch->instance_data[i], data, size);
+
+			// Unmap old transfer buffer, keep new one mapped
+			SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[i]);
+
+			SDL_EndGPUCopyPass(copy_pass);
+		}
+
+		SDL_ReleaseGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[i]);
+		batch->instance_transfer_buffer[i] = new_transfer_buffer;
+	}
+
+	batch->max_instances *= 2;
+}
+
+
 void wait_for_fences() {
 	LOG_DEBUG("Waiting for GPU fences");
 	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
@@ -1775,17 +1954,17 @@ void draw_mesh(
 ) {
 	LOG_DEBUG("Drawing mesh %d with texture %d", mesh_index, texture_index);
 
-	MeshData* mesh_data = &resources.meshes[mesh_index];
+	Batch* batch = &batches[mesh_index];
 
-	if (mesh_data->num_instances >= mesh_data->max_instances) {
+	if (batch->num_instances >= batch->max_instances) {
 		wait_for_fences();
 
-		LOG_INFO("Buffer %s full, resizing...", mesh_data->name);
-		double_instance_buffer_sizes(mesh_data);
-		LOG_INFO("New buffer size: %d", mesh_data->max_instances);
+		LOG_INFO("Buffer for mesh %d full, resizing...", mesh_index);
+		double_batch_buffer_sizes(batch);
+		LOG_INFO("New buffer size: %d", batch->max_instances);
 	}
 
-	InstanceData* transforms = get_instance_data(mesh_data);
+	InstanceData* transforms = get_batch_instance_data(batch);
 
 	InstanceData instance_data = {
 		.transform = transpose4(transform),
@@ -1795,13 +1974,13 @@ void draw_mesh(
 		.texture_scale = texture_scale,
 		.visiblity = visibility,
 	};
-	transforms[mesh_data->num_instances] = instance_data;
-	mesh_data->num_instances++;
+	transforms[batch->num_instances] = instance_data;
+	batch->num_instances++;
 }
 
 
 void draw_sprite(Vector3 position, float width, float height, int texture_index) {
-	LOG_DEBUG("Drawing mesh %d with texture %d", mesh_index, texture_index);
+	LOG_DEBUG("Drawing sprite with texture %d", texture_index);
 
 	if (quad_mesh.num_instances >= quad_mesh.max_instances) {
 		wait_for_fences();

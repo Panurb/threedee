@@ -4,9 +4,25 @@
 #include "components/light.h"
 #include "linalg.h"
 #include "util.h"
+#include "settings.h"
 
 
 #define DEPTH_FORMAT SDL_GPU_TEXTUREFORMAT_D32_FLOAT
+
+
+typedef enum {
+	PIPELINE_2D,
+	PIPELINE_TEXT,
+	PIPELINE_3D,
+	PIPELINE_3D_TEXTURED,
+	PIPELINE_SHADOW_DEPTH,
+	PIPELINE_POST_PROCESSING,
+	PIPELINE_DEPTH_OF_FIELD,
+	PIPELINE_BILLBOARD,
+	PIPELINE_LINE,
+	PIPELINE_CUBE,
+	PIPELINE_COUNT
+} Pipeline;
 
 
 typedef struct PositionTextureVertex {
@@ -90,6 +106,17 @@ typedef struct BillboardInstanceData {
 	float _pad[3];
 } BillboardInstanceData;
 static_assert(sizeof(BillboardInstanceData) % 16 == 0);
+
+
+typedef struct Batch {
+	int mesh_index;
+	SDL_GPUBuffer* instance_buffer;
+	int num_instances;
+	int max_instances;
+	SDL_GPUTransferBuffer* instance_transfer_buffer[FRAMES_IN_FLIGHT];
+	void* instance_data[FRAMES_IN_FLIGHT];  // Mapped pointer for each frame
+	int instance_size;
+} Batch;
 
 
 typedef struct Matrix2x3 {

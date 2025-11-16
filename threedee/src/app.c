@@ -38,6 +38,7 @@ void create_game_window() {
     app.window = SDL_CreateWindow("ThreeDee", game_settings.width, game_settings.height, 0);
     SDL_SetWindowFullscreen(app.window, game_settings.fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
     SDL_SetWindowRelativeMouseMode(app.window, true);
+    app.gpu_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, "vulkan");
 
     LOG_INFO("Game window created");
 }
@@ -101,9 +102,9 @@ void init() {
     app.debug_level = 0;
 
     create_game_window();
+    load_resources();
     init_render();
     app.text_engine = TTF_CreateGPUTextEngine(app.gpu_device);
-    load_resources();
     create_scene();
 
     init_physics();
