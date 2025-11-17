@@ -225,11 +225,7 @@ MeshData load_mesh(String path) {
 		return (MeshData){0};
 	}
 
-	MeshData mesh_data = {
-		.max_instances = 128,
-		.num_instances = 0,
-		.instance_size = sizeof(InstanceData),
-	};
+	MeshData mesh_data = {0};
 	strcpy(mesh_data.name, path);
 
 	ArrayList* unique_vertices = ArrayList_create(sizeof(VertexIndices));
@@ -316,24 +312,6 @@ MeshData load_mesh(String path) {
 			.size = sizeof(Uint16) * mesh_data.num_indices,
 		}
 	);
-
-	mesh_data.instance_buffer = SDL_CreateGPUBuffer(
-		app.gpu_device,
-		&(SDL_GPUBufferCreateInfo){
-			.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-			.size = sizeof(InstanceData) * mesh_data.max_instances * FRAMES_IN_FLIGHT,
-		}
-	);
-
-	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-		mesh_data.instance_transfer_buffer[i] = SDL_CreateGPUTransferBuffer(
-			app.gpu_device,
-			&(SDL_GPUTransferBufferCreateInfo){
-				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-				.size = sizeof(InstanceData) * mesh_data.max_instances,
-			}
-		);
-	}
 
 	SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
 		app.gpu_device,

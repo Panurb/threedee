@@ -29,12 +29,6 @@ typedef struct MeshData {
     int num_vertices;
     SDL_GPUBuffer* index_buffer;
     int num_indices;
-    SDL_GPUBuffer* instance_buffer;
-    int num_instances;
-    int max_instances;
-    SDL_GPUTransferBuffer* instance_transfer_buffer[FRAMES_IN_FLIGHT];
-    void* instance_data[FRAMES_IN_FLIGHT];  // Mapped pointer for each frame
-    int instance_size;
     SDL_GPUTexture* texture;
 } MeshData;
 

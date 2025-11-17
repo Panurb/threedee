@@ -100,7 +100,7 @@ typedef struct BillboardInstanceData {
 	float width;
 	float height;
 	int texture_index;
-	Material material;
+	int material_index;
 	Visibility visiblity;
 	BillboardType type;
 	float _pad[3];
@@ -157,6 +157,7 @@ static_assert(sizeof(LineInstanceData) % 16 == 0);
 typedef struct TextData {
 	MeshData mesh;
 	Batch batch;
+	TTF_Text* text;
 } TextData;
 
 

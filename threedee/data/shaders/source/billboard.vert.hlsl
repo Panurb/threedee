@@ -19,7 +19,7 @@ struct InstanceData
     float width;
     float height;
     int tex_index;
-    Material material;
+    int material_index;
     uint visibility;
     int billboard_type; // 0 = spherical, 1 = cylindrical, 2 = screen-aligned
 };
@@ -43,7 +43,7 @@ struct Output
 	int tex_index : TEXCOORD1;
     int emissive_index : TEXCOORD2;
     float3 world_position : POSITION0;
-    Material material;
+    int material_index : TEXCOORD3;
     uint visiblity;
 };
 
@@ -89,7 +89,7 @@ Output main(Input input, uint instance_id : SV_InstanceID)
 
     output.world_position = world_position;
 
-    output.material = instance_data[instance_id].material;
+    output.material_index = instance_data[instance_id].material_index;
     output.visiblity = instance_data[instance_id].visibility;
 
     return output;
