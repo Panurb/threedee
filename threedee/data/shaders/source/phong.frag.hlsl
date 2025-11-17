@@ -88,7 +88,7 @@ float shadow_pcf(float2 uv, int light_index, float shadow_depth, float2 texel_si
 
 Output main(Input input)
 {
-    Material material = materials[0];
+    Material material = materials[input.material_index];
     float2 tex_coord = input.tex_coord;
     float4 position = input.position;
     float3 normal = input.normal;

@@ -1,9 +1,3 @@
-cbuffer UBO : register(b0, space3)
-{
-    float near_plane;
-    float far_plane;
-};
-
 struct Output
 {
     float4 color : SV_Target0;

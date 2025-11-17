@@ -58,6 +58,11 @@ static MeshData quad_mesh;
 static MeshData line_mesh;
 static ArrayList* texts;
 
+static Batch triangle_batch;
+static Batch triangle_2d_batch;
+static Batch quad_batch;
+static Batch line_batch;
+
 static Batch batches[MAX_MESHES] = { 0 };
 
 static const SDL_GPUVertexInputState VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX = {
@@ -204,7 +209,7 @@ void load_shaders() {
 	shaders[SHADER_VERTEX_LINE] = load_shader(app.gpu_device, "line.vert", 0, 1, 1, 0);
 	shaders[SHADER_VERTEX_CUBE] = load_shader(app.gpu_device, "cube.vert", 0, 1, 1, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
-	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 1, 0, 0);
+	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 2, 1, 0);
 	shaders[SHADER_FRAGMENT_SHADOW_DEPTH] = load_shader(app.gpu_device, "shadow_depth.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_TEXT] = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
@@ -1098,9 +1103,9 @@ void create_screen_textures() {
 }
 
 
-Batch create_batch(int mesh_index, int instance_size) {
+Batch create_batch(MeshData* mesh, int instance_size) {
 	Batch batch = {
-		.mesh_index = mesh_index,
+		.mesh = mesh,
 		.instance_size = instance_size,
 		.num_instances = 0,
 		.max_instances = 256,
@@ -1156,8 +1161,13 @@ void init_render() {
 	line_mesh = create_mesh_line();
 	texts = ArrayList_create(sizeof(MeshData));
 
+	triangle_batch = create_batch(&triangle_mesh, sizeof(InstanceColorData));
+	triangle_2d_batch = create_batch(&triangle_2d_mesh, sizeof(InstanceColorData2D));
+	quad_batch = create_batch(&quad_mesh, sizeof(BillboardInstanceData));
+	line_batch = create_batch(&line_mesh, sizeof(LineInstanceData));
+
 	for (int i = 0; i < resources.meshes_size; i++) {
-		batches[i] = create_batch(i, sizeof(InstanceData));
+		batches[i] = create_batch(&resources.meshes[i], sizeof(InstanceData));
 	}
 
 	sampler = SDL_CreateGPUSampler(
@@ -1365,10 +1375,8 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 		LOG_ERROR("Instance size is zero");
 	}
 
-	MeshData mesh_data = resources.meshes[batch->mesh_index];
-
 	if (batch->instance_data[frame_index]) {
-		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", mesh_data.name);
+		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", mesh_data->name);
 		SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[frame_index]);
 		batch->instance_data[frame_index] = NULL;
 	}
@@ -1395,35 +1403,37 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 
 	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &batch->instance_buffer, 1);
 
-	if (mesh_data.vertex_buffer) {
+	MeshData* mesh_data = batch->mesh;
+
+	if (mesh_data->vertex_buffer) {
 		SDL_BindGPUVertexBuffers(
 			render_pass,
 			0,
 			&(SDL_GPUBufferBinding) {
-				.buffer = mesh_data.vertex_buffer,
+				.buffer = mesh_data->vertex_buffer,
 				.offset = 0
 			},
 			1
 		);
 	}
 
-	if (mesh_data.texture) {
+	if (mesh_data->texture) {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			0,
 			&(SDL_GPUTextureSamplerBinding){
-				.texture = mesh_data.texture,
+				.texture = mesh_data->texture,
 				.sampler = sampler,
 			},
 			1
 		);
 	}
 
-	if (mesh_data.index_buffer) {
+	if (mesh_data->index_buffer) {
 		SDL_BindGPUIndexBuffer(
 			render_pass,
 			&(SDL_GPUBufferBinding) {
-				.buffer = mesh_data.index_buffer,
+				.buffer = mesh_data->index_buffer,
 				.offset = 0
 			},
 			SDL_GPU_INDEXELEMENTSIZE_16BIT
@@ -1431,7 +1441,7 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 
 		SDL_DrawGPUIndexedPrimitives(
 			render_pass,
-			mesh_data.num_indices,
+			mesh_data->num_indices,
 			batch->num_instances,
 			0,
 			0,
@@ -1440,7 +1450,7 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 	} else {
 		SDL_DrawGPUPrimitives(
 			render_pass,
-			mesh_data.num_vertices,
+			mesh_data->num_vertices,
 			batch->num_instances,
 			0,
 			frame_index * batch->max_instances
@@ -1672,15 +1682,15 @@ void render() {
 			1
 		);
 
-		// for (int i = 0; i < resources.meshes_size; i++) {
-		// 	render_instances(command_buffer, render_pass, &resources.meshes[i], PIPELINE_3D_TEXTURED);
-		// }
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_batch(command_buffer, render_pass, &batches[i], PIPELINE_3D_TEXTURED);
 		}
-		render_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
-		render_instances(command_buffer, render_pass, &quad_mesh, PIPELINE_BILLBOARD);
-		render_instances(command_buffer, render_pass, &line_mesh, PIPELINE_LINE);
+		// render_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
+		// render_instances(command_buffer, render_pass, &quad_mesh, PIPELINE_BILLBOARD);
+		// render_instances(command_buffer, render_pass, &line_mesh, PIPELINE_LINE);
+		render_batch(command_buffer, render_pass, &triangle_batch, PIPELINE_3D);
+		render_batch(command_buffer, render_pass, &quad_batch, PIPELINE_BILLBOARD);
+		render_batch(command_buffer, render_pass, &line_batch, PIPELINE_LINE);
 
 		SDL_EndGPURenderPass(render_pass);
 
@@ -1764,9 +1774,6 @@ void render() {
 	// Reset instance counts for next frame
 	num_lights = 0;
 	for (int i = 0; i < resources.meshes_size; i++) {
-		resources.meshes[i].num_instances = 0;
-	}
-	for (int i = 0; i < resources.meshes_size; i++) {
 		batches[i].num_instances = 0;
 	}
 	triangle_mesh.num_instances = 0;
@@ -1775,6 +1782,10 @@ void render() {
 	line_mesh.num_instances = 0;
 	ArrayList_for_each(texts, destroy_mesh);
 	ArrayList_clear(texts);
+	triangle_batch.num_instances = 0;
+	triangle_2d_batch.num_instances = 0;
+	quad_batch.num_instances = 0;
+	line_batch.num_instances = 0;
 
 	frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
 }
@@ -2018,21 +2029,49 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 		0.0f, 0.0f, 0.0f, 1.0f
 	};
 
-	if (triangle_mesh.num_instances >= triangle_mesh.max_instances) {
+	Batch* batch = &triangle_batch;
+
+	if (batch->num_instances >= batch->max_instances) {
 		wait_for_fences();
 
 		LOG_INFO("Buffer full, resizing...");
-		double_instance_buffer_sizes(&triangle_mesh);
-		LOG_INFO("New buffer size: %d", triangle_mesh.max_instances);
+		double_batch_buffer_sizes(batch);
+		LOG_INFO("New buffer size: %d", batch->max_instances);
 	}
 
-	InstanceColorData* instance_datas = get_instance_data(&triangle_mesh);
+	InstanceColorData* instance_datas = get_batch_instance_data(batch);
 	InstanceColorData instance_data = {
 		.transform = transpose4(transform),
 		.color = color
 	};
-	instance_datas[triangle_mesh.num_instances] = instance_data;
-	triangle_mesh.num_instances++;
+	instance_datas[batch->num_instances] = instance_data;
+	batch->num_instances++;
+}
+
+
+void draw_line_batched(Vector3 start, Vector3 end, float thickness, Color color) {
+	LOG_DEBUG("Drawing batched line from (%f, %f, %f) to (%f, %f, %f)", start.x, start.y, start.z, end.x, end.y, end.z);
+
+	Batch* batch = &line_batch;
+
+	if (batch->num_instances >= batch->max_instances) {
+		wait_for_fences();
+
+		LOG_INFO("Buffer full, resizing...");
+		double_batch_buffer_sizes(batch);
+		LOG_INFO("New buffer size: %d", batch->max_instances);
+	}
+
+	LineInstanceData* instance_datas = get_batch_instance_data(batch);
+
+	LineInstanceData instance_data = {
+		.start = start,
+		.end = end,
+		.thickness = thickness,
+		.color = color
+	};
+	instance_datas[batch->num_instances] = instance_data;
+	batch->num_instances++;
 }
 
 
@@ -2057,6 +2096,8 @@ void draw_line(Vector3 start, Vector3 end, float thickness, Color color) {
 	};
 	instances[line_mesh.num_instances] = instance_data;
 	line_mesh.num_instances++;
+
+	draw_line_batched(start, end, thickness, color);
 }
 
 

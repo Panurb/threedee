@@ -109,7 +109,7 @@ static_assert(sizeof(BillboardInstanceData) % 16 == 0);
 
 
 typedef struct Batch {
-	int mesh_index;
+	MeshData* mesh;
 	SDL_GPUBuffer* instance_buffer;
 	int num_instances;
 	int max_instances;
