@@ -1159,7 +1159,7 @@ void init_render() {
 	triangle_2d_mesh = create_mesh_triangle_2d();
 	quad_mesh = create_mesh_quad();
 	line_mesh = create_mesh_line();
-	texts = ArrayList_create(sizeof(MeshData));
+	texts = ArrayList_create(sizeof(TextData));
 
 	triangle_batch = create_batch(&triangle_mesh, sizeof(InstanceColorData));
 	triangle_2d_batch = create_batch(&triangle_2d_mesh, sizeof(InstanceColorData2D));
@@ -1225,6 +1225,17 @@ void destroy_mesh(MeshData* mesh_data) {
 	if (mesh_data->index_buffer) {
 		SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->index_buffer);
 	}
+}
+
+
+void destroy_batch(Batch* batch) {
+	if (!batch) return;
+
+	SDL_ReleaseGPUBuffer(app.gpu_device, batch->instance_buffer);
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		SDL_ReleaseGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[i]);
+	}
+	destroy_mesh(batch->mesh);
 }
 
 
@@ -1685,7 +1696,7 @@ void render() {
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_batch(command_buffer, render_pass, &batches[i], PIPELINE_3D_TEXTURED);
 		}
-		// render_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
+		// nrender_instances(command_buffer, render_pass, &triangle_mesh, PIPELINE_3D);
 		// render_instances(command_buffer, render_pass, &quad_mesh, PIPELINE_BILLBOARD);
 		// render_instances(command_buffer, render_pass, &line_mesh, PIPELINE_LINE);
 		render_batch(command_buffer, render_pass, &triangle_batch, PIPELINE_3D);
@@ -1757,11 +1768,15 @@ void render() {
 		Matrix4 projection_matrix = transpose4(screen_camera->projection_matrix);
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_matrix, sizeof(Matrix4));
 
-		render_instances(command_buffer, render_pass, &triangle_2d_mesh, PIPELINE_2D);
+		// render_instances(command_buffer, render_pass, &triangle_2d_mesh, PIPELINE_2D);
+		render_batch(command_buffer, render_pass, &triangle_2d_batch, PIPELINE_2D);
 
 		for (int i = 0; i < texts->size; i++) {
-			MeshData* text = ArrayList_get(texts, i);
-			render_instances(command_buffer, render_pass, text, PIPELINE_TEXT);
+			TextData* text = ArrayList_get(texts, i);
+			Batch batch = text->batch;
+			batch.mesh = &text->mesh;
+			// render_instances(command_buffer, render_pass, text, PIPELINE_TEXT);
+			render_batch(command_buffer, render_pass, &batch, PIPELINE_TEXT);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
@@ -1780,7 +1795,7 @@ void render() {
 	triangle_2d_mesh.num_instances = 0;
 	quad_mesh.num_instances = 0;
 	line_mesh.num_instances = 0;
-	ArrayList_for_each(texts, destroy_mesh);
+	// ArrayList_for_each(texts, destroy_batch);
 	ArrayList_clear(texts);
 	triangle_batch.num_instances = 0;
 	triangle_2d_batch.num_instances = 0;
@@ -2049,7 +2064,7 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 }
 
 
-void draw_line_batched(Vector3 start, Vector3 end, float thickness, Color color) {
+void draw_line(Vector3 start, Vector3 end, float thickness, Color color) {
 	LOG_DEBUG("Drawing batched line from (%f, %f, %f) to (%f, %f, %f)", start.x, start.y, start.z, end.x, end.y, end.z);
 
 	Batch* batch = &line_batch;
@@ -2072,32 +2087,6 @@ void draw_line_batched(Vector3 start, Vector3 end, float thickness, Color color)
 	};
 	instance_datas[batch->num_instances] = instance_data;
 	batch->num_instances++;
-}
-
-
-void draw_line(Vector3 start, Vector3 end, float thickness, Color color) {
-	LOG_DEBUG("Drawing line from (%f, %f, %f) to (%f, %f, %f)", start.x, start.y, start.z, end.x, end.y, end.z);
-
-	if (line_mesh.num_instances >= line_mesh.max_instances) {
-		wait_for_fences();
-
-		LOG_INFO("Buffer %s full, resizing...", line_mesh.name);
-		double_instance_buffer_sizes(&line_mesh);
-		LOG_INFO("New buffer size: %d", line_mesh.max_instances);
-	}
-
-	LineInstanceData* instances = get_instance_data(&line_mesh);
-
-	LineInstanceData instance_data = {
-		.start = start,
-		.end = end,
-		.thickness = thickness,
-		.color = color
-	};
-	instances[line_mesh.num_instances] = instance_data;
-	line_mesh.num_instances++;
-
-	draw_line_batched(start, end, thickness, color);
 }
 
 
@@ -2218,17 +2207,15 @@ void render_plane(Plane plane, Color color) {
 
 
 void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
-	LOG_DEBUG("Drawing 2D triangle at (%.2f, %.2f), (%.2f, %.2f), (%.2f, %.2f)", a.x, a.y, b.x, b.y, c.x, c.y);
-
-	if (triangle_2d_mesh.num_instances >= triangle_2d_mesh.max_instances) {
+	Batch* batch = &triangle_2d_batch;
+	if (batch->num_instances >= batch->max_instances) {
 		wait_for_fences();
 
 		LOG_INFO("Buffer full, resizing...");
-		double_instance_buffer_sizes(&triangle_2d_mesh);
-		LOG_INFO("New buffer size: %d", triangle_2d_mesh.max_instances);
+		double_batch_buffer_sizes(batch);
+		LOG_INFO("New buffer size: %d", batch->max_instances);
 	}
-
-	InstanceColorData2D* instance_datas = get_instance_data(&triangle_2d_mesh);
+	InstanceColorData2D* instance_datas = get_batch_instance_data(batch);
 	InstanceColorData2D instance_data = {
 		.transform = {
 			b.x - a.x, c.x - a.x, a.x, 0.0f,
@@ -2236,10 +2223,8 @@ void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
 		},
 		.color = color
 	};
-	instance_datas[triangle_2d_mesh.num_instances] = instance_data;
-	triangle_2d_mesh.num_instances++;
-
-	LOG_DEBUG("2D triangle drawn");
+	instance_datas[batch->num_instances] = instance_data;
+	batch->num_instances++;
 }
 
 
@@ -2271,13 +2256,13 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 	}
 
 	MeshData mesh_data = create_mesh_text(*data);
-	strcpy(mesh_data.name, text->text);
+	Batch batch = create_batch(NULL, sizeof(InstanceColorData2D));
 
 	// Match text pixel size to screen coordinates
 	float scale = size / 216.0f;
 
 	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(
-		app.gpu_device, mesh_data.instance_transfer_buffer[frame_index], false
+		app.gpu_device, batch.instance_transfer_buffer[frame_index], false
 	);
 	InstanceColorData2D instance_data = {
 		.transform = {
@@ -2286,10 +2271,15 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 		},
 		.color = color
 	};
-	instance_datas[mesh_data.num_instances] = instance_data;
-	mesh_data.num_instances++;
+	instance_datas[batch.num_instances] = instance_data;
+	batch.num_instances++;
 
-	SDL_UnmapGPUTransferBuffer(app.gpu_device, mesh_data.instance_transfer_buffer[frame_index]);
+	// SDL_UnmapGPUTransferBuffer(app.gpu_device, batch.instance_transfer_buffer[frame_index]);
 
-	ArrayList_add(texts, &mesh_data);
+	TextData text_data = {
+		.mesh = mesh_data,
+		.batch = batch
+	};
+	ArrayList_add(texts, &text_data);
+	// TTF_DestroyText(text);
 }

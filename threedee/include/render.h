@@ -156,8 +156,7 @@ static_assert(sizeof(LineInstanceData) % 16 == 0);
 
 typedef struct TextData {
 	MeshData mesh;
-	Color color;
-	Vector2 position;
+	Batch batch;
 } TextData;
 
 
