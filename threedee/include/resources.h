@@ -19,7 +19,6 @@ typedef struct {
     float diffuse;
     float ambient;
     float shininess;
-    float emissive;
 } Material;
 
 

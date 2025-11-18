@@ -88,6 +88,7 @@ void draw_springs(Entity entity) {
             texture_index,
             material_index,
             -1,
+            0.0f,
             VISIBILITY_ALL,
             ones2()
         );
@@ -133,14 +134,14 @@ void draw_entities() {
 
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
         if (mesh_component && mesh_component->visible) {
-            Material material = resources.materials[mesh_component->material_index];
-            material.emissive = get_emissive(entity);
+            float emissive = get_emissive(entity);
             draw_mesh(
                 get_transform(entity),
                 mesh_component->mesh_index,
                 mesh_component->texture_index,
                 mesh_component->material_index,
                 mesh_component->emissive_index,
+                emissive,
                 mesh_component->visibility,
                 mesh_component->texture_scale
             );

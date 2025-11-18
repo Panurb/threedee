@@ -331,7 +331,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 			}}
 		},
 		.rasterizer_state = (SDL_GPURasterizerState){
-			.cull_mode = SDL_GPU_CULLMODE_NONE,
+			.cull_mode = SDL_GPU_CULLMODE_NONE,  // This is only for debug, no need to optimize
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
 			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
 		},
@@ -1186,7 +1186,7 @@ void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 }
 
 
-void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, Batch* batch, Pipeline pipeline) {
+void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, Batch* batch) {
 	if (batch->num_instances == 0) {
 		return;
 	}
@@ -1200,8 +1200,6 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 		SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[frame_index]);
 		batch->instance_data[frame_index] = NULL;
 	}
-
-	bind_pipeline(render_pass, pipeline);
 
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 
@@ -1331,8 +1329,9 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 			}
 		);
 
+		bind_pipeline(render_pass, PIPELINE_SHADOW_DEPTH);
 		for (int j = 0; j < resources.meshes_size; j++) {
-			render_batch(command_buffer, render_pass, &batches[j], PIPELINE_SHADOW_DEPTH);
+			render_batch(command_buffer, render_pass, &batches[j]);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
@@ -1502,12 +1501,19 @@ void render() {
 			1
 		);
 
+		bind_pipeline(render_pass, PIPELINE_3D_TEXTURED);
 		for (int i = 0; i < resources.meshes_size; i++) {
-			render_batch(command_buffer, render_pass, &batches[i], PIPELINE_3D_TEXTURED);
+			render_batch(command_buffer, render_pass, &batches[i]);
 		}
-		// render_batch(command_buffer, render_pass, &triangle_batch, PIPELINE_3D);
-		render_batch(command_buffer, render_pass, &quad_batch, PIPELINE_BILLBOARD);
-		// render_batch(command_buffer, render_pass, &line_batch, PIPELINE_LINE);
+
+		bind_pipeline(render_pass, PIPELINE_3D);
+		render_batch(command_buffer, render_pass, &triangle_batch);
+
+		bind_pipeline(render_pass, PIPELINE_BILLBOARD);
+		render_batch(command_buffer, render_pass, &quad_batch);
+
+		bind_pipeline(render_pass, PIPELINE_LINE);
+		render_batch(command_buffer, render_pass, &line_batch);
 
 		SDL_EndGPURenderPass(render_pass);
 
@@ -1574,13 +1580,15 @@ void render() {
 		Matrix4 projection_matrix = transpose4(screen_camera->projection_matrix);
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &projection_matrix, sizeof(Matrix4));
 
-		render_batch(command_buffer, render_pass, &triangle_2d_batch, PIPELINE_2D);
+		bind_pipeline(render_pass, PIPELINE_2D);
+		render_batch(command_buffer, render_pass, &triangle_2d_batch);
 
+		bind_pipeline(render_pass, PIPELINE_TEXT);
 		for (int i = 0; i < texts->size; i++) {
 			TextData* text = ArrayList_get(texts, i);
 			Batch batch = text->batch;
 			batch.mesh = &text->mesh;
-			render_batch(command_buffer, render_pass, &batch, PIPELINE_TEXT);
+			render_batch(command_buffer, render_pass, &batch);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
@@ -1619,7 +1627,7 @@ void* get_batch_instance_data(Batch* batch) {
 }
 
 SDL_GPUBuffer* double_buffer_size(SDL_GPUCommandBuffer* command_buffer, SDL_GPUBuffer* buffer, int size) {
-	LOG_INFO("Doubling buffer size from %d to %d", size, 2 * size);
+	LOG_DEBUG("Doubling buffer size from %d to %d", size, 2 * size);
 	SDL_GPUBuffer* new_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
@@ -1646,7 +1654,7 @@ SDL_GPUBuffer* double_buffer_size(SDL_GPUCommandBuffer* command_buffer, SDL_GPUB
 
 	SDL_ReleaseGPUBuffer(app.gpu_device, buffer);
 
-	LOG_INFO("Buffer size doubled successfully");
+	LOG_DEBUG("Buffer size doubled successfully");
 
 	return new_buffer;
 }
@@ -1710,26 +1718,33 @@ void wait_for_fences() {
 }
 
 
+void check_batch_buffer_sizes(Batch* batch) {
+	if (batch->num_instances < batch->max_instances) {
+		return;
+	}
+	LOG_INFO("Buffer for mesh %s full, resizing...", batch->mesh->name);
+
+	wait_for_fences();
+	double_batch_buffer_sizes(batch);
+
+	LOG_INFO("New buffer size: %d", batch->max_instances / batch->instance_size);
+}
+
+
 void draw_mesh(
 	Matrix4 transform,
 	int mesh_index,
 	int texture_index,
 	int material_index,
 	int emissive_index,
+	float emissive,
 	Visibility visibility,
 	Vector2 texture_scale
 ) {
 	LOG_DEBUG("Drawing mesh %d with texture %d", mesh_index, texture_index);
 
 	Batch* batch = &batches[mesh_index];
-
-	if (batch->num_instances >= batch->max_instances) {
-		wait_for_fences();
-
-		LOG_INFO("Buffer for mesh %d full, resizing...", mesh_index);
-		double_batch_buffer_sizes(batch);
-		LOG_INFO("New buffer size: %d", batch->max_instances);
-	}
+	check_batch_buffer_sizes(batch);
 
 	InstanceData* transforms = get_batch_instance_data(batch);
 
@@ -1740,6 +1755,7 @@ void draw_mesh(
 		.emissive_index = emissive_index,
 		.texture_scale = texture_scale,
 		.visiblity = visibility,
+		.emissive = emissive
 	};
 	transforms[batch->num_instances] = instance_data;
 	batch->num_instances++;
@@ -1750,14 +1766,7 @@ void draw_sprite(Vector3 position, float width, float height, int texture_index)
 	LOG_DEBUG("Drawing sprite with texture %d", texture_index);
 
 	Batch* batch = &quad_batch;
-
-	if (batch->num_instances >= batch->max_instances) {
-		wait_for_fences();
-
-		LOG_INFO("Buffer %s full, resizing...", quad_batch.mesh->name);
-		double_batch_buffer_sizes(batch);
-		LOG_INFO("New buffer size: %d", batch->max_instances);
-	}
+	check_batch_buffer_sizes(batch);
 
 	BillboardInstanceData* instances = get_batch_instance_data(batch);
 
@@ -1788,14 +1797,7 @@ void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 	};
 
 	Batch* batch = &triangle_batch;
-
-	if (batch->num_instances >= batch->max_instances) {
-		wait_for_fences();
-
-		LOG_INFO("Buffer full, resizing...");
-		double_batch_buffer_sizes(batch);
-		LOG_INFO("New buffer size: %d", batch->max_instances);
-	}
+	check_batch_buffer_sizes(batch);
 
 	InstanceColorData* instance_datas = get_batch_instance_data(batch);
 	InstanceColorData instance_data = {
@@ -1811,14 +1813,7 @@ void draw_line(Vector3 start, Vector3 end, float thickness, Color color) {
 	LOG_DEBUG("Drawing batched line from (%f, %f, %f) to (%f, %f, %f)", start.x, start.y, start.z, end.x, end.y, end.z);
 
 	Batch* batch = &line_batch;
-
-	if (batch->num_instances >= batch->max_instances) {
-		wait_for_fences();
-
-		LOG_INFO("Buffer full, resizing...");
-		double_batch_buffer_sizes(batch);
-		LOG_INFO("New buffer size: %d", batch->max_instances);
-	}
+	check_batch_buffer_sizes(batch);
 
 	LineInstanceData* instance_datas = get_batch_instance_data(batch);
 
@@ -1894,7 +1889,6 @@ void render_sphere(Vector3 center, float radius, int segments, Color color) {
 void render_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color) {
 	render_triangle(a, b, c, color);
 	render_triangle(a, c, d, color);
-	render_triangle(d, a, b, color);
 }
 
 
@@ -1951,13 +1945,8 @@ void render_plane(Plane plane, Color color) {
 
 void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color) {
 	Batch* batch = &triangle_2d_batch;
-	if (batch->num_instances >= batch->max_instances) {
-		wait_for_fences();
+	check_batch_buffer_sizes(batch);
 
-		LOG_INFO("Buffer full, resizing...");
-		double_batch_buffer_sizes(batch);
-		LOG_INFO("New buffer size: %d", batch->max_instances);
-	}
 	InstanceColorData2D* instance_datas = get_batch_instance_data(batch);
 	InstanceColorData2D instance_data = {
 		.transform = {

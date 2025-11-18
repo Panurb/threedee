@@ -42,7 +42,6 @@ struct Material {
     float diffuse;
     float ambient;
     float shininess;
-    float emissive;
 };
 
 StructuredBuffer<Material> materials : register(t4, space2);
@@ -57,7 +56,8 @@ struct Input
     int emissive_index : TEXCOORD2;
     float3 world_position : POSITION0;
     int material_index : TEXCOORD3;
-    uint visibility;
+    uint visibility : TEXCOORD4;
+    float emissive : TEXCOORD5;
 };
 
 struct Output
@@ -191,7 +191,7 @@ Output main(Input input)
     if (input.emissive_index != -1) {
         base_emissive = emissive_maps.Sample(sampler_emissive_maps, float3(tex_coord, input.emissive_index)).r;
     }
-    float3 emissive = material.emissive * base_emissive * base_color;
+    float3 emissive = input.emissive * base_emissive * base_color;
 
     float3 lit_color = ambient + diffuse + specular + emissive;
 

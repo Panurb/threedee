@@ -66,7 +66,8 @@ typedef struct {
 	Vector2 texture_scale;
 	int material_index;
 	Visibility visiblity;
-	float _pad[2];
+	float emissive;
+	float _pad;
 } InstanceData;
 static_assert(sizeof(InstanceData) % 16 == 0);
 
@@ -193,7 +194,7 @@ void render();
 
 void add_light(Entity entity);
 
-void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int emissive_index, Visibility visibility, Vector2 texture_scale);
+void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int emissive_index, float emissive, Visibility visibility, Vector2 texture_scale);
 
 void draw_sprite(Vector3 position, float width, float height, int texture_index);
 

@@ -13,6 +13,7 @@ struct InstanceData
     float2 tex_scale;
     int material_index;
     uint visibility;
+    float emissive;
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);
@@ -35,7 +36,8 @@ struct Output
     int emissive_index : TEXCOORD2;
     float3 world_position : POSITION0;
     int material_index : TEXCOORD3;
-    uint visiblity;
+    uint visiblity : TEXCOORD4;
+    float emissive : TEXCOORD5;
 };
 
 float3 scale_from_transform(float4x4 transform)
@@ -87,6 +89,7 @@ Output main(Input input, uint instance_id : SV_InstanceID)
 
     output.material_index = instance_data[instance_id].material_index;
     output.visiblity = instance_data[instance_id].visibility;
+    output.emissive = instance_data[instance_id].emissive;
 
     return output;
 }
