@@ -36,6 +36,7 @@ set(SOURCES
     threedee/src/quaternion.c
     threedee/src/raycast.c
     threedee/src/render.c
+    threedee/src/render_mesh.c
     threedee/src/render_pipeline.c
     threedee/src/resources.c
     threedee/src/scene.c
