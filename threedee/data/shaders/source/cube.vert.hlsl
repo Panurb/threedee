@@ -79,7 +79,7 @@ Output main(Input input, uint vertex_id : SV_VertexID, uint instance_id : SV_Ins
     output.tangent = normalize(mul((float3x3)transform, input.tangent));
     output.world_position = world_position.xyz;
 
-    output.material = instance_data[instance_id].material;
+    output.material_index = instance_data[instance_id].material_index[face_index];
     output.visiblity = instance_data[instance_id].visibility;
 
     return output;

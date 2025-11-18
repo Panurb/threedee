@@ -10,21 +10,6 @@
 #define DEPTH_FORMAT SDL_GPU_TEXTUREFORMAT_D32_FLOAT
 
 
-typedef enum {
-	PIPELINE_2D,
-	PIPELINE_TEXT,
-	PIPELINE_3D,
-	PIPELINE_3D_TEXTURED,
-	PIPELINE_SHADOW_DEPTH,
-	PIPELINE_POST_PROCESSING,
-	PIPELINE_DEPTH_OF_FIELD,
-	PIPELINE_BILLBOARD,
-	PIPELINE_LINE,
-	PIPELINE_CUBE,
-	PIPELINE_COUNT
-} Pipeline;
-
-
 typedef struct PositionTextureVertex {
 	Vector3 position;
 	Vector2 uv;
@@ -183,6 +168,8 @@ typedef struct DepthOfFieldUniformData {
 	bool vertical;
 } DepthOfFieldUniformData;
 
+
+SDL_GPUSampleCount get_sample_count(void);
 
 void init_render();
 

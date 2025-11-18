@@ -35,6 +35,8 @@ set(SOURCES
     threedee/src/perlin.c
     threedee/src/quaternion.c
     threedee/src/raycast.c
+    threedee/src/render.c
+    threedee/src/render_pipeline.c
     threedee/src/resources.c
     threedee/src/scene.c
     threedee/src/settings.c
@@ -48,7 +50,6 @@ set(SOURCES
     threedee/src/systems/player.c
     threedee/src/util.c
     threedee/src/threedee.c
-    threedee/src/render.c
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
