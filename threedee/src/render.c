@@ -29,10 +29,10 @@ static SDL_GPUSampler* screen_sampler = NULL;
 static LightData lights[MAX_LIGHTS];
 static int num_lights = 0;
 
-static MeshData triangle_mesh;
-static MeshData triangle_2d_mesh;
-static MeshData quad_mesh;
-static MeshData line_mesh;
+static Mesh triangle_mesh;
+static Mesh triangle_2d_mesh;
+static Mesh quad_mesh;
+static Mesh line_mesh;
 static ArrayList* texts;
 
 static Batch triangle_batch;
@@ -97,7 +97,7 @@ void create_screen_textures() {
 }
 
 
-Batch create_batch(MeshData* mesh, int instance_size) {
+Batch create_batch(Mesh* mesh, int instance_size) {
 	Batch batch = {
 		.mesh = mesh,
 		.instance_size = instance_size,
@@ -198,15 +198,15 @@ void init_render() {
 }
 
 
-void destroy_mesh(MeshData* mesh_data) {
-	if (!mesh_data) return;
+void destroy_mesh(Mesh* mesh) {
+	if (!mesh) return;
 
-	SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->vertex_buffer);
-	if (mesh_data->index_buffer) {
-		SDL_ReleaseGPUBuffer(app.gpu_device, mesh_data->index_buffer);
+	SDL_ReleaseGPUBuffer(app.gpu_device, mesh->vertex_buffer);
+	if (mesh->index_buffer) {
+		SDL_ReleaseGPUBuffer(app.gpu_device, mesh->index_buffer);
 	}
-	// if (mesh_data->texture) {
-	// 	SDL_ReleaseGPUTexture(app.gpu_device, mesh_data->texture);
+	// if (mesh->texture) {
+	// 	SDL_ReleaseGPUTexture(app.gpu_device, mesh->texture);
 	// }
 }
 
@@ -284,7 +284,7 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 	}
 
 	if (batch->instance_data[frame_index]) {
-		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", mesh_data->name);
+		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", mesh->name);
 		SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[frame_index]);
 		batch->instance_data[frame_index] = NULL;
 	}
@@ -309,37 +309,37 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 
 	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &batch->instance_buffer, 1);
 
-	MeshData* mesh_data = batch->mesh;
+	Mesh* mesh = batch->mesh;
 
-	if (mesh_data->vertex_buffer) {
+	if (mesh->vertex_buffer) {
 		SDL_BindGPUVertexBuffers(
 			render_pass,
 			0,
 			&(SDL_GPUBufferBinding) {
-				.buffer = mesh_data->vertex_buffer,
+				.buffer = mesh->vertex_buffer,
 				.offset = 0
 			},
 			1
 		);
 	}
 
-	if (mesh_data->texture) {
+	if (mesh->texture) {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			0,
 			&(SDL_GPUTextureSamplerBinding){
-				.texture = mesh_data->texture,
+				.texture = mesh->texture,
 				.sampler = sampler,
 			},
 			1
 		);
 	}
 
-	if (mesh_data->index_buffer) {
+	if (mesh->index_buffer) {
 		SDL_BindGPUIndexBuffer(
 			render_pass,
 			&(SDL_GPUBufferBinding) {
-				.buffer = mesh_data->index_buffer,
+				.buffer = mesh->index_buffer,
 				.offset = 0
 			},
 			SDL_GPU_INDEXELEMENTSIZE_16BIT
@@ -347,7 +347,7 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 
 		SDL_DrawGPUIndexedPrimitives(
 			render_pass,
-			mesh_data->num_indices,
+			mesh->num_indices,
 			batch->num_instances,
 			0,
 			0,
@@ -356,7 +356,7 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 	} else {
 		SDL_DrawGPUPrimitives(
 			render_pass,
-			mesh_data->num_vertices,
+			mesh->num_vertices,
 			batch->num_instances,
 			0,
 			frame_index * batch->max_instances
@@ -1075,7 +1075,7 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 		LOG_WARNING("Text %s has more than one draw sequence, only the first will be rendered", string);
 	}
 
-	MeshData mesh_data = create_mesh_text(*data);
+	Mesh mesh = create_mesh_text(*data);
 	Batch batch = create_batch(NULL, sizeof(InstanceColorData2D));
 
 	// Match text pixel size to screen coordinates
@@ -1095,7 +1095,7 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 	batch.num_instances++;
 
 	TextData text_data = {
-		.mesh = mesh_data,
+		.mesh = mesh,
 		.batch = batch,
 		.text = text
 	};

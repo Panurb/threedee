@@ -95,7 +95,7 @@ static_assert(sizeof(BillboardInstanceData) % 16 == 0);
 
 
 typedef struct Batch {
-	MeshData* mesh;
+	Mesh* mesh;
 	SDL_GPUBuffer* instance_buffer;
 	int num_instances;
 	int max_instances;
@@ -141,7 +141,7 @@ static_assert(sizeof(LineInstanceData) % 16 == 0);
 
 
 typedef struct TextData {
-	MeshData mesh;
+	Mesh mesh;
 	Batch batch;
 	TTF_Text* text;
 } TextData;

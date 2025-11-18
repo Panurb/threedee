@@ -216,17 +216,17 @@ Vector3 calculate_tangent(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 uv0, Vecto
 }
 
 
-MeshData load_mesh(String path) {
+Mesh load_mesh(String path) {
 	LOG_INFO("Loading mesh: %s", path);
 
 	FILE* file = fopen(path, "rb");
 	if (!file) {
 		LOG_ERROR("Failed to open mesh file: %s", path);
-		return (MeshData){0};
+		return (Mesh){0};
 	}
 
-	MeshData mesh_data = {0};
-	strcpy(mesh_data.name, path);
+	Mesh mesh = {0};
+	strcpy(mesh.name, path);
 
 	ArrayList* unique_vertices = ArrayList_create(sizeof(VertexIndices));
 	ArrayList* positions = ArrayList_create(sizeof(Vector3));
@@ -295,21 +295,21 @@ MeshData load_mesh(String path) {
 		}
 	}
 
-	mesh_data.num_vertices = unique_vertices->size;
-	mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
+	mesh.num_vertices = unique_vertices->size;
+	mesh.vertex_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices,
+			.size = sizeof(PositionTextureVertex) * mesh.num_vertices,
 		}
 	);
 
-	mesh_data.num_indices = indices->size;
-	mesh_data.index_buffer = SDL_CreateGPUBuffer(
+	mesh.num_indices = indices->size;
+	mesh.index_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
-			.size = sizeof(Uint16) * mesh_data.num_indices,
+			.size = sizeof(Uint16) * mesh.num_indices,
 		}
 	);
 
@@ -317,12 +317,12 @@ MeshData load_mesh(String path) {
 		app.gpu_device,
 		&(SDL_GPUTransferBufferCreateInfo){
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+			.size = sizeof(PositionTextureVertex) * mesh.num_vertices + sizeof(Uint16) * mesh.num_indices,
 		}
 	);
 
 	PositionTextureVertex* transfer_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
-	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
+	Uint16* index_data = (Uint16*) &transfer_data[mesh.num_vertices];
 
 	for (int i = 0; i < unique_vertices->size; i++) {
 		VertexIndices vi = *(VertexIndices*)ArrayList_get(unique_vertices, i);
@@ -379,9 +379,9 @@ MeshData load_mesh(String path) {
 			.offset = 0
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = mesh_data.vertex_buffer,
+			.buffer = mesh.vertex_buffer,
 			.offset = 0,
-			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices
+			.size = sizeof(PositionTextureVertex) * mesh.num_vertices
 		},
 		false
 	);
@@ -390,12 +390,12 @@ MeshData load_mesh(String path) {
 		copy_pass,
 		&(SDL_GPUTransferBufferLocation) {
 			.transfer_buffer = transfer_buffer,
-			.offset = sizeof(PositionTextureVertex) * mesh_data.num_vertices
+			.offset = sizeof(PositionTextureVertex) * mesh.num_vertices
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = mesh_data.index_buffer,
+			.buffer = mesh.index_buffer,
 			.offset = 0,
-			.size = sizeof(Uint16) * mesh_data.num_indices
+			.size = sizeof(Uint16) * mesh.num_indices
 		},
 		false
 	);
@@ -406,7 +406,7 @@ MeshData load_mesh(String path) {
 
 
 
-	return mesh_data;
+	return mesh;
 }
 
 

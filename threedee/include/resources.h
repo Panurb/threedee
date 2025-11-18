@@ -22,14 +22,14 @@ typedef struct {
 } Material;
 
 
-typedef struct MeshData {
+typedef struct Mesh {
     String name;
     SDL_GPUBuffer* vertex_buffer;
     int num_vertices;
     SDL_GPUBuffer* index_buffer;
     int num_indices;
     SDL_GPUTexture* texture;
-} MeshData;
+} Mesh;
 
 
 typedef struct {
@@ -57,7 +57,7 @@ typedef struct {
 
     Mix_Music* music[10];
 
-    MeshData meshes[MAX_MESHES];
+    Mesh meshes[MAX_MESHES];
     String mesh_names[MAX_MESHES];
     int meshes_size;
 } Resources;

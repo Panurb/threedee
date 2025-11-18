@@ -3,19 +3,19 @@
 #include "app.h"
 
 
-MeshData create_mesh_triangle() {
-	MeshData mesh_data = {
+Mesh create_mesh_triangle() {
+	Mesh mesh = {
 		.name = "triangle",
 		.num_indices = 0,
 		.index_buffer = NULL,
 	};
 
-	mesh_data.num_vertices = 3;
-    mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
+	mesh.num_vertices = 3;
+    mesh.vertex_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(Vector3) * mesh_data.num_vertices,
+            .size = sizeof(Vector3) * mesh.num_vertices,
         }
     );
 
@@ -23,7 +23,7 @@ MeshData create_mesh_triangle() {
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Vector3) * mesh_data.num_vertices,
+            .size = sizeof(Vector3) * mesh.num_vertices,
         }
     );
 
@@ -45,9 +45,9 @@ MeshData create_mesh_triangle() {
             .offset = 0
         },
         &(SDL_GPUBufferRegion) {
-            .buffer = mesh_data.vertex_buffer,
+            .buffer = mesh.vertex_buffer,
             .offset = 0,
-            .size = sizeof(Vector3) * mesh_data.num_vertices
+            .size = sizeof(Vector3) * mesh.num_vertices
         },
         false
     );
@@ -56,23 +56,23 @@ MeshData create_mesh_triangle() {
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
     SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
-	return mesh_data;
+	return mesh;
 }
 
 
-MeshData create_mesh_triangle_2d() {
-	MeshData mesh_data = {
+Mesh create_mesh_triangle_2d() {
+	Mesh mesh = {
 		.name = "triangle_2d",
 		.num_indices = 0,
 		.index_buffer = NULL,
 	};
 
-	mesh_data.num_vertices = 3;
-    mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
+	mesh.num_vertices = 3;
+    mesh.vertex_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(Vector2) * mesh_data.num_vertices,
+            .size = sizeof(Vector2) * mesh.num_vertices,
         }
     );
 
@@ -80,7 +80,7 @@ MeshData create_mesh_triangle_2d() {
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = sizeof(Vector2) * mesh_data.num_vertices,
+            .size = sizeof(Vector2) * mesh.num_vertices,
         }
     );
 
@@ -102,9 +102,9 @@ MeshData create_mesh_triangle_2d() {
             .offset = 0
         },
         &(SDL_GPUBufferRegion) {
-            .buffer = mesh_data.vertex_buffer,
+            .buffer = mesh.vertex_buffer,
             .offset = 0,
-            .size = sizeof(Vector2) * mesh_data.num_vertices
+            .size = sizeof(Vector2) * mesh.num_vertices
         },
         false
     );
@@ -113,30 +113,30 @@ MeshData create_mesh_triangle_2d() {
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
     SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
-	return mesh_data;
+	return mesh;
 }
 
 
-MeshData create_mesh_quad() {
-	MeshData mesh_data = {
+Mesh create_mesh_quad() {
+	Mesh mesh = {
 		.name = "quad",
 		.num_vertices = 4,
 		.num_indices = 6,
 	};
 
-	mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
+	mesh.vertex_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices,
+			.size = sizeof(PositionTextureVertex) * mesh.num_vertices,
 		}
 	);
 
-	mesh_data.index_buffer = SDL_CreateGPUBuffer(
+	mesh.index_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
-			.size = sizeof(Uint16) * mesh_data.num_indices,
+			.size = sizeof(Uint16) * mesh.num_indices,
 		}
 	);
 
@@ -144,7 +144,7 @@ MeshData create_mesh_quad() {
 		app.gpu_device,
 		&(SDL_GPUTransferBufferCreateInfo){
 			.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+			.size = sizeof(PositionTextureVertex) * mesh.num_vertices + sizeof(Uint16) * mesh.num_indices,
 		}
 	);
 
@@ -174,7 +174,7 @@ MeshData create_mesh_quad() {
 		.tangent = { 1.0f, 0.0f, 0.0f },
 	};
 
-	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
+	Uint16* index_data = (Uint16*) &transfer_data[mesh.num_vertices];
 	index_data[0] = 0;
 	index_data[1] = 1;
 	index_data[2] = 2;
@@ -194,9 +194,9 @@ MeshData create_mesh_quad() {
 			.offset = 0
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = mesh_data.vertex_buffer,
+			.buffer = mesh.vertex_buffer,
 			.offset = 0,
-			.size = sizeof(PositionTextureVertex) * mesh_data.num_vertices
+			.size = sizeof(PositionTextureVertex) * mesh.num_vertices
 		},
 		false
 	);
@@ -205,12 +205,12 @@ MeshData create_mesh_quad() {
 		copy_pass,
 		&(SDL_GPUTransferBufferLocation) {
 			.transfer_buffer = transfer_buffer,
-			.offset = sizeof(PositionTextureVertex) * mesh_data.num_vertices
+			.offset = sizeof(PositionTextureVertex) * mesh.num_vertices
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = mesh_data.index_buffer,
+			.buffer = mesh.index_buffer,
 			.offset = 0,
-			.size = sizeof(Uint16) * mesh_data.num_indices
+			.size = sizeof(Uint16) * mesh.num_indices
 		},
 		false
 	);
@@ -219,18 +219,18 @@ MeshData create_mesh_quad() {
 	SDL_SubmitGPUCommandBuffer(upload_command_buffer);
 	SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
-	return mesh_data;
+	return mesh;
 }
 
 
-MeshData create_mesh_line() {
-	MeshData mesh_data = {
+Mesh create_mesh_line() {
+	Mesh mesh = {
 		.name = "line",
 		.num_vertices = 4,
 		.num_indices = 0,
 	};
 
-	return mesh_data;
+	return mesh;
 }
 
 
@@ -255,27 +255,27 @@ Vector2 get_text_center(TTF_GPUAtlasDrawSequence data) {
 }
 
 
-MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
-	MeshData mesh_data = {
+Mesh create_mesh_text(TTF_GPUAtlasDrawSequence data) {
+	Mesh mesh = {
 		.name = "text",
 		.num_vertices = data.num_vertices,
 		.num_indices = data.num_indices,
 		.texture = data.atlas_texture,
 	};
 
-    mesh_data.vertex_buffer = SDL_CreateGPUBuffer(
+    mesh.vertex_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,
         &(SDL_GPUBufferCreateInfo){
             .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-            .size = sizeof(PositionTextureVertex2D) * mesh_data.num_vertices,
+            .size = sizeof(PositionTextureVertex2D) * mesh.num_vertices,
         }
     );
 
-	mesh_data.index_buffer = SDL_CreateGPUBuffer(
+	mesh.index_buffer = SDL_CreateGPUBuffer(
 		app.gpu_device,
 		&(SDL_GPUBufferCreateInfo){
 			.usage = SDL_GPU_BUFFERUSAGE_INDEX,
-			.size = sizeof(Uint16) * mesh_data.num_indices,
+			.size = sizeof(Uint16) * mesh.num_indices,
 		}
 	);
 
@@ -283,7 +283,7 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
         app.gpu_device,
         &(SDL_GPUTransferBufferCreateInfo){
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        	.size = sizeof(PositionTextureVertex2D) * mesh_data.num_vertices + sizeof(Uint16) * mesh_data.num_indices,
+        	.size = sizeof(PositionTextureVertex2D) * mesh.num_vertices + sizeof(Uint16) * mesh.num_indices,
         }
     );
 
@@ -293,14 +293,14 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
 	float w = text_center.x;
 	float h = text_center.y;
 
-    for (int i = 0; i < mesh_data.num_vertices; ++i) {
+    for (int i = 0; i < mesh.num_vertices; ++i) {
     	SDL_FPoint xy = data.xy[i];
     	SDL_FPoint uv = data.uv[i];
 		transfer_data[i] = (PositionTextureVertex2D) { xy.x - w, xy.y - h, uv.x, uv.y };
 	}
 
-	Uint16* index_data = (Uint16*) &transfer_data[mesh_data.num_vertices];
-	for (int i = 0; i < mesh_data.num_indices; ++i) {
+	Uint16* index_data = (Uint16*) &transfer_data[mesh.num_vertices];
+	for (int i = 0; i < mesh.num_indices; ++i) {
 		index_data[i] = data.indices[i];
 	}
 
@@ -316,9 +316,9 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
             .offset = 0
         },
         &(SDL_GPUBufferRegion) {
-            .buffer = mesh_data.vertex_buffer,
+            .buffer = mesh.vertex_buffer,
             .offset = 0,
-            .size = sizeof(PositionTextureVertex2D) * mesh_data.num_vertices
+            .size = sizeof(PositionTextureVertex2D) * mesh.num_vertices
         },
         false
     );
@@ -327,12 +327,12 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
 		copy_pass,
 		&(SDL_GPUTransferBufferLocation) {
 			.transfer_buffer = transfer_buffer,
-			.offset = sizeof(PositionTextureVertex2D) * mesh_data.num_vertices
+			.offset = sizeof(PositionTextureVertex2D) * mesh.num_vertices
 		},
 		&(SDL_GPUBufferRegion) {
-			.buffer = mesh_data.index_buffer,
+			.buffer = mesh.index_buffer,
 			.offset = 0,
-			.size = sizeof(Uint16) * mesh_data.num_indices
+			.size = sizeof(Uint16) * mesh.num_indices
 		},
 		false
 	);
@@ -341,5 +341,5 @@ MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data) {
     SDL_SubmitGPUCommandBuffer(upload_command_buffer);
     SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
 
-	return mesh_data;
+	return mesh;
 }

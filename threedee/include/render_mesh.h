@@ -3,12 +3,12 @@
 #include "render.h"
 
 
-MeshData create_mesh_triangle(void);
+Mesh create_mesh_triangle(void);
 
-MeshData create_mesh_triangle_2d(void);
+Mesh create_mesh_triangle_2d(void);
 
-MeshData create_mesh_quad(void);
+Mesh create_mesh_quad(void);
 
-MeshData create_mesh_line(void);
+Mesh create_mesh_line(void);
 
-MeshData create_mesh_text(TTF_GPUAtlasDrawSequence data);
+Mesh create_mesh_text(TTF_GPUAtlasDrawSequence data);
