@@ -122,6 +122,8 @@ void draw_entities() {
         get_color(1.0f, 1.0f, 1.0f, 0.5f)
     );
 
+    int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
+
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
         if (light && !light->disabled) {
@@ -135,16 +137,24 @@ void draw_entities() {
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
         if (mesh_component && mesh_component->visible) {
             float emissive = get_emissive(entity);
-            draw_mesh(
-                get_transform(entity),
-                mesh_component->mesh_index,
-                mesh_component->texture_index,
-                mesh_component->material_index,
-                mesh_component->emissive_index,
-                emissive,
-                mesh_component->visibility,
-                mesh_component->texture_scale
-            );
+            if (mesh_component->mesh_index == cube_index) {
+                draw_cube(
+                    get_transform(entity),
+                    CubeIndices_fill(mesh_component->texture_index),
+                    CubeIndices_fill(mesh_component->material_index)
+                );
+            } else {
+                draw_mesh(
+                    get_transform(entity),
+                    mesh_component->mesh_index,
+                    mesh_component->texture_index,
+                    mesh_component->material_index,
+                    mesh_component->emissive_index,
+                    emissive,
+                    mesh_component->visibility,
+                    mesh_component->texture_scale
+                );
+            }
         }
 
         SpriteComponent* sprite = get_component(entity, COMPONENT_SPRITE);

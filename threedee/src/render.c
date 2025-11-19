@@ -39,6 +39,7 @@ static Batch triangle_batch;
 static Batch triangle_2d_batch;
 static Batch quad_batch;
 static Batch line_batch;
+static Batch cube_batch;
 
 static Batch batches[MAX_MESHES] = { 0 };
 
@@ -150,6 +151,8 @@ void init_render() {
 	triangle_2d_batch = create_batch(&triangle_2d_mesh, sizeof(InstanceColorData2D));
 	quad_batch = create_batch(&quad_mesh, sizeof(BillboardInstanceData));
 	line_batch = create_batch(&line_mesh, sizeof(LineInstanceData));
+	int cube_mesh_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
+	cube_batch = create_batch(&resources.meshes[cube_mesh_index], sizeof(CubeInstanceData));
 
 	for (int i = 0; i < resources.meshes_size; i++) {
 		batches[i] = create_batch(&resources.meshes[i], sizeof(InstanceData));
@@ -246,7 +249,7 @@ void apply_render_settings() {
 void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[pipeline]);
 
-	if (pipeline == PIPELINE_3D_TEXTURED) {
+	if (pipeline == PIPELINE_3D_TEXTURED || pipeline == PIPELINE_CUBE) {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			0,
@@ -421,6 +424,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		for (int j = 0; j < resources.meshes_size; j++) {
 			render_batch(command_buffer, render_pass, &batches[j]);
 		}
+		// render_batch(command_buffer, render_pass, &cube_batch);
 
 		SDL_EndGPURenderPass(render_pass);
 	}
@@ -589,6 +593,9 @@ void render() {
 			1
 		);
 
+		bind_pipeline(render_pass, PIPELINE_CUBE);
+		render_batch(command_buffer, render_pass, &cube_batch);
+
 		bind_pipeline(render_pass, PIPELINE_3D_TEXTURED);
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_batch(command_buffer, render_pass, &batches[i]);
@@ -697,6 +704,7 @@ void render() {
 	triangle_2d_batch.num_instances = 0;
 	quad_batch.num_instances = 0;
 	line_batch.num_instances = 0;
+	cube_batch.num_instances = 0;
 
 	frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
 }
@@ -846,6 +854,37 @@ void draw_mesh(
 		.emissive = emissive
 	};
 	transforms[batch->num_instances] = instance_data;
+	batch->num_instances++;
+}
+
+
+CubeIndices CubeIndices_fill(int value) {
+	CubeIndices indices = {
+		.front = value,
+		.back = value,
+		.left = value,
+		.right = value,
+		.top = value,
+		.bottom = value
+	};
+	return indices;
+}
+
+
+void draw_cube(Matrix4 transform, CubeIndices texture_indices, CubeIndices material_indices) {
+	Batch* batch = &cube_batch;
+	check_batch_buffer_sizes(batch);
+
+	CubeInstanceData* instances = get_batch_instance_data(batch);
+
+	CubeInstanceData instance_data = {
+		.transform = transpose4(transform),
+		.texture_indices = texture_indices,
+		.material_indices = material_indices,
+		.visiblity = VISIBILITY_ALL
+	};
+
+	instances[batch->num_instances] = instance_data;
 	batch->num_instances++;
 }
 

@@ -14,6 +14,8 @@
 
 #include "util.h"
 
+#include <stdio.h>
+
 
 void fill(int* array, int value, int size) {
     for (int i = 0; i < size; i++) {

@@ -57,10 +57,20 @@ typedef struct {
 static_assert(sizeof(InstanceData) % 16 == 0);
 
 
+typedef struct CubeIndices {
+	int front;
+	int back;
+	int left;
+	int right;
+	int top;
+	int bottom;
+} CubeIndices;
+
+
 typedef struct CubeInstanceData {
 	Matrix4 transform;
-	int texture_index[6];
-	int material_index[6];
+	CubeIndices texture_indices;
+	CubeIndices material_indices;
 	Visibility visiblity;
 	float _pad[3];
 } CubeInstanceData;
@@ -182,6 +192,10 @@ void render();
 void add_light(Entity entity);
 
 void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int emissive_index, float emissive, Visibility visibility, Vector2 texture_scale);
+
+CubeIndices CubeIndices_fill(int value);
+
+void draw_cube(Matrix4 transform, CubeIndices texture_indices, CubeIndices material_indices);
 
 void draw_sprite(Vector3 position, float width, float height, int texture_index);
 
