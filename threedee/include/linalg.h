@@ -73,6 +73,8 @@ Vector2 vec2(float x, float y);
 
 Vector3 vec3(float x, float y, float z);
 
+Vector3 vec4_xyz(Vector4 v);
+
 Vector3 vec3_up();
 
 Vector3 vec3_down();

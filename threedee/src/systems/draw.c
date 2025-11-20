@@ -1,13 +1,126 @@
-#include "systems/draw.h"
-
-#include <stdio.h>
-#include <systems/enemy.h>
-#include <systems/navigation.h>
-
 #include "app.h"
 #include "render.h"
 #include "scene.h"
 #include "util.h"
+#include "systems/draw.h"
+
+#include <stdio.h>
+
+#include "systems/navigation.h"
+
+
+static Vector4 cube_corners[8] = {
+    {-0.5f, -0.5f, -0.5f, 1.0f},
+    { 0.5f, -0.5f, -0.5f, 1.0f},
+    { 0.5f,  0.5f, -0.5f, 1.0f},
+    {-0.5f,  0.5f, -0.5f, 1.0f},
+    {-0.5f, -0.5f,  0.5f, 1.0f},
+    { 0.5f, -0.5f,  0.5f, 1.0f},
+    { 0.5f,  0.5f,  0.5f, 1.0f},
+    {-0.5f,  0.5f,  0.5f, 1.0f}
+};
+
+static Vector4 cube_normals[6] = {
+    { 0.0f,  0.0f, -1.0f, 0.0f}, // Back
+    { 1.0f,  0.0f,  0.0f, 0.0f}, // Right
+    { 0.0f,  0.0f,  1.0f, 0.0f}, // Front
+    {-1.0f,  0.0f,  0.0f, 0.0f}, // Left
+    { 0.0f,  1.0f,  0.0f, 0.0f}, // Top
+    { 0.0f, -1.0f,  0.0f, 0.0f}  // Bottom
+};
+
+static int face_indices[6][4] = {
+    {0, 1, 2, 3}, // Back face
+    {1, 5, 6, 2}, // Right face
+    {5, 4, 7, 6}, // Front face
+    {4, 0, 3, 7}, // Left face
+    {3, 2, 6, 7}, // Top face
+    {4, 5, 1, 0}  // Bottom face
+};
+
+
+ArrayList* face_groups;
+
+
+bool faces_adjacent(CubeFace* a, CubeFace* b) {
+    MeshComponent* mesh_a = get_component(a->entity, COMPONENT_MESH);
+    MeshComponent* mesh_b = get_component(b->entity, COMPONENT_MESH);
+
+    if (mesh_a->texture_index != mesh_b->texture_index) {
+        return false;
+    }
+
+    if (mesh_a->material_index != mesh_b->material_index) {
+        return false;
+    }
+
+    if (dot3(a->normal, b->normal) < 0.999f) {
+        return false;
+    }
+
+    return true;
+}
+
+
+void merge_adjacent_faces() {
+    LOG_INFO("Merging adjacent cube faces");
+
+    face_groups = ArrayList_create(sizeof(ArrayList));
+
+    int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
+
+    for (Entity entity = 0; entity < scene->components->entities; entity++) {
+        MeshComponent* mesh = get_component(entity, COMPONENT_MESH);
+        if (!mesh) continue;
+        if (mesh->mesh_index != cube_index) continue;
+
+        Matrix4 transform = get_transform(entity);
+
+        for (int f = 0; f < 6; f++) {
+            Vector4 normal = cube_normals[f];
+            normal = map4(transform, normal);
+
+            CubeFace cube_face = {
+                .normal = normalized3(vec4_xyz(normal)),
+                .entity = entity
+            };
+
+            for (int v = 0; v < 4; v++) {
+                Vector4 corner = cube_corners[face_indices[f][v]];
+                corner = map4(transform, corner);
+
+                cube_face.corners[v] = vec4_xyz(corner);
+            }
+
+            ArrayList* found_group = NULL;
+            for (int g = 0; g < face_groups->size; g++) {
+                ArrayList* group = ArrayList_get(face_groups, g);
+                CubeFace* first_face = ArrayList_get(group, 0);
+                if (faces_adjacent(first_face, &cube_face)) {
+                    found_group = group;
+                    ArrayList_add(found_group, &cube_face);
+                    break;
+                }
+            }
+
+            if (!found_group) {
+                LOG_INFO("Creating new face group for entity %d", entity);
+                found_group = ArrayList_create(sizeof(CubeFace));
+                ArrayList_add(found_group, &cube_face);
+                ArrayList_add(face_groups, found_group);
+            }
+        }
+    }
+
+    for (int g = 0; g < face_groups->size; g++) {
+        ArrayList* group = ArrayList_get(face_groups, g);
+        LOG_INFO("Face group %d has %d faces", g, group->size);
+        Vector3 normal = ((CubeFace*)ArrayList_get(group, 0))->normal;
+        LOG_INFO("Normal: (%f, %f, %f)", normal.x, normal.y, normal.z);
+    }
+
+    LOG_INFO("Finished merging adjacent cube faces");
+}
 
 
 void draw_axes(Entity entity) {

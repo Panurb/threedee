@@ -63,6 +63,10 @@ Vector3 vec3(float x, float y, float z) {
     return (Vector3) { x, y, z };
 }
 
+Vector3 vec4_xyz(Vector4 v) {
+    return (Vector3) { v.x, v.y, v.z };
+}
+
 Vector3 vec3_up() {
     return (Vector3) { 0.0f, 1.0f, 0.0f };
 }
