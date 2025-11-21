@@ -1,11 +1,11 @@
+#include <stdio.h>
+
 #include "app.h"
 #include "render.h"
+#include "render_mesh.h"
 #include "scene.h"
 #include "util.h"
 #include "systems/draw.h"
-
-#include <stdio.h>
-
 #include "systems/navigation.h"
 
 
@@ -40,6 +40,7 @@ static int face_indices[6][4] = {
 
 
 ArrayList* face_groups;
+ArrayList* meshes;
 
 
 bool faces_adjacent(CubeFace* a, CubeFace* b) {
@@ -66,6 +67,7 @@ void merge_adjacent_faces() {
     LOG_INFO("Merging adjacent cube faces");
 
     face_groups = ArrayList_create(sizeof(ArrayList));
+    meshes = ArrayList_create(sizeof(Mesh));
 
     int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
 
@@ -82,6 +84,7 @@ void merge_adjacent_faces() {
 
             CubeFace cube_face = {
                 .normal = normalized3(vec4_xyz(normal)),
+                .tangent = vec3(1.0f, 0.0f, 0.0f), // Placeholder tangent
                 .entity = entity
             };
 
@@ -90,6 +93,10 @@ void merge_adjacent_faces() {
                 corner = map4(transform, corner);
 
                 cube_face.corners[v] = vec4_xyz(corner);
+                cube_face.uvs[v] = (Vector2) {
+                    (v == 0 || v == 3) ? 0.0f : 1.0f,
+                    (v == 0 || v == 1) ? 1.0f : 0.0f
+                };
             }
 
             ArrayList* found_group = NULL;
@@ -117,6 +124,9 @@ void merge_adjacent_faces() {
         LOG_INFO("Face group %d has %d faces", g, group->size);
         Vector3 normal = ((CubeFace*)ArrayList_get(group, 0))->normal;
         LOG_INFO("Normal: (%f, %f, %f)", normal.x, normal.y, normal.z);
+
+        Mesh mesh = create_mesh_from_face_group(group);
+        ArrayList_add(meshes, &mesh);
     }
 
     LOG_INFO("Finished merging adjacent cube faces");

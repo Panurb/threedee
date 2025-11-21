@@ -1,6 +1,7 @@
 #pragma once
 
 #include "render.h"
+#include "arraylist.h"
 
 
 Mesh create_mesh_triangle(void);
@@ -12,3 +13,5 @@ Mesh create_mesh_quad(void);
 Mesh create_mesh_line(void);
 
 Mesh create_mesh_text(TTF_GPUAtlasDrawSequence data);
+
+Mesh create_mesh_from_face_group(ArrayList* group);

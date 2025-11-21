@@ -343,3 +343,99 @@ Mesh create_mesh_text(TTF_GPUAtlasDrawSequence data) {
 
 	return mesh;
 }
+
+
+Mesh create_mesh_from_face_group(ArrayList* group) {
+    Mesh mesh = {
+        .name = "face_group",
+        .num_vertices = group->size * 4,
+        .num_indices = group->size * 6,
+    };
+
+    mesh.vertex_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+            .size = sizeof(PositionTextureVertex) * mesh.num_vertices,
+        }
+    );
+
+    mesh.index_buffer = SDL_CreateGPUBuffer(
+        app.gpu_device,
+        &(SDL_GPUBufferCreateInfo){
+            .usage = SDL_GPU_BUFFERUSAGE_INDEX,
+            .size = sizeof(Uint16) * mesh.num_indices,
+        }
+    );
+
+    SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(
+        app.gpu_device,
+        &(SDL_GPUTransferBufferCreateInfo){
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(PositionTextureVertex) * mesh.num_vertices + sizeof(Uint16) * mesh.num_indices,
+        }
+    );
+
+    PositionTextureVertex* vertex_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
+    Uint16* index_data = (Uint16*) &vertex_data[mesh.num_vertices];
+
+    for (int i = 0; i < group->size; i++) {
+        CubeFace* face = ArrayList_get(group, i);
+
+        for (int v = 0; v < 4; v++) {
+            Vector3 corner = face->corners[v];
+            Vector2 uv = face->uvs[v];
+
+            vertex_data[i * 4 + v] = (PositionTextureVertex) {
+                .position = corner,
+                .uv = uv,
+                .normal = face->normal,
+                .tangent = face->tangent,
+            };
+        }
+
+        index_data[i * 6 + 0] = i * 4 + 0;
+        index_data[i * 6 + 1] = i * 4 + 1;
+        index_data[i * 6 + 2] = i * 4 + 2;
+        index_data[i * 6 + 3] = i * 4 + 2;
+        index_data[i * 6 + 4] = i * 4 + 3;
+        index_data[i * 6 + 5] = i * 4 + 0;
+    }
+
+	SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
+	SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(upload_command_buffer);
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = transfer_buffer,
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = mesh.vertex_buffer,
+			.offset = 0,
+			.size = sizeof(PositionTextureVertex) * mesh.num_vertices
+		},
+		false
+	);
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = transfer_buffer,
+			.offset = sizeof(PositionTextureVertex) * mesh.num_vertices
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = mesh.index_buffer,
+			.offset = 0,
+			.size = sizeof(Uint16) * mesh.num_indices
+		},
+		false
+	);
+	SDL_EndGPUCopyPass(copy_pass);
+	SDL_SubmitGPUCommandBuffer(upload_command_buffer);
+	SDL_ReleaseGPUTransferBuffer(app.gpu_device, transfer_buffer);
+
+	return mesh;
+}

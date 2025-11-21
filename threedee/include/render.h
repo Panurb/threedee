@@ -179,6 +179,15 @@ typedef struct DepthOfFieldUniformData {
 } DepthOfFieldUniformData;
 
 
+typedef struct CubeFace {
+	Vector3 normal;
+	Vector3 tangent;
+	Vector3 corners[4];
+	Vector2 uvs[4];
+	Entity entity;
+} CubeFace;
+
+
 SDL_GPUSampleCount get_sample_count(void);
 
 void init_render();
