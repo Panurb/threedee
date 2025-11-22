@@ -62,8 +62,8 @@ static_assert(sizeof(InstanceData) % 16 == 0);
 
 
 typedef struct ModelUniformData {
-	int use_instance_buffer;
 	InstanceData instance_data;
+	int use_instance_buffer;
 } ModelUniformData;
 
 

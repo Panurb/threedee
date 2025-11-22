@@ -123,9 +123,12 @@ void merge_adjacent_faces() {
         Vector3 normal = first_face->normal;
         LOG_INFO("Normal: (%f, %f, %f)", normal.x, normal.y, normal.z);
 
-        Mesh mesh = create_mesh_from_face_group(group);
+        Mesh mesh_data = create_mesh_from_face_group(group);
+        Mesh* mesh = malloc(sizeof(Mesh));
+        *mesh = mesh_data;
+
         Model model = {
-            .mesh = &mesh,
+            .mesh = mesh,
             .instance_data = {
                 .transform = identity4(),
                 .texture_scale = ones2(),

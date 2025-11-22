@@ -1,4 +1,7 @@
 #include "render_mesh.h"
+
+#include <stdio.h>
+
 #include "render.h"
 #include "app.h"
 
@@ -351,6 +354,7 @@ Mesh create_mesh_from_face_group(ArrayList* group) {
         .num_vertices = group->size * 4,
         .num_indices = group->size * 6,
     };
+	LOG_INFO("Creating mesh from face group with %d faces (%d vertices, %d indices)", group->size, mesh.num_vertices, mesh.num_indices);
 
     mesh.vertex_buffer = SDL_CreateGPUBuffer(
         app.gpu_device,

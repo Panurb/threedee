@@ -18,8 +18,8 @@ struct InstanceData
 
 cbuffer ModelUniformData : register(b1, space1)
 {
-    int use_instance_buffer = 1;
     InstanceData model_data;
+    int use_instance_buffer = 1;
 };
 
 StructuredBuffer<InstanceData> instance_datas : register(t0, space0);

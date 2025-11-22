@@ -41,6 +41,7 @@ static Batch triangle_2d_batch;
 static Batch quad_batch;
 static Batch line_batch;
 static Batch cube_batch;
+static Batch dummy_batch;
 
 static Batch batches[MAX_MESHES] = { 0 };
 
@@ -156,6 +157,7 @@ void init_render() {
 	line_batch = create_batch(&line_mesh, sizeof(LineInstanceData));
 	int cube_mesh_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
 	cube_batch = create_batch(&resources.meshes[cube_mesh_index], sizeof(CubeInstanceData));
+	dummy_batch = create_batch(NULL, sizeof(InstanceData));
 
 	for (int i = 0; i < resources.meshes_size; i++) {
 		batches[i] = create_batch(&resources.meshes[i], sizeof(InstanceData));
@@ -340,24 +342,17 @@ void render_mesh(
 }
 
 
-void render_model(
-	SDL_GPUCommandBuffer* command_buffer,
-	SDL_GPURenderPass* render_pass,
-	Model* model
-) {
+void init_batch_rendering(SDL_GPUCommandBuffer* command_buffer) {
 	ModelUniformData model_uniform_data = {
-		.use_instance_buffer = false,
-		.instance_data = model->instance_data
+		.use_instance_buffer = true
 	};
 
 	SDL_PushGPUVertexUniformData(
 		command_buffer,
 		1,
 		&model_uniform_data,
-		sizeof(InstanceData)
+		sizeof(ModelUniformData)
 	);
-
-	render_mesh(render_pass, model->mesh, 1, 0);
 }
 
 
@@ -371,7 +366,7 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 	}
 
 	if (batch->instance_data[frame_index]) {
-		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", mesh->name);
+		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", batch->mesh->name);
 		SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[frame_index]);
 		batch->instance_data[frame_index] = NULL;
 	}
@@ -402,6 +397,33 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 		batch->num_instances,
 		frame_index * batch->max_instances
 	);
+}
+
+
+void init_model_rendering(SDL_GPURenderPass* render_pass) {
+	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &dummy_batch.instance_buffer, 1);
+}
+
+
+void render_model(
+	SDL_GPUCommandBuffer* command_buffer,
+	SDL_GPURenderPass* render_pass,
+	Model* model
+) {
+	LOG_DEBUG("Rendering model: %s", model->mesh->name);
+	ModelUniformData model_uniform_data = {
+		.use_instance_buffer = false,
+		.instance_data = model->instance_data
+	};
+
+	SDL_PushGPUVertexUniformData(
+		command_buffer,
+		1,
+		&model_uniform_data,
+		sizeof(ModelUniformData)
+	);
+
+	render_mesh(render_pass,model->mesh, 1, 0);
 }
 
 
@@ -630,25 +652,17 @@ void render() {
 			1
 		);
 
-		// for (int i = 0; i < meshes->size; i++) {
-		// 	Mesh* mesh = ArrayList_get(meshes, i);
-		// 	render_mesh(
-		// 		command_buffer,
-		// 		render_pass,
-		// 		mesh,
-		// 		-1,
-		// 		-1,
-		// 		-1,
-		// 		0.0f,
-		// 		VISIBILITY_OPAQUE,
-		// 		(vec2){1.0f, 1.0f}
-		// 	);
-		// }
-
-		bind_pipeline(render_pass, PIPELINE_CUBE);
-		render_batch(command_buffer, render_pass, &cube_batch);
+		// bind_pipeline(render_pass, PIPELINE_CUBE);
+		// render_batch(command_buffer, render_pass, &cube_batch);
 
 		bind_pipeline(render_pass, PIPELINE_3D_TEXTURED);
+		init_model_rendering(render_pass);
+		for (int i = 0; i < models->size; i++) {
+			Model* model = ArrayList_get(models, i);
+			render_model(command_buffer, render_pass, model);
+		}
+
+		init_batch_rendering(command_buffer);
 		for (int i = 0; i < resources.meshes_size; i++) {
 			render_batch(command_buffer, render_pass, &batches[i]);
 		}
@@ -767,7 +781,7 @@ void* get_batch_instance_data(Batch* batch) {
 		return batch->instance_data[frame_index];
 	}
 
-	LOG_DEBUG("Mapping instance data for batch %d, frame %d", batch->mesh_index, frame_index);
+	LOG_DEBUG("Mapping instance data for batch %s, frame %d", batch->mesh->name, frame_index);
 	batch->instance_data[frame_index] = SDL_MapGPUTransferBuffer(
 		app.gpu_device, batch->instance_transfer_buffer[frame_index], false
 	);
@@ -832,7 +846,7 @@ void double_batch_buffer_sizes(Batch* batch) {
 
 		// Only need to copy buffer data for the current frame
 		if (i == frame_index) {
-			LOG_DEBUG("Copying instance transfer buffer data for batch %d, frame %d", batch->mesh_index, i);
+			LOG_DEBUG("Copying instance transfer buffer data for batch %s, frame %d", batch->mesh->name, i);
 			SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 
 			void* data = get_batch_instance_data(batch);
