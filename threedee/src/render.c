@@ -147,6 +147,7 @@ void init_render() {
 	quad_mesh = create_mesh_quad();
 	line_mesh = create_mesh_line();
 	texts = ArrayList_create(sizeof(TextData));
+	models = ArrayList_create(sizeof(Model));
 
 	identity_batch = create_batch(&triangle_mesh, 1);
 	triangle_batch = create_batch(&triangle_mesh, sizeof(InstanceColorData));
@@ -280,126 +281,11 @@ void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 
 
 void render_mesh(
-	SDL_GPUCommandBuffer* command_buffer,
 	SDL_GPURenderPass* render_pass,
 	Mesh* mesh,
-	int texture_index,
-	int material_index,
-	int emissive_index,
-	float emissive,
-	Visibility visibility,
-	Vector2 texture_scale
+	int num_instances,
+	int first_instance
 ) {
-	ModelUniformData model_uniform_data = {
-		.use_instance_buffer = false,
-		.instance_data = {
-			.transform = identity4(),
-			.texture_index = texture_index,
-			.emissive_index = emissive_index,
-			.texture_scale = texture_scale,
-			.material_index = material_index,
-			.visiblity = visibility,
-			.emissive = emissive,
-		},
-	};
-
-	SDL_PushGPUVertexUniformData(
-		command_buffer,
-		1,
-		&model_uniform_data,
-		sizeof(InstanceData)
-	);
-
-	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh->vertex_buffer, 1);
-	if (mesh->texture) {
-		SDL_BindGPUFragmentSamplers(
-			render_pass,
-			0,
-			&(SDL_GPUTextureSamplerBinding){
-				.texture = mesh->texture,
-				.sampler = sampler,
-			},
-			1
-		);
-	}
-	if (mesh->index_buffer) {
-		SDL_BindGPUIndexBuffer(
-			render_pass,
-			&(SDL_GPUBufferBinding) {
-				.buffer = mesh->index_buffer,
-				.offset = 0
-			},
-			SDL_GPU_INDEXELEMENTSIZE_16BIT
-		);
-
-		SDL_DrawGPUIndexedPrimitives(
-			render_pass,
-			mesh->num_indices,
-			1,
-			0,
-			0,
-			0
-		);
-	} else {
-		SDL_DrawGPUPrimitives(
-			render_pass,
-			mesh->num_vertices,
-			1,
-			0,
-			0
-		);
-	}
-}
-
-
-void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, Batch* batch) {
-	if (batch->num_instances == 0) {
-		return;
-	}
-
-	if (batch->instance_size == 0) {
-		LOG_ERROR("Instance size is zero");
-	}
-
-	if (batch->instance_data[frame_index]) {
-		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", mesh->name);
-		SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[frame_index]);
-		batch->instance_data[frame_index] = NULL;
-	}
-
-	// ModelUniformData model_uniform_data = {
-	// 	.use_instance_buffer = true,
-	// };
-	//
-	// SDL_PushGPUVertexUniformData(
-	// 	gpu_command_buffer,
-	// 	1,
-	// 	&model_uniform_data,
-	// 	sizeof(InstanceData)
-	// );
-
-	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
-
-	SDL_UploadToGPUBuffer(
-		copy_pass,
-		&(SDL_GPUTransferBufferLocation) {
-			.transfer_buffer = batch->instance_transfer_buffer[frame_index],
-			.offset = 0
-		},
-		&(SDL_GPUBufferRegion) {
-			.buffer = batch->instance_buffer,
-			.offset = frame_index * batch->max_instances * batch->instance_size,
-			.size = batch->instance_size * batch->num_instances
-		},
-		true
-	);
-
-	SDL_EndGPUCopyPass(copy_pass);
-
-	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &batch->instance_buffer, 1);
-
-	Mesh* mesh = batch->mesh;
-
 	if (mesh->vertex_buffer) {
 		SDL_BindGPUVertexBuffers(
 			render_pass,
@@ -437,20 +323,85 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 		SDL_DrawGPUIndexedPrimitives(
 			render_pass,
 			mesh->num_indices,
-			batch->num_instances,
+			num_instances,
 			0,
 			0,
-			frame_index * batch->max_instances
+			first_instance
 		);
 	} else {
 		SDL_DrawGPUPrimitives(
 			render_pass,
 			mesh->num_vertices,
-			batch->num_instances,
+			num_instances,
 			0,
-			frame_index * batch->max_instances
+			first_instance
 		);
 	}
+}
+
+
+void render_model(
+	SDL_GPUCommandBuffer* command_buffer,
+	SDL_GPURenderPass* render_pass,
+	Model* model
+) {
+	ModelUniformData model_uniform_data = {
+		.use_instance_buffer = false,
+		.instance_data = model->instance_data
+	};
+
+	SDL_PushGPUVertexUniformData(
+		command_buffer,
+		1,
+		&model_uniform_data,
+		sizeof(InstanceData)
+	);
+
+	render_mesh(render_pass, model->mesh, 1, 0);
+}
+
+
+void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, Batch* batch) {
+	if (batch->num_instances == 0) {
+		return;
+	}
+
+	if (batch->instance_size == 0) {
+		LOG_ERROR("Instance size is zero");
+	}
+
+	if (batch->instance_data[frame_index]) {
+		LOG_DEBUG("Batch %s has instance data still mapped, unmapping now", mesh->name);
+		SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[frame_index]);
+		batch->instance_data[frame_index] = NULL;
+	}
+
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = batch->instance_transfer_buffer[frame_index],
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = batch->instance_buffer,
+			.offset = frame_index * batch->max_instances * batch->instance_size,
+			.size = batch->instance_size * batch->num_instances
+		},
+		true
+	);
+
+	SDL_EndGPUCopyPass(copy_pass);
+
+	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &batch->instance_buffer, 1);
+
+	render_mesh(
+		render_pass,
+		batch->mesh,
+		batch->num_instances,
+		frame_index * batch->max_instances
+	);
 }
 
 
@@ -678,6 +629,21 @@ void render() {
 			&resources.materials_buffer,
 			1
 		);
+
+		// for (int i = 0; i < meshes->size; i++) {
+		// 	Mesh* mesh = ArrayList_get(meshes, i);
+		// 	render_mesh(
+		// 		command_buffer,
+		// 		render_pass,
+		// 		mesh,
+		// 		-1,
+		// 		-1,
+		// 		-1,
+		// 		0.0f,
+		// 		VISIBILITY_OPAQUE,
+		// 		(vec2){1.0f, 1.0f}
+		// 	);
+		// }
 
 		bind_pipeline(render_pass, PIPELINE_CUBE);
 		render_batch(command_buffer, render_pass, &cube_batch);
@@ -936,7 +902,7 @@ void draw_mesh(
 		.texture_index = texture_index,
 		.emissive_index = emissive_index,
 		.texture_scale = texture_scale,
-		.visiblity = visibility,
+		.visibility = visibility,
 		.emissive = emissive
 	};
 	transforms[batch->num_instances] = instance_data;

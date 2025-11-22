@@ -5,9 +5,13 @@
 #include "linalg.h"
 #include "util.h"
 #include "settings.h"
+#include "arraylist.h"
 
 
 #define DEPTH_FORMAT SDL_GPU_TEXTUREFORMAT_D32_FLOAT
+
+
+ArrayList* models;
 
 
 typedef struct PositionTextureVertex {
@@ -50,7 +54,7 @@ typedef struct {
 	int emissive_index;
 	Vector2 texture_scale;
 	int material_index;
-	Visibility visiblity;
+	Visibility visibility;
 	float emissive;
 	float _pad;
 } InstanceData;
@@ -119,6 +123,12 @@ typedef struct Batch {
 	void* instance_data[FRAMES_IN_FLIGHT];  // Mapped pointer for each frame
 	int instance_size;
 } Batch;
+
+
+typedef struct Model {
+	Mesh* mesh;
+	InstanceData instance_data;
+} Model;
 
 
 typedef struct Matrix2x3 {
@@ -190,7 +200,8 @@ typedef struct CubeFace {
 	Vector3 tangent;
 	Vector3 corners[4];
 	Vector2 uvs[4];
-	Entity entity;
+	int texture_index;
+	int material_index;
 } CubeFace;
 
 

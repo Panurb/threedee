@@ -40,18 +40,14 @@ static int face_indices[6][4] = {
 
 
 ArrayList* face_groups;
-ArrayList* meshes;
 
 
 bool faces_adjacent(CubeFace* a, CubeFace* b) {
-    MeshComponent* mesh_a = get_component(a->entity, COMPONENT_MESH);
-    MeshComponent* mesh_b = get_component(b->entity, COMPONENT_MESH);
-
-    if (mesh_a->texture_index != mesh_b->texture_index) {
+    if (a->texture_index != b->texture_index) {
         return false;
     }
 
-    if (mesh_a->material_index != mesh_b->material_index) {
+    if (a->material_index != b->material_index) {
         return false;
     }
 
@@ -67,7 +63,7 @@ void merge_adjacent_faces() {
     LOG_INFO("Merging adjacent cube faces");
 
     face_groups = ArrayList_create(sizeof(ArrayList));
-    meshes = ArrayList_create(sizeof(Mesh));
+    models = ArrayList_create(sizeof(Model));
 
     int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
 
@@ -85,7 +81,8 @@ void merge_adjacent_faces() {
             CubeFace cube_face = {
                 .normal = normalized3(vec4_xyz(normal)),
                 .tangent = vec3(1.0f, 0.0f, 0.0f), // Placeholder tangent
-                .entity = entity
+                .texture_index = mesh->texture_index,
+                .material_index = mesh->material_index
             };
 
             for (int v = 0; v < 4; v++) {
@@ -122,12 +119,29 @@ void merge_adjacent_faces() {
     for (int g = 0; g < face_groups->size; g++) {
         ArrayList* group = ArrayList_get(face_groups, g);
         LOG_INFO("Face group %d has %d faces", g, group->size);
-        Vector3 normal = ((CubeFace*)ArrayList_get(group, 0))->normal;
+        CubeFace* first_face = ArrayList_get(group, 0);
+        Vector3 normal = first_face->normal;
         LOG_INFO("Normal: (%f, %f, %f)", normal.x, normal.y, normal.z);
 
         Mesh mesh = create_mesh_from_face_group(group);
-        ArrayList_add(meshes, &mesh);
+        Model model = {
+            .mesh = &mesh,
+            .instance_data = {
+                .transform = identity4(),
+                .texture_scale = ones2(),
+                .texture_index = first_face->texture_index,
+                .material_index = first_face->material_index,
+                .emissive_index = -1,
+                .visibility = VISIBILITY_ALL,
+                .emissive = 0.0f
+            }
+        };
+        ArrayList_add(models, &model);
     }
+
+    // ArrayList_for_each(face_groups, ArrayList_destroy);
+    // ArrayList_destroy(face_groups);
+    face_groups = NULL;
 
     LOG_INFO("Finished merging adjacent cube faces");
 }
