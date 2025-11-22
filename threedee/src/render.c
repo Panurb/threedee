@@ -35,6 +35,7 @@ static Mesh quad_mesh;
 static Mesh line_mesh;
 static ArrayList* texts;
 
+static Batch identity_batch;
 static Batch triangle_batch;
 static Batch triangle_2d_batch;
 static Batch quad_batch;
@@ -147,6 +148,7 @@ void init_render() {
 	line_mesh = create_mesh_line();
 	texts = ArrayList_create(sizeof(TextData));
 
+	identity_batch = create_batch(&triangle_mesh, 1);
 	triangle_batch = create_batch(&triangle_mesh, sizeof(InstanceColorData));
 	triangle_2d_batch = create_batch(&triangle_2d_mesh, sizeof(InstanceColorData2D));
 	quad_batch = create_batch(&quad_mesh, sizeof(BillboardInstanceData));
@@ -277,6 +279,79 @@ void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 }
 
 
+void render_mesh(
+	SDL_GPUCommandBuffer* command_buffer,
+	SDL_GPURenderPass* render_pass,
+	Mesh* mesh,
+	int texture_index,
+	int material_index,
+	int emissive_index,
+	float emissive,
+	Visibility visibility,
+	Vector2 texture_scale
+) {
+	ModelUniformData model_uniform_data = {
+		.use_instance_buffer = false,
+		.instance_data = {
+			.transform = identity4(),
+			.texture_index = texture_index,
+			.emissive_index = emissive_index,
+			.texture_scale = texture_scale,
+			.material_index = material_index,
+			.visiblity = visibility,
+			.emissive = emissive,
+		},
+	};
+
+	SDL_PushGPUVertexUniformData(
+		command_buffer,
+		1,
+		&model_uniform_data,
+		sizeof(InstanceData)
+	);
+
+	SDL_BindGPUVertexStorageBuffers(render_pass, 0, &mesh->vertex_buffer, 1);
+	if (mesh->texture) {
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			0,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = mesh->texture,
+				.sampler = sampler,
+			},
+			1
+		);
+	}
+	if (mesh->index_buffer) {
+		SDL_BindGPUIndexBuffer(
+			render_pass,
+			&(SDL_GPUBufferBinding) {
+				.buffer = mesh->index_buffer,
+				.offset = 0
+			},
+			SDL_GPU_INDEXELEMENTSIZE_16BIT
+		);
+
+		SDL_DrawGPUIndexedPrimitives(
+			render_pass,
+			mesh->num_indices,
+			1,
+			0,
+			0,
+			0
+		);
+	} else {
+		SDL_DrawGPUPrimitives(
+			render_pass,
+			mesh->num_vertices,
+			1,
+			0,
+			0
+		);
+	}
+}
+
+
 void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* render_pass, Batch* batch) {
 	if (batch->num_instances == 0) {
 		return;
@@ -291,6 +366,17 @@ void render_batch(SDL_GPUCommandBuffer* gpu_command_buffer, SDL_GPURenderPass* r
 		SDL_UnmapGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[frame_index]);
 		batch->instance_data[frame_index] = NULL;
 	}
+
+	// ModelUniformData model_uniform_data = {
+	// 	.use_instance_buffer = true,
+	// };
+	//
+	// SDL_PushGPUVertexUniformData(
+	// 	gpu_command_buffer,
+	// 	1,
+	// 	&model_uniform_data,
+	// 	sizeof(InstanceData)
+	// );
 
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(gpu_command_buffer);
 

@@ -1,4 +1,4 @@
-cbuffer TransformBlock : register(b0, space1)
+cbuffer CameraUniformData : register(b0, space1)
 {
     float4x4 projection_matrix : packoffset(c0);
     float4x4 view_matrix : packoffset(c4);
@@ -16,7 +16,13 @@ struct InstanceData
     float emissive;
 };
 
-StructuredBuffer<InstanceData> instance_data : register(t0, space0);
+cbuffer ModelUniformData : register(b1, space1)
+{
+    int use_instance_buffer = 1;
+    InstanceData model_data;
+};
+
+StructuredBuffer<InstanceData> instance_datas : register(t0, space0);
 
 struct Input
 {
@@ -51,10 +57,17 @@ float3 scale_from_transform(float4x4 transform)
 
 Output main(Input input, uint instance_id : SV_InstanceID)
 {
-    float4x4 transform = instance_data[instance_id].transform_matrix;
+    InstanceData instance_data;
+    if (use_instance_buffer == 0) {
+        instance_data = model_data;
+    } else {
+        instance_data = instance_datas[instance_id];
+    }
+
+    float4x4 transform = instance_data.transform_matrix;
     float3 scale = scale_from_transform(transform);
 
-    float2 tex_scale = instance_data[instance_id].tex_scale;
+    float2 tex_scale = instance_data.tex_scale;
 
     float2 tiling;
     if (tex_scale.x == 0.0f || tex_scale.y == 0.0f) {
@@ -80,16 +93,16 @@ Output main(Input input, uint instance_id : SV_InstanceID)
 
     Output output;
     output.tex_coord = input.tex_coord * tiling;
-	output.tex_index = instance_data[instance_id].tex_index;
-    output.emissive_index = instance_data[instance_id].emissive_index;
+	output.tex_index = instance_data.tex_index;
+    output.emissive_index = instance_data.emissive_index;
     output.position = mul(projection_view_matrix, world_position);
     output.normal = normalize(mul((float3x3)transform, input.normal));
     output.tangent = normalize(mul((float3x3)transform, input.tangent));
     output.world_position = world_position.xyz;
 
-    output.material_index = instance_data[instance_id].material_index;
-    output.visiblity = instance_data[instance_id].visibility;
-    output.emissive = instance_data[instance_id].emissive;
+    output.material_index = instance_data.material_index;
+    output.visiblity = instance_data.visibility;
+    output.emissive = instance_data.emissive;
 
     return output;
 }
