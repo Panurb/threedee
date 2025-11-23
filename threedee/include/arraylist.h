@@ -21,6 +21,6 @@ void ArrayList_clear(ArrayList* list);
 
 void ArrayList_destroy(ArrayList* list);
 
-void ArrayList_for_each(ArrayList* list, void (*print_func)(void*));
+void ArrayList_for_each(ArrayList* list, void (*func)(void*));
 
 int ArrayList_find(ArrayList* list, void* value);

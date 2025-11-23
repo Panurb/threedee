@@ -106,7 +106,7 @@ void init() {
     init_render();
     app.text_engine = TTF_CreateGPUTextEngine(app.gpu_device);
     create_scene();
-    merge_adjacent_faces();
+    create_face_groups();
 
     init_physics();
     init_waypoints();

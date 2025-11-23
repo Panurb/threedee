@@ -64,9 +64,10 @@ void ArrayList_destroy(ArrayList* list) {
 }
 
 
-void ArrayList_for_each(ArrayList* list, void (*print_func)(void*)) {
+void ArrayList_for_each(ArrayList* list, void (*func)(void*)) {
     for (int i = 0; i < list->size; i++) {
-        print_func((char*)list->data + i * list->element_size);
+        void* element = ArrayList_get(list, i);
+        func(element);
     }
 }
 

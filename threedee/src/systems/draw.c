@@ -42,7 +42,7 @@ static int face_indices[6][4] = {
 ArrayList* face_groups;
 
 
-bool faces_adjacent(CubeFace* a, CubeFace* b) {
+bool faces_similar(CubeFace* a, CubeFace* b) {
     if (a->texture_index != b->texture_index) {
         return false;
     }
@@ -51,18 +51,53 @@ bool faces_adjacent(CubeFace* a, CubeFace* b) {
         return false;
     }
 
-    if (dot3(a->normal, b->normal) < 0.999f) {
-        return false;
-    }
-
     return true;
 }
 
 
-void merge_adjacent_faces() {
-    LOG_INFO("Merging adjacent cube faces");
+bool faces_adjacent(CubeFace* a, CubeFace* b) {
+    if (dot3(a->normal, b->normal) < 0.999f) {
+        return false;
+    }
 
-    face_groups = ArrayList_create(sizeof(ArrayList));
+    // TODO: check if corner lies on edge
+    int shared_corners = 0;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (dist3(a->corners[i], b->corners[j]) < 0.001f) {
+                shared_corners++;
+            }
+        }
+    }
+
+    return shared_corners >= 2;
+}
+
+
+void merge_adjacent_faces(ArrayList* face_group) {
+    bool changed = true;
+    while (changed) {
+        changed = false;
+
+        CubeFace* face = ArrayList_get(face_group, 0);
+        for (int i = 1; i < face_group->size; i++) {
+            CubeFace* other_face = ArrayList_get(face_group, i);
+            if (faces_adjacent(face, other_face)) {
+                LOG_INFO("Merging adjacent faces");
+                // Merge logic here (not implemented)
+                ArrayList_remove(face_group, i);
+                changed = true;
+                break;
+            }
+        }
+    }
+}
+
+
+void create_face_groups() {
+    LOG_INFO("Creating face groups");
+
+    face_groups = ArrayList_create(sizeof(ArrayList*));
     models = ArrayList_create(sizeof(Model));
 
     int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
@@ -116,9 +151,9 @@ void merge_adjacent_faces() {
 
             ArrayList* found_group = NULL;
             for (int g = 0; g < face_groups->size; g++) {
-                ArrayList* group = ArrayList_get(face_groups, g);
+                ArrayList* group = *(ArrayList**)ArrayList_get(face_groups, g);
                 CubeFace* first_face = ArrayList_get(group, 0);
-                if (faces_adjacent(first_face, &cube_face)) {
+                if (faces_similar(first_face, &cube_face)) {
                     found_group = group;
                     ArrayList_add(found_group, &cube_face);
                     break;
@@ -129,17 +164,16 @@ void merge_adjacent_faces() {
                 LOG_INFO("Creating new face group for entity %d", entity);
                 found_group = ArrayList_create(sizeof(CubeFace));
                 ArrayList_add(found_group, &cube_face);
-                ArrayList_add(face_groups, found_group);
+                ArrayList_add(face_groups, &found_group);
             }
         }
     }
 
     for (int g = 0; g < face_groups->size; g++) {
-        ArrayList* group = ArrayList_get(face_groups, g);
+        ArrayList* group = *(ArrayList**)ArrayList_get(face_groups, g);
         LOG_INFO("Face group %d has %d faces", g, group->size);
         CubeFace* first_face = ArrayList_get(group, 0);
-        Vector3 normal = first_face->normal;
-        LOG_INFO("Normal: (%f, %f, %f)", normal.x, normal.y, normal.z);
+        LOG_INFO("Texture index: %d, Material index: %d", first_face->texture_index, first_face->material_index);
 
         Mesh mesh_data = create_mesh_from_face_group(group);
         Mesh* mesh = malloc(sizeof(Mesh));
@@ -164,7 +198,7 @@ void merge_adjacent_faces() {
     // ArrayList_destroy(face_groups);
     face_groups = NULL;
 
-    LOG_INFO("Finished merging adjacent cube faces");
+    LOG_INFO("Finished creating face groups");
 }
 
 

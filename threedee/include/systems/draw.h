@@ -1,5 +1,5 @@
 #pragma once
 
-void merge_adjacent_faces(void);
+void create_face_groups(void);
 
 void draw_entities(void);
