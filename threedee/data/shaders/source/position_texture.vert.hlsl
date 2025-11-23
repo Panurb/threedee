@@ -69,27 +69,10 @@ Output main(Input input, uint instance_id : SV_InstanceID)
 
     float2 tex_scale = instance_data.tex_scale;
 
-    float2 tiling;
-    if (tex_scale.x == 0.0f || tex_scale.y == 0.0f) {
-        // Determine tiling axes based on face normal
-        if (abs(input.normal.x) > 0.5)
-            tiling = scale.zy;
-        else if (abs(input.normal.y) > 0.5)
-            tiling = scale.xz;
-        else
-            tiling = scale.xy;
-    } else {
-        tiling = 1.0f / tex_scale;
-    }
+    float2 tiling = 1.0f / tex_scale;
 
     float4x4 projection_view_matrix = mul(projection_matrix, view_matrix);
-
 	float4 world_position = mul(transform, float4(input.position, 1.0f));
-	// Snap to grid to avoid floating point precision issues
-	// world_position.xyz = round(world_position.xyz * 100.0f) / 100.0f;
-
-	// Add slight overlap
-	// world_position.xyz += normalize(input.normal) * 0.0001f;
 
     Output output;
     output.tex_coord = input.tex_coord * tiling;

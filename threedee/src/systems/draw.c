@@ -74,6 +74,8 @@ void merge_adjacent_faces() {
 
         Matrix4 transform = get_transform(entity);
 
+        Vector3 scale = get_scale(entity);
+
         for (int f = 0; f < 6; f++) {
             Vector4 normal = cube_normals[f];
             normal = map4(transform, normal);
@@ -84,14 +86,22 @@ void merge_adjacent_faces() {
                 .material_index = mesh->material_index
             };
 
+            // Determine tiling axes based on face normal
+            Vector2 tiling = vec2(scale.x, scale.y);
+            if (abs(cube_face.normal.x) > 0.5) {
+                tiling = vec2(scale.z, scale.y);
+            } else if (abs(cube_face.normal.y) > 0.5) {
+                tiling = vec2(scale.x, scale.z);
+            }
+
             for (int v = 0; v < 4; v++) {
                 Vector4 corner = cube_corners[face_indices[f][v]];
                 corner = map4(transform, corner);
 
                 cube_face.corners[v] = vec4_xyz(corner);
-                cube_face.uvs[v] = (Vector2) {
-                    (v == 0 || v == 3) ? 0.0f : 1.0f,
-                    (v == 0 || v == 1) ? 1.0f : 0.0f
+                cube_face.uvs[v] = (Vector2){
+                    .x = (v == 1 || v == 2) ? tiling.x : 0.0f,
+                    .y = (v == 2 || v == 3) ? tiling.y : 0.0f
                 };
             }
 
