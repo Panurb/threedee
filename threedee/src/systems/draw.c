@@ -30,12 +30,12 @@ static Vector4 cube_normals[6] = {
 };
 
 static int face_indices[6][4] = {
-    {0, 1, 2, 3}, // Back face
-    {1, 5, 6, 2}, // Right face
-    {5, 4, 7, 6}, // Front face
-    {4, 0, 3, 7}, // Left face
-    {3, 2, 6, 7}, // Top face
-    {4, 5, 1, 0}  // Bottom face
+    {3, 2, 1, 0}, // Back face
+    {2, 6, 5, 1}, // Right face
+    {6, 7, 4, 5}, // Front face
+    {7, 3, 0, 4}, // Left face
+    {7, 6, 2, 3}, // Top face
+    {0, 1, 5, 4}  // Bottom face
 };
 
 
@@ -80,7 +80,6 @@ void merge_adjacent_faces() {
 
             CubeFace cube_face = {
                 .normal = normalized3(vec4_xyz(normal)),
-                .tangent = vec3(1.0f, 0.0f, 0.0f), // Placeholder tangent
                 .texture_index = mesh->texture_index,
                 .material_index = mesh->material_index
             };
@@ -95,6 +94,15 @@ void merge_adjacent_faces() {
                     (v == 0 || v == 1) ? 1.0f : 0.0f
                 };
             }
+
+            cube_face.tangent = calculate_tangent(
+                cube_face.corners[0],
+                cube_face.corners[1],
+                cube_face.corners[2],
+                cube_face.uvs[0],
+                cube_face.uvs[1],
+                cube_face.uvs[2]
+            );
 
             ArrayList* found_group = NULL;
             for (int g = 0; g < face_groups->size; g++) {

@@ -480,6 +480,14 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		);
 
 		bind_pipeline(render_pass, PIPELINE_SHADOW_DEPTH);
+
+		init_model_rendering(render_pass);
+		for (int j = 0; j < models->size; j++) {
+			Model* model = ArrayList_get(models, j);
+			render_model(command_buffer, render_pass, model);
+		}
+
+		init_batch_rendering(command_buffer);
 		for (int j = 0; j < resources.meshes_size; j++) {
 			render_batch(command_buffer, render_pass, &batches[j]);
 		}

@@ -190,3 +190,5 @@ void get_ellipse_points(Vector2 position, float major, float minor, float angle,
 void get_rect_corners(Vector2 position, float angle, float width, float height, Vector2* corners);
 
 float map_to_range(int x, int min_x, int max_x, float min_y, float max_y);
+
+Vector3 calculate_tangent(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 uv0, Vector2 uv1, Vector2 uv2);

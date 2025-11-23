@@ -12,6 +12,13 @@ struct InstanceData
     float2 tex_scale;
     int material_index;
     uint visibility;
+    float emissive;
+};
+
+cbuffer ModelUniformData : register(b1, space1)
+{
+    InstanceData model_data;
+    int use_instance_buffer = 1;
 };
 
 StructuredBuffer<InstanceData> instance_data : register(t0, space0);
@@ -26,12 +33,19 @@ struct Input
 
 float4 main(Input input, uint instance_id : SV_InstanceID) : SV_Position
 {
-    if ((instance_data[instance_id].visibility & visibility_mask) == 0)
+    InstanceData instance;
+    if (use_instance_buffer == 0) {
+        instance = model_data;
+    } else {
+        instance = instance_data[instance_id];
+    }
+
+    if ((instance.visibility & visibility_mask) == 0)
     {
         return float4(0.0f, 0.0f, -1e6f, 0.0f);
     }
 
-    float4x4 transform = instance_data[instance_id].transform_matrix;
+    float4x4 transform = instance.transform_matrix;
 
     float4 position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
 

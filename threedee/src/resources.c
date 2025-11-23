@@ -200,22 +200,6 @@ SDL_GPUBuffer* create_materials_buffer(Material* materials, int size) {
 }
 
 
-Vector3 calculate_tangent(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 uv0, Vector2 uv1, Vector2 uv2) {
-	Vector3 edge1 = sub3(v1, v0);
-	Vector3 edge2 = sub3(v2, v0);
-	Vector2 delta_uv1 = sub2(uv1, uv0);
-	Vector2 delta_uv2 = sub2(uv2, uv0);
-
-	float f = 1.0f / (delta_uv1.x * delta_uv2.y - delta_uv1.y * delta_uv2.x);
-	Vector3 tangent;
-	tangent.x = f * (delta_uv2.y * edge1.x - delta_uv1.y * edge2.x);
-	tangent.y = f * (delta_uv2.y * edge1.y - delta_uv1.y * edge2.y);
-	tangent.z = f * (delta_uv2.y * edge1.z - delta_uv1.y * edge2.z);
-
-	return normalized3(tangent);
-}
-
-
 Mesh load_mesh(String path) {
 	LOG_INFO("Loading mesh: %s", path);
 
