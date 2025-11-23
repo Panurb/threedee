@@ -63,6 +63,10 @@ Vector3 vec3(float x, float y, float z) {
     return (Vector3) { x, y, z };
 }
 
+bool vec3_equal(Vector3 a, Vector3 b) {
+    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+}
+
 Vector3 vec4_xyz(Vector4 v) {
     return (Vector3) { v.x, v.y, v.z };
 }

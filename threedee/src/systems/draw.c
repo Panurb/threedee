@@ -51,6 +51,10 @@ bool faces_similar(CubeFace* a, CubeFace* b) {
         return false;
     }
 
+    if (dot3(a->normal, b->normal) < 0.999f) {
+        return false;
+    }
+
     return true;
 }
 

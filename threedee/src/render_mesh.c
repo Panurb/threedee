@@ -348,10 +348,48 @@ Mesh create_mesh_text(TTF_GPUAtlasDrawSequence data) {
 }
 
 
+int find_vertex_index(ArrayList* vertices, Vector3 position) {
+	for (int i = 0; i < vertices->size; i++) {
+		PositionTextureVertex* vertex = ArrayList_get(vertices, i);
+		if (vec3_equal(vertex->position, position)) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+
 Mesh create_mesh_from_face_group(ArrayList* group) {
+	CubeFace* first_face = ArrayList_get(group, 0);
+	Vector3 uv_origin = first_face->corners[0];
+	Vector3 uv_x = first_face->tangent;
+	Vector3 uv_y = cross(first_face->normal, uv_x);
+
+	ArrayList* unique_vertices = ArrayList_create(sizeof(PositionTextureVertex));
+	for (int i = 0; i < group->size; i++) {
+		CubeFace* face = ArrayList_get(group, i);
+		for (int v = 0; v < 4; v++) {
+			if (find_vertex_index(unique_vertices, face->corners[v]) == -1) {
+				Vector3 uv_offset = sub3(face->corners[v], uv_origin);
+				ArrayList_add(
+					unique_vertices,
+					&(PositionTextureVertex) {
+						.position = face->corners[v],
+						.uv = vec2(
+							dot3(uv_offset, uv_x),
+							dot3(uv_offset, uv_y)
+						),
+						.normal = face->normal,
+						.tangent = face->tangent,
+					}
+				);
+			}
+		}
+	}
+
     Mesh mesh = {
         .name = "face_group",
-        .num_vertices = group->size * 4,
+        .num_vertices = unique_vertices->size,
         .num_indices = group->size * 6,
     };
 	LOG_INFO("Creating mesh from face group with %d faces (%d vertices, %d indices)", group->size, mesh.num_vertices, mesh.num_indices);
@@ -383,28 +421,27 @@ Mesh create_mesh_from_face_group(ArrayList* group) {
     PositionTextureVertex* vertex_data = SDL_MapGPUTransferBuffer(app.gpu_device, transfer_buffer, false);
     Uint16* index_data = (Uint16*) &vertex_data[mesh.num_vertices];
 
+	for (int i = 0; i < unique_vertices->size; i++) {
+		vertex_data[i] = *(PositionTextureVertex*)ArrayList_get(unique_vertices, i);
+	}
+
     for (int i = 0; i < group->size; i++) {
         CubeFace* face = ArrayList_get(group, i);
 
+    	int indices[4];
         for (int v = 0; v < 4; v++) {
-            Vector3 corner = face->corners[v];
-            Vector2 uv = face->uvs[v];
-
-            vertex_data[i * 4 + v] = (PositionTextureVertex) {
-                .position = corner,
-                .uv = uv,
-                .normal = face->normal,
-                .tangent = face->tangent,
-            };
+        	indices[v] = find_vertex_index(unique_vertices, face->corners[v]);
         }
 
-        index_data[i * 6 + 0] = i * 4 + 0;
-        index_data[i * 6 + 1] = i * 4 + 1;
-        index_data[i * 6 + 2] = i * 4 + 2;
-        index_data[i * 6 + 3] = i * 4 + 2;
-        index_data[i * 6 + 4] = i * 4 + 3;
-        index_data[i * 6 + 5] = i * 4 + 0;
+        index_data[i * 6 + 0] = indices[0];
+        index_data[i * 6 + 1] = indices[1];
+        index_data[i * 6 + 2] = indices[2];
+        index_data[i * 6 + 3] = indices[2];
+        index_data[i * 6 + 4] = indices[3];
+        index_data[i * 6 + 5] = indices[0];
     }
+
+	ArrayList_destroy(unique_vertices);
 
 	SDL_UnmapGPUTransferBuffer(app.gpu_device, transfer_buffer);
 	SDL_GPUCommandBuffer* upload_command_buffer = SDL_AcquireGPUCommandBuffer(app.gpu_device);

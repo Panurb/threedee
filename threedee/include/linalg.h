@@ -73,6 +73,8 @@ Vector2 vec2(float x, float y);
 
 Vector3 vec3(float x, float y, float z);
 
+bool vec3_equal(Vector3 a, Vector3 b);
+
 Vector3 vec4_xyz(Vector4 v);
 
 Vector3 vec3_up();
