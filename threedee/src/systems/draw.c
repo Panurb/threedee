@@ -78,6 +78,50 @@ bool faces_adjacent(CubeFace* a, CubeFace* b) {
 }
 
 
+float get_face_area(CubeFace* face) {
+    Vector3 edge1 = sub3(face->corners[1], face->corners[0]);
+    Vector3 edge2 = sub3(face->corners[3], face->corners[0]);
+    return norm3(cross(edge1, edge2));
+}
+
+
+typedef struct FaceToRemove {
+    bool first;
+    bool second;
+} FaceToRemove;
+
+
+FaceToRemove faces_kissing(CubeFace* a, CubeFace* b) {
+    int shared_corners = 0;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (dist3(a->corners[i], b->corners[j]) < 0.01f) {
+                shared_corners++;
+            }
+        }
+    }
+
+    if (shared_corners < 2) {
+        return (FaceToRemove) { false, false };
+    }
+
+    float area_a = get_face_area(a);
+    float area_b = get_face_area(b);
+
+    // Areas are the same size
+    if (fabsf(area_a - area_b) < 0.01f) {
+        return (FaceToRemove) { true, true };
+    }
+
+    // Remove smaller face
+    if (area_a < area_b) {
+        return (FaceToRemove) { true, false };
+    }
+
+    return (FaceToRemove) { false, true };
+}
+
+
 void merge_adjacent_faces(ArrayList* face_group) {
     bool changed = true;
     while (changed) {
@@ -94,6 +138,50 @@ void merge_adjacent_faces(ArrayList* face_group) {
                 break;
             }
         }
+    }
+}
+
+
+void add_to_face_group(CubeFace cube_face) {
+    ArrayList* found_group = NULL;
+    bool removed = false;
+    for (int g = 0; g < face_groups->size; g++) {
+        ArrayList* group = *(ArrayList**)ArrayList_get(face_groups, g);
+        CubeFace* first_face = ArrayList_get(group, 0);
+        if (!found_group && faces_similar(first_face, &cube_face)) {
+            found_group = group;
+        }
+        if (dot3(first_face->normal, cube_face.normal) < -0.999f) {
+            for (int i = 0; i < group->size; i++) {
+                CubeFace* other_face = ArrayList_get(group, i);
+                FaceToRemove result = faces_kissing(&cube_face, other_face);
+                if (result.first) {
+                    LOG_INFO("Removing first face");
+                    removed = true;
+                }
+                if (result.second) {
+                    LOG_INFO("Removing second face");
+                    ArrayList_remove(group, i);
+                    if (group->size == 0) {
+                        ArrayList_remove(face_groups, g);
+                        g--;
+                    }
+                }
+            }
+        }
+    }
+
+    if (removed) {
+        return;
+    }
+
+    if (found_group) {
+        ArrayList_add(found_group, &cube_face);
+    } else {
+        LOG_INFO("Creating new face group");
+        found_group = ArrayList_create(sizeof(CubeFace));
+        ArrayList_add(found_group, &cube_face);
+        ArrayList_add(face_groups, &found_group);
     }
 }
 
@@ -153,23 +241,7 @@ void create_face_groups() {
                 cube_face.uvs[2]
             );
 
-            ArrayList* found_group = NULL;
-            for (int g = 0; g < face_groups->size; g++) {
-                ArrayList* group = *(ArrayList**)ArrayList_get(face_groups, g);
-                CubeFace* first_face = ArrayList_get(group, 0);
-                if (faces_similar(first_face, &cube_face)) {
-                    found_group = group;
-                    ArrayList_add(found_group, &cube_face);
-                    break;
-                }
-            }
-
-            if (!found_group) {
-                LOG_INFO("Creating new face group for entity %d", entity);
-                found_group = ArrayList_create(sizeof(CubeFace));
-                ArrayList_add(found_group, &cube_face);
-                ArrayList_add(face_groups, &found_group);
-            }
+            add_to_face_group(cube_face);
         }
     }
 
