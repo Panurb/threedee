@@ -146,7 +146,7 @@ void load_shaders() {
 	shaders[SHADER_VERTEX_CUBE] = load_shader(app.gpu_device, "cube.vert", 0, 1, 1, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 0, 0, 0);
-	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 2, 2, 0);
+	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 1, 2, 0);
 	shaders[SHADER_FRAGMENT_SHADOW_DEPTH] = load_shader(app.gpu_device, "shadow_depth.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_TEXT] = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.frag", 2, 1, 0, 0);

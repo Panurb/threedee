@@ -20,6 +20,15 @@ cbuffer UBO : register(b0, space3)
     float fog_end : packoffset(c3.y);
 };
 
+struct Material {
+    float specular;
+    float diffuse;
+    float ambient;
+    float shininess;
+};
+
+StructuredBuffer<Material> materials : register(t4, space2);
+
 struct LightData
 {
     float3 position;
@@ -31,20 +40,6 @@ struct LightData
     float3 specular_color;
     float4x4 projection_view_matrix;
 };
-
-cbuffer LightBuffer : register(b1, space3)
-{
-    LightData light_data[32];  // Should match MAX_LIGHTS
-};
-
-struct Material {
-    float specular;
-    float diffuse;
-    float ambient;
-    float shininess;
-};
-
-StructuredBuffer<Material> materials : register(t4, space2);
 
 StructuredBuffer<LightData> lights : register(t5, space2);
 

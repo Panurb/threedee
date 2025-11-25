@@ -26,9 +26,6 @@ static SDL_GPUTexture* resolve_texture = NULL;
 static SDL_GPUTexture* dof_temp_texture = NULL;
 static SDL_GPUSampler* screen_sampler = NULL;
 
-static LightData lights[MAX_LIGHTS];
-static int num_lights = 0;
-
 static MultiBuffer light_buffer;
 
 static Mesh triangle_mesh;
@@ -514,10 +511,6 @@ void add_light(Entity entity) {
 	Color diffuse_color = light->diffuse_color;
 	Color specular_color = light->specular_color;
 
-	Matrix4 view_matrix = inverse_transform(get_transform(entity));
-	Matrix4 projection_matrix = light->projection_matrix;
-	Matrix4 projection_view_matrix = matrix4_mul(projection_matrix, view_matrix);
-
 	LightData light_data = {
 		.position = get_position(entity),
 		.visibility_mask = light->visibility_mask,
@@ -525,12 +518,9 @@ void add_light(Entity entity) {
 		.cutoff_cos = cosf(to_radians(light->fov * 0.5f)),
 		.diffuse_color = { diffuse_color.r, diffuse_color.g, diffuse_color.b },
 		.specular_color = { specular_color.r, specular_color.g, specular_color.b },
-		.projection_view_matrix = transpose4(projection_view_matrix),
+		.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
 		.range = light->range,
 	};
-
-	memcpy(lights + num_lights, &light_data, sizeof(LightData));
-	num_lights++;
 
 	LightData* data = get_multi_buffer_data(&light_buffer);
 	data[light_buffer.size] = light_data;
@@ -554,6 +544,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 			LOG_ERROR("Light %d does not have a shadow map depth texture!", i);
 		}
 
+		// TODO: render directly to texture array layers (update SDL first)
 		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
 			command_buffer,
 			 NULL,
@@ -738,7 +729,7 @@ void render() {
 			.near_plane = camera->near_plane,
 			.far_plane = camera->far_plane,
 			.ambient_light = weather->ambient_light,
-			.num_lights = num_lights,
+			.num_lights = light_buffer.size,
 			.camera_position = get_position(scene->camera),
 			.shadow_map_resolution = SHADOW_MAP_RESOLUTION,
 			.fog_color = weather->fog_color,
@@ -746,7 +737,6 @@ void render() {
 			.fog_end = weather->fog_end,
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
-		SDL_PushGPUFragmentUniformData(command_buffer, 1, &lights, sizeof(LightData) * num_lights);
 
 		SDL_BindGPUFragmentStorageBuffers(
 			render_pass,
@@ -863,7 +853,6 @@ void render() {
 	LOG_DEBUG("Submitted frame %d", frame_index);
 
 	// Reset instance counts for next frame
-	num_lights = 0;
 	light_buffer.size = 0;
 	for (int i = 0; i < resources.meshes_size; i++) {
 		batches[i].num_instances = 0;
