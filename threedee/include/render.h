@@ -114,6 +114,16 @@ typedef struct BillboardInstanceData {
 static_assert(sizeof(BillboardInstanceData) % 16 == 0);
 
 
+typedef struct MultiBuffer {
+	SDL_GPUBuffer* buffer[FRAMES_IN_FLIGHT];
+	SDL_GPUTransferBuffer* transfer_buffer[FRAMES_IN_FLIGHT];
+	void* data[FRAMES_IN_FLIGHT];  // Mapped pointer for each frame
+	int capacity;
+	int size;
+	int element_size;
+} MultiBuffer;
+
+
 typedef struct Batch {
 	Mesh* mesh;
 	SDL_GPUBuffer* instance_buffer;
@@ -154,6 +164,7 @@ typedef struct {
 	float _pad3;
 	Matrix4 projection_view_matrix;
 } LightData;
+static_assert(sizeof(LightData) % 16 == 0);
 
 
 typedef struct LineInstanceData {

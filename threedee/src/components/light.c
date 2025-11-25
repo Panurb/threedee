@@ -45,18 +45,20 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
             return NULL;
     }
 
-    light->shadow_map.depth_texture = SDL_CreateGPUTexture(
-        app.gpu_device,
-        &(SDL_GPUTextureCreateInfo) {
-            .type = SDL_GPU_TEXTURETYPE_2D,
-            .format = DEPTH_FORMAT,
-            .width = SHADOW_MAP_RESOLUTION,
-            .height = SHADOW_MAP_RESOLUTION,
-            .layer_count_or_depth = 1,
-            .num_levels = 1,
-            .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
-        }
-    );
+    for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        light->shadow_map.depth_texture[i] = SDL_CreateGPUTexture(
+            app.gpu_device,
+            &(SDL_GPUTextureCreateInfo) {
+                .type = SDL_GPU_TEXTURETYPE_2D,
+                .format = DEPTH_FORMAT,
+                .width = SHADOW_MAP_RESOLUTION,
+                .height = SHADOW_MAP_RESOLUTION,
+                .layer_count_or_depth = 1,
+                .num_levels = 1,
+                .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+            }
+        );
+    }
     light->shadow_map.projection_view_matrix = identity4();
 
     scene->components->light[entity] = light;

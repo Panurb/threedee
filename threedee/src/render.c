@@ -20,7 +20,7 @@ SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
 
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
-static SDL_GPUTexture* shadow_maps = NULL;
+static SDL_GPUTexture* shadow_maps[FRAMES_IN_FLIGHT] = { 0 };
 static SDL_GPUTexture* screen_texture = NULL;
 static SDL_GPUTexture* resolve_texture = NULL;
 static SDL_GPUTexture* dof_temp_texture = NULL;
@@ -28,6 +28,8 @@ static SDL_GPUSampler* screen_sampler = NULL;
 
 static LightData lights[MAX_LIGHTS];
 static int num_lights = 0;
+
+static MultiBuffer light_buffer;
 
 static Mesh triangle_mesh;
 static Mesh triangle_2d_mesh;
@@ -130,6 +132,75 @@ Batch create_batch(Mesh* mesh, int instance_size) {
 }
 
 
+MultiBuffer create_multi_buffer(int element_size, int capacity) {
+	MultiBuffer multi_buffer = {
+		.size = 0,
+		.capacity = capacity,
+		.element_size = element_size
+	};
+
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		multi_buffer.buffer[i] = SDL_CreateGPUBuffer(
+			app.gpu_device,
+			&(SDL_GPUBufferCreateInfo){
+				.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+				.size = element_size * capacity * FRAMES_IN_FLIGHT,
+			}
+		);
+
+		multi_buffer.transfer_buffer[i] = SDL_CreateGPUTransferBuffer(
+			app.gpu_device,
+			&(SDL_GPUTransferBufferCreateInfo){
+				.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+				.size = element_size * capacity,
+			}
+		);
+
+		multi_buffer.data[i] = NULL;
+	}
+
+	return multi_buffer;
+}
+
+
+void* get_multi_buffer_data(MultiBuffer* multi_buffer) {
+	if (!multi_buffer->data[frame_index]) {
+		multi_buffer->data[frame_index] = SDL_MapGPUTransferBuffer(
+			app.gpu_device,
+			multi_buffer->transfer_buffer[frame_index],
+			false
+		);
+	}
+
+	return multi_buffer->data[frame_index];
+}
+
+
+void upload_multi_buffer(SDL_GPUCopyPass* copy_pass, MultiBuffer* multi_buffer) {
+	if (multi_buffer->data[frame_index]) {
+		SDL_UnmapGPUTransferBuffer(
+			app.gpu_device,
+			multi_buffer->transfer_buffer[frame_index]
+		);
+		multi_buffer->data[frame_index] = NULL;
+	}
+
+	SDL_UploadToGPUBuffer(
+		copy_pass,
+		&(SDL_GPUTransferBufferLocation) {
+			.transfer_buffer = multi_buffer->transfer_buffer[frame_index],
+			.offset = 0
+		},
+		&(SDL_GPUBufferRegion) {
+			.buffer = multi_buffer->buffer[frame_index],
+			.offset = 0,
+			.size = multi_buffer->element_size * multi_buffer->size
+		},
+		false
+	);
+}
+
+
 void init_render() {
 	SDL_ClaimWindowForGPUDevice(app.gpu_device, app.window);
 
@@ -142,6 +213,8 @@ void init_render() {
 
 	load_shaders();
 	create_pipelines();
+
+	light_buffer = create_multi_buffer(sizeof(LightData), MAX_LIGHTS);
 
 	triangle_mesh = create_mesh_triangle();
 	triangle_2d_mesh = create_mesh_triangle_2d();
@@ -189,18 +262,20 @@ void init_render() {
 		}
 	);
 
-	shadow_maps = SDL_CreateGPUTexture(
-		app.gpu_device,
-		&(SDL_GPUTextureCreateInfo){
-			.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
-			.format = DEPTH_FORMAT,
-			.width = SHADOW_MAP_RESOLUTION,
-			.height = SHADOW_MAP_RESOLUTION,
-			.layer_count_or_depth = MAX_LIGHTS,
-			.num_levels = 1,
-			.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
-		}
-	);
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		shadow_maps[i] = SDL_CreateGPUTexture(
+			app.gpu_device,
+			&(SDL_GPUTextureCreateInfo){
+				.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
+				.format = DEPTH_FORMAT,
+				.width = SHADOW_MAP_RESOLUTION,
+				.height = SHADOW_MAP_RESOLUTION,
+				.layer_count_or_depth = MAX_LIGHTS,
+				.num_levels = 1,
+				.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+			}
+		);
+	}
 
 	create_screen_textures();
 }
@@ -268,7 +343,7 @@ void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 					.sampler = sampler,
 				},
 				{
-					.texture = shadow_maps,
+					.texture = shadow_maps[frame_index],
 					.sampler = sampler,
 				},
 				{
@@ -277,6 +352,13 @@ void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 				}
 			},
 			4
+		);
+
+		SDL_BindGPUFragmentStorageBuffers(
+			render_pass,
+			1,
+			&light_buffer.buffer[frame_index],
+			1
 		);
 	}
 }
@@ -432,6 +514,10 @@ void add_light(Entity entity) {
 	Color diffuse_color = light->diffuse_color;
 	Color specular_color = light->specular_color;
 
+	Matrix4 view_matrix = inverse_transform(get_transform(entity));
+	Matrix4 projection_matrix = light->projection_matrix;
+	Matrix4 projection_view_matrix = matrix4_mul(projection_matrix, view_matrix);
+
 	LightData light_data = {
 		.position = get_position(entity),
 		.visibility_mask = light->visibility_mask,
@@ -439,12 +525,16 @@ void add_light(Entity entity) {
 		.cutoff_cos = cosf(to_radians(light->fov * 0.5f)),
 		.diffuse_color = { diffuse_color.r, diffuse_color.g, diffuse_color.b },
 		.specular_color = { specular_color.r, specular_color.g, specular_color.b },
-		.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
+		.projection_view_matrix = transpose4(projection_view_matrix),
 		.range = light->range,
 	};
 
 	memcpy(lights + num_lights, &light_data, sizeof(LightData));
 	num_lights++;
+
+	LightData* data = get_multi_buffer_data(&light_buffer);
+	data[light_buffer.size] = light_data;
+	light_buffer.size++;
 }
 
 
@@ -470,7 +560,7 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 			0,
 			&(SDL_GPUDepthStencilTargetInfo){
 				.clear_depth = 1.0f,
-				.texture = light->shadow_map.depth_texture,
+				.texture = light->shadow_map.depth_texture[frame_index],
 				.cycle = true,
 				.load_op = SDL_GPU_LOADOP_CLEAR,
 				.store_op = SDL_GPU_STOREOP_STORE,
@@ -506,11 +596,11 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		SDL_CopyGPUTextureToTexture(
 			copy_pass,
 			&(SDL_GPUTextureLocation) {
-				.texture = light->shadow_map.depth_texture,
+				.texture = light->shadow_map.depth_texture[frame_index],
 				.layer = 0
 			},
 			&(SDL_GPUTextureLocation) {
-				.texture = shadow_maps,
+				.texture = shadow_maps[frame_index],
 				.layer = layer,
 			},
 			SHADOW_MAP_RESOLUTION,
@@ -594,6 +684,11 @@ void render() {
 
 	if (swapchain_texture) {
 		render_shadow_maps(command_buffer);
+
+		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
+		upload_multi_buffer(copy_pass, &light_buffer);
+		// TODO: upload batches in one copy pass
+		SDL_EndGPUCopyPass(copy_pass);
 
 		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
 		Matrix4 view_matrix = inverse_transform(get_transform(scene->camera));
@@ -769,6 +864,7 @@ void render() {
 
 	// Reset instance counts for next frame
 	num_lights = 0;
+	light_buffer.size = 0;
 	for (int i = 0; i < resources.meshes_size; i++) {
 		batches[i].num_instances = 0;
 	}
@@ -795,6 +891,7 @@ void* get_batch_instance_data(Batch* batch) {
 	);
 	return batch->instance_data[frame_index];
 }
+
 
 SDL_GPUBuffer* double_buffer_size(SDL_GPUCommandBuffer* command_buffer, SDL_GPUBuffer* buffer, int size) {
 	LOG_DEBUG("Doubling buffer size from %d to %d", size, 2 * size);

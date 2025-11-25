@@ -22,14 +22,14 @@ cbuffer UBO : register(b0, space3)
 
 struct LightData
 {
-    float3 position : packoffset(c0);
-    uint visibility_mask : packoffset(c0.w);
-    float3 direction : packoffset(c1);
-    float cutoff_cos : packoffset(c1.w);
-    float3 diffuse_color : packoffset(c2);
-    float range : packoffset(c2.w);
-    float3 specular_color : packoffset(c3);
-    float4x4 projection_view_matrix : packoffset(c4);
+    float3 position;
+    uint visibility_mask;
+    float3 direction;
+    float cutoff_cos;
+    float3 diffuse_color;
+    float range;
+    float3 specular_color;
+    float4x4 projection_view_matrix;
 };
 
 cbuffer LightBuffer : register(b1, space3)
@@ -45,6 +45,8 @@ struct Material {
 };
 
 StructuredBuffer<Material> materials : register(t4, space2);
+
+StructuredBuffer<LightData> lights : register(t5, space2);
 
 struct Input
 {
@@ -127,23 +129,24 @@ Output main(Input input)
     float3 specular = float3(0.0, 0.0, 0.0);
     float combined_spot_intensity = 0.0;
 
-    for (int i = 0; i < num_lights; ++i)
-    {
-        if ((light_data[i].visibility_mask & input.visibility) == 0) {
+    for (int i = 0; i < num_lights; ++i) {
+        LightData light = lights[i];
+
+        if ((light.visibility_mask & input.visibility) == 0) {
             continue;
         }
 
-        float3 l = normalize(light_data[i].position - world_position);
+        float3 l = normalize(light.position - world_position);
         float3 r = reflect(-l, n);
 
         float diff = max(dot(n, l), 0.0);
 
-        float spot_cos = dot(-l, light_data[i].direction);
-        float spot_intensity = saturate((spot_cos - light_data[i].cutoff_cos) / (1.0 - light_data[i].cutoff_cos));
+        float spot_cos = dot(-l, light.direction);
+        float spot_intensity = saturate((spot_cos - light.cutoff_cos) / (1.0 - light.cutoff_cos));
 
-        float light_distance = length(light_data[i].position - world_position);
+        float light_distance = length(light.position - world_position);
         float attenuation = 1.0 / (1.0 + 0.1 * light_distance + 0.01 * light_distance * light_distance);
-        float fade = smoothstep(light_data[i].range, 0.8 * light_data[i].range, light_distance);
+        float fade = smoothstep(light.range, 0.8 * light.range, light_distance);
         attenuation *= fade;
         spot_intensity *= attenuation;
 
@@ -153,7 +156,7 @@ Output main(Input input)
 
         float spec = pow(max(dot(r, v), 0.0), material.shininess);
 
-        float4 shadow_coord = mul(light_data[i].projection_view_matrix, float4(world_position, 1.0));
+        float4 shadow_coord = mul(light.projection_view_matrix, float4(world_position, 1.0));
         shadow_coord.xyz /= shadow_coord.w;
         float2 shadow_uv = shadow_coord.xy * 0.5 + 0.5;
 
@@ -172,8 +175,8 @@ Output main(Input input)
         diff *= spot_intensity;
         spec *= spot_intensity;
 
-        float3 diffuse_color = light_data[i].diffuse_color;
-        float3 specular_color = light_data[i].specular_color;
+        float3 diffuse_color = light.diffuse_color;
+        float3 specular_color = light.specular_color;
 
         // Hidden entities light up in different color
         // TODO: parametrize the color

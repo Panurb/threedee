@@ -21,7 +21,7 @@ typedef enum {
 
 
 typedef struct {
-    SDL_GPUTexture* depth_texture;
+    SDL_GPUTexture* depth_texture[FRAMES_IN_FLIGHT];
     Matrix4 projection_view_matrix;
 } ShadowMap;
 
