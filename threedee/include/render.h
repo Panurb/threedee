@@ -121,17 +121,13 @@ typedef struct MultiBuffer {
 	int capacity;
 	int size;
 	int element_size;
+	bool resizable;
 } MultiBuffer;
 
 
 typedef struct Batch {
 	Mesh* mesh;
-	SDL_GPUBuffer* instance_buffer;
-	int num_instances;
-	int max_instances;
-	SDL_GPUTransferBuffer* instance_transfer_buffer[FRAMES_IN_FLIGHT];
-	void* instance_data[FRAMES_IN_FLIGHT];  // Mapped pointer for each frame
-	int instance_size;
+	MultiBuffer instances;
 } Batch;
 
 
