@@ -167,11 +167,11 @@ void draw_collider(Entity entity) {
 
     switch (collider->type) {
         case COLLIDER_PLANE: {
-            render_plane(get_shape(entity).plane, color);
+            draw_plane(get_shape(entity).plane, color);
             break;
         }
         case COLLIDER_SPHERE:
-            render_sphere(position, collider->radius, 32, color);
+            draw_sphere(position, collider->radius, 32, color);
             break;
         case COLLIDER_CUBOID:
             break;
@@ -179,8 +179,8 @@ void draw_collider(Entity entity) {
             Vector3 h = map3(rot, vec3(0.0f, collider->height / 2.0f, 0.0f));
             Vector3 p0 = add3(position, h);
             Vector3 p1 = add3(position, neg3(h));
-            render_sphere(p0, collider->radius, 16, color);
-            render_sphere(p1, collider->radius, 16, color);
+            draw_sphere(p0, collider->radius, 16, color);
+            draw_sphere(p1, collider->radius, 16, color);
             break;
         case COLLIDER_AABB:
             break;

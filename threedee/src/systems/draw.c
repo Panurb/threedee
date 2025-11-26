@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 
 #include "app.h"
 #include "render.h"
@@ -92,6 +93,14 @@ typedef struct FaceToRemove {
 
 
 FaceToRemove faces_kissing(CubeFace* a, CubeFace* b) {
+    // Faces must be opposing
+    assert(dot3(a->normal, b->normal) < -0.999f);
+
+    float distance = dot3(sub3(b->corners[0], a->corners[0]), a->normal);
+    if (fabsf(distance) > 0.01f) {
+        return (FaceToRemove) { false, false };
+    }
+
     int shared_corners = 0;
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -101,9 +110,11 @@ FaceToRemove faces_kissing(CubeFace* a, CubeFace* b) {
         }
     }
 
-    if (shared_corners < 2) {
+    if (shared_corners < 4) {
         return (FaceToRemove) { false, false };
     }
+
+    return (FaceToRemove) { true, true };
 
     float area_a = get_face_area(a);
     float area_b = get_face_area(b);
@@ -301,21 +312,21 @@ void draw_axes(Entity entity) {
     y = map3(rot, y);
     z = map3(rot, z);
 
-    render_arrow(
+    draw_arrow(
         pos,
         add3(pos, x),
         thickness,
         COLOR_RED
     );
 
-    render_arrow(
+    draw_arrow(
         pos,
         add3(pos, y),
         thickness,
         COLOR_GREEN
     );
 
-    render_arrow(
+    draw_arrow(
         pos,
         add3(pos, z),
         thickness,
@@ -446,10 +457,10 @@ void draw_entities() {
             for (int i = 0; i < collider->collisions->size; i++) {
                 Collision collision = *(Collision*)ArrayList_get(collider->collisions, i);
                 Vector3 end = add3(start, collision.overlap);
-                render_arrow(start, end, 0.01f, COLOR_RED);
+                draw_arrow(start, end, 0.01f, COLOR_RED);
 
                 end = add3(start, collision.offset);
-                render_arrow(start, end, 0.01f, COLOR_BLUE);
+                draw_arrow(start, end, 0.01f, COLOR_BLUE);
             }
 
             draw_collider(entity);
@@ -480,7 +491,7 @@ void draw_entities() {
         }
 
         if (light) {
-            render_circle(
+            draw_circle(
                 get_position(entity),
                 0.1f,
                 32,
@@ -499,25 +510,25 @@ void draw_entities() {
             Vector3 far_bottom_right = add3(far_center, mul3(half_size, sub3(up, right)));
             Vector3 far_bottom_left = sub3(far_center, mul3(half_size, add3(right, up)));
 
-            render_arrow(
+            draw_arrow(
                 get_position(entity),
                 far_top_left,
                 0.1f,
                 COLOR_YELLOW
             );
-            render_arrow(
+            draw_arrow(
                 get_position(entity),
                 far_top_right,
                 0.1f,
                 COLOR_YELLOW
             );
-            render_arrow(
+            draw_arrow(
                 get_position(entity),
                 far_bottom_left,
                 0.1f,
                 COLOR_YELLOW
             );
-            render_arrow(
+            draw_arrow(
                 get_position(entity),
                 far_bottom_right,
                 0.1f,

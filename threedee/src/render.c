@@ -32,15 +32,13 @@ static Mesh triangle_mesh;
 static Mesh triangle_2d_mesh;
 static Mesh quad_mesh;
 static Mesh line_mesh;
-static ArrayList* texts;
+static ArrayList* texts = NULL;
 
-static Batch identity_batch;
 static Batch triangle_batch;
 static Batch triangle_2d_batch;
 static Batch quad_batch;
 static Batch line_batch;
 static Batch dummy_batch;
-
 static Batch batches[MAX_MESHES] = { 0 };
 
 
@@ -200,12 +198,10 @@ void init_render() {
 	texts = ArrayList_create(sizeof(TextData));
 	models = ArrayList_create(sizeof(Model));
 
-	identity_batch = create_batch(&triangle_mesh, 1);
 	triangle_batch = create_batch(&triangle_mesh, sizeof(InstanceColorData));
 	triangle_2d_batch = create_batch(&triangle_2d_mesh, sizeof(InstanceColorData2D));
 	quad_batch = create_batch(&quad_mesh, sizeof(BillboardInstanceData));
 	line_batch = create_batch(&line_mesh, sizeof(LineInstanceData));
-	int cube_mesh_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
 	dummy_batch = create_batch(NULL, sizeof(InstanceData));
 
 	for (int i = 0; i < resources.meshes_size; i++) {
@@ -1036,7 +1032,7 @@ void draw_sprite(Vector3 position, float width, float height, int texture_index)
 }
 
 
-void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
+void draw_triangle(Vector3 a, Vector3 b, Vector3 c, Color color) {
 	Vector3 n = cross(
 		sub3(b, a),
 		sub3(c, a)
@@ -1080,7 +1076,7 @@ void draw_line(Vector3 start, Vector3 end, float thickness, Color color) {
 }
 
 
-void render_circle(Vector3 center, float radius, int segments, Color color) {
+void draw_circle(Vector3 center, float radius, int segments, Color color) {
 	if (segments < 3) return; // At least a triangle
 
 	float angle_increment = 2.0f * M_PI / segments;
@@ -1093,13 +1089,13 @@ void render_circle(Vector3 center, float radius, int segments, Color color) {
 			center.y + radius * sinf(angle),
 			center.z
 		};
-		render_triangle(center, prev_point, current_point, color);
+		draw_triangle(center, prev_point, current_point, color);
 		prev_point = current_point;
 	}
 }
 
 
-void render_sphere(Vector3 center, float radius, int segments, Color color) {
+void draw_sphere(Vector3 center, float radius, int segments, Color color) {
 	if (segments < 3) return; // At least a triangle
 
 	float angle_increment = M_PI / segments;
@@ -1132,19 +1128,19 @@ void render_sphere(Vector3 center, float radius, int segments, Color color) {
 				center.z + radius * cosf(theta2)
 			};
 
-			render_quad(a, b, c, d, color);
+			draw_quad(a, b, c, d, color);
 		}
 	}
 }
 
 
-void render_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color) {
-	render_triangle(a, b, c, color);
-	render_triangle(a, c, d, color);
+void draw_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color) {
+	draw_triangle(a, b, c, color);
+	draw_triangle(a, c, d, color);
 }
 
 
-void render_arrow(Vector3 start, Vector3 end, float thickness, Color color) {
+void draw_arrow(Vector3 start, Vector3 end, float thickness, Color color) {
 	// Arrow tip size
 	float tip_length = 4.0f * thickness;
 	float tip_width = 5.0f * thickness;
@@ -1171,11 +1167,11 @@ void render_arrow(Vector3 start, Vector3 end, float thickness, Color color) {
 	Vector3 left = add3(tip_base, mul3(tip_width / 2.0f, perp));
 	Vector3 right = sub3(tip_base, mul3(tip_width / 2.0f, perp));
 
-	render_triangle(end, left, right, color);
+	draw_triangle(end, left, right, color);
 }
 
 
-void render_plane(Plane plane, Color color) {
+void draw_plane(Plane plane, Color color) {
 	// Create a large quad in the plane's normal direction
 	Vector3 up = {0.0f, 0.0f, 1.0f};
 	if (fabsf(dot3(plane.normal, up)) > 0.99f) {
@@ -1191,7 +1187,7 @@ void render_plane(Plane plane, Color color) {
 	Vector3 c = sub3(center, mul3(size, right));
 	Vector3 d = sub3(center, mul3(size, forward));
 
-	render_quad(a, b, c, d, color);
+	draw_quad(a, b, c, d, color);
 }
 
 

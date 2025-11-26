@@ -229,19 +229,19 @@ CubeIndices CubeIndices_fill(int value);
 
 void draw_sprite(Vector3 position, float width, float height, int texture_index);
 
-void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
+void draw_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 
 void draw_line(Vector3 start, Vector3 end, float thickness, Color color);
 
-void render_circle(Vector3 center, float radius, int segments, Color color);
+void draw_circle(Vector3 center, float radius, int segments, Color color);
 
-void render_sphere(Vector3 center, float radius, int segments, Color color);
+void draw_sphere(Vector3 center, float radius, int segments, Color color);
 
-void render_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color);
+void draw_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color);
 
-void render_arrow(Vector3 start, Vector3 end, float thickness, Color color);
+void draw_arrow(Vector3 start, Vector3 end, float thickness, Color color);
 
-void render_plane(Plane plane, Color color);
+void draw_plane(Plane plane, Color color);
 
 void draw_triangle_2d(Vector2 a, Vector2 b, Vector2 c, Color color);
 

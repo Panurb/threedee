@@ -186,7 +186,7 @@ void draw_waypoints() {
 
         Vector3 pos = get_position(i);
 
-        render_circle(pos, 0.1f, 8, COLOR_WHITE);
+        draw_circle(pos, 0.1f, 8, COLOR_WHITE);
 
         for (ListNode* node = waypoint->neighbors->head; node; node = node->next) {
             int k = node->value;
