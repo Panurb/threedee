@@ -175,8 +175,7 @@ static_assert(sizeof(LineInstanceData) % 16 == 0);
 
 typedef struct TextData {
 	Mesh mesh;
-	Batch batch;
-	TTF_Text* text;
+	InstanceColorData2D instance_color_data;
 } TextData;
 
 

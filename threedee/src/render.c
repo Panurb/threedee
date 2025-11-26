@@ -259,6 +259,22 @@ void init_render() {
 }
 
 
+void destroy_multi_buffer(MultiBuffer* multi_buffer) {
+	for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+		if (multi_buffer->data[i]) {
+			SDL_UnmapGPUTransferBuffer(
+				app.gpu_device,
+				multi_buffer->transfer_buffer[i]
+			);
+			multi_buffer->data[i] = NULL;
+		}
+
+		SDL_ReleaseGPUBuffer(app.gpu_device, multi_buffer->buffer[i]);
+		SDL_ReleaseGPUTransferBuffer(app.gpu_device, multi_buffer->transfer_buffer[i]);
+	}
+}
+
+
 void destroy_mesh(Mesh* mesh) {
 	if (!mesh) return;
 
@@ -275,10 +291,8 @@ void destroy_mesh(Mesh* mesh) {
 void destroy_batch(Batch* batch) {
 	if (!batch) return;
 
-	// SDL_ReleaseGPUBuffer(app.gpu_device, batch->instance_buffer);
-	// for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
-	// 	SDL_ReleaseGPUTransferBuffer(app.gpu_device, batch->instance_transfer_buffer[i]);
-	// }
+	destroy_mesh(batch->mesh);
+	destroy_multi_buffer(&batch->instances);
 }
 
 
@@ -286,8 +300,6 @@ void destroy_text_data(TextData* text_data) {
 	if (!text_data) return;
 
 	destroy_mesh(&text_data->mesh);
-	destroy_batch(&text_data->batch);
-	TTF_DestroyText(text_data->text);
 }
 
 
@@ -550,13 +562,13 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		SDL_EndGPURenderPass(render_pass);
 	}
 
+	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 	int layer = 0;
 	for (Entity i = 0; i < scene->components->entities; i++) {
 		LightComponent* light = get_component(i, COMPONENT_LIGHT);
 		if (!light) continue;
 		if (light->disabled) continue;
 
-		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 		SDL_CopyGPUTextureToTexture(
 			copy_pass,
 			&(SDL_GPUTextureLocation) {
@@ -572,9 +584,9 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 			1,
 			false
 		);
-		SDL_EndGPUCopyPass(copy_pass);
 		layer++;
 	}
+	SDL_EndGPUCopyPass(copy_pass);
 }
 
 
@@ -658,11 +670,6 @@ void render() {
 		upload_multi_buffer(copy_pass, &quad_batch.instances);
 		upload_multi_buffer(copy_pass, &line_batch.instances);
 		upload_multi_buffer(copy_pass, &triangle_2d_batch.instances);
-
-		for (int i = 0; i < texts->size; i++) {
-			TextData* text_data = ArrayList_get(texts, i);
-			upload_multi_buffer(copy_pass, &text_data->batch.instances);
-		}
 
 		SDL_EndGPUCopyPass(copy_pass);
 
@@ -827,9 +834,15 @@ void render() {
 		bind_pipeline(render_pass, PIPELINE_TEXT);
 		for (int i = 0; i < texts->size; i++) {
 			TextData* text = ArrayList_get(texts, i);
-			Batch batch = text->batch;
-			batch.mesh = &text->mesh;
-			render_batch(render_pass, &batch);
+
+			SDL_PushGPUVertexUniformData(
+				command_buffer,
+				1,
+				&text->instance_color_data,
+				sizeof(InstanceColorData2D)
+			);
+
+			render_mesh(render_pass, &text->mesh, 1, 0);
 		}
 
 		SDL_EndGPURenderPass(render_pass);
@@ -1245,6 +1258,7 @@ void draw_circle_2d(Vector2 center, float radius, Color color) {
 void draw_text(String string, Vector2 position, float angle, float size, Color color) {
 	TTF_Text* text = TTF_CreateText(app.text_engine, resources.fonts[0], string, 0);
 
+	// TODO: do I have to free this data?
 	TTF_GPUAtlasDrawSequence* data = TTF_GetGPUTextDrawData(text);
 
 	if (data->next != NULL) {
@@ -1252,14 +1266,10 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 	}
 
 	Mesh mesh = create_mesh_text(*data);
-	Batch batch = create_batch(NULL, sizeof(InstanceColorData2D));
 
 	// Match text pixel size to screen coordinates
 	float scale = size / 216.0f;
 
-	InstanceColorData2D* instance_datas = SDL_MapGPUTransferBuffer(
-		app.gpu_device, batch.instances.transfer_buffer[frame_index], false
-	);
 	InstanceColorData2D instance_data = {
 		.transform = {
 			scale * cosf(angle), -scale * sinf(angle), position.x, 0.0f,
@@ -1267,13 +1277,11 @@ void draw_text(String string, Vector2 position, float angle, float size, Color c
 		},
 		.color = color
 	};
-	instance_datas[batch.instances.size] = instance_data;
-	batch.instances.size++;
 
 	TextData text_data = {
 		.mesh = mesh,
-		.batch = batch,
-		.text = text
+		.instance_color_data = instance_data,
 	};
 	ArrayList_add(texts, &text_data);
+	TTF_DestroyText(text);
 }

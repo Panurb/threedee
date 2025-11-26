@@ -138,7 +138,7 @@ void load_shaders() {
 	shaders[SHADER_VERTEX_POSITION_COLOR_2D] = load_shader(app.gpu_device, "position_color_2d.vert", 0, 1, 1, 0);
 	shaders[SHADER_VERTEX_POSITION_COLOR] = load_shader(app.gpu_device, "position_color.vert", 0, 1, 1, 0);
 	shaders[SHADER_VERTEX_POSITION_TEXTURE] = load_shader(app.gpu_device, "position_texture.vert", 0, 2, 1, 0);
-	shaders[SHADER_VERTEX_TEXT] = load_shader(app.gpu_device, "text.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_TEXT] = load_shader(app.gpu_device, "text.vert", 0, 2, 0, 0);
 	shaders[SHADER_VERTEX_SHADOW_DEPTH] = load_shader(app.gpu_device, "shadow_depth.vert", 0, 2, 1, 0);
 	shaders[SHADER_VERTEX_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
 	shaders[SHADER_VERTEX_BILLBOARD] = load_shader(app.gpu_device, "billboard.vert", 0, 1, 1, 0);
