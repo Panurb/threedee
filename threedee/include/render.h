@@ -227,8 +227,6 @@ void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int materia
 
 CubeIndices CubeIndices_fill(int value);
 
-void draw_cube(Matrix4 transform, CubeIndices texture_indices, CubeIndices material_indices);
-
 void draw_sprite(Vector3 position, float width, float height, int texture_index);
 
 void render_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);

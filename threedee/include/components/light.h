@@ -4,7 +4,7 @@
 
 
 #define SHADOW_MAP_RESOLUTION 512
-#define MAX_LIGHTS 32  // Should match array size in phong shader
+#define MAX_LIGHTS 32
 
 
 typedef enum {

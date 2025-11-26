@@ -39,7 +39,6 @@ static Batch triangle_batch;
 static Batch triangle_2d_batch;
 static Batch quad_batch;
 static Batch line_batch;
-static Batch cube_batch;
 static Batch dummy_batch;
 
 static Batch batches[MAX_MESHES] = { 0 };
@@ -207,7 +206,6 @@ void init_render() {
 	quad_batch = create_batch(&quad_mesh, sizeof(BillboardInstanceData));
 	line_batch = create_batch(&line_mesh, sizeof(LineInstanceData));
 	int cube_mesh_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
-	cube_batch = create_batch(&resources.meshes[cube_mesh_index], sizeof(CubeInstanceData));
 	dummy_batch = create_batch(NULL, sizeof(InstanceData));
 
 	for (int i = 0; i < resources.meshes_size; i++) {
@@ -319,7 +317,7 @@ void apply_render_settings() {
 void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[pipeline]);
 
-	if (pipeline == PIPELINE_3D_TEXTURED || pipeline == PIPELINE_CUBE) {
+	if (pipeline == PIPELINE_3D_TEXTURED) {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			0,
@@ -557,7 +555,6 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 		for (int j = 0; j < resources.meshes_size; j++) {
 			render_batch(render_pass, &batches[j]);
 		}
-		// render_batch(command_buffer, render_pass, &cube_batch);
 
 		SDL_EndGPURenderPass(render_pass);
 	}
@@ -739,9 +736,6 @@ void render() {
 			1
 		);
 
-		// bind_pipeline(render_pass, PIPELINE_CUBE);
-		// render_batch(command_buffer, render_pass, &cube_batch);
-
 		bind_pipeline(render_pass, PIPELINE_3D_TEXTURED);
 		init_model_rendering(render_pass);
 		for (int i = 0; i < models->size; i++) {
@@ -863,7 +857,6 @@ void render() {
 	triangle_2d_batch.instances.size = 0;
 	quad_batch.instances.size = 0;
 	line_batch.instances.size = 0;
-	cube_batch.instances.size = 0;
 
 	frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
 }
@@ -1018,24 +1011,6 @@ CubeIndices CubeIndices_fill(int value) {
 		.bottom = value
 	};
 	return indices;
-}
-
-
-void draw_cube(Matrix4 transform, CubeIndices texture_indices, CubeIndices material_indices) {
-	Batch* batch = &cube_batch;
-	check_multi_buffer_size(&batch->instances);
-
-	CubeInstanceData* instances = get_multi_buffer_data(&batch->instances);
-
-	CubeInstanceData instance_data = {
-		.transform = transpose4(transform),
-		.texture_indices = texture_indices,
-		.material_indices = material_indices,
-		.visiblity = VISIBILITY_ALL
-	};
-
-	instances[batch->instances.size] = instance_data;
-	batch->instances.size++;
 }
 
 

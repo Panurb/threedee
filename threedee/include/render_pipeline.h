@@ -32,7 +32,6 @@ typedef enum {
     PIPELINE_DEPTH_OF_FIELD,
     PIPELINE_BILLBOARD,
     PIPELINE_LINE,
-    PIPELINE_CUBE,
     PIPELINE_COUNT
 } Pipeline;
 

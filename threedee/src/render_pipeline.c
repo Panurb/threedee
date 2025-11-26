@@ -558,7 +558,6 @@ void create_pipelines() {
 	pipelines[PIPELINE_DEPTH_OF_FIELD] = create_render_pipeline_depth_of_field();
 	pipelines[PIPELINE_BILLBOARD] = create_render_pipeline_billboard();
 	pipelines[PIPELINE_LINE] = create_render_pipeline_line();
-	pipelines[PIPELINE_CUBE] = create_render_pipeline_cube();
 }
 
 

@@ -405,13 +405,7 @@ void draw_entities() {
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);
         if (mesh_component && mesh_component->visible) {
             float emissive = get_emissive(entity);
-            if (mesh_component->mesh_index == cube_index) {
-                draw_cube(
-                    get_transform(entity),
-                    CubeIndices_fill(mesh_component->texture_index),
-                    CubeIndices_fill(mesh_component->material_index)
-                );
-            } else {
+            if (mesh_component->mesh_index != cube_index) {
                 draw_mesh(
                     get_transform(entity),
                     mesh_component->mesh_index,
