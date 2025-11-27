@@ -126,15 +126,12 @@ extern "C" {
  */
 #define SDL_TriggerBreakpoint() TriggerABreakpointInAPlatformSpecificManner
 
-#elif defined(_MSC_VER) && _MSC_VER >= 1310
+#elif defined(__MINGW32__) || (defined(_MSC_VER) && _MSC_VER >= 1310)
     /* Don't include intrin.h here because it contains C++ code */
     extern void __cdecl __debugbreak(void);
     #define SDL_TriggerBreakpoint() __debugbreak()
 #elif defined(_MSC_VER) && defined(_M_IX86)
     #define SDL_TriggerBreakpoint() { _asm { int 0x03 }  }
-#elif defined(ANDROID)
-    #include <assert.h>
-    #define SDL_TriggerBreakpoint() assert(0)
 #elif SDL_HAS_BUILTIN(__builtin_debugtrap)
     #define SDL_TriggerBreakpoint() __builtin_debugtrap()
 #elif SDL_HAS_BUILTIN(__builtin_trap)
@@ -179,12 +176,40 @@ extern "C" {
 #   define SDL_FUNCTION "???"
 #endif
 
+#ifndef SDL_FILE
+
 /**
  * A macro that reports the current file being compiled.
+ *
+ * This macro is only defined if it isn't already defined, so to override it
+ * (perhaps with something that doesn't provide path information at all, so
+ * build machine information doesn't leak into public binaries), apps can
+ * define this macro before including SDL_assert.h. For example, Clang and GCC
+ * can define this to `FILE_NAME` to get just the source filename instead of
+ * the full path.
  *
  * \since This macro is available since SDL 3.2.0.
  */
 #define SDL_FILE    __FILE__
+#endif
+
+#ifndef SDL_ASSERT_FILE
+
+/**
+ * A macro that reports the current file being compiled, for use in
+ * assertions.
+ *
+ * This macro is only defined if it isn't already defined, so to override it
+ * (perhaps with something that doesn't provide path information at all, so
+ * build machine information doesn't leak into public binaries), apps can
+ * define this macro before including SDL_assert.h. For example, defining this
+ * to `""` will make sure no source path information is included in asserts.
+ *
+ * \since This macro is available since SDL 3.4.0.
+ */
+#define SDL_ASSERT_FILE SDL_FILE
+#endif
+
 
 /**
  * A macro that reports the current line number of the file being compiled.
@@ -362,8 +387,8 @@ extern SDL_DECLSPEC SDL_AssertState SDLCALL SDL_ReportAssertion(SDL_AssertData *
 #define SDL_enabled_assert(condition) \
     do { \
         while ( !(condition) ) { \
-            static struct SDL_AssertData sdl_assert_data = { 0, 0, #condition, 0, 0, 0, 0 }; \
-            const SDL_AssertState sdl_assert_state = SDL_ReportAssertion(&sdl_assert_data, SDL_FUNCTION, SDL_FILE, SDL_LINE); \
+            static struct SDL_AssertData sdl_assert_data = { false, 0, #condition, NULL, 0, NULL, NULL }; \
+            const SDL_AssertState sdl_assert_state = SDL_ReportAssertion(&sdl_assert_data, SDL_FUNCTION, SDL_ASSERT_FILE, SDL_LINE); \
             if (sdl_assert_state == SDL_ASSERTION_RETRY) { \
                 continue; /* go again. */ \
             } else if (sdl_assert_state == SDL_ASSERTION_BREAK) { \
