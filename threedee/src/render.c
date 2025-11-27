@@ -27,6 +27,7 @@ static SDL_GPUTexture* dof_temp_texture = NULL;
 static SDL_GPUSampler* screen_sampler = NULL;
 
 static MultiBuffer light_buffer;
+static ShadowUniformData shadow_map_data[MAX_LIGHTS] = { 0 };
 
 static Mesh triangle_mesh;
 static Mesh triangle_2d_mesh;
@@ -244,7 +245,7 @@ void init_render() {
 				.height = SHADOW_MAP_RESOLUTION,
 				.layer_count_or_depth = MAX_LIGHTS,
 				.num_levels = 1,
-				.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
+				.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
 			}
 		);
 	}
@@ -485,57 +486,65 @@ void render_model(
 }
 
 
-void add_light(Entity entity) {
-	LightComponent* light = get_component(entity, COMPONENT_LIGHT);
-	Color diffuse_color = light->diffuse_color;
-	Color specular_color = light->specular_color;
+void add_light(
+	Matrix4 transform,
+	Color diffuse_color,
+	Color specular_color,
+	float fov,
+	float range,
+	Visibility visibility_mask,
+	Matrix4 projection_matrix
+) {
+	Matrix4 view_matrix = inverse_transform(transform);
+	Matrix4 projection_view_matrix = matrix4_mul(projection_matrix, view_matrix);
 
 	LightData light_data = {
-		.position = get_position(entity),
-		.visibility_mask = light->visibility_mask,
-		.direction = quaternion_forward(get_rotation(entity)),
-		.cutoff_cos = cosf(to_radians(light->fov * 0.5f)),
+		.position = position_from_transform(transform),
+		.visibility_mask = visibility_mask,
+		.direction = quaternion_forward(rotation_from_transform(transform)),
+		.cutoff_cos = cosf(to_radians(fov * 0.5f)),
 		.diffuse_color = { diffuse_color.r, diffuse_color.g, diffuse_color.b },
 		.specular_color = { specular_color.r, specular_color.g, specular_color.b },
-		.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
-		.range = light->range,
+		.projection_view_matrix = transpose4(projection_view_matrix),
+		.range = range,
+	};
+
+	ShadowUniformData shadow_uniform_data = {
+		.projection_view_matrix = light_data.projection_view_matrix,
+		.visibility_mask = visibility_mask
 	};
 
 	LightData* data = get_multi_buffer_data(&light_buffer);
 	data[light_buffer.size] = light_data;
+	shadow_map_data[light_buffer.size] = shadow_uniform_data;
 	light_buffer.size++;
 }
 
 
 void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
-	for (Entity i = 0; i < scene->components->entities; i++) {
-		LightComponent* light = get_component(i, COMPONENT_LIGHT);
-		if (!light) continue;
-		if (light->disabled) continue;
+	for (int i = 0; i < light_buffer.size; i++) {
+		ShadowUniformData shadow_uniform_data = shadow_map_data[i];
 
-		ShadowUniformData shadow_uniform_data = {
-			.projection_view_matrix = transpose4(light->shadow_map.projection_view_matrix),
-			.visibility_mask = light->visibility_mask
-		};
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &shadow_uniform_data, sizeof(ShadowUniformData));
+		SDL_PushGPUVertexUniformData(
+			command_buffer,
+			0,
+			&shadow_uniform_data,
+			sizeof(ShadowUniformData)
+		);
 
-		if (!light->shadow_map.depth_texture) {
-			LOG_ERROR("Light %d does not have a shadow map depth texture!", i);
-		}
-
-		// TODO: render directly to texture array layers (update SDL first)
 		SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
 			command_buffer,
 			 NULL,
 			0,
 			&(SDL_GPUDepthStencilTargetInfo){
 				.clear_depth = 1.0f,
-				.texture = light->shadow_map.depth_texture[frame_index],
-				.cycle = true,
+				.texture = shadow_maps[frame_index],
+				.cycle = false,
 				.load_op = SDL_GPU_LOADOP_CLEAR,
 				.store_op = SDL_GPU_STOREOP_STORE,
 				.stencil_load_op = SDL_GPU_LOADOP_CLEAR,
 				.stencil_store_op = SDL_GPU_STOREOP_STORE,
+				.layer = i,
 			}
 		);
 
@@ -554,32 +563,6 @@ void render_shadow_maps(SDL_GPUCommandBuffer* command_buffer) {
 
 		SDL_EndGPURenderPass(render_pass);
 	}
-
-	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
-	int layer = 0;
-	for (Entity i = 0; i < scene->components->entities; i++) {
-		LightComponent* light = get_component(i, COMPONENT_LIGHT);
-		if (!light) continue;
-		if (light->disabled) continue;
-
-		SDL_CopyGPUTextureToTexture(
-			copy_pass,
-			&(SDL_GPUTextureLocation) {
-				.texture = light->shadow_map.depth_texture[frame_index],
-				.layer = 0
-			},
-			&(SDL_GPUTextureLocation) {
-				.texture = shadow_maps[frame_index],
-				.layer = layer,
-			},
-			SHADOW_MAP_RESOLUTION,
-			SHADOW_MAP_RESOLUTION,
-			1,
-			false
-		);
-		layer++;
-	}
-	SDL_EndGPUCopyPass(copy_pass);
 }
 
 
@@ -702,7 +685,7 @@ void render() {
 			&(SDL_GPUDepthStencilTargetInfo){
 				.clear_depth = 1.0f,
 				.texture = depth_stencil_texture,
-				.cycle = true,
+				.cycle = false,
 				.load_op = SDL_GPU_LOADOP_CLEAR,
 				.store_op = SDL_GPU_STOREOP_STORE,
 				.stencil_load_op = SDL_GPU_LOADOP_CLEAR,

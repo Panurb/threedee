@@ -406,11 +406,15 @@ void draw_entities() {
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
         if (light && !light->disabled) {
-            Matrix4 view_matrix = inverse_transform(get_transform(entity));
-            Matrix4 projection_matrix = light->projection_matrix;
-            light->shadow_map.projection_view_matrix = matrix4_mul(projection_matrix, view_matrix);
-
-            add_light(entity);
+            add_light(
+                get_transform(entity),
+                light->diffuse_color,
+                light->specular_color,
+                light->fov,
+                light->range,
+                light->visibility_mask,
+                light->projection_matrix
+            );
         }
 
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);

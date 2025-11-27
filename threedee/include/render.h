@@ -221,7 +221,7 @@ void pre_render();
 
 void render();
 
-void add_light(Entity entity);
+void add_light(Matrix4 transform, Color diffuse_color, Color specular_color, float fov, float range, Visibility visibility_mask, Matrix4 projection_matrix);
 
 void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int material_index, int emissive_index, float emissive, Visibility visibility, Vector2 texture_scale);
 
