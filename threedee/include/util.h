@@ -89,6 +89,17 @@ typedef struct {
     int size;
 } PolygonShape;
 
+typedef struct Frustum {
+    Plane near_plane;
+    Plane far_plane;
+    Plane left_plane;
+    Plane right_plane;
+    Plane top_plane;
+    Plane bottom_plane;
+    Vector3 origin;
+    Vector3 corners[4];
+} Frustum;
+
 typedef union {
     Plane plane;
     Sphere sphere;
@@ -192,3 +203,5 @@ void get_rect_corners(Vector2 position, float angle, float width, float height, 
 float map_to_range(int x, int min_x, int max_x, float min_y, float max_y);
 
 Vector3 calculate_tangent(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 uv0, Vector2 uv1, Vector2 uv2);
+
+bool frustum_sphere_check(Frustum frustum, Sphere sphere);

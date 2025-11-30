@@ -24,7 +24,11 @@ Entity create_player(Vector3 position) {
         .dont_sleep = true
     });
     rb->linear_damping = 0.99f;
-    // MeshComponent_add(i, "cube", "tiles", "default");
+    // MeshComponent_add(i, (MeshParameters) {
+    //     .mesh_filename = "sphere",
+    //     .texture_filename = "black",
+    //     .material_filename = "plastic",
+    // });
     ColliderComponent_add(i,
         (ColliderParameters) {
             .type = COLLIDER_CAPSULE,

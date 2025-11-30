@@ -392,6 +392,24 @@ float get_emissive(Entity entity) {
 }
 
 
+void draw_frustum(Frustum frustum) {
+    // draw_plane(frustum.left_plane, get_color(1.0f, 0.0f, 0.0f, 0.1f));
+    // draw_plane(frustum.right_plane, get_color(0.0f, 1.0f, 0.0f, 0.1f));
+    // draw_plane(frustum.top_plane, get_color(0.0f, 0.0f, 1.0f, 0.1f));
+    // draw_plane(frustum.bottom_plane, get_color(1.0f, 1.0f, 0.0f, 0.1f));
+    // draw_plane(frustum.near_plane, get_color(1.0f, 0.0f, 1.0f, 0.1f));
+    // draw_plane(frustum.far_plane, get_color(0.0f, 1.0f, 1.0f, 0.1f));
+
+    draw_line(frustum.corners[0], frustum.corners[1], 0.01f, COLOR_WHITE);
+    draw_line(frustum.corners[1], frustum.corners[2], 0.01f, COLOR_WHITE);
+    draw_line(frustum.corners[2], frustum.corners[3], 0.01f, COLOR_WHITE);
+    draw_line(frustum.corners[3], frustum.corners[0], 0.01f, COLOR_WHITE);
+    for (int i = 0; i < 4; i++) {
+        draw_line(frustum.origin, frustum.corners[i], 0.01f, COLOR_WHITE);
+    }
+}
+
+
 void draw_entities() {
     LOG_DEBUG("Drawing entities");
 
@@ -402,19 +420,40 @@ void draw_entities() {
     );
 
     int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
+    Entity camera = get_children(scene->player)->head->value;
+    Frustum frustum = get_camera_frustum(camera);
 
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
         if (light && !light->disabled) {
-            add_light(
-                get_transform(entity),
-                light->diffuse_color,
-                light->specular_color,
-                light->fov,
-                light->range,
-                light->visibility_mask,
-                light->projection_matrix
-            );
+            Sphere light_sphere = {
+                .center = get_position(entity),
+                .radius = light->range
+            };
+            if (frustum_sphere_check(frustum, light_sphere)) {
+                add_light(
+                    get_transform(entity),
+                    light->diffuse_color,
+                    light->specular_color,
+                    light->fov,
+                    light->range,
+                    light->visibility_mask,
+                    light->projection_matrix
+                );
+                // draw_sphere(
+                //     light_sphere.center,
+                //     light_sphere.radius,
+                //     16,
+                //     get_color(1.0f, 0.0f, 0.0f, 0.1f)
+                // );
+            } else {
+                // draw_sphere(
+                //     light_sphere.center,
+                //     light_sphere.radius,
+                //     16,
+                //     get_color(1.0f, 1.0f, 1.0f, 0.1f)
+                // );
+            }
         }
 
         MeshComponent* mesh_component = get_component(entity, COMPONENT_MESH);

@@ -374,3 +374,21 @@ Vector3 calculate_tangent(Vector3 v0, Vector3 v1, Vector3 v2, Vector2 uv0, Vecto
 
     return normalized3(tangent);
 }
+
+
+bool plane_sphere_check(Plane plane, Sphere sphere) {
+    // Check if sphere is in front of or intersects the plane
+    float distance = dot3(plane.normal, sphere.center) - plane.offset;
+    return distance >= -sphere.radius;
+}
+
+
+bool frustum_sphere_check(Frustum frustum, Sphere sphere) {
+    if (!plane_sphere_check(frustum.near_plane, sphere)) return false;
+    if (!plane_sphere_check(frustum.far_plane, sphere)) return false;
+    if (!plane_sphere_check(frustum.left_plane, sphere)) return false;
+    if (!plane_sphere_check(frustum.right_plane, sphere)) return false;
+    if (!plane_sphere_check(frustum.top_plane, sphere)) return false;
+    if (!plane_sphere_check(frustum.bottom_plane, sphere)) return false;
+    return true; // Sphere is inside or intersects all planes
+}

@@ -5,6 +5,7 @@
 
 #include "linalg.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <util.h>
 
@@ -234,6 +235,10 @@ Vector3 proj3(Vector3 a, Vector3 b) {
 
 Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u) {
     return add2(mul2(a, v), mul2(b, u));
+}
+
+Vector3 lin_comb3(float a, Vector3 v, float b, Vector3 u, float c, Vector3 w) {
+    return add3(add3(mul3(a, v), mul3(b, u)), mul3(c, w));
 }
 
 Vector3 cross(Vector3 v, Vector3 u) {
@@ -511,8 +516,8 @@ Matrix4 perspective_projection_matrix(float fov, float aspect_ratio, float near,
     // Depth is mapped to [0, 1] range as expected by Vulkan
     float f = 1.0f / tanf(fov / 2.0f);
     Matrix4 m = identity4();
-    m._11 = f / aspect_ratio;
-    m._22 = f;
+    m._11 = f;
+    m._22 = f * aspect_ratio;
     m._33 = far / (near - far);
     m._34 = (far * near) / (near - far);
     m._43 = -1.0f;

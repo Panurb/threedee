@@ -54,7 +54,7 @@ Entity create_rope(Vector3 position, float length, int segments) {
 
 Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent_add(i, (TransformParameters) { .position = position, .scale = vec3(1.0f, 1.0f, 1.0f) });
+    TransformComponent_add(i, (TransformParameters) { .position = position });
     look_at(i, vec3(position.x, position.y - 1.0f, position.z));
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "lamp",
@@ -87,7 +87,11 @@ Entity create_lamp(Vector3 position) {
         .rotation = quaternion_from_forward(vec3_down(), vec3_forward()),
         .parent = i
     });
-    LightComponent_add(light, (LightParameters) { .color = COLOR_WHITE, .visibility_mask = VISIBILITY_NORMAL });
+    LightComponent_add(light, (LightParameters) {
+        .color = COLOR_WHITE,
+        .visibility_mask = VISIBILITY_NORMAL,
+        .range = 10.0f
+    });
 
     // Entity rope = create_entity();
     // TransformComponent_add(rope, (TransformParameters) {
@@ -148,6 +152,7 @@ Entity create_ground(float width, float depth) {
 
 
 Entity create_ceiling(Vector3 position, float width, float depth) {
+    return NULL_ENTITY;
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
         .position = vec3(position.x, position.y - 0.5f, position.z),
@@ -741,6 +746,7 @@ void create_scene() {
     scene->player = create_player(zeros3());
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
+    // scene->camera = create_overhead_camera();
 
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {

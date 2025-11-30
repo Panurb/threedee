@@ -147,6 +147,8 @@ Vector3 proj3(Vector3 a, Vector3 b);
 
 Vector2 lin_comb(float a, Vector2 v, float b, Vector2 u);
 
+Vector3 lin_comb3(float a, Vector3 v, float b, Vector3 u, float c, Vector3 w);
+
 Vector3 cross(Vector3 v, Vector3 u);
 
 Vector2 rotate(Vector2 v, float angle);
