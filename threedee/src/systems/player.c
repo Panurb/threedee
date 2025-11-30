@@ -363,3 +363,8 @@ void input_players() {
         }
     }
 }
+
+
+Entity get_player_camera(Entity player) {
+    return get_children(player)->head->value;
+}

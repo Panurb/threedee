@@ -7,6 +7,9 @@
 #include "scene.h"
 #include "util.h"
 #include "systems/draw.h"
+
+#include <systems/player.h>
+
 #include "systems/navigation.h"
 
 
@@ -413,6 +416,7 @@ void draw_frustum(Frustum frustum) {
 void draw_entities() {
     LOG_DEBUG("Drawing entities");
 
+    // Crosshair
     draw_circle_2d(
         zeros2(),
         0.007f,
@@ -420,7 +424,7 @@ void draw_entities() {
     );
 
     int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
-    Entity camera = get_children(scene->player)->head->value;
+    Entity camera = get_player_camera(scene->player);
     Frustum frustum = get_camera_frustum(camera);
 
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
@@ -440,19 +444,6 @@ void draw_entities() {
                     light->visibility_mask,
                     light->projection_matrix
                 );
-                // draw_sphere(
-                //     light_sphere.center,
-                //     light_sphere.radius,
-                //     16,
-                //     get_color(1.0f, 0.0f, 0.0f, 0.1f)
-                // );
-            } else {
-                // draw_sphere(
-                //     light_sphere.center,
-                //     light_sphere.radius,
-                //     16,
-                //     get_color(1.0f, 1.0f, 1.0f, 0.1f)
-                // );
             }
         }
 

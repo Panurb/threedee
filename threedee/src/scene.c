@@ -44,14 +44,6 @@ float wall_angle(Direction direction) {
 }
 
 
-Entity create_rope(Vector3 position, float length, int segments) {
-    Entity i = create_entity();
-    TransformComponent_add(i, (TransformParameters) { .position = position });
-    float segment_length = length / (float) segments;
-
-}
-
-
 Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
@@ -92,17 +84,6 @@ Entity create_lamp(Vector3 position) {
         .visibility_mask = VISIBILITY_NORMAL,
         .range = 10.0f
     });
-
-    // Entity rope = create_entity();
-    // TransformComponent_add(rope, (TransformParameters) {
-    //     .position = vec3(0.0f, 0.5f, 0.0f),
-    //     .scale = vec3(0.01f, 0.5f, 0.01f),
-    //     .parent = i
-    // });
-    // MeshComponent_add(rope, (MeshParameters) {
-    //     .mesh_filename = "rope",
-    //     .texture_filename = "black",
-    // });
 
     return i;
 }
@@ -152,7 +133,6 @@ Entity create_ground(float width, float depth) {
 
 
 Entity create_ceiling(Vector3 position, float width, float depth) {
-    return NULL_ENTITY;
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
         .position = vec3(position.x, position.y - 0.5f, position.z),

@@ -176,6 +176,8 @@ void update(float time_step) {
     update_players(time_step);
     update_enemies(time_step);
     update_waypoints();
+
+    // For overhead camera testing
     // TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);
     // trans->position.x = get_position(scene->player).x;
     // trans->position.z = get_position(scene->player).z;
