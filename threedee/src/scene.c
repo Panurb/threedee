@@ -119,6 +119,29 @@ Entity create_television(Vector3 position, float yaw) {
 }
 
 
+Entity create_chair(Vector3 position, float yaw) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = position,
+        .yaw = yaw
+    });
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "chair",
+        .texture_filename = "wood",
+        .material_filename = "concrete"
+    });
+    ColliderComponent_add(i, (ColliderParameters) {
+        .type = COLLIDER_CUBOID,
+        .group = GROUP_PROPS,
+        .width = 0.5f,
+        .height = 1.0f,
+        .depth = 0.5f
+    });
+
+    return i;
+}
+
+
 Entity create_ground(float width, float depth) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
@@ -190,7 +213,7 @@ void create_frame(Vector3 position, float width, float height, float depth) {
 
     MeshParameters mesh_params = {
         .mesh_filename = "cube",
-        .texture_filename = "white",
+        .texture_filename = "wood",
         .material_filename = "concrete"
     };
 
@@ -706,6 +729,14 @@ Level create_level() {
                     break;
                 case ROOM_KITCHEN:
                     create_lamp(vec3(pos.x, 2.5f, pos.z));
+                    create_chair(
+                        vec3(
+                            pos.x + randf(-0.5f * level.room_width + 1.0f, 0.5f * level.room_width - 1.0f),
+                            pos.y,
+                            pos.z + randf(-0.5f * level.room_depth + 1.0f, 0.5f * level.room_depth - 1.0f)
+                        ),
+                        randf(0.0f, 360.0f)
+                    );
                     break;
                 default:
                     break;
