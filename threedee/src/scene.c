@@ -142,6 +142,29 @@ Entity create_chair(Vector3 position, float yaw) {
 }
 
 
+Entity create_table(Vector3 position, float yaw) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = position,
+        .yaw = yaw
+    });
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "table",
+        .texture_filename = "wood",
+        .material_filename = "concrete"
+    });
+    ColliderComponent_add(i, (ColliderParameters) {
+        .type = COLLIDER_CUBOID,
+        .group = GROUP_PROPS,
+        .width = 1.5f,
+        .height = 0.75f,
+        .depth = 1.5f
+    });
+
+    return i;
+}
+
+
 Entity create_ground(float width, float depth) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
@@ -729,14 +752,15 @@ Level create_level() {
                     break;
                 case ROOM_KITCHEN:
                     create_lamp(vec3(pos.x, 2.5f, pos.z));
-                    create_chair(
-                        vec3(
-                            pos.x + randf(-0.5f * level.room_width + 1.0f, 0.5f * level.room_width - 1.0f),
-                            pos.y,
-                            pos.z + randf(-0.5f * level.room_depth + 1.0f, 0.5f * level.room_depth - 1.0f)
-                        ),
-                        randf(0.0f, 360.0f)
-                    );
+                    create_table(pos, 0.0f);
+                    for (int c = 0; c < 4; c++) {
+                        float angle = to_radians(c * 90.0f);
+                        float d = (c % 2 == 0) ? 1.5f : 1.0f;
+                        create_chair(
+                            add3(pos, vec3(cosf(angle) * d, 0.0f, sinf(angle) * d)),
+                            -(c + 1) * 90.0f
+                        );
+                    }
                     break;
                 default:
                     break;
