@@ -161,28 +161,32 @@ void draw_collider(Entity entity) {
 
     Vector3 position = get_position(entity);
     Vector3 scale = get_scale(entity);
-    Matrix3 rot = quaternion_to_rotation_matrix(get_rotation(entity));
+    Quaternion rotation = get_rotation(entity);
+    Matrix3 rot = quaternion_to_rotation_matrix(rotation);
+    float radius = get_radius(entity);
+    Vector3 half_extents = get_half_extents(entity);
 
     Color color = get_color(1.0f, 0.0f, 0.0f, 0.5f);
 
     switch (collider->type) {
-        case COLLIDER_PLANE: {
+        case COLLIDER_PLANE:
             draw_plane(get_shape(entity).plane, color);
             break;
-        }
         case COLLIDER_SPHERE:
-            draw_sphere(position, collider->radius, 32, color);
+            draw_sphere(position, radius, 32, color);
             break;
         case COLLIDER_CUBOID:
+            draw_cuboid(position, rotation, mul3(2.0f, half_extents), color);
             break;
         case COLLIDER_CAPSULE:
             Vector3 h = map3(rot, vec3(0.0f, collider->height / 2.0f, 0.0f));
             Vector3 p0 = add3(position, h);
             Vector3 p1 = add3(position, neg3(h));
-            draw_sphere(p0, collider->radius, 16, color);
-            draw_sphere(p1, collider->radius, 16, color);
+            draw_sphere(p0, radius, 16, color);
+            draw_sphere(p1, radius, 16, color);
             break;
         case COLLIDER_AABB:
+            draw_cuboid(position, quaternion_id(), mul3(2.0f, half_extents), color);
             break;
     }
 }

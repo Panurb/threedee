@@ -1117,6 +1117,43 @@ void draw_sphere(Vector3 center, float radius, int segments, Color color) {
 }
 
 
+void draw_cuboid(Vector3 position, Quaternion rotation, Vector3 size, Color color) {
+	Matrix4 transform = transform_matrix(position, rotation, size);
+
+	Vector4 corners[8] = {
+		{-0.5f, -0.5f, -0.5f, 1.0f},
+		{ 0.5f, -0.5f, -0.5f, 1.0f},
+		{ 0.5f,  0.5f, -0.5f, 1.0f},
+		{-0.5f,  0.5f, -0.5f, 1.0f},
+		{-0.5f, -0.5f,  0.5f, 1.0f},
+		{ 0.5f, -0.5f,  0.5f, 1.0f},
+		{ 0.5f,  0.5f,  0.5f, 1.0f},
+		{-0.5f,  0.5f,  0.5f, 1.0f},
+	};
+
+	int quads[6][4] = {
+		{0, 1, 2, 3}, // Back
+		{5, 4, 7, 6}, // Front
+		{4, 0, 3, 7}, // Left
+		{1, 5, 6, 2}, // Right
+		{3, 2, 6, 7}, // Top
+		{4, 5, 1, 0}  // Bottom
+	};
+
+	for (int i = 0; i < 8; i++) {
+		corners[i] = map4(transform, corners[i]);
+	}
+
+	for (int i = 0; i < 6; i++) {
+		Vector3 a = {corners[quads[i][0]].x, corners[quads[i][0]].y, corners[quads[i][0]].z};
+		Vector3 b = {corners[quads[i][1]].x, corners[quads[i][1]].y, corners[quads[i][1]].z};
+		Vector3 c = {corners[quads[i][2]].x, corners[quads[i][2]].y, corners[quads[i][2]].z};
+		Vector3 d = {corners[quads[i][3]].x, corners[quads[i][3]].y, corners[quads[i][3]].z};
+		draw_quad(a, b, c, d, color);
+	}
+}
+
+
 void draw_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color) {
 	draw_triangle(a, b, c, color);
 	draw_triangle(a, c, d, color);

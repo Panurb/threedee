@@ -237,6 +237,8 @@ void draw_circle(Vector3 center, float radius, int segments, Color color);
 
 void draw_sphere(Vector3 center, float radius, int segments, Color color);
 
+void draw_cuboid(Vector3 position, Quaternion rotation, Vector3 size, Color color);
+
 void draw_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color);
 
 void draw_arrow(Vector3 start, Vector3 end, float thickness, Color color);

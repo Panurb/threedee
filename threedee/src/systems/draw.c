@@ -486,7 +486,8 @@ void draw_entities() {
 
         RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
         ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
-        if (entity != scene->player && collider && rb) {
+        MeshComponent* mesh = get_component(entity, COMPONENT_MESH);
+        if (entity != scene->player && collider && mesh->mesh_index != cube_index) {
             Vector3 start = get_position(entity);
             for (int i = 0; i < collider->collisions->size; i++) {
                 Collision collision = *(Collision*)ArrayList_get(collider->collisions, i);

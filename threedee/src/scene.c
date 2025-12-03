@@ -133,9 +133,14 @@ Entity create_chair(Vector3 position, float yaw) {
     ColliderComponent_add(i, (ColliderParameters) {
         .type = COLLIDER_CUBOID,
         .group = GROUP_PROPS,
-        .width = 0.5f,
-        .height = 1.0f,
-        .depth = 0.5f
+        .width = 0.75f,
+        .height = 1.5f,
+        .depth = 0.9f
+    });
+    RigidBodyComponent_add(i, (RigidBodyParameters) {
+        .mass = 5.0f,
+        .friction = 0.5f,
+        .bounce = 0.2f
     });
 
     return i;
@@ -154,10 +159,10 @@ Entity create_table(Vector3 position, float yaw) {
         .material_filename = "concrete"
     });
     ColliderComponent_add(i, (ColliderParameters) {
-        .type = COLLIDER_CUBOID,
-        .group = GROUP_PROPS,
-        .width = 1.5f,
-        .height = 0.75f,
+        .type = COLLIDER_AABB,
+        .group = GROUP_WALLS,
+        .width = 3.0f,
+        .height = 2.0f,
         .depth = 1.5f
     });
 
@@ -757,7 +762,7 @@ Level create_level() {
                         float angle = to_radians(c * 90.0f);
                         float d = (c % 2 == 0) ? 1.5f : 1.0f;
                         create_chair(
-                            add3(pos, vec3(cosf(angle) * d, 0.0f, sinf(angle) * d)),
+                            add3(pos, vec3(cosf(angle) * d, 1.0f, sinf(angle) * d)),
                             -(c + 1) * 90.0f
                         );
                     }
