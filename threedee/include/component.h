@@ -82,9 +82,9 @@ Quaternion get_rotation(Entity entity);
 float get_yaw(Entity entity);
 Vector3 get_scale(Entity entity);
 
-Vector2 get_position_interpolated(int entity, float delta);
-float get_angle_interpolated(int entity, float delta);
-Vector2 get_scale_interpolated(int entity, float delta);
+Matrix4 get_transform_interpolated(Entity entity, float delta);
+Vector3 get_position_interpolated(int entity, float delta);
+Axes get_axes_interpolated(Entity entity, float delta);
 
 bool entity_exists(Entity entity);
 bool entity_is_dynamic(Entity entity);

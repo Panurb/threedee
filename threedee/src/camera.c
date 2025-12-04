@@ -71,9 +71,9 @@ Vector3 screen_to_world(int camera, Vector3 a) {
 }
 
 
-Frustum get_camera_frustum(Entity entity) {
-    Axes axes = get_axes(entity);
-    Matrix4 transform = get_transform(entity);
+Frustum get_camera_frustum(Entity entity, float delta) {
+    Axes axes = get_axes_interpolated(entity, delta);
+    Matrix4 transform = get_transform_interpolated(entity, delta);
     Vector3 position = position_from_transform(transform);
 
     CameraComponent* cam = get_component(entity, COMPONENT_CAMERA);

@@ -164,6 +164,17 @@ void input() {
 }
 
 
+void update_transforms() {
+    for (Entity i = 0; i < scene->components->entities; i++) {
+        TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
+        if (!trans) continue;
+        trans->previous.position = trans->position;
+        trans->previous.rotation = trans->rotation;
+        trans->previous.scale = trans->scale;
+    }
+}
+
+
 void update(float time_step) {
     static AppState previous_state = STATE_MENU;
 
@@ -171,6 +182,7 @@ void update(float time_step) {
 
     input_players();
 
+    update_transforms();
     update_collisions();
     update_physics(time_step);
     update_players(time_step);

@@ -425,18 +425,18 @@ void draw_entities() {
 
     int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
     Entity camera = get_player_camera(scene->player);
-    Frustum frustum = get_camera_frustum(camera);
+    Frustum frustum = get_camera_frustum(camera, app.delta);
 
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         LightComponent* light = get_component(entity, COMPONENT_LIGHT);
         if (light && !light->disabled) {
             Sphere light_sphere = {
-                .center = get_position(entity),
+                .center = get_position_interpolated(entity, app.delta),
                 .radius = light->range
             };
             if (frustum_sphere_check(frustum, light_sphere)) {
                 add_light(
-                    get_transform(entity),
+                    get_transform_interpolated(entity, app.delta),
                     light->diffuse_color,
                     light->specular_color,
                     light->fov,
@@ -467,7 +467,7 @@ void draw_entities() {
         SpriteComponent* sprite = get_component(entity, COMPONENT_SPRITE);
         if (sprite) {
             draw_sprite(
-                get_position(entity),
+                get_position_interpolated(entity, app.delta),
                 1.0f,
                 1.0f,
                 sprite->texture_index

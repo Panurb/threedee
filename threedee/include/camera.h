@@ -17,4 +17,4 @@ Vector3 world_to_screen(int camera, Vector3 a);
 
 Vector3 screen_to_world(int camera, Vector3 a);
 
-Frustum get_camera_frustum(Entity entity);
+Frustum get_camera_frustum(Entity entity, float delta);

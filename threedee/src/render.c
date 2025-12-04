@@ -652,11 +652,11 @@ void render() {
 		render_shadow_maps(command_buffer);
 
 		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
-		Matrix4 view_matrix = inverse_transform(get_transform(scene->camera));
+		Matrix4 view_matrix = inverse_transform(get_transform_interpolated(scene->camera, app.delta));
 		CameraData camera_data = {
 			.projection_matrix = transpose4(camera->projection_matrix),
 			.view_matrix = transpose4(view_matrix),
-			.position = get_position(scene->camera),
+			.position = get_position_interpolated(scene->camera, app.delta),
 		};
 
 		SDL_PushGPUVertexUniformData(command_buffer, 0, &camera_data, sizeof(CameraData));
@@ -700,7 +700,7 @@ void render() {
 			.far_plane = camera->far_plane,
 			.ambient_light = weather->ambient_light,
 			.num_lights = light_buffer.size,
-			.camera_position = get_position(scene->camera),
+			.camera_position = get_position_interpolated(scene->camera, app.delta),
 			.shadow_map_resolution = SHADOW_MAP_RESOLUTION,
 			.fog_color = weather->fog_color,
 			.fog_start = weather->fog_start,
@@ -1145,10 +1145,10 @@ void draw_cuboid(Vector3 position, Quaternion rotation, Vector3 size, Color colo
 	}
 
 	for (int i = 0; i < 6; i++) {
-		Vector3 a = {corners[quads[i][0]].x, corners[quads[i][0]].y, corners[quads[i][0]].z};
-		Vector3 b = {corners[quads[i][1]].x, corners[quads[i][1]].y, corners[quads[i][1]].z};
-		Vector3 c = {corners[quads[i][2]].x, corners[quads[i][2]].y, corners[quads[i][2]].z};
-		Vector3 d = {corners[quads[i][3]].x, corners[quads[i][3]].y, corners[quads[i][3]].z};
+		Vector3 a = vec4_xyz(corners[quads[i][0]]);
+		Vector3 b = vec4_xyz(corners[quads[i][1]]);
+		Vector3 c = vec4_xyz(corners[quads[i][2]]);
+		Vector3 d = vec4_xyz(corners[quads[i][3]]);
 		draw_quad(a, b, c, d, color);
 	}
 }

@@ -268,34 +268,39 @@ Vector3 get_scale(Entity entity) {
 }
 
 
-// Vector2 get_position_interpolated(int entity, float delta) {
-//     Vector2 previous_position = TransformComponent_get(entity)->previous.position;
-//     Vector2 current_position = get_xy(entity);
-//
-//     float x = lerp(previous_position.x, current_position.x, delta);
-//     float y = lerp(previous_position.y, current_position.y, delta);
-//
-//     return (Vector2) { x, y };
-// }
-//
-//
-// float get_angle_interpolated(int entity, float delta) {
-//     float previous_angle = TransformComponent_get(entity)->previous.angle;
-//     float current_angle = get_angle(entity);
-//
-//     return lerp_angle(previous_angle, current_angle, delta);
-// }
-//
-//
-// Vector2 get_scale_interpolated(int entity, float delta) {
-//     Vector2 previous_scale = TransformComponent_get(entity)->previous.scale;
-//     Vector2 current_scale = get_scale(entity);
-//
-//     float x = lerp(previous_scale.x, current_scale.x, delta);
-//     float y = lerp(previous_scale.y, current_scale.y, delta);
-//
-//     return (Vector2) { x, y };
-// }
+Matrix4 get_transform_interpolated(Entity entity, float delta) {
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+    Vector3 position = lerp3(trans->previous.position, trans->position, delta);
+    Quaternion rotation = slerp(trans->previous.rotation, trans->rotation, delta);
+    Vector3 scale = lerp3(trans->previous.scale, trans->scale, delta);
+    Matrix4 transform = transform_matrix(position, rotation, scale);
+    if (trans->parent != NULL_ENTITY) {
+        return matrix4_mul(get_transform_interpolated(trans->parent, delta), transform);
+    }
+    return transform;
+}
+
+
+Vector3 get_position_interpolated(int entity, float delta) {
+    Matrix4 transform = get_transform_interpolated(entity, delta);
+    return position_from_transform(transform);
+}
+
+
+Axes get_axes_interpolated(Entity entity, float delta) {
+    Matrix4 transform = get_transform_interpolated(entity, delta);
+    Axes axes;
+    axes.x = vec3(transform._11, transform._21, transform._31);
+    axes.y = vec3(transform._12, transform._22, transform._32);
+    axes.z = vec3(transform._13, transform._23, transform._33);
+    axes.right = axes.x;
+    axes.up = axes.y;
+    axes.forward = neg3(axes.z);
+    axes.left = neg3(axes.x);
+    axes.down = neg3(axes.y);
+    axes.back = axes.z;
+    return axes;
+}
 
 
 bool entity_exists(Entity entity) {

@@ -159,8 +159,9 @@ void update_players(float time_step) {
             player->foot = FOOT_BOTH;
         }
 
-        Vector3 position = get_position(scene->camera);
-        Vector3 forward = look_direction(scene->camera);
+        Entity camera = get_player_camera(i);
+        Vector3 position = get_position(camera);
+        Vector3 forward = look_direction(camera);
         Vector3 right = normalized3(cross(forward, vec3_up()));
         Vector3 up = cross(right, forward);
 
@@ -232,7 +233,7 @@ void input_players() {
         TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
         RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
 
-        Entity camera = trans->children->head->value;
+        Entity camera = get_player_camera(i);
         CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
 
         TransformComponent* trans_cam = get_component(camera, COMPONENT_TRANSFORM);

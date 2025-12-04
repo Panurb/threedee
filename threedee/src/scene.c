@@ -104,7 +104,7 @@ Entity create_television(Vector3 position, float yaw) {
     ColliderComponent_add(i, (ColliderParameters) {
         .type = COLLIDER_CUBOID,
         .group = GROUP_WALLS,
-        .width = 4.0f,
+        .width = 1.8f,
         .height = 2.0f,
         .depth = 0.2f
     });
