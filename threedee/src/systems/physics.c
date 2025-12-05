@@ -12,7 +12,6 @@
 
 
 static int ITERATIONS = 10;
-static Vector3 gravity = { 0.0f, -9.81f, 0.0f };
 
 
 Quaternion extract_twist(Quaternion q, Vector3 axis) {
@@ -341,7 +340,7 @@ void update_physics(float time_step) {
 
         TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
 
-        rigid_body->acceleration = add3(rigid_body->acceleration, mul3(rigid_body->gravity_scale, gravity));
+        rigid_body->acceleration = add3(rigid_body->acceleration, mul3(rigid_body->gravity_scale, scene->gravity));
         rigid_body->velocity = add3(rigid_body->velocity, mul3(time_step, rigid_body->acceleration));
         Vector3 delta_position = mul3(time_step, rigid_body->velocity);
         if (rigid_body->axis_lock.x) {

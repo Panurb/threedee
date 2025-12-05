@@ -21,6 +21,7 @@ set(SOURCES
     threedee/src/components/enemy.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
+    threedee/src/components/particle.c
     threedee/src/components/player.c
     threedee/src/components/rigidbody.c
     threedee/src/components/sound.c
@@ -47,6 +48,7 @@ set(SOURCES
     threedee/src/systems/enemy.c
     threedee/src/systems/input.c
     threedee/src/systems/navigation.c
+    threedee/src/systems/particle.c
     threedee/src/systems/physics.c
     threedee/src/systems/player.c
     threedee/src/util.c

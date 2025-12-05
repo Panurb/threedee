@@ -11,6 +11,7 @@
 #include "components/enemy.h"
 #include "components/light.h"
 #include "components/mesh.h"
+#include "components/particle.h"
 #include "components/player.h"
 #include "components/rigidbody.h"
 #include "components/sound.h"
@@ -38,6 +39,7 @@ typedef struct ComponentData {
     WaypointComponent* waypoint[MAX_ENTITIES];
     EnemyComponent* enemy[MAX_ENTITIES];
     SpriteComponent* sprite[MAX_ENTITIES];
+    ParticleComponent* particle[MAX_ENTITIES];
 } ComponentData;
 
 typedef enum ComponentType {
@@ -54,6 +56,7 @@ typedef enum ComponentType {
     COMPONENT_WAYPOINT,
     COMPONENT_ENEMY,
     COMPONENT_SPRITE,
+    COMPONENT_PARTICLE,
 } ComponentType;
 
 ComponentData* ComponentData_create();

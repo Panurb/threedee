@@ -9,6 +9,7 @@ typedef struct Scene {
     Entity player;
     Entity weather;
     ComponentData* components;
+    Vector3 gravity;
 } Scene;
 
 

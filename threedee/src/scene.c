@@ -787,6 +787,7 @@ void create_scene() {
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
     // scene->camera = create_overhead_camera();
+    scene->gravity = vec3(0.0f, -9.81f, 0.0f);
 
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
