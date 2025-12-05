@@ -25,6 +25,7 @@
 #include "systems/physics.h"
 #include "systems/player.h"
 #include "systems/enemy.h"
+#include "systems/particle.h"
 
 
 App app;
@@ -187,6 +188,7 @@ void update(float time_step) {
     update_physics(time_step);
     update_players(time_step);
     update_enemies(time_step);
+    update_particles(time_step);
     update_waypoints();
 
     // For overhead camera testing
@@ -203,8 +205,11 @@ void update(float time_step) {
 void draw() {
     LOG_DEBUG("Drawing frame");
     pre_render();
+
     draw_entities();
+    draw_particles();
     FPSCounter_draw(app.fps);
+
     render();
 }
 

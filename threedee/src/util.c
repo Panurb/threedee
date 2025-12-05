@@ -109,8 +109,18 @@ float rand_angle() {
     return randf(0.0, 2 * M_PI);
 }
 
-Vector2 rand_vector() {
+Vector2 vec2_rand() {
     return polar_to_cartesian(1.0, rand_angle());
+}
+
+Vector3 vec3_rand() {
+    float theta = randf(0.0f, 2.0f * M_PI);
+    float phi = acosf(randf(-1.0f, 1.0f));
+    return (Vector3) {
+        sinf(phi) * cosf(theta),
+        sinf(phi) * sinf(theta),
+        cosf(phi)
+    };
 }
 
 int rand_choice(float* probs, int size) {

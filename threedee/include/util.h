@@ -150,7 +150,9 @@ int randi(int low, int upp);
 
 float rand_angle();
 
-Vector2 rand_vector();
+Vector2 vec2_rand();
+
+Vector3 vec3_rand();
 
 int rand_choice(float* probs, int size);
 

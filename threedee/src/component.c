@@ -70,6 +70,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->enemy[entity];
         case COMPONENT_SPRITE:
             return scene->components->sprite[entity];
+        case COMPONENT_PARTICLE:
+            return scene->components->particle[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;
@@ -117,6 +119,9 @@ void remove_component(Entity entity, ComponentType component_type) {
             break;
         case COMPONENT_SPRITE:
             SpriteComponent_remove(entity);
+            break;
+        case COMPONENT_PARTICLE:
+            ParticleComponent_remove(entity);
             break;
         default:
             LOG_ERROR("Unknown component type: %d", component_type);

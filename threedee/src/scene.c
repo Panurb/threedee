@@ -84,6 +84,16 @@ Entity create_lamp(Vector3 position) {
         .visibility_mask = VISIBILITY_NORMAL,
         .range = 10.0f
     });
+    ParticleComponent_add(light, (ParticleParameters) {
+        .lifetime = 1.0f,
+        .spawn_rate = 10.0f,
+        .gravity_scale = 0.5f,
+        .phases = {
+            { .color = COLOR_WHITE, .size = 0.025f, .normalized_time = 0.0f },
+            { .color = COLOR_ORANGE, .size = 0.0f, .normalized_time = 1.0f }
+        },
+        .num_phases = 2
+    });
 
     return i;
 }

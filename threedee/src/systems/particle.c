@@ -1,6 +1,7 @@
 #include "systems/particle.h"
 
 #include <render.h>
+#include <stdio.h>
 
 #include "util.h"
 #include "scene.h"
@@ -24,6 +25,8 @@ void update_particles(float time_step) {
         ParticleComponent* particle = get_component(entity, COMPONENT_PARTICLE);
         if (!particle) continue;
 
+        Vector3 position = get_position(entity);
+
         for (int i = 0; i < particle->num_particles; i++) {
             particle->time[i] += time_step;
             if (particle->time[i] >= particle->lifetime) {
@@ -45,6 +48,28 @@ void update_particles(float time_step) {
                 particle->velocity[i],
                 mul3(time_step * particle->gravity_scale, scene->gravity)
             );
+        }
+
+        particle->spawn_accumulator += particle->spawn_rate * time_step;
+
+        while (particle->spawn_accumulator > 1.0f) {
+            particle->spawn_accumulator -= 1.0f;
+
+            if (particle->num_particles >= MAX_PARTICLES) {
+                particle->spawn_accumulator = 0.0f;
+                break;
+            }
+            particle->position[particle->num_particles] = position;
+            particle->velocity[particle->num_particles] = add3(
+                particle->spawn_velocity,
+                vec3(
+                    randf(-0.5f, 0.5f) * particle->direction_variance,
+                    randf(-0.5f, 0.5f) * particle->direction_variance,
+                    randf(-0.5f, 0.5f) * particle->direction_variance
+                )
+            );
+            particle->time[particle->num_particles] = 0.0f;
+            particle->num_particles++;
         }
     }
 }

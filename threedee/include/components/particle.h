@@ -20,6 +20,7 @@ typedef struct ParticleParameters {
     ParticlePhase phases[MAX_PHASES];
     int num_phases;
     float gravity_scale;
+    float spawn_rate;
 } ParticleParameters;
 
 
@@ -32,6 +33,11 @@ typedef struct ParticleComponent {
     int num_phases;
     int num_particles;
     float gravity_scale;
+    int texture_index;
+    float spawn_rate;  // particles per second
+    Vector3 spawn_velocity;
+    float direction_variance;
+    float spawn_accumulator;
 } ParticleComponent;
 
 

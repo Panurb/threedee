@@ -14,6 +14,11 @@ ParticleComponent* ParticleComponent_add(Entity entity, ParticleParameters param
     memset(particle->velocity, 0, sizeof(particle->velocity));
     memset(particle->time, 0, sizeof(particle->time));
     particle->gravity_scale = params.gravity_scale;
+    particle->texture_index = -1;
+    particle->spawn_rate = params.spawn_rate;
+    particle->spawn_velocity = vec3(0.0f, 1.0f, 0.0f);
+    particle->direction_variance = 0.5f;
+    particle->spawn_accumulator = 0.0f;
 
     for (int i = 0; i < params.num_phases && i < MAX_PHASES; i++) {
         particle->phases[i] = params.phases[i];
