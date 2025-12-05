@@ -416,6 +416,14 @@ void draw_frustum(Frustum frustum) {
 void draw_entities() {
     LOG_DEBUG("Drawing entities");
 
+    Entity camera = get_player_camera(scene->player);
+    CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
+    set_camera_data(
+        cam->projection_matrix,
+        inverse_transform(get_transform_interpolated(camera, app.delta)),
+        get_position_interpolated(camera, app.delta)
+    );
+
     // Crosshair
     draw_circle_2d(
         zeros2(),
@@ -424,7 +432,6 @@ void draw_entities() {
     );
 
     int cube_index = binary_search_filename("cube", resources.mesh_names, resources.meshes_size);
-    Entity camera = get_player_camera(scene->player);
     Frustum frustum = get_camera_frustum(camera, app.delta);
 
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
@@ -452,7 +459,7 @@ void draw_entities() {
             float emissive = get_emissive(entity);
             if (mesh_component->mesh_index != cube_index) {
                 draw_mesh(
-                    get_transform(entity),
+                    get_transform_interpolated(entity, app.delta),
                     mesh_component->mesh_index,
                     mesh_component->texture_index,
                     mesh_component->material_index,

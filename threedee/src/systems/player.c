@@ -135,6 +135,8 @@ void update_players(float time_step) {
         PlayerComponent* player = get_component(i, COMPONENT_PLAYER);
         if (!player) continue;
 
+        TransformComponent* trans = get_component(i, COMPONENT_TRANSFORM);
+
         RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
 
         Vector2 velocity = vec2(rb->velocity.x, rb->velocity.z);
@@ -160,6 +162,18 @@ void update_players(float time_step) {
         }
 
         Entity camera = get_player_camera(i);
+        TransformComponent* trans_cam = get_component(camera, COMPONENT_TRANSFORM);
+
+        Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->yaw));
+        Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(player->pitch));
+
+        trans->rotation = q_yaw;
+
+        // Camera only moves in pitch direction
+        trans_cam->rotation = q_pitch;
+
+        trans_cam->position.y = player->head_height + get_bobbing_height(i, 0.0f);
+
         Vector3 position = get_position(camera);
         Vector3 forward = look_direction(camera);
         Vector3 right = normalized3(cross(forward, vec3_up()));
@@ -187,9 +201,9 @@ void update_players(float time_step) {
 
             TransformComponent* trans_item = get_component(item, COMPONENT_TRANSFORM);
 
-            // trans_item->position = lerp3(trans_item->position, item_pos, 0.9f);
             trans_item->position = item_pos;
             trans_item->rotation = slerp(trans_item->rotation, item_rotation, 0.1f);
+            // trans_item->rotation = item_rotation;
         }
     }
 }
@@ -236,9 +250,6 @@ void input_players() {
         Entity camera = get_player_camera(i);
         CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
 
-        TransformComponent* trans_cam = get_component(camera, COMPONENT_TRANSFORM);
-        trans_cam->position.y = player->head_height + get_bobbing_height(i, 0.0f);
-
         if (controller->controller.buttons_down[BUTTON_X] && player->sprint_timer > 0.5f * player->max_sprint) {
             player->sprinting = true;
         }
@@ -262,15 +273,6 @@ void input_players() {
                 rb->velocity.x = velocity.x;
                 rb->velocity.z = velocity.z;
             }
-
-            Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->yaw));
-            Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(player->pitch));
-
-            trans->rotation = q_yaw;
-
-            // Camera only moves in pitch direction
-            TransformComponent* camera_trans = get_component(camera, COMPONENT_TRANSFORM);
-            camera_trans->rotation = q_pitch;
         } else {
             rb->velocity.x = 0.0f;
             rb->velocity.z = 0.0f;

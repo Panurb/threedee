@@ -217,6 +217,8 @@ void init_render();
 
 void apply_render_settings();
 
+void set_camera_data(Matrix4 projection_matrix, Matrix4 view_matrix, Vector3 position);
+
 void pre_render();
 
 void render();

@@ -18,6 +18,8 @@
 static int frame_index = 0;
 SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
 
+static CameraData camera_data[FRAMES_IN_FLIGHT];
+
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
 static SDL_GPUTexture* shadow_maps[FRAMES_IN_FLIGHT] = { 0 };
@@ -610,6 +612,15 @@ void render_depth_of_field(SDL_GPUCommandBuffer* command_buffer, SDL_GPUTexture*
 }
 
 
+void set_camera_data(Matrix4 projection_matrix, Matrix4 view_matrix, Vector3 position) {
+	camera_data[frame_index] = (CameraData) {
+		.projection_matrix = transpose4(projection_matrix),
+		.view_matrix = transpose4(view_matrix),
+		.position = position
+	};
+}
+
+
 void pre_render() {
 	LOG_DEBUG("Pre-rendering frame %d", frame_index);
 
@@ -651,15 +662,12 @@ void render() {
 
 		render_shadow_maps(command_buffer);
 
-		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
-		Matrix4 view_matrix = inverse_transform(get_transform_interpolated(scene->camera, app.delta));
-		CameraData camera_data = {
-			.projection_matrix = transpose4(camera->projection_matrix),
-			.view_matrix = transpose4(view_matrix),
-			.position = get_position_interpolated(scene->camera, app.delta),
-		};
-
-		SDL_PushGPUVertexUniformData(command_buffer, 0, &camera_data, sizeof(CameraData));
+		SDL_PushGPUVertexUniformData(
+			command_buffer,
+			0,
+			&camera_data[frame_index],
+			sizeof(CameraData)
+		);
 
 		SDL_GPUColorTargetInfo color_target_info = {
 			.texture = screen_texture,
@@ -695,12 +703,14 @@ void render() {
 
 		WeatherComponent* weather = get_component(scene->weather, COMPONENT_WEATHER);
 
+		CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
+
 		UniformData uniform_data = {
 			.near_plane = camera->near_plane,
 			.far_plane = camera->far_plane,
 			.ambient_light = weather->ambient_light,
 			.num_lights = light_buffer.size,
-			.camera_position = get_position_interpolated(scene->camera, app.delta),
+			.camera_position = camera_data[frame_index].position,
 			.shadow_map_resolution = SHADOW_MAP_RESOLUTION,
 			.fog_color = weather->fog_color,
 			.fog_start = weather->fog_start,
