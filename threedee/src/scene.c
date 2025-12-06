@@ -93,7 +93,7 @@ Entity create_lamp(Vector3 position) {
             { .color = COLOR_ORANGE, .size = 0.0f, .normalized_time = 1.0f }
         },
         .num_phases = 2,
-        .spawn_area = vec3(1.0f, 1.0f, 1.0f)
+        .position_variance = vec3(1.0f, 1.0f, 1.0f)
     });
 
     return i;
@@ -680,7 +680,9 @@ Entity create_dust_particles(Vector3 position, float width, float depth, float h
             { .color = COLOR_WHITE, .size = 0.01f, .normalized_time = 0.0f },
         },
         .num_phases = 1,
-        .spawn_area = vec3(width, height, depth)
+        .position_variance = vec3(width, height, depth),
+        .velocity = zeros3(),
+        .velocity_variance = 1.0f
     });
 
     return i;

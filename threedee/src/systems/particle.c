@@ -62,17 +62,17 @@ void update_particles(float time_step) {
             particle->position[particle->num_particles] = add3(
                 position,
                 vec3(
-                    randf(-0.5f, 0.5f) * particle->spawn_area.x,
-                    randf(-0.5f, 0.5f) * particle->spawn_area.y,
-                    randf(-0.5f, 0.5f) * particle->spawn_area.z
+                    randf(-0.5f, 0.5f) * particle->position_variance.x,
+                    randf(-0.5f, 0.5f) * particle->position_variance.y,
+                    randf(-0.5f, 0.5f) * particle->position_variance.z
                 )
             );
             particle->velocity[particle->num_particles] = add3(
                 particle->spawn_velocity,
                 vec3(
-                    randf(-0.5f, 0.5f) * particle->direction_variance,
-                    randf(-0.5f, 0.5f) * particle->direction_variance,
-                    randf(-0.5f, 0.5f) * particle->direction_variance
+                    randf(-0.5f, 0.5f) * particle->velocity_variance,
+                    randf(-0.5f, 0.5f) * particle->velocity_variance,
+                    randf(-0.5f, 0.5f) * particle->velocity_variance
                 )
             );
             particle->time[particle->num_particles] = 0.0f;
