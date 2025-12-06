@@ -19,6 +19,7 @@ ParticleComponent* ParticleComponent_add(Entity entity, ParticleParameters param
     particle->spawn_velocity = vec3(0.0f, 1.0f, 0.0f);
     particle->direction_variance = 0.5f;
     particle->spawn_accumulator = 0.0f;
+    particle->spawn_area = params.spawn_area;
 
     for (int i = 0; i < params.num_phases && i < MAX_PHASES; i++) {
         particle->phases[i] = params.phases[i];

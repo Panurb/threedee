@@ -5,14 +5,6 @@ cbuffer TransformBlock : register(b0, space1)
     float3 camera_position : packoffset(c8);
 };
 
-struct Material {
-    float specular;
-    float diffuse;
-    float ambient;
-    float shininess;
-    float emissive;
-};
-
 struct InstanceData
 {
     float3 position;

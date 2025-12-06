@@ -123,6 +123,14 @@ Vector3 vec3_rand() {
     };
 }
 
+Vector3 vec3_rand_cube() {
+    return (Vector3) {
+        randf(-1.0f, 1.0f),
+        randf(-1.0f, 1.0f),
+        randf(-1.0f, 1.0f)
+    };
+}
+
 int rand_choice(float* probs, int size) {
     float total = 0.0f;
     for (int i = 0; i < size; i++) {

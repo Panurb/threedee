@@ -92,7 +92,8 @@ Entity create_lamp(Vector3 position) {
             { .color = COLOR_WHITE, .size = 0.025f, .normalized_time = 0.0f },
             { .color = COLOR_ORANGE, .size = 0.0f, .normalized_time = 1.0f }
         },
-        .num_phases = 2
+        .num_phases = 2,
+        .spawn_area = vec3(1.0f, 1.0f, 1.0f)
     });
 
     return i;
@@ -615,6 +616,11 @@ void generate_level(Level* level, int x, int z) {
 
     RoomType room_types[] = { ROOM_BATHROOM, ROOM_HALLWAY, ROOM_BEDROOM, ROOM_LIVINGROOM, ROOM_KITCHEN };
     float probs[] = { 0.1f, 0.4f, 0.25f, 0.25f, 0.2f };
+
+    if (x == level->width / 2 && z == level->depth / 2) {
+        probs[4] = 0.0f;
+    }
+
     room->type = room_types[rand_choice(probs, LENGTH(probs))];
     room->floor = true;
 
@@ -663,6 +669,24 @@ void generate_level(Level* level, int x, int z) {
 }
 
 
+Entity create_dust_particles(Vector3 position, float width, float depth, float height, float density) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) { .position = position });
+    ParticleComponent_add(i, (ParticleParameters) {
+        .lifetime = 20.0f,
+        .spawn_rate = density,
+        .gravity_scale = 0.0f,
+        .phases = {
+            { .color = COLOR_WHITE, .size = 0.01f, .normalized_time = 0.0f },
+        },
+        .num_phases = 1,
+        .spawn_area = vec3(width, height, depth)
+    });
+
+    return i;
+}
+
+
 Level create_level() {
     Level level = {
         .width = 5,
@@ -699,6 +723,14 @@ Level create_level() {
             float x_offset = (i - level.width / 2) * level.room_width;
             float z_offset = (j - level.depth / 2) * level.room_depth;
             Vector3 pos = vec3(x_offset, 0.0f, z_offset);
+
+            create_dust_particles(
+                pos,
+                level.room_width,
+                level.room_depth,
+                4.0f,
+                5.0f
+            );
 
             if (room.floor) {
                 create_floor(pos, level.room_width, level.room_depth, "tiles");

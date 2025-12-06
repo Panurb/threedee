@@ -470,6 +470,35 @@ void load_emissive_maps() {
 }
 
 
+void load_particles() {
+	resources.particles_size = list_files_alphabetically("data/particles/*.png", resources.particle_names);
+	ArrayList* surfaces = ArrayList_create(sizeof(SDL_Surface*));
+
+	for (int i = 0; i < resources.particles_size; i++) {
+		LOG_INFO("Loading particle: %s", resources.particle_names[i]);
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/particles/", resources.particle_names[i], ".png");
+		SDL_Surface* surface = IMG_Load(path);
+		LOG_INFO("Format: %s, Size: %dx%d", SDL_GetPixelFormatName(surface->format), surface->w, surface->h);
+		if (!surface) {
+			LOG_ERROR("Failed to load image: %s", path);
+			continue;
+		}
+		// Fill alpha channel with 255
+		SDL_Surface* alpha_surface = SDL_CreateSurface(surface->w, surface->h, SDL_PIXELFORMAT_ABGR8888);
+		SDL_BlitSurface(surface, NULL, alpha_surface, NULL);
+		SDL_DestroySurface(surface);
+		surface = alpha_surface;
+		ArrayList_add(surfaces, &surface);
+	}
+
+	resources.particle_array = create_texture_array(surfaces->data, surfaces->size);
+
+	ArrayList_for_each(surfaces, SDL_DestroySurface);
+	ArrayList_destroy(surfaces);
+}
+
+
 void load_fonts() {
 	resources.fonts_size = list_files_alphabetically("data/fonts/*.ttf", resources.font_names);
 	for (int i = 0; i < resources.fonts_size; i++) {
@@ -573,6 +602,7 @@ void load_resources() {
 	load_sounds();
 	load_meshes();
 	load_materials();
+	load_particles();
 
     LOG_INFO("Resources loaded");
 }

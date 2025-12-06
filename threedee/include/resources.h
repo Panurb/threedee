@@ -47,6 +47,10 @@ typedef struct {
     Material materials[MAX_TEXTURES];
     SDL_GPUBuffer* materials_buffer;
 
+    String particle_names[MAX_TEXTURES];
+    int particles_size;
+    SDL_GPUTexture* particle_array;
+
     String font_names[MAX_FONTS];
     TTF_Font* fonts[MAX_FONTS];
     int fonts_size;
