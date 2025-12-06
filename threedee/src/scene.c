@@ -84,17 +84,6 @@ Entity create_lamp(Vector3 position) {
         .visibility_mask = VISIBILITY_NORMAL,
         .range = 10.0f
     });
-    ParticleComponent_add(light, (ParticleParameters) {
-        .lifetime = 1.0f,
-        .spawn_rate = 10.0f,
-        .gravity_scale = 0.5f,
-        .phases = {
-            { .color = COLOR_WHITE, .size = 0.025f, .normalized_time = 0.0f },
-            { .color = COLOR_ORANGE, .size = 0.0f, .normalized_time = 1.0f }
-        },
-        .num_phases = 2,
-        .position_variance = vec3(1.0f, 1.0f, 1.0f)
-    });
 
     return i;
 }
@@ -669,20 +658,20 @@ void generate_level(Level* level, int x, int z) {
 }
 
 
-Entity create_dust_particles(Vector3 position, float width, float depth, float height, float density) {
+Entity create_dust_particles(Vector3 position, float width, float depth, float height) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
     ParticleComponent_add(i, (ParticleParameters) {
         .lifetime = 20.0f,
-        .spawn_rate = density,
+        .spawn_rate = 5.0f,
         .gravity_scale = 0.0f,
         .phases = {
-            { .color = COLOR_WHITE, .size = 0.01f, .normalized_time = 0.0f },
+            { .color = get_color(0.5f, 0.5f, 0.5f, 0.5f), .size = 0.01f, .normalized_time = 0.0f },
         },
         .num_phases = 1,
         .position_variance = vec3(width, height, depth),
         .velocity = zeros3(),
-        .velocity_variance = 1.0f
+        .velocity_variance = diag3(0.1f)
     });
 
     return i;
@@ -726,15 +715,14 @@ Level create_level() {
             float z_offset = (j - level.depth / 2) * level.room_depth;
             Vector3 pos = vec3(x_offset, 0.0f, z_offset);
 
-            create_dust_particles(
-                pos,
-                level.room_width,
-                level.room_depth,
-                4.0f,
-                5.0f
-            );
-
             if (room.floor) {
+                create_dust_particles(
+                    pos,
+                    level.room_width,
+                    level.room_depth,
+                    4.0f
+                );
+
                 create_floor(pos, level.room_width, level.room_depth, "tiles");
                 create_ceiling(vec3(pos.x, 4.0f, pos.z), level.room_width, level.room_depth);
                 create_waypoint(pos);

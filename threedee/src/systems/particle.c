@@ -70,12 +70,12 @@ void update_particles(float time_step) {
             particle->velocity[particle->num_particles] = add3(
                 particle->spawn_velocity,
                 vec3(
-                    randf(-0.5f, 0.5f) * particle->velocity_variance,
-                    randf(-0.5f, 0.5f) * particle->velocity_variance,
-                    randf(-0.5f, 0.5f) * particle->velocity_variance
+                    randf(-0.5f, 0.5f) * particle->velocity_variance.x,
+                    randf(-0.5f, 0.5f) * particle->velocity_variance.y,
+                    randf(-0.5f, 0.5f) * particle->velocity_variance.z
                 )
             );
-            particle->time[particle->num_particles] = 0.0f;
+            particle->time[particle->num_particles] = randf(0.0f, particle->lifetime);
             particle->num_particles++;
         }
     }

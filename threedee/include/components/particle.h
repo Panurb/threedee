@@ -23,7 +23,7 @@ typedef struct ParticleParameters {
     float spawn_rate;
     Vector3 position_variance;
     Vector3 velocity;
-    float velocity_variance;
+    Vector3 velocity_variance;
     float speed;
 } ParticleParameters;
 
@@ -40,7 +40,7 @@ typedef struct ParticleComponent {
     int texture_index;
     float spawn_rate;  // particles per second
     Vector3 spawn_velocity;
-    float velocity_variance;
+    Vector3 velocity_variance;
     float speed;
     float spawn_accumulator;
     Vector3 position_variance;
