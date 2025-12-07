@@ -666,7 +666,7 @@ Entity create_dust_particles(Vector3 position, float width, float depth, float h
         .spawn_rate = 5.0f,
         .gravity_scale = 0.0f,
         .phases = {
-            { .color = get_color(0.5f, 0.5f, 0.5f, 0.5f), .size = 0.01f, .normalized_time = 0.0f },
+            { .color = get_color(0.5f, 0.5f, 0.5f, 0.5f), .size = 0.05f, .normalized_time = 0.0f },
         },
         .num_phases = 1,
         .position_variance = vec3(width, height, depth),

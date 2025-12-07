@@ -63,7 +63,40 @@ Output main(Input input)
 {
     float4 sampled_color = tex.Sample(sampler_tex, float3(input.tex_coord, input.tex_index));
 
+    float3 view_dir = normalize(camera_position - input.world_position);
+
+    float3 final_color = float3(ambient_light, ambient_light, ambient_light);
+
+    for (int i = 0; i < num_lights; ++i) {
+        LightData light = lights[i];
+
+        if ((light.visibility_mask & input.visibility) == 0) {
+            continue;
+        }
+
+        float3 light_dir = normalize(light.position - input.world_position);
+
+        // Angle-based forward scattering
+        float scatter = saturate(dot(view_dir, light_dir));
+        scatter = pow(scatter, 8.0f);
+
+        // Distance attenuation
+        float distance = length(light.position - input.world_position);
+        float attenuation = saturate(1.0f - (distance / light.range));
+
+        float spot_atten = saturate((dot(-light_dir, light.direction) - light.cutoff_cos) / (1.0 - light.cutoff_cos));
+        attenuation *= spot_atten;
+
+        if (attenuation <= 0.0f) {
+            continue;
+        }
+
+        final_color += light.diffuse_color * attenuation * scatter;
+    }
+
+    float alpha = 0.3f;
+
     Output result;
-    result.color = sampled_color;
+    result.color = float4(sampled_color.rgb * final_color, sampled_color.a * alpha);
     return result;
 }

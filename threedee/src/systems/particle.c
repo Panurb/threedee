@@ -75,7 +75,7 @@ void update_particles(float time_step) {
                     randf(-0.5f, 0.5f) * particle->velocity_variance.z
                 )
             );
-            particle->time[particle->num_particles] = randf(0.0f, particle->lifetime);
+            particle->time[particle->num_particles] = 0.0f;
             particle->num_particles++;
         }
     }

@@ -523,7 +523,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_particle() {
 		},
 		.vertex_input_state = VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX,
 		.rasterizer_state = (SDL_GPURasterizerState){
-			.cull_mode = SDL_GPU_CULLMODE_NONE,
+			.cull_mode = SDL_GPU_CULLMODE_BACK,
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
 			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
 		},
