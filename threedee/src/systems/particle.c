@@ -119,8 +119,8 @@ void draw_particles() {
 
             draw_particle(
                 particle->position[i],
-                1.0f,
-                0,
+                blended_phase.size,
+                particle->texture_index,
                 blended_phase.color
             );
         }

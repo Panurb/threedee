@@ -44,12 +44,7 @@ struct Output
 
 Output main(Input input, uint instance_id : SV_InstanceID)
 {
-    InstanceData instance_data;
-    if (use_instance_buffer == 0) {
-        instance_data = model_data;
-    } else {
-        instance_data = instance_datas[instance_id];
-    }
+    InstanceData instance_data = instance_datas[instance_id];
 
     float4x4 projection_view_matrix = mul(projection_matrix, view_matrix);
 
@@ -85,7 +80,6 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     output.world_position = world_position;
 
     output.visibility = instance_data.visibility;
-    // output.position = float4(input.position.xy, 0, 1);
 
     return output;
 }

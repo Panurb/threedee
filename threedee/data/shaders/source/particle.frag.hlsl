@@ -61,7 +61,9 @@ struct Output
 
 Output main(Input input)
 {
+    float4 sampled_color = tex.Sample(sampler_tex, float3(input.tex_coord, input.tex_index));
+
     Output result;
-    result.color = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    result.color = sampled_color;
     return result;
 }
