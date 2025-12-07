@@ -117,10 +117,10 @@ void draw_particles() {
                 (next_phase.normalized_time - previous_phase.normalized_time)
             );
 
-            draw_circle(
+            draw_particle(
                 particle->position[i],
-                blended_phase.size,
-                8,
+                1.0f,
+                0,
                 blended_phase.color
             );
         }

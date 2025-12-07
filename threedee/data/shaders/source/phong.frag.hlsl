@@ -60,7 +60,6 @@ struct Input
 struct Output
 {
     float4 color : SV_Target0;
-    float depth : SV_Depth;
 };
 
 float radial_fade(float2 uv) {
@@ -203,6 +202,5 @@ Output main(Input input)
 
     Output result;
     result.color = float4(fogged_color, alpha);
-    result.depth = position.z;
     return result;
 }

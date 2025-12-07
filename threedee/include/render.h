@@ -114,6 +114,17 @@ typedef struct BillboardInstanceData {
 static_assert(sizeof(BillboardInstanceData) % 16 == 0);
 
 
+typedef struct ParticleInstanceData {
+	Vector3 position;
+	float width;
+	float height;
+	int texture_index;
+	Visibility visiblity;
+	float _pad;
+} ParticleInstanceData;
+static_assert(sizeof(ParticleInstanceData) % 16 == 0);
+
+
 typedef struct MultiBuffer {
 	SDL_GPUBuffer* buffer[FRAMES_IN_FLIGHT];
 	SDL_GPUTransferBuffer* transfer_buffer[FRAMES_IN_FLIGHT];
@@ -230,6 +241,8 @@ void draw_mesh(Matrix4 transform, int mesh_index, int texture_index, int materia
 CubeIndices CubeIndices_fill(int value);
 
 void draw_sprite(Vector3 position, float width, float height, int texture_index);
+
+void draw_particle(Vector3 position, float size, int texture_index, Color color);
 
 void draw_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 

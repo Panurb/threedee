@@ -143,7 +143,7 @@ void load_shaders() {
 	shaders[SHADER_VERTEX_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
 	shaders[SHADER_VERTEX_BILLBOARD] = load_shader(app.gpu_device, "billboard.vert", 0, 1, 1, 0);
 	shaders[SHADER_VERTEX_LINE] = load_shader(app.gpu_device, "line.vert", 0, 1, 1, 0);
-	shaders[SHADER_VERTEX_CUBE] = load_shader(app.gpu_device, "cube.vert", 0, 1, 1, 0);
+	shaders[SHADER_VERTEX_PARTICLE] = load_shader(app.gpu_device, "particle.vert", 0, 2, 1, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 1, 2, 0);
@@ -151,6 +151,7 @@ void load_shaders() {
 	shaders[SHADER_FRAGMENT_TEXT] = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
 	shaders[SHADER_FRAGMENT_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.frag", 2, 1, 0, 0);
 	shaders[SHADER_FRAGMENT_DEPTH_OF_FIELD] = load_shader(app.gpu_device, "depth_of_field.frag", 2, 1, 0, 0);
+	shaders[SHADER_FRAGMENT_PARTICLE] = load_shader(app.gpu_device, "particle.frag", 4, 1, 2, 0);
 }
 
 
@@ -509,7 +510,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_line() {
 }
 
 
-SDL_GPUGraphicsPipeline* create_render_pipeline_cube() {
+SDL_GPUGraphicsPipeline* create_render_pipeline_particle() {
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
@@ -522,7 +523,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_cube() {
 		},
 		.vertex_input_state = VERTEX_INPUT_STATE_POSITION_TEXTURE_VERTEX,
 		.rasterizer_state = (SDL_GPURasterizerState){
-			.cull_mode = SDL_GPU_CULLMODE_BACK,
+			.cull_mode = SDL_GPU_CULLMODE_NONE,
 			.fill_mode = SDL_GPU_FILLMODE_FILL,
 			.front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
 		},
@@ -531,12 +532,12 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_cube() {
 		},
 		.depth_stencil_state = (SDL_GPUDepthStencilState){
 			.enable_depth_test = true,
-			.enable_depth_write = true,
+			.enable_depth_write = false,
 			.compare_op = SDL_GPU_COMPAREOP_LESS
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-		.vertex_shader = shaders[SHADER_VERTEX_CUBE],
-		.fragment_shader = shaders[SHADER_FRAGMENT_PHONG],
+		.vertex_shader = shaders[SHADER_VERTEX_PARTICLE],
+		.fragment_shader = shaders[SHADER_FRAGMENT_PARTICLE],
 	};
 
 	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
@@ -548,6 +549,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_cube() {
 	return pipeline;
 }
 
+
 void create_pipelines() {
 	pipelines[PIPELINE_2D] = create_render_pipeline_2d();
 	pipelines[PIPELINE_TEXT] = create_render_pipeline_text();
@@ -558,6 +560,7 @@ void create_pipelines() {
 	pipelines[PIPELINE_DEPTH_OF_FIELD] = create_render_pipeline_depth_of_field();
 	pipelines[PIPELINE_BILLBOARD] = create_render_pipeline_billboard();
 	pipelines[PIPELINE_LINE] = create_render_pipeline_line();
+	pipelines[PIPELINE_PARTICLE] = create_render_pipeline_particle();
 }
 
 

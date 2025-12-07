@@ -40,6 +40,7 @@ static ArrayList* texts = NULL;
 static Batch triangle_batch;
 static Batch triangle_2d_batch;
 static Batch quad_batch;
+static Batch particle_batch;
 static Batch line_batch;
 static Batch dummy_batch;
 static Batch batches[MAX_MESHES] = { 0 };
@@ -111,7 +112,7 @@ MultiBuffer create_multi_buffer(int element_size, int capacity) {
 			app.gpu_device,
 			&(SDL_GPUBufferCreateInfo){
 				.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-				.size = element_size * capacity * FRAMES_IN_FLIGHT,
+				.size = element_size * capacity,
 			}
 		);
 
@@ -204,6 +205,7 @@ void init_render() {
 	triangle_batch = create_batch(&triangle_mesh, sizeof(InstanceColorData));
 	triangle_2d_batch = create_batch(&triangle_2d_mesh, sizeof(InstanceColorData2D));
 	quad_batch = create_batch(&quad_mesh, sizeof(BillboardInstanceData));
+	particle_batch = create_batch(&quad_mesh, sizeof(ParticleInstanceData));
 	line_batch = create_batch(&line_mesh, sizeof(LineInstanceData));
 	dummy_batch = create_batch(NULL, sizeof(InstanceData));
 
@@ -343,8 +345,23 @@ void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 
 		SDL_BindGPUFragmentStorageBuffers(
 			render_pass,
-			1,
-			&light_buffer.buffer[frame_index],
+			0,
+			(SDL_GPUBuffer*[]) {
+				resources.materials_buffer,
+				light_buffer.buffer[frame_index]
+			},
+			2
+		);
+	}
+
+	if (pipeline == PIPELINE_PARTICLE) {
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			0,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = resources.particle_array,
+				.sampler = sampler,
+			},
 			1
 		);
 	}
@@ -658,6 +675,8 @@ void render() {
 		upload_multi_buffer(copy_pass, &line_batch.instances);
 		upload_multi_buffer(copy_pass, &triangle_2d_batch.instances);
 
+		upload_multi_buffer(copy_pass, &particle_batch.instances);
+
 		SDL_EndGPUCopyPass(copy_pass);
 
 		render_shadow_maps(command_buffer);
@@ -718,13 +737,6 @@ void render() {
 		};
 		SDL_PushGPUFragmentUniformData(command_buffer, 0, &uniform_data, sizeof(UniformData));
 
-		SDL_BindGPUFragmentStorageBuffers(
-			render_pass,
-			0,
-			&resources.materials_buffer,
-			1
-		);
-
 		bind_pipeline(render_pass, PIPELINE_3D_TEXTURED);
 		init_model_rendering(render_pass);
 		for (int i = 0; i < models->size; i++) {
@@ -737,11 +749,14 @@ void render() {
 			render_batch(render_pass, &batches[i]);
 		}
 
-		bind_pipeline(render_pass, PIPELINE_3D);
-		render_batch(render_pass, &triangle_batch);
-
 		bind_pipeline(render_pass, PIPELINE_BILLBOARD);
 		render_batch(render_pass, &quad_batch);
+
+		bind_pipeline(render_pass, PIPELINE_PARTICLE);
+		render_batch(render_pass, &particle_batch);
+
+		bind_pipeline(render_pass, PIPELINE_3D);
+		render_batch(render_pass, &triangle_batch);
 
 		bind_pipeline(render_pass, PIPELINE_LINE);
 		render_batch(render_pass, &line_batch);
@@ -846,6 +861,7 @@ void render() {
 	triangle_2d_batch.instances.size = 0;
 	quad_batch.instances.size = 0;
 	line_batch.instances.size = 0;
+	particle_batch.instances.size = 0;
 
 	frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
 }
@@ -955,7 +971,7 @@ void check_multi_buffer_size(MultiBuffer* multi_buffer) {
 	wait_for_fences();
 	double_multi_buffer_size(multi_buffer);
 
-	LOG_INFO("New buffer size: %d", multi_buffer->size / multi_buffer->element_size);
+	LOG_INFO("New buffer size: %d", multi_buffer->capacity);
 }
 
 
@@ -1019,6 +1035,26 @@ void draw_sprite(Vector3 position, float width, float height, int texture_index)
 		.material_index = 1,
 		.visiblity = VISIBILITY_ALL,
 		.type = BILLBOARD_CYLINDRICAL
+	};
+	instances[batch->instances.size] = instance_data;
+	batch->instances.size++;
+}
+
+
+void draw_particle(Vector3 position, float size, int texture_index, Color color) {
+	LOG_DEBUG("Drawing particle with texture %d", texture_index);
+
+	Batch* batch = &particle_batch;
+	check_multi_buffer_size(&batch->instances);
+
+	ParticleInstanceData* instances = get_multi_buffer_data(&batch->instances);
+
+	ParticleInstanceData instance_data = {
+		.position = position,
+		.width = size,
+		.height = size,
+		.texture_index = texture_index,
+		.visiblity = VISIBILITY_ALL,
 	};
 	instances[batch->instances.size] = instance_data;
 	batch->instances.size++;
