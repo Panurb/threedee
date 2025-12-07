@@ -25,6 +25,7 @@ typedef struct ParticleParameters {
     Vector3 velocity;
     Vector3 velocity_variance;
     float speed;
+    String texture_name;
 } ParticleParameters;
 
 

@@ -3,6 +3,7 @@
 
 #include "components/particle.h"
 #include "scene.h"
+#include "resources.h"
 
 
 ParticleComponent* ParticleComponent_add(Entity entity, ParticleParameters params) {
@@ -20,6 +21,10 @@ ParticleComponent* ParticleComponent_add(Entity entity, ParticleParameters param
     particle->velocity_variance = params.velocity_variance;
     particle->spawn_accumulator = 0.0f;
     particle->position_variance = params.position_variance;
+
+    if (params.texture_name[0] != '\0') {
+        particle->texture_index = binary_search_filename(params.texture_name, resources.particle_names, resources.particles_size);
+    }
 
     for (int i = 0; i < params.num_phases && i < MAX_PHASES; i++) {
         particle->phases[i] = params.phases[i];

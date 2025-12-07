@@ -93,20 +93,20 @@ void draw_particles() {
             // Default to zero size fading at ends
             ParticlePhase previous_phase = {
                 .color = particle->phases[0].color,
-                .normalized_time = 0.0f
+                .normalized_time = 0.0f,
+                .size = 0.0f
             };
-            ParticlePhase next_phase = {
-                .color = particle->phases[particle->num_phases - 1].color,
-                .normalized_time = 1.0f
-            };
+            ParticlePhase next_phase = particle->phases[0];
 
             for (int j = 0; j < particle->num_phases; j++) {
                 if (normalized_time > particle->phases[j].normalized_time) {
                     previous_phase = particle->phases[j];
                     if (j < particle->num_phases - 1) {
                         next_phase = particle->phases[j + 1];
+                    } else {
+                        next_phase.size = 0.0f;
+                        next_phase.normalized_time = 1.0f;
                     }
-                    break;
                 }
             }
 

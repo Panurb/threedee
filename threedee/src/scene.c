@@ -661,17 +661,19 @@ void generate_level(Level* level, int x, int z) {
 Entity create_dust_particles(Vector3 position, float width, float depth, float height) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
+    Color color = get_color(0.5f, 0.5f, 0.5f, 0.5f);
     ParticleComponent_add(i, (ParticleParameters) {
         .lifetime = 20.0f,
         .spawn_rate = 5.0f,
         .gravity_scale = 0.0f,
         .phases = {
-            { .color = get_color(0.5f, 0.5f, 0.5f, 0.5f), .size = 0.05f, .normalized_time = 0.0f },
+            { .color = color, .size = 0.05f, .normalized_time = 0.5f },
         },
         .num_phases = 1,
         .position_variance = vec3(width, height, depth),
         .velocity = zeros3(),
-        .velocity_variance = diag3(0.1f)
+        .velocity_variance = diag3(0.1f),
+        .texture_name = "dust"
     });
 
     return i;
