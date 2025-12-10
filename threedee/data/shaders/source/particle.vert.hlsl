@@ -7,6 +7,7 @@ cbuffer TransformBlock : register(b0, space1)
 
 struct InstanceData
 {
+	float4 color;
     float3 position;
     float width;
     float height;
@@ -38,7 +39,8 @@ struct Output
     float3 tangent : TANGENT0;
 	int tex_index : TEXCOORD1;
     float3 world_position : TEXCOORD2;
-    uint visibility;
+    uint visibility: TEXCOORD3;
+	float4 color : COLOR0;
 };
 
 
@@ -80,6 +82,7 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     output.world_position = world_position;
 
     output.visibility = instance_data.visibility;
+	output.color = instance_data.color;
 
     return output;
 }

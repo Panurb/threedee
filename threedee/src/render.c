@@ -1050,6 +1050,7 @@ void draw_particle(Vector3 position, float size, int texture_index, Color color)
 	ParticleInstanceData* instances = get_multi_buffer_data(&batch->instances);
 
 	ParticleInstanceData instance_data = {
+		.color = color,
 		.position = position,
 		.width = size,
 		.height = size,

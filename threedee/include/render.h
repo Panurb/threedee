@@ -115,6 +115,7 @@ static_assert(sizeof(BillboardInstanceData) % 16 == 0);
 
 
 typedef struct ParticleInstanceData {
+	Color color;
 	Vector3 position;
 	float width;
 	float height;

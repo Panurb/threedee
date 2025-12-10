@@ -51,7 +51,8 @@ struct Input
     float3 tangent : TANGENT0;
     int tex_index : TEXCOORD1;
     float3 world_position : TEXCOORD2;
-    uint visibility;
+    uint visibility : TEXCOORD3;
+	float4 color : COLOR0;
 };
 
 struct Output
@@ -94,9 +95,8 @@ Output main(Input input)
         final_color += light.diffuse_color * attenuation * scatter;
     }
 
-    float alpha = 0.3f;
-
     Output result;
-    result.color = float4(sampled_color.rgb * final_color, sampled_color.a * alpha);
+	float4 color = input.color;
+    result.color = float4(color.rgb * final_color, sampled_color.a * color.a);
     return result;
 }
