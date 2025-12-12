@@ -11,6 +11,7 @@ struct InstanceData
     float3 position;
     float width;
     float height;
+	float angle;
     int tex_index;
     uint visibility;
 };
@@ -54,21 +55,22 @@ Output main(Input input, uint instance_id : SV_InstanceID)
     float width = instance_data.width;
     float height = instance_data.height;
 
-    float3 camera_right = normalize(float3(view_matrix._11, view_matrix._12, view_matrix._13));
-    float3 camera_up = normalize(float3(view_matrix._21, view_matrix._22, view_matrix._23));
-
     // This is like a spherical billboard
     float3 to_camera = camera_position - position;
     float3 world_up = float3(0.0f, 1.0f, 0.0f);
 
-    camera_right = normalize(cross(world_up, to_camera));
-    camera_up = normalize(cross(to_camera, camera_right));
-
+    float3 camera_right = normalize(cross(world_up, to_camera));
+    float3 camera_up = normalize(cross(to_camera, camera_right));
     float3 camera_forward = normalize(cross(camera_right, camera_up));
 
-    float3 world_position = position
-        + input.position.x * width * camera_right
-        + input.position.y * height * camera_up;
+    float c = cos(instance_data.angle);
+    float s = sin(instance_data.angle);
+
+    float2 local_pos = float2(width * input.position.x, height * input.position.y);
+    float2 rotated = float2(c * local_pos.x - s * local_pos.y,
+                            s * local_pos.x + c * local_pos.y);
+
+    float3 world_position = position + rotated.x * camera_right + rotated.y *  camera_up;
 
     Output output;
     output.tex_coord = input.tex_coord;

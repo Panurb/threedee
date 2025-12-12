@@ -250,8 +250,10 @@ void input_players() {
         Entity camera = get_player_camera(i);
         CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
 
-        if (controller->controller.buttons_down[BUTTON_X] && player->sprint_timer > 0.5f * player->max_sprint) {
-            player->sprinting = true;
+        if (controller->controller.buttons_down[BUTTON_X] && norm2(controller->controller.left_stick) > 0.0f) {
+            if (player->sprint_timer > 0.5f * player->max_sprint) {
+                player->sprinting = true;
+            }
         }
         if (controller->controller.buttons_released[BUTTON_X] || player->sprint_timer <= 0.0f) {
             player->sprinting = false;

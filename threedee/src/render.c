@@ -755,7 +755,7 @@ void render() {
 		bind_pipeline(render_pass, PIPELINE_BILLBOARD);
 		render_batch(render_pass, &quad_batch);
 
-		bind_pipeline(render_pass, PIPELINE_PARTICLE_EMISSIVE);
+		bind_pipeline(render_pass, PIPELINE_PARTICLE);
 		render_batch(render_pass, &particle_batch);
 
 		bind_pipeline(render_pass, PIPELINE_PARTICLE_EMISSIVE);
@@ -1048,7 +1048,7 @@ void draw_sprite(Vector3 position, float width, float height, int texture_index)
 }
 
 
-void draw_particle(Vector3 position, float size, int texture_index, Color color, bool emissive) {
+void draw_particle(Vector3 position, float width, float height, float angle, int texture_index, Color color, bool emissive) {
 	LOG_DEBUG("Drawing particle with texture %d", texture_index);
 
 	Batch* batch = emissive ? &particle_emissive_batch : &particle_batch;
@@ -1059,8 +1059,9 @@ void draw_particle(Vector3 position, float size, int texture_index, Color color,
 	ParticleInstanceData instance_data = {
 		.color = color,
 		.position = position,
-		.width = size,
-		.height = size,
+		.width = width,
+		.height = height,
+		.angle = angle,
 		.texture_index = texture_index,
 		.visiblity = VISIBILITY_ALL,
 	};

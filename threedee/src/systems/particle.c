@@ -115,9 +115,19 @@ void draw_particles() {
                 (next_phase.normalized_time - previous_phase.normalized_time)
             );
 
+            float speed = norm3(particle->velocity[i]);
+            Vector3 direction = div3(speed, particle->velocity[i]);
+            Vector3 camera_up = get_axes(scene->camera).up;
+            float angle = atan2f(
+                dot3(camera_up, cross(camera_up, direction)),
+                dot3(camera_up, direction)
+            );
+
             draw_particle(
                 particle->position[i],
                 blended_phase.size,
+                blended_phase.size * (1.0f + speed * particle->stretch),
+                angle,
                 particle->texture_index,
                 blended_phase.color,
                 particle->emissive

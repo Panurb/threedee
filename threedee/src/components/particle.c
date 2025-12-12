@@ -22,6 +22,7 @@ ParticleComponent* ParticleComponent_add(Entity entity, ParticleParameters param
     particle->spawn_accumulator = 0.0f;
     particle->position_variance = params.position_variance;
     particle->emissive = params.emissive;
+    particle->stretch = params.stretch;
 
     if (params.texture_name[0] != '\0') {
         particle->texture_index = binary_search_filename(params.texture_name, resources.particle_names, resources.particles_size);

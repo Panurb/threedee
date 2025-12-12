@@ -681,7 +681,7 @@ Entity create_dust_particles(Vector3 position, float width, float depth, float h
 
 
 Entity create_fire(Vector3 position, float size) {
-    float brightness = 5.0f;
+    float brightness = 20.0f;
 
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
@@ -698,7 +698,7 @@ Entity create_fire(Vector3 position, float size) {
             { .color = smoke_color, .size = size, .normalized_time = 0.75f },
             { .color = make_transparent(smoke_color), .size = 2.0f * size, .normalized_time = 1.0f },
         },
-        .num_phases = 4,
+        .num_phases = 5,
         .velocity_variance = diag3(0.1f),
         .texture_name = "dust",
         .emissive = true

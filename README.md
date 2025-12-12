@@ -30,16 +30,15 @@
 * Triple buffering
 * Billboarding
 * Spring constraints
+* Particles
+* Frustrum culling for lights
 
 ### TODO ###
-* Frustrum culling
 * Data serialization for saving/loading game state
-* Particles
 * PCSS for soft shadows?
 * Skybox
 * 3D audio using OpenAL
 * Broad-phase collision detection for optimization
-* Ambient occlusion
 * Bloom
 * Oren-Nayar diffuse shading
 * Screen-space ambient occlusion (SSAO)

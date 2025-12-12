@@ -119,9 +119,9 @@ typedef struct ParticleInstanceData {
 	Vector3 position;
 	float width;
 	float height;
+	float angle;
 	int texture_index;
 	Visibility visiblity;
-	float _pad;
 } ParticleInstanceData;
 static_assert(sizeof(ParticleInstanceData) % 16 == 0);
 
@@ -243,7 +243,7 @@ CubeIndices CubeIndices_fill(int value);
 
 void draw_sprite(Vector3 position, float width, float height, int texture_index);
 
-void draw_particle(Vector3 position, float size, int texture_index, Color color, bool emissive);
+void draw_particle(Vector3 position, float width, float height, float angle, int texture_index, Color color, bool emissive);
 
 void draw_triangle(Vector3 a, Vector3 b, Vector3 c, Color color);
 
