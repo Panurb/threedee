@@ -92,7 +92,7 @@ char* mouse_to_string(int button) {
 }
 
 
-char* keybind_to_string(Keybind keybind) {
+const char* keybind_to_string(Keybind keybind) {
     if (keybind.device == DEVICE_KEYBOARD) {
         return key_to_string(keybind.key);
     } else if (keybind.device == DEVICE_MOUSE) {
@@ -126,7 +126,7 @@ Keybind string_to_keybind(String string) {
 }
 
 
-char* action_to_keybind(char* action) {
+const char* action_to_keybind(char* action) {
     for (int i = 0; i < LENGTH(ACTIONS); i++) {
         if (strcmp(action, ACTIONS[i]) == 0) {
             return keybind_to_string(game_settings.keybinds[i]);

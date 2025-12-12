@@ -171,9 +171,10 @@ void update_waypoints() {
             if (i == j) continue;
             WaypointComponent* n = get_component(j, COMPONENT_WAYPOINT);
             if (!n) continue;
-            if (!entity_is_dynamic(j)) continue;
-
-            update_connection(i, j);
+            bool pure_waypoint = !get_component(j, COMPONENT_COLLIDER);
+            if (entity_is_dynamic(j) || pure_waypoint) {
+                update_connection(i, j);
+            }
         }
     }
 }

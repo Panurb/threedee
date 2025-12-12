@@ -694,7 +694,7 @@ Entity create_fire(Vector3 position, float size) {
         .phases = {
             { .color = brighten(make_transparent(COLOR_YELLOW), brightness), .size = 0.5f * size, .normalized_time = 0.0f },
             { .color = brighten(flame_color, brightness), .size = size, .normalized_time = 0.2f },
-            { .color = brighten(flame_color, brightness), .size = 0.5f * size, .normalized_time = 0.5f },
+            { .color = brighten(flame_color, 0.5f * brightness), .size = 0.5f * size, .normalized_time = 0.5f },
             { .color = smoke_color, .size = size, .normalized_time = 0.75f },
             { .color = make_transparent(smoke_color), .size = 2.0f * size, .normalized_time = 1.0f },
         },

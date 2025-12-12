@@ -57,11 +57,11 @@ Vector2 get_mouse_position();
 
 const char* key_to_string(SDL_Scancode key);
 
-char* keybind_to_string(Keybind keybind);
+const char* keybind_to_string(Keybind keybind);
 
 Keybind string_to_keybind(String string);
 
-char* action_to_keybind(char* action);
+const char* action_to_keybind(char* action);
 
 void replace_actions(String output, String input);
 
