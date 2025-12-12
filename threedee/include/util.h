@@ -171,6 +171,10 @@ float mod(float x, float y);
 
 Color get_color(float r, float g, float b, float a);
 
+Color brighten(Color color, float c);
+
+Color make_transparent(Color color);
+
 float get_luminance(Color color);
 
 void permute(int* array, int size);

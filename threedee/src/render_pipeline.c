@@ -12,12 +12,23 @@
 static SDL_GPUShader* shaders[SHADER_COUNT] = { 0 };
 
 
-static const SDL_GPUColorTargetBlendState BLEND_STATE = {
+static const SDL_GPUColorTargetBlendState BLEND_STATE_ALPHA = {
 	.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
 	.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
 	.color_blend_op = SDL_GPU_BLENDOP_ADD,
 	.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
 	.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+	.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+	.enable_blend = true
+};
+
+
+static const SDL_GPUColorTargetBlendState BLEND_STATE_ADDITIVE = {
+	.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+	.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+	.color_blend_op = SDL_GPU_BLENDOP_ADD,
+	.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO,
+	.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
 	.alpha_blend_op = SDL_GPU_BLENDOP_ADD,
 	.enable_blend = true
 };
@@ -161,7 +172,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_2d() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = BLEND_STATE
+				.blend_state = BLEND_STATE_ALPHA
 			}},
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
@@ -201,7 +212,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_text() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = BLEND_STATE
+				.blend_state = BLEND_STATE_ALPHA
 			}},
 		},
 		.vertex_input_state = (SDL_GPUVertexInputState){
@@ -246,7 +257,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = BLEND_STATE
+				.blend_state = BLEND_STATE_ALPHA
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = DEPTH_FORMAT
@@ -304,7 +315,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d_textured() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = BLEND_STATE
+				.blend_state = BLEND_STATE_ALPHA
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = DEPTH_FORMAT
@@ -437,7 +448,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_billboard() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = BLEND_STATE
+				.blend_state = BLEND_STATE_ALPHA
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = DEPTH_FORMAT
@@ -477,7 +488,7 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_line() {
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = BLEND_STATE
+				.blend_state = BLEND_STATE_ALPHA
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = DEPTH_FORMAT
@@ -510,13 +521,13 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_line() {
 }
 
 
-SDL_GPUGraphicsPipeline* create_render_pipeline_particle() {
+SDL_GPUGraphicsPipeline* create_render_pipeline_particle(bool emissive) {
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
 			.num_color_targets = 1,
 			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
 				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window),
-				.blend_state = BLEND_STATE
+				.blend_state = emissive ? BLEND_STATE_ADDITIVE : BLEND_STATE_ALPHA
 			}},
 			.has_depth_stencil_target = true,
 			.depth_stencil_format = DEPTH_FORMAT
@@ -560,7 +571,8 @@ void create_pipelines() {
 	pipelines[PIPELINE_DEPTH_OF_FIELD] = create_render_pipeline_depth_of_field();
 	pipelines[PIPELINE_BILLBOARD] = create_render_pipeline_billboard();
 	pipelines[PIPELINE_LINE] = create_render_pipeline_line();
-	pipelines[PIPELINE_PARTICLE] = create_render_pipeline_particle();
+	pipelines[PIPELINE_PARTICLE] = create_render_pipeline_particle(false);
+	pipelines[PIPELINE_PARTICLE_EMISSIVE] = create_render_pipeline_particle(true);
 }
 
 

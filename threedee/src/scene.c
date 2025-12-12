@@ -680,6 +680,34 @@ Entity create_dust_particles(Vector3 position, float width, float depth, float h
 }
 
 
+Entity create_fire(Vector3 position, float size) {
+    float brightness = 5.0f;
+
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) { .position = position });
+    Color flame_color = get_color(1.0f, 0.5f, 0.0f, 0.5f);
+    Color smoke_color = get_color(0.5f, 0.5f, 0.5f, 0.5f);
+    ParticleComponent_add(i, (ParticleParameters) {
+        .lifetime = 4.0f * size,
+        .spawn_rate = 10.0f,
+        .gravity_scale = -0.1f,
+        .phases = {
+            { .color = brighten(make_transparent(COLOR_YELLOW), brightness), .size = 0.5f * size, .normalized_time = 0.0f },
+            { .color = brighten(flame_color, brightness), .size = size, .normalized_time = 0.2f },
+            { .color = brighten(flame_color, brightness), .size = 0.5f * size, .normalized_time = 0.5f },
+            { .color = smoke_color, .size = size, .normalized_time = 0.75f },
+            { .color = make_transparent(smoke_color), .size = 2.0f * size, .normalized_time = 1.0f },
+        },
+        .num_phases = 4,
+        .velocity_variance = diag3(0.1f),
+        .texture_name = "dust",
+        .emissive = true
+    });
+
+    return i;
+}
+
+
 Level create_level() {
     Level level = {
         .width = 5,
@@ -708,6 +736,8 @@ Level create_level() {
     print_level(level);
 
     create_ground(100.0f, 100.0f);
+
+    create_fire(vec3(0.0f, 1.0f, 0.0f), 0.5f);
 
     for (int i = 0; i < level.width; i++) {
         for (int j = 0; j < level.depth; j++) {

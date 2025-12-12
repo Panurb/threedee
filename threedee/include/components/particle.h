@@ -26,6 +26,7 @@ typedef struct ParticleParameters {
     Vector3 velocity_variance;
     float speed;
     String texture_name;
+    bool emissive;
 } ParticleParameters;
 
 
@@ -45,6 +46,7 @@ typedef struct ParticleComponent {
     float speed;
     float spawn_accumulator;
     Vector3 position_variance;
+    bool emissive;
 } ParticleComponent;
 
 

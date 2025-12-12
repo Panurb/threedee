@@ -191,6 +191,18 @@ Color get_color(float r, float g, float b, float a) {
     return color;
 }
 
+Color brighten(Color color, float c) {
+    color.r = color.r * c;
+    color.g = color.g * c;
+    color.b = color.b * c;
+    return color;
+}
+
+Color make_transparent(Color color) {
+    color.a = 0.0f;
+    return color;
+}
+
 float get_luminance(Color color) {
     return 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
 }

@@ -1,8 +1,6 @@
 #include "systems/particle.h"
 
-#include <render.h>
-#include <stdio.h>
-
+#include "render.h"
 #include "util.h"
 #include "scene.h"
 
@@ -121,7 +119,8 @@ void draw_particles() {
                 particle->position[i],
                 blended_phase.size,
                 particle->texture_index,
-                blended_phase.color
+                blended_phase.color,
+                particle->emissive
             );
         }
     }

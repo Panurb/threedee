@@ -41,6 +41,7 @@ static Batch triangle_batch;
 static Batch triangle_2d_batch;
 static Batch quad_batch;
 static Batch particle_batch;
+static Batch particle_emissive_batch;
 static Batch line_batch;
 static Batch dummy_batch;
 static Batch batches[MAX_MESHES] = { 0 };
@@ -206,6 +207,7 @@ void init_render() {
 	triangle_2d_batch = create_batch(&triangle_2d_mesh, sizeof(InstanceColorData2D));
 	quad_batch = create_batch(&quad_mesh, sizeof(BillboardInstanceData));
 	particle_batch = create_batch(&quad_mesh, sizeof(ParticleInstanceData));
+	particle_emissive_batch = create_batch(&quad_mesh, sizeof(ParticleInstanceData));
 	line_batch = create_batch(&line_mesh, sizeof(LineInstanceData));
 	dummy_batch = create_batch(NULL, sizeof(InstanceData));
 
@@ -354,7 +356,7 @@ void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 		);
 	}
 
-	if (pipeline == PIPELINE_PARTICLE) {
+	if (pipeline == PIPELINE_PARTICLE_EMISSIVE || pipeline == PIPELINE_PARTICLE) {
 		SDL_BindGPUFragmentSamplers(
 			render_pass,
 			0,
@@ -676,6 +678,7 @@ void render() {
 		upload_multi_buffer(copy_pass, &triangle_2d_batch.instances);
 
 		upload_multi_buffer(copy_pass, &particle_batch.instances);
+		upload_multi_buffer(copy_pass, &particle_emissive_batch.instances);
 
 		SDL_EndGPUCopyPass(copy_pass);
 
@@ -752,8 +755,11 @@ void render() {
 		bind_pipeline(render_pass, PIPELINE_BILLBOARD);
 		render_batch(render_pass, &quad_batch);
 
-		bind_pipeline(render_pass, PIPELINE_PARTICLE);
+		bind_pipeline(render_pass, PIPELINE_PARTICLE_EMISSIVE);
 		render_batch(render_pass, &particle_batch);
+
+		bind_pipeline(render_pass, PIPELINE_PARTICLE_EMISSIVE);
+		render_batch(render_pass, &particle_emissive_batch);
 
 		bind_pipeline(render_pass, PIPELINE_3D);
 		render_batch(render_pass, &triangle_batch);
@@ -862,6 +868,7 @@ void render() {
 	quad_batch.instances.size = 0;
 	line_batch.instances.size = 0;
 	particle_batch.instances.size = 0;
+	particle_emissive_batch.instances.size = 0;
 
 	frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
 }
@@ -1041,10 +1048,10 @@ void draw_sprite(Vector3 position, float width, float height, int texture_index)
 }
 
 
-void draw_particle(Vector3 position, float size, int texture_index, Color color) {
+void draw_particle(Vector3 position, float size, int texture_index, Color color, bool emissive) {
 	LOG_DEBUG("Drawing particle with texture %d", texture_index);
 
-	Batch* batch = &particle_batch;
+	Batch* batch = emissive ? &particle_emissive_batch : &particle_batch;
 	check_multi_buffer_size(&batch->instances);
 
 	ParticleInstanceData* instances = get_multi_buffer_data(&batch->instances);
