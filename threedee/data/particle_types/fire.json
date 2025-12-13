@@ -1,0 +1,59 @@
+{
+    "lifetime": 4,
+    "gravity_scale": -0.1,
+    "texture_name": "dust",
+    "emissive": true,
+    "stretch": 0.0,
+    "phases": [
+        {
+            "normalized_time": 0,
+            "size": 0.5,
+            "color": {
+                "r": 20.0,
+                "g": 20.0,
+                "b": 0.0,
+                "a": 0.0
+            }
+        },
+        {
+            "normalized_time": 0.2,
+            "size": 1.0,
+            "color": {
+                "r": 20.0,
+                "g": 10.0,
+                "b": 0.0,
+                "a": 0.5
+            }
+        },
+        {
+            "normalized_time": 0.5,
+            "size": 0.5,
+            "color": {
+                "r": 10.0,
+                "g": 5.0,
+                "b": 0.0,
+                "a": 0.5
+            }
+        },
+        {
+            "normalized_time": 0.75,
+            "size": 1.0,
+            "color": {
+                "r": 0.5,
+                "g": 0.5,
+                "b": 0.5,
+                "a": 0.5
+            }
+        },
+        {
+            "normalized_time": 1.0,
+            "size": 2.0,
+            "color": {
+                "r": 0.5,
+                "g": 0.5,
+                "b": 0.5,
+                "a": 0.0
+            }
+        }
+    ]
+}

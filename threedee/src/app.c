@@ -188,6 +188,7 @@ void update(float time_step) {
     update_physics(time_step);
     update_players(time_step);
     update_enemies(time_step);
+    update_emitters(time_step);
     update_particles(time_step);
     update_waypoints();
     update_sounds(time_step);

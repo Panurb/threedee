@@ -1,9 +1,19 @@
 #include "systems/particle.h"
 
+#include <assert.h>
+#include <stdio.h>
+
 #include "render.h"
 #include "util.h"
 #include "scene.h"
 
+
+
+ParticleData* ParticleData_create() {
+    ParticleData* pd = malloc(sizeof(ParticleData));
+    pd->size = 0;
+    return pd;
+}
 
 
 ParticlePhase lerp_particle_phase(ParticlePhase a, ParticlePhase b, float t) {
@@ -18,67 +28,65 @@ ParticlePhase lerp_particle_phase(ParticlePhase a, ParticlePhase b, float t) {
 }
 
 
-void add_particles(Entity entity, int count) {
-    ParticleComponent* particle = get_component(entity, COMPONENT_PARTICLE);
-    if (!particle) return;
+void add_particles(int count, Vector3 position, Vector3 velocity, float size, int particle_type) {
+    assert(particle_type != -1, "Invalid particle type index");
 
-    Vector3 position = get_position(entity);
+    ParticleData* particles = scene->particles;
 
     for (int i = 0; i < count; i++) {
-        if (particle->num_particles >= MAX_PARTICLES) {
+        if (particles->size >= MAX_PARTICLES) {
             break;
         }
-        particle->position[particle->num_particles] = add3(
-            position,
-            vec3(
-                randf(-0.5f, 0.5f) * particle->position_variance.x,
-                randf(-0.5f, 0.5f) * particle->position_variance.y,
-                randf(-0.5f, 0.5f) * particle->position_variance.z
-            )
-        );
-        particle->velocity[particle->num_particles] = add3(
-            particle->spawn_velocity,
-            vec3(
-                randf(-0.5f, 0.5f) * particle->velocity_variance.x,
-                randf(-0.5f, 0.5f) * particle->velocity_variance.y,
-                randf(-0.5f, 0.5f) * particle->velocity_variance.z
-            )
-        );
-        particle->time[particle->num_particles] = 0.0f;
-        particle->num_particles++;
+        particles->position[particles->size] = position;
+        particles->velocity[particles->size] = velocity;
+        particles->scale[particles->size] = size;
+        particles->time[particles->size] = 0.0f;
+        particles->particle_type[particles->size] = particle_type;
+        particles->size++;
     }
 }
 
 
 void update_particles(float time_step) {
+    ParticleData* particles = scene->particles;
+
+    for (int i = 0; i < particles->size; i++) {
+        ParticleType particle_type = resources.particle_types[particles->particle_type[i]];
+
+        particles->time[i] += time_step;
+        if (particles->time[i] >= particle_type.lifetime * particles->scale[i]) {
+
+            // Remove particle by swapping with the last one
+            particles->position[i] = particles->position[particles->size - 1];
+            particles->velocity[i] = particles->velocity[particles->size - 1];
+            particles->time[i] = particles->time[particles->size - 1];
+            particles->particle_type[i] = particles->particle_type[particles->size - 1];
+            particles->scale[i] = particles->scale[particles->size - 1];
+            particles->size--;
+
+            i--; // Check the swapped particle
+            continue;
+        }
+
+        particles->position[i] = add3(
+            particles->position[i],
+            mul3(time_step, particles->velocity[i])
+        );
+
+        particles->velocity[i] = add3(
+            particles->velocity[i],
+            mul3(time_step * particle_type.gravity_scale, scene->gravity)
+        );
+    }
+}
+
+
+void update_emitters(float time_step) {
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         ParticleComponent* particle = get_component(entity, COMPONENT_PARTICLE);
         if (!particle) continue;
 
-        Vector3 position = get_position(entity);
-
-        for (int i = 0; i < particle->num_particles; i++) {
-            particle->time[i] += time_step;
-            if (particle->time[i] >= particle->lifetime) {
-                // Remove particle by swapping with the last one
-                particle->position[i] = particle->position[particle->num_particles - 1];
-                particle->velocity[i] = particle->velocity[particle->num_particles - 1];
-                particle->time[i] = particle->time[particle->num_particles - 1];
-                particle->num_particles--;
-                i--; // Check the swapped particle
-                continue;
-            }
-
-            particle->position[i] = add3(
-                particle->position[i],
-                mul3(time_step, particle->velocity[i])
-            );
-
-            particle->velocity[i] = add3(
-                particle->velocity[i],
-                mul3(time_step * particle->gravity_scale, scene->gravity)
-            );
-        }
+        Vector3 spawn_position = get_position(entity);
 
         if (particle->spawn_rate <= 0.0f) {
             continue;
@@ -88,7 +96,25 @@ void update_particles(float time_step) {
 
         if (particle->spawn_accumulator > 1.0f) {
             int n = (int)particle->spawn_accumulator;
-            add_particles(entity, n);
+
+            Vector3 position = add3(
+                spawn_position,
+                vec3(
+                    randf(-0.5f, 0.5f) * particle->position_variance.x,
+                    randf(-0.5f, 0.5f) * particle->position_variance.y,
+                    randf(-0.5f, 0.5f) * particle->position_variance.z
+                )
+            );
+            Vector3 velocity = add3(
+                particle->spawn_velocity,
+                vec3(
+                    randf(-0.5f, 0.5f) * particle->velocity_variance.x,
+                    randf(-0.5f, 0.5f) * particle->velocity_variance.y,
+                    randf(-0.5f, 0.5f) * particle->velocity_variance.z
+                )
+            );
+
+            add_particles(n, position, velocity, particle->scale, particle->particle_type);
             particle->spawn_accumulator -= n;
         }
     }
@@ -96,57 +122,58 @@ void update_particles(float time_step) {
 
 
 void draw_particles() {
-    for (Entity entity = 0; entity < scene->components->entities; entity++) {
-        ParticleComponent* particle = scene->components->particle[entity];
-        if (!particle) continue;
+    ParticleData* particles = scene->particles;
 
-        for (int i = 0; i < particle->num_particles; i++) {
-            float normalized_time = particle->time[i] / particle->lifetime;
+    for (int i = 0; i < particles->size; i++) {
+        ParticleType particle_type = resources.particle_types[particles->particle_type[i]];
 
-            // Default to zero size fading at ends
-            ParticlePhase previous_phase = {
-                .color = particle->phases[0].color,
-                .normalized_time = 0.0f,
-                .size = 0.0f
-            };
-            ParticlePhase next_phase = particle->phases[0];
+        float normalized_time = particles->time[i] / (particle_type.lifetime * particles->scale[i]);
 
-            for (int j = 0; j < particle->num_phases; j++) {
-                if (normalized_time > particle->phases[j].normalized_time) {
-                    previous_phase = particle->phases[j];
-                    if (j < particle->num_phases - 1) {
-                        next_phase = particle->phases[j + 1];
-                    } else {
-                        next_phase.size = 0.0f;
-                        next_phase.normalized_time = 1.0f;
-                    }
+        // Default to zero size fading at ends
+        ParticlePhase previous_phase = {
+            .color = particle_type.phases[0].color,
+            .normalized_time = 0.0f,
+            .size = 0.0f
+        };
+        ParticlePhase next_phase = particle_type.phases[0];
+
+        for (int j = 0; j < particle_type.num_phases; j++) {
+            if (normalized_time > particle_type.phases[j].normalized_time) {
+                previous_phase = particle_type.phases[j];
+                if (j < particle_type.num_phases - 1) {
+                    next_phase = particle_type.phases[j + 1];
+                } else {
+                    next_phase.size = 0.0f;
+                    next_phase.normalized_time = 1.0f;
                 }
             }
-
-            ParticlePhase blended_phase = lerp_particle_phase(
-                previous_phase,
-                next_phase,
-                (normalized_time - previous_phase.normalized_time) /
-                (next_phase.normalized_time - previous_phase.normalized_time)
-            );
-
-            float speed = norm3(particle->velocity[i]);
-            Vector3 direction = div3(speed, particle->velocity[i]);
-            Vector3 camera_up = get_axes(scene->camera).up;
-            float angle = atan2f(
-                dot3(camera_up, cross(camera_up, direction)),
-                dot3(camera_up, direction)
-            );
-
-            draw_particle(
-                particle->position[i],
-                blended_phase.size,
-                blended_phase.size * (1.0f + speed * particle->stretch),
-                angle,
-                particle->texture_index,
-                blended_phase.color,
-                particle->emissive
-            );
         }
+
+        ParticlePhase blended_phase = lerp_particle_phase(
+            previous_phase,
+            next_phase,
+            (normalized_time - previous_phase.normalized_time) /
+            (next_phase.normalized_time - previous_phase.normalized_time)
+        );
+
+        float speed = norm3(particles->velocity[i]);
+        Vector3 direction = div3(speed, particles->velocity[i]);
+        Vector3 camera_up = get_axes(scene->camera).up;
+        float angle = atan2f(
+            dot3(camera_up, cross(camera_up, direction)),
+            dot3(camera_up, direction)
+        );
+
+        float size = blended_phase.size * particles->scale[i];
+
+        draw_particle(
+            particles->position[i],
+            size,
+            size * (1.0f + speed * particle_type.stretch),
+            angle,
+            particle_type.texture_index,
+            blended_phase.color,
+            particle_type.emissive
+        );
     }
 }

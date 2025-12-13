@@ -119,23 +119,6 @@ Entity create_television(Vector3 position, float yaw) {
 }
 
 
-void add_dust(Entity entity) {
-    ParticleComponent_add(entity, (ParticleParameters) {
-        .lifetime = 1.0f,
-        .gravity_scale = 0.0f,
-        .phases = {
-            { .color = get_color(1.0f, 1.0f, 1.0f, 0.2f), .size = 0.1f, .normalized_time = 0.0f },
-            { .color = make_transparent(get_color(1.0f, 1.0f, 1.0f, 0.2f)), .size = 0.5f, .normalized_time = 1.0f },
-            },
-        2,
-        .position_variance = vec3(0.5f, 0.5f, 0.5f),
-        .velocity = vec3(0.0f, 0.1f, 0.0f),
-        .velocity_variance = diag3(0.05f),
-        .texture_name = "dust"
-    });
-}
-
-
 Entity create_chair(Vector3 position, float yaw) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
@@ -162,7 +145,6 @@ Entity create_chair(Vector3 position, float yaw) {
     SoundComponent_add(i, (SoundParameters) {
         .hit_sound = "wood_hit"
     });
-    add_dust(i);
 
     return i;
 }
@@ -682,19 +664,12 @@ void generate_level(Level* level, int x, int z) {
 Entity create_dust_particles(Vector3 position, float width, float depth, float height) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
-    Color color = get_color(0.5f, 0.5f, 0.5f, 0.5f);
     ParticleComponent_add(i, (ParticleParameters) {
-        .lifetime = 20.0f,
         .spawn_rate = 5.0f,
-        .gravity_scale = 0.0f,
-        .phases = {
-            { .color = color, .size = 0.05f, .normalized_time = 0.5f },
-        },
-        .num_phases = 1,
         .position_variance = vec3(width, height, depth),
         .velocity = zeros3(),
         .velocity_variance = diag3(0.1f),
-        .texture_name = "dust"
+        .particle_type_name = "dust"
     });
 
     return i;
@@ -702,27 +677,13 @@ Entity create_dust_particles(Vector3 position, float width, float depth, float h
 
 
 Entity create_fire(Vector3 position, float size) {
-    float brightness = 20.0f;
-
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
-    Color flame_color = get_color(1.0f, 0.5f, 0.0f, 0.5f);
-    Color smoke_color = get_color(0.5f, 0.5f, 0.5f, 0.5f);
     ParticleComponent_add(i, (ParticleParameters) {
-        .lifetime = 4.0f * size,
         .spawn_rate = 10.0f,
-        .gravity_scale = -0.1f,
-        .phases = {
-            { .color = brighten(make_transparent(COLOR_YELLOW), brightness), .size = 0.5f * size, .normalized_time = 0.0f },
-            { .color = brighten(flame_color, brightness), .size = size, .normalized_time = 0.2f },
-            { .color = brighten(flame_color, 0.5f * brightness), .size = 0.5f * size, .normalized_time = 0.5f },
-            { .color = smoke_color, .size = size, .normalized_time = 0.75f },
-            { .color = make_transparent(smoke_color), .size = 2.0f * size, .normalized_time = 1.0f },
-        },
-        .num_phases = 5,
         .velocity_variance = diag3(0.1f),
-        .texture_name = "dust",
-        .emissive = true
+        .particle_type_name = "fire",
+        .scale = size
     });
 
     return i;
@@ -867,6 +828,7 @@ void create_scene() {
 
     scene = malloc(sizeof(Scene));
     scene->components = ComponentData_create();
+    scene->particles = ParticleData_create();
     scene->screen_camera = create_screen_camera();
     scene->player = create_player(zeros3());
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);

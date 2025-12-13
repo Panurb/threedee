@@ -12,6 +12,8 @@
 #define MAX_SOUNDS 128
 #define MAX_MESHES 128
 #define MAX_FONTS 16
+#define MAX_PARTICLE_TYPES 32
+#define MAX_PHASES 10
 
 
 typedef struct {
@@ -32,6 +34,24 @@ typedef struct Mesh {
 } Mesh;
 
 
+typedef struct ParticlePhase {
+    Color color;
+    float size;
+    float normalized_time;
+} ParticlePhase;
+
+
+typedef struct ParticleType {
+    float lifetime;
+    ParticlePhase phases[MAX_PHASES];
+    int num_phases;
+    float gravity_scale;
+    int texture_index;
+    bool emissive;
+    float stretch;
+} ParticleType;
+
+
 typedef struct {
     String texture_names[MAX_TEXTURES];
     int textures_size;
@@ -50,6 +70,10 @@ typedef struct {
     String particle_names[MAX_TEXTURES];
     int particles_size;
     SDL_GPUTexture* particle_array;
+
+    String particle_type_names[MAX_PARTICLE_TYPES];
+    int particle_types_size;
+    ParticleType particle_types[MAX_PARTICLE_TYPES];
 
     String font_names[MAX_FONTS];
     TTF_Font* fonts[MAX_FONTS];

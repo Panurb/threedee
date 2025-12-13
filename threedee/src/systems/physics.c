@@ -328,7 +328,7 @@ void update_physics(float time_step) {
 
             ParticleComponent* particle = get_component(i, COMPONENT_PARTICLE);
             if (particle && collision.speed > 5.0f) {
-                add_particles(i, (int)(collision.speed / 2.0f));
+                // add_particles(i, (int)(collision.speed / 2.0f));
             }
         }
 

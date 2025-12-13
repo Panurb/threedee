@@ -590,6 +590,54 @@ void load_materials() {
 }
 
 
+void load_particle_types() {
+	resources.particle_types_size = list_files_alphabetically("data/particle_types/*.json", resources.particle_type_names);
+	for (int i = 0; i < resources.particle_types_size; i++) {
+		LOG_INFO("Loading particle type: %s", resources.particle_type_names[i]);
+		String path;
+		snprintf(path, STRING_SIZE, "%s%s%s", "data/particle_types/", resources.particle_type_names[i], ".json");
+		cJSON* json = load_json(path);
+		if (!json) {
+			LOG_ERROR("Failed to load particle type: %s", path);
+			continue;
+		}
+		ParticleType particle_type = { 0 };
+		particle_type.lifetime = cJSON_GetObjectItem(json, "lifetime")->valuedouble;
+		particle_type.gravity_scale = cJSON_GetObjectItem(json, "gravity_scale")->valuedouble;
+		char* texture_name = cJSON_GetObjectItem(json, "texture_name")->valuestring;
+		particle_type.texture_index = binary_search_filename(texture_name, resources.particle_names, resources.particles_size);
+		if (particle_type.texture_index == -1) {
+			LOG_WARNING("Particle texture not found: %s", texture_name);
+		}
+		particle_type.emissive = cJSON_GetObjectItem(json, "emissive")->valueint;
+		particle_type.stretch = cJSON_GetObjectItem(json, "stretch")->valuedouble;
+
+		cJSON* phases_json = cJSON_GetObjectItem(json, "phases");
+		int phase_index = 0;
+		cJSON* phase_json;
+		cJSON_ArrayForEach(phase_json, phases_json) {
+			cJSON* color_json = cJSON_GetObjectItem(phase_json, "color");
+			Color color = {
+				.r = cJSON_GetObjectItem(color_json, "r")->valuedouble,
+				.g = cJSON_GetObjectItem(color_json, "g")->valuedouble,
+				.b = cJSON_GetObjectItem(color_json, "b")->valuedouble,
+				.a = cJSON_GetObjectItem(color_json, "a")->valuedouble,
+			};
+			float size = cJSON_GetObjectItem(phase_json, "size")->valuedouble;
+			float normalized_time = cJSON_GetObjectItem(phase_json, "normalized_time")->valuedouble;
+			particle_type.phases[phase_index++] = (ParticlePhase){
+				.color = color,
+				.size = size,
+				.normalized_time = normalized_time
+			};
+		}
+		particle_type.num_phases = phase_index;
+		resources.particle_types[i] = particle_type;
+		LOG_INFO("Phases: %d", particle_type.num_phases);
+	}
+}
+
+
 void load_resources() {
     LOG_INFO("Loading resources");
 
@@ -603,6 +651,7 @@ void load_resources() {
 	load_meshes();
 	load_materials();
 	load_particles();
+	load_particle_types();
 
     LOG_INFO("Resources loaded");
 }

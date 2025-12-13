@@ -1,0 +1,28 @@
+{
+    "lifetime": 1,
+    "gravity_scale": 0.0,
+    "texture_name": "dust",
+    "emissive": false,
+    "stretch": 0.0,
+    "phases": [
+        {
+            "normalized_time": 0.0,
+            "size": 0.1,
+            "color": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 0.2
+            }
+        }, {
+            "normalized_time": 1.0,
+            "size": 0.5,
+            "color": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 0.0
+            }
+        }
+    ]
+}

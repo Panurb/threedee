@@ -1,6 +1,7 @@
 #pragma once
 
 #include "component.h"
+#include "systems/particle.h"
 
 
 typedef struct Scene {
@@ -10,6 +11,7 @@ typedef struct Scene {
     Entity weather;
     ComponentData* components;
     Vector3 gravity;
+    ParticleData* particles;
 } Scene;
 
 
