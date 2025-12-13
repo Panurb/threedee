@@ -30,6 +30,7 @@ typedef struct {
     Vector3 overlap;
     Vector3 offset;
     Vector3 offset_other;
+    float speed;
 } Collision;
 
 

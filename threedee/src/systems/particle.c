@@ -18,6 +18,38 @@ ParticlePhase lerp_particle_phase(ParticlePhase a, ParticlePhase b, float t) {
 }
 
 
+void add_particles(Entity entity, int count) {
+    ParticleComponent* particle = get_component(entity, COMPONENT_PARTICLE);
+    if (!particle) return;
+
+    Vector3 position = get_position(entity);
+
+    for (int i = 0; i < count; i++) {
+        if (particle->num_particles >= MAX_PARTICLES) {
+            break;
+        }
+        particle->position[particle->num_particles] = add3(
+            position,
+            vec3(
+                randf(-0.5f, 0.5f) * particle->position_variance.x,
+                randf(-0.5f, 0.5f) * particle->position_variance.y,
+                randf(-0.5f, 0.5f) * particle->position_variance.z
+            )
+        );
+        particle->velocity[particle->num_particles] = add3(
+            particle->spawn_velocity,
+            vec3(
+                randf(-0.5f, 0.5f) * particle->velocity_variance.x,
+                randf(-0.5f, 0.5f) * particle->velocity_variance.y,
+                randf(-0.5f, 0.5f) * particle->velocity_variance.z
+            )
+        );
+        particle->time[particle->num_particles] = 0.0f;
+        particle->num_particles++;
+    }
+}
+
+
 void update_particles(float time_step) {
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
         ParticleComponent* particle = get_component(entity, COMPONENT_PARTICLE);
@@ -48,33 +80,16 @@ void update_particles(float time_step) {
             );
         }
 
+        if (particle->spawn_rate <= 0.0f) {
+            continue;
+        }
+
         particle->spawn_accumulator += particle->spawn_rate * time_step;
 
-        while (particle->spawn_accumulator > 1.0f) {
-            particle->spawn_accumulator -= 1.0f;
-
-            if (particle->num_particles >= MAX_PARTICLES) {
-                particle->spawn_accumulator = 0.0f;
-                break;
-            }
-            particle->position[particle->num_particles] = add3(
-                position,
-                vec3(
-                    randf(-0.5f, 0.5f) * particle->position_variance.x,
-                    randf(-0.5f, 0.5f) * particle->position_variance.y,
-                    randf(-0.5f, 0.5f) * particle->position_variance.z
-                )
-            );
-            particle->velocity[particle->num_particles] = add3(
-                particle->spawn_velocity,
-                vec3(
-                    randf(-0.5f, 0.5f) * particle->velocity_variance.x,
-                    randf(-0.5f, 0.5f) * particle->velocity_variance.y,
-                    randf(-0.5f, 0.5f) * particle->velocity_variance.z
-                )
-            );
-            particle->time[particle->num_particles] = 0.0f;
-            particle->num_particles++;
+        if (particle->spawn_accumulator > 1.0f) {
+            int n = (int)particle->spawn_accumulator;
+            add_particles(entity, n);
+            particle->spawn_accumulator -= n;
         }
     }
 }

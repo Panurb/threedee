@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <render.h>
+#include <systems/particle.h>
 #include <systems/sound.h>
 
 #include "components/rigidbody.h"
@@ -319,10 +320,15 @@ void update_physics(float time_step) {
         for (int j = 0; j < collider->collisions->size; j++) {
             Collision collision = *(Collision*)ArrayList_get(collider->collisions, j);
             SoundComponent* sound = get_component(i, COMPONENT_SOUND);
-            // Approximate impulse with overlap length
-            float volume = clamp(5.0f * norm3(collision.overlap), 0.0f, 1.0f);
+
+            float volume = clamp(0.05f * collision.speed, 0.0f, 1.0f);
             if (sound && volume > 0.1f && sound->hit_sound[0] != '\0') {
                 add_sound(i, sound->hit_sound, volume, 1.0f);
+            }
+
+            ParticleComponent* particle = get_component(i, COMPONENT_PARTICLE);
+            if (particle && collision.speed > 5.0f) {
+                add_particles(i, (int)(collision.speed / 2.0f));
             }
         }
 

@@ -682,6 +682,15 @@ Penetration get_penetration(Entity i, Entity j) {
 }
 
 
+float get_collision_speed(Entity entity, Entity other) {
+    RigidBodyComponent* rb1 = get_component(entity, COMPONENT_RIGIDBODY);
+    RigidBodyComponent* rb2 = get_component(other, COMPONENT_RIGIDBODY);
+    Vector3 v1 = rb1 ? rb1->velocity : zeros3();
+    Vector3 v2 = rb2 ? rb2->velocity : zeros3();
+    return norm3(sub3(v1, v2));
+}
+
+
 void update_collisions() {
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
@@ -698,7 +707,7 @@ void update_collisions() {
             ColliderComponent* other_collider = get_component(j, COMPONENT_COLLIDER);
             if (!other_collider) continue;
 
-            // TODO: Handle unsymmetric collisions
+            // TODO: Handle asymmetric collisions
             bool collides = (COLLISION_MASKS[collider->group] & other_collider->group);
             bool other_collides = (COLLISION_MASKS[other_collider->group] & collider->group);
 
@@ -708,18 +717,21 @@ void update_collisions() {
 
             Penetration penetration = get_penetration(i, j);
             if (penetration.valid) {
+                float speed = get_collision_speed(i, j);
                 Collision collision = {
                     .entity = j,
                     .overlap = penetration.overlap,
                     .offset = sub3(penetration.contact_point, get_position(i)),
-                    .offset_other = sub3(penetration.contact_point, get_position(j))
+                    .offset_other = sub3(penetration.contact_point, get_position(j)),
+                    .speed = speed
                 };
                 ArrayList_add(collider->collisions, &collision);
                 Collision other_collision = {
                     .entity = i,
                     .overlap = mul3(-1.0f, penetration.overlap),
                     .offset = sub3(penetration.contact_point, get_position(j)),
-                    .offset_other = sub3(penetration.contact_point, get_position(i))
+                    .offset_other = sub3(penetration.contact_point, get_position(i)),
+                    .speed = speed
                 };
                 ArrayList_add(other_collider->collisions, &other_collision);
             }

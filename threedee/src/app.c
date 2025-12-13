@@ -190,6 +190,7 @@ void update(float time_step) {
     update_enemies(time_step);
     update_particles(time_step);
     update_waypoints();
+    update_sounds(time_step);
 
     // For overhead camera testing
     // TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);

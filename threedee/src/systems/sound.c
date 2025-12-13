@@ -22,6 +22,10 @@ int sound_index(String filename) {
 
 void add_sound(Entity entity, String filename, float volume, float pitch) {
     SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
+    if (scomp->cooldown_timer > 0.0f) {
+        return;
+    }
+
     for (int i = 0; i < scomp->size; i++) {
         if (!scomp->events[i]) {
             SoundEvent* event = malloc(sizeof(SoundEvent));
@@ -31,6 +35,7 @@ void add_sound(Entity entity, String filename, float volume, float pitch) {
             event->loop = false;
             event->channel = -1;
             scomp->events[i] = event;
+            scomp->cooldown_timer = scomp->cooldown;
             break;
         }
     }
@@ -77,6 +82,16 @@ void set_panning_from_angle(int channel, float angle) {
     Uint8 right = 255 * (1.0f + pan) / 2.0f;
 
     Mix_SetPanning(channel, left, right);
+}
+
+
+void update_sounds(float time_step) {
+    for (int i = 0; i < scene->components->entities; i++) {
+        SoundComponent* scomp = get_component(i, COMPONENT_SOUND);
+        if (!scomp) continue;
+
+        scomp->cooldown_timer = fmaxf(0.0f, scomp->cooldown_timer - time_step);
+    }
 }
 
 

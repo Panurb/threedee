@@ -119,6 +119,23 @@ Entity create_television(Vector3 position, float yaw) {
 }
 
 
+void add_dust(Entity entity) {
+    ParticleComponent_add(entity, (ParticleParameters) {
+        .lifetime = 1.0f,
+        .gravity_scale = 0.0f,
+        .phases = {
+            { .color = get_color(1.0f, 1.0f, 1.0f, 0.2f), .size = 0.1f, .normalized_time = 0.0f },
+            { .color = make_transparent(get_color(1.0f, 1.0f, 1.0f, 0.2f)), .size = 0.5f, .normalized_time = 1.0f },
+            },
+        2,
+        .position_variance = vec3(0.5f, 0.5f, 0.5f),
+        .velocity = vec3(0.0f, 0.1f, 0.0f),
+        .velocity_variance = diag3(0.05f),
+        .texture_name = "dust"
+    });
+}
+
+
 Entity create_chair(Vector3 position, float yaw) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
@@ -142,6 +159,10 @@ Entity create_chair(Vector3 position, float yaw) {
         .friction = 0.5f,
         .bounce = 0.2f
     });
+    SoundComponent_add(i, (SoundParameters) {
+        .hit_sound = "wood_hit"
+    });
+    add_dust(i);
 
     return i;
 }

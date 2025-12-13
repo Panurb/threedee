@@ -15,6 +15,8 @@ typedef struct SoundComponent {
     SoundEvent* events[4];
     String hit_sound;
     String loop_sound;
+    float cooldown_timer;
+    float cooldown;
 } SoundComponent;
 
 

@@ -12,6 +12,8 @@ void loop_sound(Entity entity, String filename, float volume, float pitch);
 
 void stop_loop(Entity entity);
 
+void update_sounds(float time_step);
+
 void play_sounds(Entity camera);
 
 void clear_sounds(Entity entity);
