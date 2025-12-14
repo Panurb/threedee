@@ -1,11 +1,11 @@
 #include "systems/particle.h"
 
 #include <assert.h>
-#include <stdio.h>
 
 #include "render.h"
 #include "util.h"
 #include "scene.h"
+#include "components/emitter.h"
 
 
 
@@ -83,39 +83,39 @@ void update_particles(float time_step) {
 
 void update_emitters(float time_step) {
     for (Entity entity = 0; entity < scene->components->entities; entity++) {
-        ParticleComponent* particle = get_component(entity, COMPONENT_PARTICLE);
-        if (!particle) continue;
+        EmitterComponent* emitter = get_component(entity, COMPONENT_EMITTER);
+        if (!emitter) continue;
 
         Vector3 spawn_position = get_position(entity);
 
-        if (particle->spawn_rate <= 0.0f) {
+        if (emitter->spawn_rate <= 0.0f) {
             continue;
         }
 
-        particle->spawn_accumulator += particle->spawn_rate * time_step;
+        emitter->spawn_accumulator += emitter->spawn_rate * time_step;
 
-        if (particle->spawn_accumulator > 1.0f) {
-            int n = (int)particle->spawn_accumulator;
+        if (emitter->spawn_accumulator > 1.0f) {
+            int n = (int)emitter->spawn_accumulator;
 
             Vector3 position = add3(
                 spawn_position,
                 vec3(
-                    randf(-0.5f, 0.5f) * particle->position_variance.x,
-                    randf(-0.5f, 0.5f) * particle->position_variance.y,
-                    randf(-0.5f, 0.5f) * particle->position_variance.z
+                    randf(-0.5f, 0.5f) * emitter->position_variance.x,
+                    randf(-0.5f, 0.5f) * emitter->position_variance.y,
+                    randf(-0.5f, 0.5f) * emitter->position_variance.z
                 )
             );
             Vector3 velocity = add3(
-                particle->spawn_velocity,
+                emitter->spawn_velocity,
                 vec3(
-                    randf(-0.5f, 0.5f) * particle->velocity_variance.x,
-                    randf(-0.5f, 0.5f) * particle->velocity_variance.y,
-                    randf(-0.5f, 0.5f) * particle->velocity_variance.z
+                    randf(-0.5f, 0.5f) * emitter->velocity_variance.x,
+                    randf(-0.5f, 0.5f) * emitter->velocity_variance.y,
+                    randf(-0.5f, 0.5f) * emitter->velocity_variance.z
                 )
             );
 
-            add_particles(n, position, velocity, particle->scale, particle->particle_type);
-            particle->spawn_accumulator -= n;
+            add_particles(n, position, velocity, emitter->scale, emitter->particle_type);
+            emitter->spawn_accumulator -= n;
         }
     }
 }

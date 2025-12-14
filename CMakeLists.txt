@@ -18,10 +18,10 @@ set(SOURCES
     threedee/src/components/camera.c
     threedee/src/components/collider.c
     threedee/src/components/controller.c
+    threedee/src/components/emitter.c
     threedee/src/components/enemy.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
-    threedee/src/components/particle.c
     threedee/src/components/player.c
     threedee/src/components/rigidbody.c
     threedee/src/components/sound.c

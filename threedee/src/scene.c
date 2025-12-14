@@ -664,7 +664,7 @@ void generate_level(Level* level, int x, int z) {
 Entity create_dust_particles(Vector3 position, float width, float depth, float height) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
-    ParticleComponent_add(i, (ParticleParameters) {
+    EmitterComponent_add(i, (EmitterParameters) {
         .spawn_rate = 5.0f,
         .position_variance = vec3(width, height, depth),
         .velocity = zeros3(),
@@ -679,7 +679,7 @@ Entity create_dust_particles(Vector3 position, float width, float depth, float h
 Entity create_fire(Vector3 position, float size) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
-    ParticleComponent_add(i, (ParticleParameters) {
+    EmitterComponent_add(i, (EmitterParameters) {
         .spawn_rate = 10.0f,
         .velocity_variance = diag3(0.1f),
         .particle_type_name = "fire",

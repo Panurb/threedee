@@ -70,8 +70,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->enemy[entity];
         case COMPONENT_SPRITE:
             return scene->components->sprite[entity];
-        case COMPONENT_PARTICLE:
-            return scene->components->particle[entity];
+        case COMPONENT_EMITTER:
+            return scene->components->emitter[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;
@@ -120,8 +120,8 @@ void remove_component(Entity entity, ComponentType component_type) {
         case COMPONENT_SPRITE:
             SpriteComponent_remove(entity);
             break;
-        case COMPONENT_PARTICLE:
-            ParticleComponent_remove(entity);
+        case COMPONENT_EMITTER:
+            EmitterComponent_remove(entity);
             break;
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
@@ -174,12 +174,13 @@ void remove_prefab(Entity entity) {
 
 
 void destroy_entity(Entity entity) {
-    if (entity == -1) return;
+    if (entity == NULL_ENTITY) return;
 
     // TODO: remove parent
 
-    TransformComponent_remove(entity);
-    CameraComponent_remove(entity);
+    for (int i = 0; i < COMPONENT_COUNT; i++) {
+        remove_component(entity, i);
+    }
 
     if (entity == scene->components->entities - 1) {
         scene->components->entities--;

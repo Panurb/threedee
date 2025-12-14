@@ -326,8 +326,7 @@ void update_physics(float time_step) {
                 add_sound(i, sound->hit_sound, volume, 1.0f);
             }
 
-            ParticleComponent* particle = get_component(i, COMPONENT_PARTICLE);
-            if (particle && collision.speed > 5.0f) {
+            if (collision.speed > 5.0f) {
                 // add_particles(i, (int)(collision.speed / 2.0f));
             }
         }
