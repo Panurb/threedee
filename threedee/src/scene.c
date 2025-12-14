@@ -831,6 +831,9 @@ void create_scene() {
     scene->particles = ParticleData_create();
     scene->screen_camera = create_screen_camera();
     scene->player = create_player(zeros3());
+
+    create_chair(vec3(2.0f, 0.0f, 2.0f), 45.0f);
+
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
     // scene->camera = create_overhead_camera();

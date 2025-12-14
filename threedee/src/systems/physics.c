@@ -313,6 +313,12 @@ void update_physics(float time_step) {
         update_springs(i);
     }
 
+    int particle_index = binary_search_filename(
+        "dust_cloud",
+        resources.particle_type_names,
+        resources.particle_types_size
+    );
+
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
         if (!collider) continue;
@@ -321,13 +327,19 @@ void update_physics(float time_step) {
             Collision collision = *(Collision*)ArrayList_get(collider->collisions, j);
             SoundComponent* sound = get_component(i, COMPONENT_SOUND);
 
-            float volume = clamp(0.05f * collision.speed, 0.0f, 1.0f);
-            if (sound && volume > 0.1f && sound->hit_sound[0] != '\0') {
+            float volume = clamp(0.25f * collision.speed, 0.0f, 1.0f);
+            if (sound && volume > 0.2f && sound->hit_sound[0] != '\0') {
                 add_sound(i, sound->hit_sound, volume, 1.0f);
             }
 
-            if (collision.speed > 5.0f) {
-                // add_particles(i, (int)(collision.speed / 2.0f));
+            if (volume > 0.2f) {
+                add_particles(
+                    1,
+                    add3(get_position(i), collision.offset),
+                    mul3(0.2f, normalized3(collision.overlap)),
+                    1.0f,
+                    particle_index
+                );
             }
         }
 

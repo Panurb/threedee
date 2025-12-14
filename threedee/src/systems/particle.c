@@ -1,6 +1,7 @@
 #include "systems/particle.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 #include "render.h"
 #include "util.h"

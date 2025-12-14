@@ -682,12 +682,25 @@ Penetration get_penetration(Entity i, Entity j) {
 }
 
 
-float get_collision_speed(Entity entity, Entity other) {
-    RigidBodyComponent* rb1 = get_component(entity, COMPONENT_RIGIDBODY);
-    RigidBodyComponent* rb2 = get_component(other, COMPONENT_RIGIDBODY);
-    Vector3 v1 = rb1 ? rb1->velocity : zeros3();
-    Vector3 v2 = rb2 ? rb2->velocity : zeros3();
-    return norm3(sub3(v1, v2));
+float get_collision_speed(Entity entity, Entity other, Penetration penetration) {
+    RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
+    RigidBodyComponent* rb_other = get_component(other, COMPONENT_RIGIDBODY);
+
+    Vector3 n = normalized3(penetration.overlap);
+
+    Vector3 r = sub3(penetration.contact_point, get_position(entity));
+    Vector3 v_rel = zeros3();
+    if (rb) {
+        v_rel = add3(rb->velocity, cross(rb->angular_velocity, r));
+    }
+
+    if (rb_other) {
+        Vector3 r_other = sub3(penetration.contact_point, get_position(other));
+        Vector3 v_other = add3(rb_other->velocity, cross(rb_other->angular_velocity, r_other));
+        v_rel = sub3(v_rel, v_other);
+    }
+
+    return  fmaxf(0.0f, -dot3(v_rel, n));
 }
 
 
@@ -717,7 +730,8 @@ void update_collisions() {
 
             Penetration penetration = get_penetration(i, j);
             if (penetration.valid) {
-                float speed = get_collision_speed(i, j);
+                float speed = get_collision_speed(i, j, penetration);
+
                 Collision collision = {
                     .entity = j,
                     .overlap = penetration.overlap,
