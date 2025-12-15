@@ -146,23 +146,73 @@ SDL_GPUShader* load_shader(
 
 
 void load_shaders() {
-	shaders[SHADER_VERTEX_POSITION_COLOR_2D] = load_shader(app.gpu_device, "position_color_2d.vert", 0, 1, 1, 0);
-	shaders[SHADER_VERTEX_POSITION_COLOR] = load_shader(app.gpu_device, "position_color.vert", 0, 1, 1, 0);
-	shaders[SHADER_VERTEX_POSITION_TEXTURE] = load_shader(app.gpu_device, "position_texture.vert", 0, 2, 1, 0);
-	shaders[SHADER_VERTEX_TEXT] = load_shader(app.gpu_device, "text.vert", 0, 2, 0, 0);
-	shaders[SHADER_VERTEX_SHADOW_DEPTH] = load_shader(app.gpu_device, "shadow_depth.vert", 0, 2, 1, 0);
-	shaders[SHADER_VERTEX_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.vert", 0, 0, 0, 0);
-	shaders[SHADER_VERTEX_BILLBOARD] = load_shader(app.gpu_device, "billboard.vert", 0, 1, 1, 0);
-	shaders[SHADER_VERTEX_LINE] = load_shader(app.gpu_device, "line.vert", 0, 1, 1, 0);
-	shaders[SHADER_VERTEX_PARTICLE] = load_shader(app.gpu_device, "particle.vert", 0, 2, 1, 0);
-	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(app.gpu_device, "solid_color.frag", 0, 0, 0, 0);
-	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(app.gpu_device, "solid_color_depth.frag", 0, 0, 0, 0);
-	shaders[SHADER_FRAGMENT_PHONG] = load_shader(app.gpu_device, "phong.frag", 4, 1, 2, 0);
-	shaders[SHADER_FRAGMENT_SHADOW_DEPTH] = load_shader(app.gpu_device, "shadow_depth.frag", 0, 0, 0, 0);
-	shaders[SHADER_FRAGMENT_TEXT] = load_shader(app.gpu_device, "text.frag", 1, 0, 0, 0);
-	shaders[SHADER_FRAGMENT_POST_PROCESSING] = load_shader(app.gpu_device, "post_processing.frag", 2, 1, 0, 0);
-	shaders[SHADER_FRAGMENT_DEPTH_OF_FIELD] = load_shader(app.gpu_device, "depth_of_field.frag", 2, 1, 0, 0);
-	shaders[SHADER_FRAGMENT_PARTICLE] = load_shader(app.gpu_device, "particle.frag", 4, 1, 2, 0);
+	shaders[SHADER_VERTEX_POSITION_COLOR_2D] = load_shader(
+		app.gpu_device, "position_color_2d.vert",
+		0, 1, 1, 0
+	);
+	shaders[SHADER_VERTEX_POSITION_COLOR] = load_shader(
+		app.gpu_device, "position_color.vert",
+		0, 1, 1, 0);
+	shaders[SHADER_VERTEX_POSITION_TEXTURE] = load_shader(
+		app.gpu_device, "position_texture.vert",
+		0, 2, 1, 0
+	);
+	shaders[SHADER_VERTEX_TEXT] = load_shader(
+		app.gpu_device, "text.vert",
+		0, 2, 0, 0
+	);
+	shaders[SHADER_VERTEX_SHADOW_DEPTH] = load_shader(
+		app.gpu_device, "shadow_depth.vert",
+		0, 2, 1, 0
+	);
+	shaders[SHADER_VERTEX_POST_PROCESSING] = load_shader(
+		app.gpu_device, "post_processing.vert",
+		0, 0, 0, 0
+	);
+	shaders[SHADER_VERTEX_BILLBOARD] = load_shader(
+		app.gpu_device, "billboard.vert",
+		0, 1, 1, 0
+	);
+	shaders[SHADER_VERTEX_LINE] = load_shader(
+		app.gpu_device, "line.vert",
+		0, 1, 1, 0
+	);
+	shaders[SHADER_VERTEX_PARTICLE] = load_shader(
+		app.gpu_device, "particle.vert",
+		0, 2, 1, 0
+	);
+	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(
+		app.gpu_device, "solid_color.frag",
+		0, 0, 0, 0
+	);
+	shaders[SHADER_FRAGMENT_SOLID_COLOR_DEPTH] = load_shader(
+		app.gpu_device, "solid_color_depth.frag",
+		0, 0, 0, 0
+	);
+	shaders[SHADER_FRAGMENT_PHONG] = load_shader(
+		app.gpu_device, "phong.frag",
+		4, 1, 2, 0
+	);
+	shaders[SHADER_FRAGMENT_SHADOW_DEPTH] = load_shader(
+		app.gpu_device, "shadow_depth.frag",
+		0, 0, 0, 0
+	);
+	shaders[SHADER_FRAGMENT_TEXT] = load_shader(
+		app.gpu_device, "text.frag",
+		1, 0, 0, 0
+	);
+	shaders[SHADER_FRAGMENT_POST_PROCESSING] = load_shader(
+		app.gpu_device, "post_processing.frag",
+		2, 1, 0, 0
+	);
+	shaders[SHADER_FRAGMENT_DEPTH_OF_FIELD] = load_shader(
+		app.gpu_device, "depth_of_field.frag",
+		2, 2, 0, 0
+	);
+	shaders[SHADER_FRAGMENT_PARTICLE] = load_shader(
+		app.gpu_device, "particle.frag",
+		4, 1, 2, 0
+	);
 }
 
 

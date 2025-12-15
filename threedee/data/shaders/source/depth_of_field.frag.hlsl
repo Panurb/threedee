@@ -1,17 +1,20 @@
+// Common post-processing descriptor set
 Texture2D tex : register(t0, space2);
 Texture2DMS<float> depth_tex : register(t1, space2);
 SamplerState sampler_tex : register(s0, space2);
 
-
 cbuffer UBO : register(b0, space3) {
     float near_plane;
     float far_plane;
+    float2 screen_size;
+};
+// End of common descriptor set
+
+cbuffer DOFParams : register(b1, space3) {
     float focal_distance;
     float focal_range;
-    float2 screen_size;
     bool vertical;
 };
-
 
 struct Input {
     float4 position : SV_POSITION;

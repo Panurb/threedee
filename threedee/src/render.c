@@ -617,14 +617,11 @@ void render_depth_of_field(SDL_GPUCommandBuffer* command_buffer, SDL_GPUTexture*
 
 	CameraComponent* camera = get_component(scene->camera, COMPONENT_CAMERA);
 	DepthOfFieldUniformData dof_uniform_data = {
-		.near_plane = camera->near_plane,
-		.far_plane = camera->far_plane,
 		.focal_distance = (camera->focal_distance - camera->near_plane) / (camera->far_plane - camera->near_plane),
 		.focal_range = camera->focal_range,
-		.screen_size = { (float)game_settings.width, (float)game_settings.height },
 		.vertical = vertical
 	};
-	SDL_PushGPUFragmentUniformData(command_buffer, 0, &dof_uniform_data, sizeof(DepthOfFieldUniformData));
+	SDL_PushGPUFragmentUniformData(command_buffer, 1, &dof_uniform_data, sizeof(DepthOfFieldUniformData));
 	SDL_DrawGPUPrimitives(render_pass, 4, 1, 0, 0);
 
 	SDL_EndGPURenderPass(render_pass);
@@ -769,6 +766,17 @@ void render() {
 
 		SDL_EndGPURenderPass(render_pass);
 
+		SDL_PushGPUFragmentUniformData(
+			command_buffer,
+			0,
+			&(PostProcessingUniformData){
+				.near_plane = camera->near_plane,
+				.far_plane = camera->far_plane,
+				.screen_size = { (float)game_settings.width, (float)game_settings.height }
+			},
+			sizeof(PostProcessingUniformData)
+		);
+
 		SDL_GPUTexture* source_texture = game_settings.antialiasing == 0 ? screen_texture : resolve_texture;
 		if (camera->dof_enabled) {
 			render_depth_of_field(command_buffer, source_texture, dof_temp_texture, false);
@@ -803,15 +811,6 @@ void render() {
 				}
 			},
 			2
-		);
-		SDL_PushGPUFragmentUniformData(
-			command_buffer,
-			0,
-			&(PostProcessingUniformData){
-				.near_plane = camera->near_plane,
-				.far_plane = camera->far_plane,
-			},
-			sizeof(PostProcessingUniformData)
 		);
 		SDL_DrawGPUPrimitives(render_pass, 4, 1, 0, 0);
 

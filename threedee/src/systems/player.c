@@ -318,8 +318,8 @@ void input_players() {
                     trans = get_component(player->grabbed_entity, COMPONENT_TRANSFORM);
                     trans->position = player->grabbed_position;
                     trans->rotation = player->grabbed_rotation;
-                    cam->dof_enabled = false;
                 }
+                cam->dof_enabled = false;
                 player->grabbed_entity = NULL_ENTITY;
             } else {
                 Vector3 dir = look_direction(scene->camera);
@@ -337,10 +337,10 @@ void input_players() {
                         player->examine_yaw = player->yaw;
                         player->grabbed_position = get_position(player->grabbed_entity);
                         player->grabbed_rotation = get_rotation(player->grabbed_entity);
-                        cam->dof_enabled = true;
-                        cam->focal_distance = 1.0f;
-                        cam->focal_range = 1.0f;
                     }
+                    cam->dof_enabled = true;
+                    cam->focal_distance = 1.0f;
+                    cam->focal_range = 1.0f;
                 }
             }
         }
