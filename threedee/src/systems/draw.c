@@ -145,7 +145,7 @@ void merge_adjacent_faces(ArrayList* face_group) {
         for (int i = 1; i < face_group->size; i++) {
             CubeFace* other_face = ArrayList_get(face_group, i);
             if (faces_adjacent(face, other_face)) {
-                LOG_INFO("Merging adjacent faces");
+                LOG_DEBUG("Merging adjacent faces");
                 // Merge logic here (not implemented)
                 ArrayList_remove(face_group, i);
                 changed = true;
@@ -170,11 +170,11 @@ void add_to_face_group(CubeFace cube_face) {
                 CubeFace* other_face = ArrayList_get(group, i);
                 FaceToRemove result = faces_kissing(&cube_face, other_face);
                 if (result.first) {
-                    LOG_INFO("Removing first face");
+                    LOG_DEBUG("Removing first face");
                     removed = true;
                 }
                 if (result.second) {
-                    LOG_INFO("Removing second face");
+                    LOG_DEBUG("Removing second face");
                     ArrayList_remove(group, i);
                     if (group->size == 0) {
                         ArrayList_remove(face_groups, g);
@@ -192,7 +192,7 @@ void add_to_face_group(CubeFace cube_face) {
     if (found_group) {
         ArrayList_add(found_group, &cube_face);
     } else {
-        LOG_INFO("Creating new face group");
+        LOG_DEBUG("Creating new face group");
         found_group = ArrayList_create(sizeof(CubeFace));
         ArrayList_add(found_group, &cube_face);
         ArrayList_add(face_groups, &found_group);

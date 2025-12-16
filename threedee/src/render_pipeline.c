@@ -181,6 +181,7 @@ void load_shaders() {
 		app.gpu_device, "particle.vert",
 		0, 2, 1, 0
 	);
+
 	shaders[SHADER_FRAGMENT_SOLID_COLOR] = load_shader(
 		app.gpu_device, "solid_color.frag",
 		0, 0, 0, 0
@@ -189,29 +190,44 @@ void load_shaders() {
 		app.gpu_device, "solid_color_depth.frag",
 		0, 0, 0, 0
 	);
-	shaders[SHADER_FRAGMENT_PHONG] = load_shader(
-		app.gpu_device, "phong.frag",
-		4, 1, 2, 0
-	);
-	shaders[SHADER_FRAGMENT_SHADOW_DEPTH] = load_shader(
-		app.gpu_device, "shadow_depth.frag",
-		0, 0, 0, 0
-	);
 	shaders[SHADER_FRAGMENT_TEXT] = load_shader(
 		app.gpu_device, "text.frag",
 		1, 0, 0, 0
 	);
+
+	shaders[SHADER_FRAGMENT_PHONG] = load_shader(
+		app.gpu_device, "phong.frag",
+		4, 1, 2, 0
+	);
+	shaders[SHADER_FRAGMENT_PARTICLE] = load_shader(
+		app.gpu_device, "particle.frag",
+		4, 1, 2, 0
+	);
+
+	shaders[SHADER_FRAGMENT_SHADOW_DEPTH] = load_shader(
+		app.gpu_device, "shadow_depth.frag",
+		0, 0, 0, 0
+	);
+
 	shaders[SHADER_FRAGMENT_POST_PROCESSING] = load_shader(
 		app.gpu_device, "post_processing.frag",
-		2, 1, 0, 0
+		1, 1, 0, 0
 	);
 	shaders[SHADER_FRAGMENT_DEPTH_OF_FIELD] = load_shader(
 		app.gpu_device, "depth_of_field.frag",
 		2, 2, 0, 0
 	);
-	shaders[SHADER_FRAGMENT_PARTICLE] = load_shader(
-		app.gpu_device, "particle.frag",
-		4, 1, 2, 0
+	shaders[SHADER_FRAGMENT_BLOOM_EXTRACT] = load_shader(
+		app.gpu_device, "bloom_extract.frag",
+		1, 1, 0, 0
+	);
+	shaders[SHADER_FRAGMENT_BLOOM_BLUR] = load_shader(
+		app.gpu_device, "bloom_blur.frag",
+		1, 1, 0, 0
+	);
+	shaders[SHADER_FRAGMENT_BLOOM_COMBINE] = load_shader(
+		app.gpu_device, "bloom_combine.frag",
+		2, 1, 0, 0
 	);
 }
 
@@ -492,6 +508,78 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_depth_of_field() {
 }
 
 
+SDL_GPUGraphicsPipeline* create_render_pipeline_bloom_extract() {
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window)
+			}},
+			.has_depth_stencil_target = false
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+		.vertex_shader = shaders[SHADER_VERTEX_POST_PROCESSING],
+		.fragment_shader = shaders[SHADER_FRAGMENT_BLOOM_EXTRACT],
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
+SDL_GPUGraphicsPipeline* create_render_pipeline_bloom_blur() {
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window)
+			}},
+			.has_depth_stencil_target = false
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+		.vertex_shader = shaders[SHADER_VERTEX_POST_PROCESSING],
+		.fragment_shader = shaders[SHADER_FRAGMENT_BLOOM_BLUR],
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
+SDL_GPUGraphicsPipeline* create_render_pipeline_bloom_combine() {
+	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
+		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
+			.num_color_targets = 1,
+			.color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+				.format = SDL_GetGPUSwapchainTextureFormat(app.gpu_device, app.window)
+			}},
+			.has_depth_stencil_target = false
+		},
+		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLESTRIP,
+		.vertex_shader = shaders[SHADER_VERTEX_POST_PROCESSING],
+		.fragment_shader = shaders[SHADER_FRAGMENT_BLOOM_COMBINE],
+	};
+
+	SDL_GPUGraphicsPipeline* pipeline = SDL_CreateGPUGraphicsPipeline(app.gpu_device, &pipeline_info);
+
+	if (!pipeline) {
+		LOG_ERROR("Failed to create graphics pipeline: %s", SDL_GetError());
+	}
+
+	return pipeline;
+}
+
+
 SDL_GPUGraphicsPipeline* create_render_pipeline_billboard() {
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info = {
 		.target_info = (SDL_GPUGraphicsPipelineTargetInfo){
@@ -623,6 +711,9 @@ void create_pipelines() {
 	pipelines[PIPELINE_LINE] = create_render_pipeline_line();
 	pipelines[PIPELINE_PARTICLE] = create_render_pipeline_particle(false);
 	pipelines[PIPELINE_PARTICLE_EMISSIVE] = create_render_pipeline_particle(true);
+	pipelines[PIPELINE_BLOOM_EXTRACT] = create_render_pipeline_post_processing();
+	pipelines[PIPELINE_BLOOM_BLUR] = create_render_pipeline_post_processing();
+	pipelines[PIPELINE_BLOOM_COMBINE] = create_render_pipeline_post_processing();
 }
 
 

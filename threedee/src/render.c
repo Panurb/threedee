@@ -15,6 +15,8 @@
 #include "util.h"
 
 
+#define BLOOM_DOWNSAMPLE 2
+
 static int frame_index = 0;
 SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
 
@@ -26,6 +28,7 @@ static SDL_GPUTexture* shadow_maps[FRAMES_IN_FLIGHT] = { 0 };
 static SDL_GPUTexture* screen_texture = NULL;
 static SDL_GPUTexture* resolve_texture = NULL;
 static SDL_GPUTexture* dof_temp_texture = NULL;
+static SDL_GPUTexture* bloom_temp_textures[2] = { 0 };
 static SDL_GPUSampler* screen_sampler = NULL;
 
 static MultiBuffer light_buffer;
@@ -98,6 +101,18 @@ void create_screen_textures() {
 	resolve_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
 
 	dof_temp_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
+
+	SDL_GPUTextureCreateInfo bloom_texture_info = {
+		.width = game_settings.width / BLOOM_DOWNSAMPLE,
+		.height = game_settings.height / BLOOM_DOWNSAMPLE,
+		.format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
+		.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+		.layer_count_or_depth = 1,
+		.num_levels = 1
+	};
+	for (int i = 0; i < 2; i++) {
+		bloom_temp_textures[i] = SDL_CreateGPUTexture(app.gpu_device, &bloom_texture_info);
+	}
 }
 
 
@@ -628,6 +643,116 @@ void render_depth_of_field(SDL_GPUCommandBuffer* command_buffer, SDL_GPUTexture*
 }
 
 
+void render_bloom_phase(
+	SDL_GPUCommandBuffer* command_buffer,
+	SDL_GPUTexture* source,
+	SDL_GPUTexture* target,
+	Pipeline pipeline
+) {
+	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
+		command_buffer,
+		&(SDL_GPUColorTargetInfo) {
+			.texture = target,
+			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.store_op = SDL_GPU_STOREOP_STORE
+		},
+		1,
+		NULL
+	);
+	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[pipeline]);
+	SDL_BindGPUFragmentSamplers(
+		render_pass,
+		0,
+		&(SDL_GPUTextureSamplerBinding){
+			.texture = source,
+			.sampler = screen_sampler,
+		},
+		1
+	);
+	SDL_DrawGPUPrimitives(render_pass, 4, 1, 0, 0);
+
+	SDL_EndGPURenderPass(render_pass);
+}
+
+
+void render_bloom_combine(
+	SDL_GPUCommandBuffer* command_buffer,
+	SDL_GPUTexture* source1,
+	SDL_GPUTexture* source2,
+	SDL_GPUTexture* target
+) {
+	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(
+		command_buffer,
+		&(SDL_GPUColorTargetInfo) {
+			.texture = target,
+			.load_op = SDL_GPU_LOADOP_DONT_CARE,
+			.store_op = SDL_GPU_STOREOP_STORE
+		},
+		1,
+		NULL
+	);
+	SDL_BindGPUGraphicsPipeline(render_pass, pipelines[PIPELINE_BLOOM_COMBINE]);
+	SDL_BindGPUFragmentSamplers(
+		render_pass,
+		0,
+		(SDL_GPUTextureSamplerBinding[]){
+			{
+				.texture = source1,
+				.sampler = screen_sampler,
+			},
+			{
+				.texture = source2,
+				.sampler = screen_sampler,
+			}
+		},
+		2
+	);
+	SDL_DrawGPUPrimitives(render_pass, 4, 1, 0, 0);
+
+	SDL_EndGPURenderPass(render_pass);
+}
+
+
+void render_bloom(
+	SDL_GPUCommandBuffer* command_buffer,
+	SDL_GPUTexture* source,
+	SDL_GPUTexture* target
+) {
+	BloomUniformData bloom_uniform_data = {
+		.bloom_threshold = scene->bloom.threshold,
+		.bloom_knee = scene->bloom.knee,
+		.bloom_intensity = scene->bloom.intensity,
+		.bloom_strength = scene->bloom.strength,
+		.texel_size = {
+			1.0f / (float)(game_settings.width / BLOOM_DOWNSAMPLE),
+			1.0f / (float)(game_settings.height / BLOOM_DOWNSAMPLE)
+		},
+		.vertical = false
+	};
+	SDL_PushGPUFragmentUniformData(
+		command_buffer,
+		1,
+		&bloom_uniform_data,
+		sizeof(BloomUniformData)
+	);
+
+	render_bloom_phase(command_buffer, source, bloom_temp_textures[0], PIPELINE_BLOOM_EXTRACT);
+	render_bloom_phase(command_buffer, bloom_temp_textures[0], bloom_temp_textures[1], PIPELINE_BLOOM_BLUR);
+
+	bloom_uniform_data.vertical = true;
+	SDL_PushGPUFragmentUniformData(
+		command_buffer,
+		1,
+		&bloom_uniform_data,
+		sizeof(BloomUniformData)
+	);
+
+	render_bloom_phase(command_buffer, bloom_temp_textures[1], bloom_temp_textures[0], PIPELINE_BLOOM_BLUR);
+
+	render_bloom_combine(command_buffer, source, bloom_temp_textures[0], target);
+}
+
+
 void set_camera_data(Matrix4 projection_matrix, Matrix4 view_matrix, Vector3 position) {
 	camera_data[frame_index] = (CameraData) {
 		.projection_matrix = transpose4(projection_matrix),
@@ -782,6 +907,8 @@ void render() {
 			render_depth_of_field(command_buffer, source_texture, dof_temp_texture, false);
 			render_depth_of_field(command_buffer, dof_temp_texture, source_texture, true);
 		}
+
+		render_bloom(command_buffer, source_texture, dof_temp_texture);
 
 		// Draw to swapchain texture
 		color_target_info = (SDL_GPUColorTargetInfo) {

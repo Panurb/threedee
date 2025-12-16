@@ -211,6 +211,16 @@ typedef struct DepthOfFieldUniformData {
 } DepthOfFieldUniformData;
 
 
+typedef struct BloomUniformData {
+	float bloom_threshold;
+	float bloom_knee;
+	float bloom_intensity;
+	float bloom_strength;
+	Vector2 texel_size;
+	int vertical;
+} BloomUniformData;
+
+
 typedef struct CubeFace {
 	Vector3 normal;
 	Vector3 tangent;

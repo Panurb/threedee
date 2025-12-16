@@ -12,6 +12,12 @@ typedef struct Scene {
     ComponentData* components;
     Vector3 gravity;
     ParticleData* particles;
+    struct {
+        float threshold;
+        float knee;
+        float intensity;
+        float strength;
+    } bloom;
 } Scene;
 
 
