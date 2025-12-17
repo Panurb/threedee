@@ -98,7 +98,6 @@ Output main(Input input)
         discard;
     }
     float3 base_color = sampled_color.rgb;
-    base_color = pow(base_color, float3(2.2)); // Convert to linear space
 
     float3 normal_map = normal_tex.Sample(sampler_normal_tex, float3(tex_coord, input.tex_index)).rgb;
     normal_map = normal_map * 2.0 - 1.0; // Convert to range [-1, 1]

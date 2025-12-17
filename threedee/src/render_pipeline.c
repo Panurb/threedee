@@ -219,15 +219,15 @@ void load_shaders() {
 	);
 	shaders[SHADER_FRAGMENT_BLOOM_EXTRACT] = load_shader(
 		app.gpu_device, "bloom_extract.frag",
-		1, 1, 0, 0
+		1, 2, 0, 0
 	);
 	shaders[SHADER_FRAGMENT_BLOOM_BLUR] = load_shader(
 		app.gpu_device, "bloom_blur.frag",
-		1, 1, 0, 0
+		1, 2, 0, 0
 	);
 	shaders[SHADER_FRAGMENT_BLOOM_COMBINE] = load_shader(
 		app.gpu_device, "bloom_combine.frag",
-		2, 1, 0, 0
+		2, 2, 0, 0
 	);
 }
 
@@ -711,9 +711,9 @@ void create_pipelines() {
 	pipelines[PIPELINE_LINE] = create_render_pipeline_line();
 	pipelines[PIPELINE_PARTICLE] = create_render_pipeline_particle(false);
 	pipelines[PIPELINE_PARTICLE_EMISSIVE] = create_render_pipeline_particle(true);
-	pipelines[PIPELINE_BLOOM_EXTRACT] = create_render_pipeline_post_processing();
-	pipelines[PIPELINE_BLOOM_BLUR] = create_render_pipeline_post_processing();
-	pipelines[PIPELINE_BLOOM_COMBINE] = create_render_pipeline_post_processing();
+	pipelines[PIPELINE_BLOOM_EXTRACT] = create_render_pipeline_bloom_extract();
+	pipelines[PIPELINE_BLOOM_BLUR] = create_render_pipeline_bloom_blur();
+	pipelines[PIPELINE_BLOOM_COMBINE] = create_render_pipeline_bloom_combine();
 }
 
 

@@ -82,7 +82,7 @@ SDL_GPUTexture* create_texture(SDL_Surface* image_data) {
 }
 
 
-SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
+SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images, bool use_srgb) {
 	SDL_Surface* first_image = images[0];
 
 	int num_levels = floorf(log2f(fmaxf(first_image->w, first_image->h)) + 1);
@@ -90,7 +90,8 @@ SDL_GPUTexture* create_texture_array(SDL_Surface** images, int num_images) {
 		app.gpu_device,
 		&(SDL_GPUTextureCreateInfo){
 			.type = SDL_GPU_TEXTURETYPE_2D_ARRAY,
-			.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+			.format = use_srgb ? SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB
+				: SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
 			.width = first_image->w,
 			.height = first_image->h,
 			.layer_count_or_depth = num_images,
@@ -416,7 +417,7 @@ void load_textures() {
 		ArrayList_add(surfaces, &surface);
 	}
 
-	resources.texture_array = create_texture_array(surfaces->data, surfaces->size);
+	resources.texture_array = create_texture_array(surfaces->data, surfaces->size, true);
 
 	ArrayList_for_each(surfaces, SDL_DestroySurface);
 	ArrayList_destroy(surfaces);
@@ -439,7 +440,7 @@ void load_normal_maps() {
 		ArrayList_add(surfaces, &surface);
 	}
 
-	resources.normal_map_array = create_texture_array(surfaces->data, surfaces->size);
+	resources.normal_map_array = create_texture_array(surfaces->data, surfaces->size, false);
 
 	ArrayList_for_each(surfaces, SDL_DestroySurface);
 	ArrayList_destroy(surfaces);
@@ -463,7 +464,7 @@ void load_emissive_maps() {
 		ArrayList_add(surfaces, &surface);
 	}
 
-	resources.emissive_map_array = create_texture_array(surfaces->data, surfaces->size);
+	resources.emissive_map_array = create_texture_array(surfaces->data, surfaces->size, false);
 
 	ArrayList_for_each(surfaces, SDL_DestroySurface);
 	ArrayList_destroy(surfaces);
@@ -492,7 +493,7 @@ void load_particles() {
 		ArrayList_add(surfaces, &surface);
 	}
 
-	resources.particle_array = create_texture_array(surfaces->data, surfaces->size);
+	resources.particle_array = create_texture_array(surfaces->data, surfaces->size, true);
 
 	ArrayList_for_each(surfaces, SDL_DestroySurface);
 	ArrayList_destroy(surfaces);

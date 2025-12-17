@@ -19,12 +19,15 @@
         * cuboid-cuboid (buggy)
         * capsule-plane
         * capsule-AABB
-* Importing of 3D models in OBJ format
+* Importing of 3D models in OBJ format (triangles only)
 * Normal maps
 * Emissive maps
 * Dynamic shadows using shadow mapping
 * HDR lighting
-* Depth of field post-processing effect
+* Post-processing effects
+    - Bloom
+    - Depth of field
+    - Tone mapping
 * 2D and text rendering
 * Sound effects
 * Triple buffering
@@ -39,7 +42,6 @@
 * Skybox
 * 3D audio using OpenAL
 * Broad-phase collision detection for optimization
-* Bloom
 * Oren-Nayar diffuse shading
 * Screen-space ambient occlusion (SSAO)
 * Soft body physics

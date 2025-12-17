@@ -18,7 +18,7 @@ cbuffer BloomParams : register(b1, space3) {
     bool vertical;
 };
 
-float weights[5] = { 0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216 };
+static const float weights[7] = {0.196, 0.144, 0.092, 0.056, 0.034, 0.018, 0.008};
 
 struct Input {
     float4 position : SV_POSITION;
@@ -28,7 +28,7 @@ struct Input {
 float4 main(Input input) : SV_Target {
     float3 result = tex.Sample(sampler_tex, input.tex_coord).rgb * weights[0];
 
-    for (int i = 1; i < 5; ++i) {
+    for (int i = 1; i < 7; ++i) {
         float2 offset = vertical ? float2(0.0, texel_size.y * i) : float2(texel_size.x * i, 0.0);
         result += tex.Sample(sampler_tex, input.tex_coord + offset).rgb * weights[i];
         result += tex.Sample(sampler_tex, input.tex_coord - offset).rgb * weights[i];

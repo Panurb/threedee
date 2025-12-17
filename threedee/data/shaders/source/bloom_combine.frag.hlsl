@@ -10,6 +10,7 @@ cbuffer UBO : register(b0, space3) {
 // End of common descriptor set
 
 Texture2D bloom_tex : register(t1, space2);
+SamplerState sampler_bloom : register(s1, space2);
 
 cbuffer BloomParams : register(b1, space3) {
     float bloom_threshold;
@@ -27,7 +28,7 @@ struct Input {
 
 float4 main(Input input) : SV_Target {
     float3 scene = tex.Sample(sampler_tex, input.tex_coord).rgb;
-    float3 bloom = bloom_tex.Sample(sampler_tex, input.tex_coord).rgb;
+    float3 bloom = bloom_tex.Sample(sampler_bloom, input.tex_coord).rgb;
 
     return float4(scene + bloom * bloom_strength, 1.0);
 }

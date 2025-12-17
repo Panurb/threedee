@@ -15,7 +15,7 @@
 #include "util.h"
 
 
-#define BLOOM_DOWNSAMPLE 2
+#define BLOOM_DOWNSAMPLE 4
 
 static int frame_index = 0;
 SDL_GPUFence* fences[FRAMES_IN_FLIGHT] = { 0 };
@@ -27,6 +27,7 @@ static SDL_GPUSampler* sampler = NULL;
 static SDL_GPUTexture* shadow_maps[FRAMES_IN_FLIGHT] = { 0 };
 static SDL_GPUTexture* screen_texture = NULL;
 static SDL_GPUTexture* resolve_texture = NULL;
+static SDL_GPUTexture* final_texture = NULL;
 static SDL_GPUTexture* dof_temp_texture = NULL;
 static SDL_GPUTexture* bloom_temp_textures[2] = { 0 };
 static SDL_GPUSampler* screen_sampler = NULL;
@@ -101,6 +102,8 @@ void create_screen_textures() {
 	resolve_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
 
 	dof_temp_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
+
+	final_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
 
 	SDL_GPUTextureCreateInfo bloom_texture_info = {
 		.width = game_settings.width / BLOOM_DOWNSAMPLE,
@@ -748,7 +751,6 @@ void render_bloom(
 	);
 
 	render_bloom_phase(command_buffer, bloom_temp_textures[1], bloom_temp_textures[0], PIPELINE_BLOOM_BLUR);
-
 	render_bloom_combine(command_buffer, source, bloom_temp_textures[0], target);
 }
 
@@ -903,12 +905,13 @@ void render() {
 		);
 
 		SDL_GPUTexture* source_texture = game_settings.antialiasing == 0 ? screen_texture : resolve_texture;
-		if (camera->dof_enabled) {
-			render_depth_of_field(command_buffer, source_texture, dof_temp_texture, false);
-			render_depth_of_field(command_buffer, dof_temp_texture, source_texture, true);
-		}
 
-		render_bloom(command_buffer, source_texture, dof_temp_texture);
+		render_bloom(command_buffer, source_texture, final_texture);
+
+		if (camera->dof_enabled) {
+			render_depth_of_field(command_buffer, final_texture, dof_temp_texture, false);
+			render_depth_of_field(command_buffer, dof_temp_texture, final_texture, true);
+		}
 
 		// Draw to swapchain texture
 		color_target_info = (SDL_GPUColorTargetInfo) {
@@ -929,7 +932,7 @@ void render() {
 			0,
 			(SDL_GPUTextureSamplerBinding[]) {
 				{
-					.texture = source_texture,
+					.texture = final_texture,
 					.sampler = screen_sampler,
 				},
 				{
