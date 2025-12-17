@@ -25,11 +25,13 @@ static CameraData camera_data[FRAMES_IN_FLIGHT];
 static SDL_GPUTexture* depth_stencil_texture = NULL;
 static SDL_GPUSampler* sampler = NULL;
 static SDL_GPUTexture* shadow_maps[FRAMES_IN_FLIGHT] = { 0 };
+
 static SDL_GPUTexture* screen_texture = NULL;
 static SDL_GPUTexture* resolve_texture = NULL;
 static SDL_GPUTexture* final_texture = NULL;
 static SDL_GPUTexture* dof_temp_texture = NULL;
 static SDL_GPUTexture* bloom_temp_textures[2] = { 0 };
+
 static SDL_GPUSampler* screen_sampler = NULL;
 
 static MultiBuffer light_buffer;
@@ -100,9 +102,7 @@ void create_screen_textures() {
 		.num_levels = 1
 	};
 	resolve_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
-
 	dof_temp_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
-
 	final_texture = SDL_CreateGPUTexture(app.gpu_device, &resolve_texture_info);
 
 	SDL_GPUTextureCreateInfo bloom_texture_info = {
@@ -331,6 +331,10 @@ void apply_render_settings() {
 	SDL_ReleaseGPUTexture(app.gpu_device, screen_texture);
 	SDL_ReleaseGPUTexture(app.gpu_device, resolve_texture);
 	SDL_ReleaseGPUTexture(app.gpu_device, dof_temp_texture);
+	SDL_ReleaseGPUTexture(app.gpu_device, final_texture);
+	for (int i = 0; i < 2; i++) {
+		SDL_ReleaseGPUTexture(app.gpu_device, bloom_temp_textures[i]);
+	}
 	create_screen_textures();
 }
 
@@ -906,7 +910,11 @@ void render() {
 
 		SDL_GPUTexture* source_texture = game_settings.antialiasing == 0 ? screen_texture : resolve_texture;
 
-		render_bloom(command_buffer, source_texture, final_texture);
+		if (game_settings.bloom) {
+			render_bloom(command_buffer, source_texture, final_texture);
+		} else {
+			final_texture = source_texture;
+		}
 
 		if (camera->dof_enabled) {
 			render_depth_of_field(command_buffer, final_texture, dof_temp_texture, false);

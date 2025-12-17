@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "components/emitter.h"
 #include "scene.h"
@@ -22,6 +23,9 @@ EmitterComponent* EmitterComponent_add(Entity entity, EmitterParameters params) 
             resources.particle_type_names,
             resources.particle_types_size
         );
+    }
+    if (emitter->particle_type == -1) {
+        LOG_WARNING("Particle type '%s' not found", params.particle_type_name);
     }
 
     scene->components->emitter[entity] = emitter;

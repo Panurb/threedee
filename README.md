@@ -56,8 +56,8 @@ MSVC:
     * C++ CMake tools for Windows
 * Install glslangValidator (Comes with Vulkan SDK for example)
 * Build the .exe:
-
-
-    cmake . -B build -G "Visual Studio 17 2022" -A x64
-    cd build
-    cmake --build . --target install --config Release --parallel 8
+```
+cmake . -B build -G "Visual Studio 17 2022" -A x64
+cd build
+cmake --build . --target install --config Release --parallel 8
+```

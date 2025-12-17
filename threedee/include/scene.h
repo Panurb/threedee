@@ -67,6 +67,7 @@ typedef struct Level {
     int depth;
     float room_width;
     float room_depth;
+    float room_height;
 } Level;
 
 

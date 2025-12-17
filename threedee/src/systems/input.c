@@ -335,6 +335,12 @@ void input_game(SDL_Event sdl_event) {
         }
     }
 
+    if (sdl_event.type == SDL_EVENT_KEY_DOWN && sdl_event.key.repeat == 0) {
+        if (sdl_event.key.key == SDLK_B) {
+            game_settings.bloom = !game_settings.bloom;
+        }
+    }
+
     switch (app.state) {
         case STATE_GAME:
 

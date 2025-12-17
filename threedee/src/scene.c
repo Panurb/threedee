@@ -690,12 +690,27 @@ Entity create_fire(Vector3 position, float size) {
 }
 
 
+Entity create_blood_dripper(Vector3 position) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) { .position = position });
+    EmitterComponent_add(i, (EmitterParameters) {
+        .spawn_rate = 1.0f,
+        .velocity = vec3(0.0f, -0.1f, 0.0f),
+        .position_variance = vec3(0.1f, 0.0f, 0.1f),
+        .particle_type_name = "blood"
+    });
+
+    return i;
+}
+
+
 Level create_level() {
     Level level = {
         .width = 5,
         .depth = 5,
         .room_width = 10.0f,
         .room_depth = 10.0f,
+        .room_height = 3.0f
     };
 
     generate_level(&level, level.width / 2, level.depth / 2);
@@ -720,6 +735,9 @@ Level create_level() {
     create_ground(100.0f, 100.0f);
 
     create_fire(vec3(0.0f, 1.0f, 0.0f), 0.5f);
+
+    create_blood_dripper(vec3(2.0f, level.room_height, 2.0f));
+    create_blood(vec3(2.0f, 0.0f, 2.0f), false);
 
     for (int i = 0; i < level.width; i++) {
         for (int j = 0; j < level.depth; j++) {

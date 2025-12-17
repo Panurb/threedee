@@ -166,11 +166,13 @@ void draw_particles() {
         );
 
         float size = blended_phase.size * particles->scale[i];
+        float area = size * size;
+        float height = size * (1.0f + speed * particle_type.stretch);
 
         draw_particle(
             particles->position[i],
-            size,
-            size * (1.0f + speed * particle_type.stretch),
+            area / height,
+            height,
             angle,
             particle_type.texture_index,
             blended_phase.color,

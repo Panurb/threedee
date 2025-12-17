@@ -32,11 +32,11 @@ typedef struct {
     int max_fps;
     int volume;
     int music;
-    Quality particles;
     bool debug;
     Keybind keybinds[16];
     float mouse_sensitivity;
     float fov;
+    bool bloom;
 } Settings;
 
 typedef struct {

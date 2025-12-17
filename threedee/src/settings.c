@@ -19,7 +19,6 @@ Settings game_settings = {
     .max_fps = 0,
     .volume = 100,
     .music = 100,
-    .particles = QUALITY_LOW,
     .debug = false,
     .keybinds = {
         { DEVICE_KEYBOARD, SDL_SCANCODE_W },
@@ -35,7 +34,8 @@ Settings game_settings = {
         { DEVICE_KEYBOARD, SDL_SCANCODE_Q }
     },
     .mouse_sensitivity = 1.0f,
-    .fov = 90.0f
+    .fov = 90.0f,
+    .bloom = true,
 };
 
 

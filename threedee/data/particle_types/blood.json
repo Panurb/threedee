@@ -1,0 +1,29 @@
+{
+    "lifetime": 1,
+    "gravity_scale": 1.0,
+    "texture_name": "circle",
+    "emissive": false,
+    "stretch": 0.25,
+    "phases": [
+        {
+            "normalized_time": 0.0,
+            "size": 0.05,
+            "color": {
+                "r": 0.67,
+                "g": 0,
+                "b": 0,
+                "a": 0.8
+            }
+        },
+        {
+            "normalized_time": 1.0,
+            "size": 0.05,
+            "color": {
+                "r": 0.67,
+                "g": 0,
+                "b": 0,
+                "a": 0.8
+            }
+        }
+    ]
+}
