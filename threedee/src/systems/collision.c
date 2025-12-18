@@ -226,11 +226,13 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
     };
     memcpy(clipped.points, inc_face_points, sizeof(Vector3) * 4);
 
+    float slop = 1e-4f;
+
     Plane planes[4] = {
-        { ref_u, dot3(ref_u, add3(ref_face_center, mul3(hu, ref_u))) },
-        { neg3(ref_u), dot3(neg3(ref_u), sub3(ref_face_center, mul3(hu, ref_u))) },
-        { ref_v, dot3(ref_v, add3(ref_face_center, mul3(hv, ref_v))) },
-        { neg3(ref_v), dot3(neg3(ref_v), sub3(ref_face_center, mul3(hv, ref_v))) }
+        { ref_u, dot3(ref_u, add3(ref_face_center, mul3(hu + slop, ref_u))) },
+        { neg3(ref_u), dot3(neg3(ref_u), sub3(ref_face_center, mul3(hu + slop, ref_u))) },
+        { ref_v, dot3(ref_v, add3(ref_face_center, mul3(hv + slop, ref_v))) },
+        { neg3(ref_v), dot3(neg3(ref_v), sub3(ref_face_center, mul3(hv + slop, ref_v))) }
     };
 
     for (int i = 0; i < 4; i++) {
@@ -242,20 +244,35 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
 
     Vector3 contact_normal = normalized3(ref_face_normal);
 
-    Vector3 contact_point = zeros3();
-    float deepest_depth = 1e-4f;
+    Vector3 avg_contact_point = zeros3();
+    int contact_count = 0;
 
     for (int i = 0; i < clipped.size; i++) {
         Vector3 p = clipped.points[i];
         float depth = dot3(sub3(p, ref_face_center), contact_normal);
-        if (depth > deepest_depth) {
+        if (depth > slop) {
             continue;
         }
 
-        contact_point = sub3(p, mul3(depth, contact_normal));;
+        Vector3 contact_point = sub3(p, mul3(depth, contact_normal));
+        avg_contact_point = add3(avg_contact_point, contact_point);
+        contact_count++;
     }
 
-    return contact_point;
+    if (contact_count > 0) {
+        avg_contact_point = div3((float)contact_count, avg_contact_point);
+        return avg_contact_point;
+    }
+
+    Vector3 fallback_point = cuboid1.center;
+    for (int i = 0; i < 3; i++) {
+        Vector3 axis = mat3_column(rot1, i);
+        float d = dot3(axis, neg3(overlap_axis)); // Toward the other object
+        float sign = (d >= 0.0f) ? 1.0f : -1.0f;
+        fallback_point = add3(fallback_point, mul3(sign * vec3_get(cuboid1.half_extents, i), axis));
+    }
+
+    return inc_face_center;
 }
 
 
