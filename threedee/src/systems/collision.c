@@ -187,19 +187,6 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
         (ref_axis + 2) % 3
     };
 
-    Vector3 ref_face_points[4];
-    int n = 0;
-    for (int dx = -1; dx <= 1; dx += 2) {
-        for (int dy = -1; dy <= 1; dy += 2) {
-            Vector3 offset = add3(
-                mul3(dx * vec3_get(ref_cuboid.half_extents, ref_face_axes[0]), mat3_column(ref_rot, ref_face_axes[0])),
-                mul3(dy * vec3_get(ref_cuboid.half_extents, ref_face_axes[1]), mat3_column(ref_rot, ref_face_axes[1]))
-            );
-            ref_face_points[n] = add3(ref_face_center, offset);
-            n++;
-        }
-    }
-
     float dot_incs[3];
     for (int i = 0; i < 3; i++) {
         dot_incs[i] = dot3(ref_face_normal, mat3_column(inc_rot, i));
@@ -218,7 +205,7 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
     };
 
     Vector3 inc_face_points[4];
-    n = 0;
+    int n = 0;
     for (int dx = -1; dx <= 1; dx += 2) {
         for (int dy = -1; dy <= 1; dy += 2) {
             Vector3 offset = add3(
@@ -254,32 +241,21 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
     }
 
     Vector3 contact_normal = normalized3(ref_face_normal);
-    Vector3 avg_contact_point = zeros3();
 
-    Vector3 deepest_point = zeros3();
+    Vector3 contact_point = zeros3();
     float deepest_depth = 1e-4f;
 
-    int contact_count = 0;
     for (int i = 0; i < clipped.size; i++) {
         Vector3 p = clipped.points[i];
         float depth = dot3(sub3(p, ref_face_center), contact_normal);
-        if (depth > 1e-4f) {
+        if (depth > deepest_depth) {
             continue;
         }
 
-        Vector3 contact_point = sub3(p, mul3(depth, contact_normal));
-        avg_contact_point = add3(avg_contact_point, contact_point);
-        if (depth < deepest_depth) {
-            deepest_depth = depth;
-            deepest_point = contact_point;
-        }
-        contact_count++;
-    }
-    if (contact_count > 0) {
-        avg_contact_point = div3((float)contact_count, avg_contact_point);
+        contact_point = sub3(p, mul3(depth, contact_normal));;
     }
 
-    return deepest_point;
+    return contact_point;
 }
 
 
@@ -347,13 +323,12 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
             if (axis_norm < eps) continue;
             axis = mul3(1.0f / axis_norm, axis);
 
-            float ra = fabsf(cuboid1.half_extents.x * dot3(axis, mat3_column(rot1, 0))) +
-                       fabsf(cuboid1.half_extents.y * dot3(axis, mat3_column(rot1, 1))) +
-                       fabsf(cuboid1.half_extents.z * dot3(axis, mat3_column(rot1, 2)));
-
-            float rb = fabsf(cuboid2.half_extents.x * dot3(axis, mat3_column(rot2, 0))) +
-                       fabsf(cuboid2.half_extents.y * dot3(axis, mat3_column(rot2, 1))) +
-                       fabsf(cuboid2.half_extents.z * dot3(axis, mat3_column(rot2, 2)));
+            float ra = 0.0f;
+            float rb = 0.0f;
+            for (int k = 0; k < 3; k++) {
+                ra += vec3_get(cuboid1.half_extents, k) * fabsf(dot3(axis, mat3_column(rot1, k)));
+                rb += vec3_get(cuboid2.half_extents, k) * fabsf(dot3(axis, mat3_column(rot2, k)));
+            }
 
             float dist = fabsf(dot3(t_world, axis));
             float overlap = ra + rb - dist;
@@ -437,57 +412,6 @@ Penetration penetration_sphere_aabb(Sphere sphere, AABB aabb) {
 }
 
 
-Vector3 contact_point_obb_aabb(Cuboid obb, AABB aabb, Vector3 normal) {
-    Matrix3 rot_obb = quaternion_to_rotation_matrix(obb.rotation);
-    Vector3 contact_point = zeros3();
-    float max_penetration = -INFINITY;
-
-    // Compute all 8 corners of the OBB
-    for (int dx = -1; dx <= 1; dx += 2) {
-        for (int dy = -1; dy <= 1; dy += 2) {
-            for (int dz = -1; dz <= 1; dz += 2) {
-                Vector3 offset = add3(
-                    mul3(dx * obb.half_extents.x, mat3_column(rot_obb, 0)),
-                    add3(
-                        mul3(dy * obb.half_extents.y, mat3_column(rot_obb, 1)),
-                        mul3(dz * obb.half_extents.z, mat3_column(rot_obb, 2))
-                    )
-                );
-                Vector3 corner = add3(obb.center, offset);
-
-                // Vector from AABB to OBB corner
-                Vector3 diff = sub3(corner, aabb.center);
-                float depth = -dot3(diff, normal);  // Negative = into AABB
-
-                if (depth > max_penetration) {
-                    max_penetration = depth;
-                    contact_point = corner;
-                }
-            }
-        }
-    }
-
-    // Project deepest point onto AABB face (by removing normal component of penetration)
-    contact_point = add3(contact_point, mul3(max_penetration, normal));
-
-    // Clamp to AABB bounds along the tangent directions (to get a valid surface point)
-    Vector3 aabb_min = sub3(aabb.center, aabb.half_extents);
-    Vector3 aabb_max = add3(aabb.center, aabb.half_extents);
-
-    for (int i = 0; i < 3; i++) {
-        // If normal is mostly aligned with this axis, skip clamping that axis
-        if (fabsf(vec3_get(normal, i)) > 0.99f) continue;
-
-        float v = vec3_get(contact_point, i);
-        v = fmaxf(vec3_get(aabb_min, i), fminf(v, vec3_get(aabb_max, i)));
-        vec3_set(&contact_point, i, v);
-    }
-
-    return contact_point;
-}
-
-
-
 Penetration penetration_cuboid_aabb(Cuboid cuboid, AABB aabb) {
     Cuboid cuboid_aabb = {
         .center = aabb.center,
@@ -495,11 +419,7 @@ Penetration penetration_cuboid_aabb(Cuboid cuboid, AABB aabb) {
         .rotation = quaternion_id(),
     };
 
-    Penetration penetration = penetration_cuboid_cuboid(cuboid, cuboid_aabb);
-    // penetration.contact_point = contact_point_obb_aabb(cuboid, aabb, penetration.overlap);
-    penetration.contact_point = contact_point_cuboid_cuboid(cuboid, cuboid_aabb, normalized3(penetration.overlap));
-
-    return penetration;
+    return penetration_cuboid_cuboid(cuboid, cuboid_aabb);
 }
 
 
