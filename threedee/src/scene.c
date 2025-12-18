@@ -844,6 +844,8 @@ Level create_level() {
 void create_scene() {
     LOG_INFO("Creating scene");
 
+    srand(0);
+
     scene = malloc(sizeof(Scene));
     scene->components = ComponentData_create();
     scene->particles = ParticleData_create();
@@ -853,8 +855,6 @@ void create_scene() {
     scene->bloom.knee = 0.05f;
     scene->bloom.intensity = 0.5f;
     scene->bloom.strength = 0.5f;
-
-    create_chair(vec3(2.0f, 0.0f, 2.0f), 45.0f);
 
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;

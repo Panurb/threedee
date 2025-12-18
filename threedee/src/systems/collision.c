@@ -127,7 +127,6 @@ void clip_polygon(PolygonShape* polygon, Plane plane) {
 
     // The clipped polygon will have at most 1 extra point
     PolygonShape clipped = {
-        .points = malloc(sizeof(Vector3) * (polygon->size + 4)),
         .size = 0
     };
 
@@ -144,8 +143,7 @@ void clip_polygon(PolygonShape* polygon, Plane plane) {
         }
         prev = curr;
     }
-    free(polygon->points);
-    polygon->points = clipped.points;
+    memcpy(polygon->points, clipped.points, sizeof(Vector3) * clipped.size);
     polygon->size = clipped.size;
     #undef inside
 }
@@ -237,7 +235,6 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
     float hv = vec3_get(ref_cuboid.half_extents, ref_face_axes[1]);
 
     PolygonShape clipped = {
-        .points = malloc(sizeof(Vector3) * 4),
         .size = 4
     };
     memcpy(clipped.points, inc_face_points, sizeof(Vector3) * 4);
@@ -258,6 +255,10 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
 
     Vector3 contact_normal = normalized3(ref_face_normal);
     Vector3 avg_contact_point = zeros3();
+
+    Vector3 deepest_point = zeros3();
+    float deepest_depth = 1e-4f;
+
     int contact_count = 0;
     for (int i = 0; i < clipped.size; i++) {
         Vector3 p = clipped.points[i];
@@ -268,14 +269,17 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
 
         Vector3 contact_point = sub3(p, mul3(depth, contact_normal));
         avg_contact_point = add3(avg_contact_point, contact_point);
+        if (depth < deepest_depth) {
+            deepest_depth = depth;
+            deepest_point = contact_point;
+        }
         contact_count++;
     }
     if (contact_count > 0) {
         avg_contact_point = div3((float)contact_count, avg_contact_point);
     }
 
-    free(clipped.points);
-    return avg_contact_point;
+    return deepest_point;
 }
 
 
@@ -321,7 +325,7 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
 
     // Test axes L = B0, B1, B2 (cuboid 2 local axes)
     for (int i = 0; i < 3; i++) {
-        float ra = dot3(cuboid1.half_extents, mat3_row(abs_rot, i));
+        float ra = dot3(cuboid1.half_extents, mat3_column(abs_rot, i));
         float rb = vec3_get(cuboid2.half_extents, i);
 
         float overlap = ra + rb - fabsf(dot3(t, mat3_column(rot, i)));
@@ -343,15 +347,15 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
             if (axis_norm < eps) continue;
             axis = mul3(1.0f / axis_norm, axis);
 
-            float ra = 0.0f;
-            float rb = 0.0f;
+            float ra = fabsf(cuboid1.half_extents.x * dot3(axis, mat3_column(rot1, 0))) +
+                       fabsf(cuboid1.half_extents.y * dot3(axis, mat3_column(rot1, 1))) +
+                       fabsf(cuboid1.half_extents.z * dot3(axis, mat3_column(rot1, 2)));
 
-            for (int k = 0; k < 3; k++) {
-                ra += fabsf(vec3_get(cuboid1.half_extents, k) * dot3(axis, mat3_row(rot1, k)));
-                rb += fabsf(vec3_get(cuboid2.half_extents, k) * dot3(axis, mat3_row(rot2, k)));
-            }
+            float rb = fabsf(cuboid2.half_extents.x * dot3(axis, mat3_column(rot2, 0))) +
+                       fabsf(cuboid2.half_extents.y * dot3(axis, mat3_column(rot2, 1))) +
+                       fabsf(cuboid2.half_extents.z * dot3(axis, mat3_column(rot2, 2)));
 
-            float dist = fabsf(dot3(t, axis));
+            float dist = fabsf(dot3(t_world, axis));
             float overlap = ra + rb - dist;
             if (overlap < 0.0f) {
                 return penetration;
@@ -365,7 +369,7 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
     }
 
     if (dot3(t_world, overlap_axis) > 0.0f) {
-        overlap_axis = mul3(-1.0f, overlap_axis);
+        overlap_axis = neg3(overlap_axis);
     }
 
     penetration.valid = true;
@@ -492,7 +496,8 @@ Penetration penetration_cuboid_aabb(Cuboid cuboid, AABB aabb) {
     };
 
     Penetration penetration = penetration_cuboid_cuboid(cuboid, cuboid_aabb);
-    penetration.contact_point = contact_point_obb_aabb(cuboid, aabb, penetration.overlap);
+    // penetration.contact_point = contact_point_obb_aabb(cuboid, aabb, penetration.overlap);
+    penetration.contact_point = contact_point_cuboid_cuboid(cuboid, cuboid_aabb, normalized3(penetration.overlap));
 
     return penetration;
 }

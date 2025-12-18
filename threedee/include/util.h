@@ -84,8 +84,9 @@ typedef struct {
     Vector3 half_extents;
 } AABB;
 
+#define MAX_POLYGON_POINTS 64
 typedef struct {
-    Vector3* points;
+    Vector3 points[MAX_POLYGON_POINTS];
     int size;
 } PolygonShape;
 
