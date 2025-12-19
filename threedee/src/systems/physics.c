@@ -334,9 +334,7 @@ void update_physics(float time_step) {
             float volume = clamp(0.25f * collision.speed, 0.0f, 1.0f);
             if (sound && volume > 0.2f && sound->hit_sound[0] != '\0') {
                 add_sound(i, sound->hit_sound, volume, 1.0f);
-            }
 
-            if (volume > 0.2f) {
                 add_particles(
                     1,
                     add3(get_position(i), collision.offset),
@@ -391,7 +389,11 @@ void update_physics(float time_step) {
         rigid_body->velocity = mul3(rigid_body->linear_damping, rigid_body->velocity);
         rigid_body->angular_velocity = mul3(rigid_body->angular_damping, rigid_body->angular_velocity);
 
-        if (rigid_body->can_sleep && norm3(rigid_body->velocity) < 0.001f && norm3(rigid_body->angular_velocity) < 0.01f) {
+        if (
+            rigid_body->can_sleep
+            && norm3(rigid_body->velocity) < SLEEP_THRESHOLD_LINEAR
+            && norm3(rigid_body->angular_velocity) < SLEEP_THRESHOLD_LINEAR
+        ) {
             rigid_body->velocity = zeros3();
             rigid_body->angular_velocity = zeros3();
             rigid_body->asleep = true;

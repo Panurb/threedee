@@ -149,7 +149,7 @@ void clip_polygon(PolygonShape* polygon, Plane plane) {
 }
 
 
-Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 overlap_axis) {
+ContactManifold contact_manifold_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 overlap_axis) {
     Matrix3 rot1 = quaternion_to_rotation_matrix(cuboid1.rotation);
     Matrix3 rot2 = quaternion_to_rotation_matrix(cuboid2.rotation);
 
@@ -244,8 +244,10 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
 
     Vector3 contact_normal = normalized3(ref_face_normal);
 
-    Vector3 avg_contact_point = zeros3();
-    int contact_count = 0;
+    ContactManifold manifold = {
+        .points_size = 0,
+        .average_point = zeros3()
+    };
 
     for (int i = 0; i < clipped.size; i++) {
         Vector3 p = clipped.points[i];
@@ -255,13 +257,14 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
         }
 
         Vector3 contact_point = sub3(p, mul3(depth, contact_normal));
-        avg_contact_point = add3(avg_contact_point, contact_point);
-        contact_count++;
+        manifold.points[manifold.points_size] = contact_point;
+        manifold.average_point = add3(manifold.average_point, contact_point);
+        manifold.points_size++;
     }
 
-    if (contact_count > 0) {
-        avg_contact_point = div3((float)contact_count, avg_contact_point);
-        return avg_contact_point;
+    if (manifold.points_size > 0) {
+        manifold.average_point = div3((float)manifold.points_size, manifold.average_point);
+        return manifold;
     }
 
     Vector3 fallback_point = cuboid1.center;
@@ -272,7 +275,11 @@ Vector3 contact_point_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2, Vector3 over
         fallback_point = add3(fallback_point, mul3(sign * vec3_get(cuboid1.half_extents, i), axis));
     }
 
-    return inc_face_center;
+    return (ContactManifold) {
+        .points = { fallback_point },
+        .points_size = 1,
+        .average_point = fallback_point,
+    };
 }
 
 
@@ -366,7 +373,8 @@ Penetration penetration_cuboid_cuboid(Cuboid cuboid1, Cuboid cuboid2) {
 
     penetration.valid = true;
     penetration.overlap = mul3(min_overlap, overlap_axis);
-    penetration.contact_point = contact_point_cuboid_cuboid(cuboid1, cuboid2, overlap_axis);
+    penetration.contact_manifold = contact_manifold_cuboid_cuboid(cuboid1, cuboid2, overlap_axis);
+    penetration.contact_point = penetration.contact_manifold.average_point;
 
     return penetration;
 }
@@ -673,6 +681,28 @@ void update_collisions() {
             Penetration penetration = get_penetration(i, j);
             if (penetration.valid) {
                 float speed = get_collision_speed(i, j, penetration);
+                if (penetration.contact_manifold.points_size > 0) {
+                    for (int k = 0; k < penetration.contact_manifold.points_size; k++) {
+                        Vector3 contact_point = penetration.contact_manifold.points[k];
+                        Collision collision = {
+                            .entity = j,
+                            .overlap = penetration.overlap,
+                            .offset = sub3(contact_point, get_position(i)),
+                            .offset_other = sub3(contact_point, get_position(j)),
+                            .speed = speed
+                        };
+                        ArrayList_add(collider->collisions, &collision);
+                        Collision other_collision = {
+                            .entity = i,
+                            .overlap = neg3(penetration.overlap),
+                            .offset = sub3(contact_point, get_position(j)),
+                            .offset_other = sub3(contact_point, get_position(i)),
+                            .speed = speed
+                        };
+                        ArrayList_add(other_collider->collisions, &other_collision);
+                    }
+                    continue;
+                }
 
                 Collision collision = {
                     .entity = j,

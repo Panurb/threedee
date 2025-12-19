@@ -18,7 +18,7 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, RigidBodyParameters pa
     rigid_body->can_sleep = !params.dont_sleep;
     rigid_body->asleep = false;
     rigid_body->on_ground = false;
-    rigid_body->angular_damping = 0.95f;
+    rigid_body->angular_damping = 0.98f;
     rigid_body->linear_damping = 0.999f;
     rigid_body->inv_inertia = identity3();
     rigid_body->max_speed = 10.0f;

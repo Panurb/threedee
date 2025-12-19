@@ -14,7 +14,7 @@ SoundComponent* SoundComponent_add(Entity entity, SoundParameters params) {
     }
     strcpy(sound->hit_sound, params.hit_sound);
     strcpy(sound->loop_sound, params.loop_sound);
-    sound->cooldown = 0.1f;
+    sound->cooldown = 0.2f;
     sound->cooldown_timer = 1.0f;
     scene->components->sound[entity] = sound;
     return sound;

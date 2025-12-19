@@ -122,7 +122,7 @@ Entity create_television(Vector3 position, float yaw) {
 Entity create_chair(Vector3 position, float yaw) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
-        .position = position,
+        .position = add3(position, vec3(0.0f, 0.75f, 0.0f)),
         .yaw = yaw
     });
     MeshComponent_add(i, (MeshParameters) {
@@ -165,7 +165,7 @@ Entity create_table(Vector3 position, float yaw) {
         .type = COLLIDER_AABB,
         .group = GROUP_WALLS,
         .width = 3.0f,
-        .height = 2.0f,
+        .height = 2.1f,
         .depth = 1.5f
     });
 
@@ -826,7 +826,7 @@ Level create_level() {
                         float angle = to_radians(c * 90.0f);
                         float d = (c % 2 == 0) ? 1.5f : 1.0f;
                         create_chair(
-                            add3(pos, vec3(cosf(angle) * d, 1.0f, sinf(angle) * d)),
+                            add3(pos, vec3(cosf(angle) * d, 0.0f, sinf(angle) * d)),
                             -(c + 1) * 90.0f
                         );
                     }
