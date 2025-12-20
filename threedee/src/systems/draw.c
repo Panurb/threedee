@@ -360,7 +360,13 @@ void draw_springs(Entity entity) {
         Vector3 dir = sub3(end, start);
         float length = norm3(dir);
         Vector3 pos = mul3(0.5f, add3(start, end));
-        Quaternion rotation = quaternion_from_forward(div3(length, dir), vec3_up());
+
+        Vector3 up = vec3_up();
+        if (dir.x == 0.0f && dir.z == 0.0f) {
+            up = vec3_forward();
+        }
+
+        Quaternion rotation = quaternion_from_forward(div3(length, dir), up);
         Vector3 scale = vec3(spring.thickness, spring.thickness, 0.5f * length);
         Matrix4 transform = transform_matrix(pos, rotation, scale);
 
@@ -473,10 +479,11 @@ void draw_entities() {
 
         SpriteComponent* sprite = get_component(entity, COMPONENT_SPRITE);
         if (sprite) {
+            Vector3 scale = get_scale(entity);
             draw_sprite(
                 get_position_interpolated(entity, app.delta),
-                1.0f,
-                1.0f,
+                scale.x,
+                scale.y,
                 sprite->texture_index
             );
         }

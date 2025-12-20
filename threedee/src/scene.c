@@ -10,6 +10,7 @@
 #include "systems/player.h"
 #include "util.h"
 #include "component.h"
+#include "perlin.h"
 
 
 Vector3 wall_direction(Direction direction) {
@@ -46,8 +47,9 @@ float wall_angle(Direction direction) {
 
 Entity create_lamp(Vector3 position) {
     Entity i = create_entity();
-    TransformComponent_add(i, (TransformParameters) { .position = position });
-    look_at(i, vec3(position.x, position.y - 1.0f, position.z));
+    TransformComponent_add(i, (TransformParameters) {
+        .position = position,
+    });
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "lamp",
         .texture_filename = "lamp",
@@ -449,7 +451,7 @@ void create_tree(Vector3 position) {
 
 Entity create_shrub(Vector3 position) {
     Entity i = create_entity();
-    float scale = randf(0.5f, 1.5f);
+    float scale = randf(1.0f, 2.0f);
     TransformComponent_add(i, (TransformParameters) {
         .position = add3(position, vec3(0.0f, 0.5f, 0.0f)),
         .scale = diag3(scale)
@@ -461,19 +463,36 @@ Entity create_shrub(Vector3 position) {
 }
 
 
-void create_forest(Vector3 position, float width, float depth, float density, float min_distance) {
-    for (float x = -width / 2.0f; x < width / 2.0f; x += density) {
-        for (float z = -depth / 2.0f; z < depth / 2.0f; z += density) {
-            if (fabs(x) < min_distance && fabs(z) < min_distance) {
-                continue; // Skip the center area
+void create_forest(float width, float depth, float density, Level level) {
+    float frequency = 0.4f;
+    float distance = 1.0f / density;
+
+    Permutation permutation;
+    init_perlin(permutation);
+
+    float origin_x = 0.5f * level.width * level.room_width;
+    float origin_z = 0.5f * level.depth * level.room_depth;
+
+    for (float x = -width / 2.0f; x < width / 2.0f; x += distance) {
+        for (float z = -depth / 2.0f; z < depth / 2.0f; z += distance) {
+            int i = (int)floorf((x + origin_x) / level.room_width);
+            int j = (int)floorf((z + origin_z) / level.room_depth);
+            if (0 <= i && i < level.width
+                && 0 <= j && j < level.depth
+                && level.rooms[j][i].type != ROOM_EMPTY
+            ) {
+                continue;
             }
 
-            if (rand() % 100 < 10) {
-                create_tree(vec3(position.x + x, position.y, position.z + z));
-            }
+            float prob = perlin(x * frequency, 0.0f, z * frequency, permutation, 0);
 
-            if (rand() % 100 < 50) {
-                create_shrub(vec3(position.x + x, position.y, position.z + z));
+            float offset_x = sign(x) * randf(0.0f, distance);
+            float offset_z = sign(z) * randf(0.0f, distance);
+
+            if (prob < 0.3f) {
+                create_tree(vec3(x + offset_x, 0.0f, z + offset_z));
+            } else if (prob < 0.4f) {
+                create_shrub(vec3(x + offset_x, 0.0f, z + offset_z));
             }
         }
     }
@@ -872,9 +891,9 @@ void create_scene() {
         .material_filename = "concrete"
     });
 
-    create_forest(zeros3(), 100.0f, 100.0f, 2.0f, 30.0f);
-
     Level level = create_level();
+
+    create_forest(100.0f, 100.0f, 0.5f, level);
 
     while (false) {
         int x = randi(0, level.width - 1);
