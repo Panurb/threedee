@@ -175,7 +175,96 @@ Entity create_table(Vector3 position, float yaw) {
 }
 
 
-Entity create_ground(float width, float depth) {
+Entity create_book(Vector3 position, float yaw, float thickness) {
+    Entity i = create_entity();
+    TransformComponent_add(i, (TransformParameters) {
+        .position = position,
+        .yaw = yaw,
+        .scale = vec3(1.0f, 1.0f, thickness / 0.2f)
+    });
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "book",
+        .texture_filename = "wood",
+        .material_filename = "concrete"
+    });
+    ColliderComponent_add(i, (ColliderParameters) {
+        .type = COLLIDER_CUBOID,
+        .group = GROUP_PROPS,
+        .width = 0.4f,
+        .height = 0.5f,
+        .depth = 0.2f
+    });
+    RigidBodyComponent_add(i, (RigidBodyParameters) {
+        .mass = 1.0f,
+        .friction = 1.0f,
+        .bounce = 0.2f,
+    });
+    SoundComponent_add(i, (SoundParameters) {
+        .hit_sound = "wood_hit"
+    });
+
+    return i;
+}
+
+
+void create_bookshelf(Vector3 position, float yaw) {
+    float width = 1.5f;
+    float height = 2.5f;
+
+    for (int i = -1; i < 2; i += 2) {
+        Entity side = create_entity();
+        TransformComponent_add(side, (TransformParameters) {
+            .position = add3(position, vec3(i * 1.025f, 1.25f, 1.0f)),
+            .yaw = yaw,
+            .scale = vec3(0.05f, 2.5f, 0.4f)
+        });
+        MeshComponent_add(side, (MeshParameters) {
+            .mesh_filename = "cube",
+            .texture_filename = "wood",
+            .material_filename = "concrete"
+        });
+        ColliderComponent_add(side, (ColliderParameters) {
+            .type = COLLIDER_AABB,
+            .group = GROUP_WALLS
+        });
+    }
+
+    for (int i = 0; i < 4; i++) {
+        float height = i == 0 ? 0.5f : 0.05f;
+        float offset = i == 0 ? 0.25f : 0.5f;
+
+        Entity shelf = create_entity();
+        TransformComponent_add(shelf, (TransformParameters) {
+            .position = add3(position, vec3(0.0f, i * 0.66f + offset, 1.0f)),
+            .yaw = yaw,
+            .scale = vec3(2.0f, height, 0.4f)
+        });
+        MeshComponent_add(shelf, (MeshParameters) {
+            .mesh_filename = "cube",
+            .texture_filename = "wood",
+            .material_filename = "concrete"
+        });
+        ColliderComponent_add(shelf, (ColliderParameters) {
+            .type = COLLIDER_AABB,
+            .group = GROUP_WALLS
+        });
+
+        float book_thickness = 0.2f;
+        float accum_width = 0.0f;
+        for (int j = 0; j < randi(0, 5); j++) {
+            float w = randf(0.4f, 0.8f);
+            create_book(
+                add3(position, vec3(accum_width + 0.5f * w * book_thickness - 0.5f * width, i * 0.66f + offset + 0.25f, 1.0f)),
+                yaw + 90.0f,
+                w * book_thickness
+            );
+            accum_width += w * book_thickness;
+        }
+    }
+}
+
+
+Entity create_ground(float width, float depth) {j
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
         .position = vec3(0.0f, -0.51f, 0.0f),
@@ -874,6 +963,8 @@ void create_scene() {
     scene->bloom.knee = 0.05f;
     scene->bloom.intensity = 0.5f;
     scene->bloom.strength = 0.5f;
+
+    create_bookshelf(vec3(-2.0f, 0.0f, -2.0f), 0.0f);
 
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
