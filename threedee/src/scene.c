@@ -184,7 +184,7 @@ Entity create_book(Vector3 position, float yaw, float thickness, float height) {
     });
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "book",
-        .texture_filename = "wood",
+        .texture_filename = "book",
         .material_filename = "concrete"
     });
     ColliderComponent_add(i, (ColliderParameters) {
