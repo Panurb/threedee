@@ -175,12 +175,12 @@ Entity create_table(Vector3 position, float yaw) {
 }
 
 
-Entity create_book(Vector3 position, float yaw, float thickness) {
+Entity create_book(Vector3 position, float yaw, float thickness, float height) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
         .position = position,
         .yaw = yaw,
-        .scale = vec3(1.0f, 1.0f, thickness / 0.2f)
+        .scale = vec3(1.0f, height / 0.5f, thickness / 0.2f)
     });
     MeshComponent_add(i, (MeshParameters) {
         .mesh_filename = "book",
@@ -209,14 +209,16 @@ Entity create_book(Vector3 position, float yaw, float thickness) {
 
 void create_bookshelf(Vector3 position, float yaw) {
     float width = 1.5f;
+    float depth = 0.5f;
     float height = 2.5f;
+    float shelf_thickness = 0.05f;
 
     for (int i = -1; i < 2; i += 2) {
         Entity side = create_entity();
         TransformComponent_add(side, (TransformParameters) {
-            .position = add3(position, vec3(i * 1.025f, 1.25f, 1.0f)),
+            .position = add3(position, vec3(i * 0.5f * width, 0.5f * height, 1.0f)),
             .yaw = yaw,
-            .scale = vec3(0.05f, 2.5f, 0.4f)
+            .scale = vec3(shelf_thickness, height, depth)
         });
         MeshComponent_add(side, (MeshParameters) {
             .mesh_filename = "cube",
@@ -229,15 +231,15 @@ void create_bookshelf(Vector3 position, float yaw) {
         });
     }
 
+    int shelves = 4;
+    float offset = 0.5f;
+    float shelf_height = (height - offset) / (shelves - 1);
     for (int i = 0; i < 4; i++) {
-        float height = i == 0 ? 0.5f : 0.05f;
-        float offset = i == 0 ? 0.25f : 0.5f;
-
         Entity shelf = create_entity();
         TransformComponent_add(shelf, (TransformParameters) {
-            .position = add3(position, vec3(0.0f, i * 0.66f + offset, 1.0f)),
+            .position = add3(position, vec3(0.0f, i * shelf_height + offset - 0.5f * shelf_thickness, 1.0f)),
             .yaw = yaw,
-            .scale = vec3(2.0f, height, 0.4f)
+            .scale = vec3(width - shelf_thickness, shelf_thickness, depth)
         });
         MeshComponent_add(shelf, (MeshParameters) {
             .mesh_filename = "cube",
@@ -249,22 +251,32 @@ void create_bookshelf(Vector3 position, float yaw) {
             .group = GROUP_WALLS
         });
 
-        float book_thickness = 0.2f;
+        if (i == 3) {
+            break;
+        }
+
         float accum_width = 0.0f;
-        for (int j = 0; j < randi(0, 5); j++) {
-            float w = randf(0.4f, 0.8f);
+        float dir = sign(randf(-1.0f, 1.0f));
+
+        for (int j = 0; j < randi(5, 10); j++) {
+            float w = randf(0.1f, 0.2f);
+            float h = randf(0.3f, 0.5f);
+
+            float x = accum_width + 0.5f * (w - width + shelf_thickness);
+            float y = i * shelf_height + offset + 0.5f * shelf_thickness + 0.5f * h;
             create_book(
-                add3(position, vec3(accum_width + 0.5f * w * book_thickness - 0.5f * width, i * 0.66f + offset + 0.25f, 1.0f)),
+                add3(position, vec3(x * dir, y, 1.0f)),
                 yaw + 90.0f,
-                w * book_thickness
+                w,
+                h
             );
-            accum_width += w * book_thickness;
+            accum_width += w;
         }
     }
 }
 
 
-Entity create_ground(float width, float depth) {j
+Entity create_ground(float width, float depth) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
         .position = vec3(0.0f, -0.51f, 0.0f),
