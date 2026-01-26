@@ -30,7 +30,7 @@ ParticlePhase lerp_particle_phase(ParticlePhase a, ParticlePhase b, float t) {
 
 
 void add_particles(int count, Vector3 position, Vector3 velocity, float size, int particle_type) {
-    assert(particle_type != -1, "Invalid particle type index");
+    assert(particle_type != -1);
 
     ParticleData* particles = scene->particles;
 

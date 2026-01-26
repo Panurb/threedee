@@ -155,3 +155,13 @@ Quaternion slerp(Quaternion a, Quaternion b, float t) {
 
     return quaternion_normalize(result);
 }
+
+
+Quaternion random_y_rotation() {
+    return axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), randf(0.0f, 2.0f * M_PI));
+}
+
+
+Quaternion random_z_rotation() {
+    return axis_angle_to_quaternion(vec3(0.0f, 0.0f, 1.0f), randf(0.0f, 2.0f * M_PI));
+}

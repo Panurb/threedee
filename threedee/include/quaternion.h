@@ -36,3 +36,7 @@ EulerAngles quaternion_to_euler(Quaternion q);
 Quaternion euler_to_quaternion(EulerAngles euler);
 
 Quaternion slerp(Quaternion a, Quaternion b, float t);
+
+Quaternion random_y_rotation();
+
+Quaternion random_z_rotation();

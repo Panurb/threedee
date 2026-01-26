@@ -3,7 +3,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W1")
 
 project(threedee C)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     set(USE_FLAGS "-s USE_SDL=3 -s USE_SDL_IMAGE=3 -s USE_SDL_TTF=3 -s USE_SDL_MIXER=3")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${USE_FLAGS}")
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
@@ -31,9 +31,11 @@ set(SOURCES
     threedee/src/components/weather.c
     threedee/src/heap.c
     threedee/src/interface.c
+    threedee/src/level.c
     threedee/src/linalg.c
     threedee/src/list.c
     threedee/src/perlin.c
+    threedee/src/prefab.c
     threedee/src/quaternion.c
     threedee/src/raycast.c
     threedee/src/render.c
@@ -55,20 +57,20 @@ set(SOURCES
     threedee/src/threedee.c
 )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")  
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     add_executable(threedee ${SOURCES})
     set_target_properties(threedee PROPERTIES LINK_FLAGS "--preload-file=data -s ALLOW_MEMORY_GROWTH=1 --shell-file ../shell.html")
 
     file(COPY threedee/data
         DESTINATION ${CMAKE_BINARY_DIR}
-        FILES_MATCHING 
+        FILES_MATCHING
             PATTERN "*.png"
             PATTERN "*.ttf"
             PATTERN "*.wav"
             PATTERN "*.json"
             PATTERN "*.ogg"
             PATTERN "*.obj"
-    )   
+    )
 else()
     # Enable console by removing WIN32 flag
     add_executable(threedee ${SOURCES})
@@ -132,7 +134,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 
     install(DIRECTORY threedee/data
         DESTINATION ${CMAKE_BINARY_DIR}
-        FILES_MATCHING 
+        FILES_MATCHING
             PATTERN "*.png"
             PATTERN "*.ttf"
             PATTERN "*.wav"
@@ -145,7 +147,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
         DESTINATION ${CMAKE_BINARY_DIR}
     )
 
-    set(CONFIG 
+    set(CONFIG
         ${CMAKE_SOURCE_DIR}/threedee/config.cfg
     )
 
