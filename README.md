@@ -19,6 +19,7 @@
         * cuboid-cuboid
         * capsule-plane
         * capsule-AABB
+        * capsule-cuboid
 * Importing of 3D models in OBJ format (triangles only)
 * Normal maps
 * Emissive maps

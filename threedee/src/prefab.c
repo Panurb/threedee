@@ -171,12 +171,18 @@ void create_bookshelf(Vector3 position, float yaw) {
     float height = 2.5f;
     float shelf_thickness = 0.05f;
 
+    Entity parent = create_entity();
+    TransformComponent_add(parent, (TransformParameters) {
+        .position = position,
+        .yaw = yaw
+    });
+
     for (int i = -1; i < 2; i += 2) {
         Entity side = create_entity();
         TransformComponent_add(side, (TransformParameters) {
-            .position = add3(position, vec3(i * 0.5f * width, 0.5f * height, 1.0f)),
-            .yaw = yaw,
-            .scale = vec3(shelf_thickness, height, depth)
+            .position = vec3(i * 0.5f * width, 0.5f * height, 1.0f),
+            .scale = vec3(shelf_thickness, height, depth),
+            .parent = parent
         });
         MeshComponent_add(side, (MeshParameters) {
             .mesh_filename = "cube",
@@ -184,7 +190,7 @@ void create_bookshelf(Vector3 position, float yaw) {
             .material_filename = "concrete"
         });
         ColliderComponent_add(side, (ColliderParameters) {
-            .type = COLLIDER_AABB,
+            .type = COLLIDER_CUBOID,
             .group = GROUP_WALLS
         });
     }
@@ -195,9 +201,9 @@ void create_bookshelf(Vector3 position, float yaw) {
     for (int i = 0; i < 4; i++) {
         Entity shelf = create_entity();
         TransformComponent_add(shelf, (TransformParameters) {
-            .position = add3(position, vec3(0.0f, i * shelf_height + offset - 0.5f * shelf_thickness, 1.0f)),
-            .yaw = yaw,
-            .scale = vec3(width - shelf_thickness, shelf_thickness, depth)
+            .position = vec3(0.0f, i * shelf_height + offset - 0.5f * shelf_thickness, 1.0f),
+            .scale = vec3(width - shelf_thickness, shelf_thickness, depth),
+            .parent = parent
         });
         MeshComponent_add(shelf, (MeshParameters) {
             .mesh_filename = "cube",
@@ -205,7 +211,7 @@ void create_bookshelf(Vector3 position, float yaw) {
             .material_filename = "concrete"
         });
         ColliderComponent_add(shelf, (ColliderParameters) {
-            .type = COLLIDER_AABB,
+            .type = COLLIDER_CUBOID,
             .group = GROUP_WALLS
         });
 
@@ -216,7 +222,7 @@ void create_bookshelf(Vector3 position, float yaw) {
         float accum_width = 0.0f;
         float dir = sign(randf(-1.0f, 1.0f));
 
-        for (int j = 0; j < randi(5, 10); j++) {
+        for (int j = 0; j < randi(1, 5); j++) {
             float w = randf(0.1f, 0.2f);
             float h = randf(0.3f, 0.5f);
 
@@ -224,7 +230,7 @@ void create_bookshelf(Vector3 position, float yaw) {
             float y = i * shelf_height + offset + 0.5f * shelf_thickness + 0.5f * h;
             create_book(
                 add3(position, vec3(x * dir, y, 1.0f)),
-                yaw + 90.0f,
+                yaw - 90.0f,
                 w,
                 h
             );

@@ -574,6 +574,17 @@ Level create_level() {
                                 ),
                                 -wall_angle(w)
                             );
+                            create_bookshelf(
+                                sub3(
+                                    vec3(
+                                        pos.x + dir.x * (0.5f * level.room_width - 1.5f),
+                                        pos.y,
+                                        pos.z + dir.z * (0.5f * level.room_depth - 1.5f)
+                                    ),
+                                    mul3(3.0f, cross(dir, vec3_up()))
+                                ),
+                                -wall_angle(w)
+                            );
                             break;
                         }
                     }

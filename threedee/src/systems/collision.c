@@ -502,6 +502,40 @@ Penetration penetration_capsule_aabb(Capsule capsule, AABB aabb) {
 }
 
 
+Penetration penetration_capsule_cuboid(Capsule capsule, Cuboid cuboid) {
+    // Transform cuboid into cuboid coordinates
+    Matrix3 rot = quaternion_to_rotation_matrix(cuboid.rotation);
+    Matrix3 inv_rot = transpose3(rot);
+
+    Vector3 local_center = map3(inv_rot, sub3(capsule.center, cuboid.center));
+    Quaternion local_rotation = quaternion_mult(quaternion_conjugate(cuboid.rotation), capsule.rotation);
+
+    Capsule local_capsule = {
+        .center = local_center,
+        .rotation = local_rotation,
+        .height = capsule.height,
+        .radius = capsule.radius
+    };
+
+    AABB aabb = {
+        .center = zeros3(),
+        .half_extents = cuboid.half_extents
+    };
+
+    Penetration penetration = penetration_capsule_aabb(local_capsule, aabb);
+
+    if (penetration.valid) {
+        // Transform back to world coordinates
+        penetration.overlap = map3(rot, penetration.overlap);
+        penetration.contact_point = add3(
+            cuboid.center,
+            map3(rot, penetration.contact_point)
+        );
+    }
+    return penetration;
+}
+
+
 Penetration penetration_capsule_sphere(Capsule capsule, Sphere sphere) {
     Penetration penetration = {
         .valid = false
@@ -530,6 +564,12 @@ Penetration penetration_capsule_sphere(Capsule capsule, Sphere sphere) {
         );
     }
 
+    return penetration;
+}
+
+
+Penetration flip_overlap(Penetration penetration) {
+    penetration.overlap = neg3(penetration.overlap);
     return penetration;
 }
 
@@ -622,6 +662,14 @@ Penetration get_penetration(Entity i, Entity j) {
         Penetration penetration = penetration_capsule_sphere(shape_other.capsule, shape.sphere);
         penetration.overlap = neg3(penetration.overlap);
         return penetration;
+    }
+
+    if (collider->type == COLLIDER_CAPSULE && other_collider->type == COLLIDER_CUBOID) {
+        return penetration_capsule_cuboid(shape.capsule, shape_other.cuboid);
+    }
+
+    if (collider->type == COLLIDER_CUBOID && other_collider->type == COLLIDER_CAPSULE) {
+        return flip_overlap(penetration_capsule_cuboid(shape_other.capsule, shape.cuboid));
     }
 
     // LOG_ERROR("Invalid collision: %d vs %d", collider->type, other_collider->type);

@@ -27,8 +27,6 @@ void create_scene() {
     scene->bloom.intensity = 0.5f;
     scene->bloom.strength = 0.5f;
 
-    create_bookshelf(vec3(-2.0f, 0.0f, -2.0f), 0.0f);
-
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
     // scene->camera = create_overhead_camera();
