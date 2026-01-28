@@ -19,7 +19,7 @@ Entity create_table(Vector3 position, float yaw);
 Entity create_book(Vector3 position, float yaw, float thickness, float height);
 
 
-void create_bookshelf(Vector3 position, float yaw);
+void create_bookcase(Vector3 position, float yaw);
 
 
 void create_tree(Vector3 position);

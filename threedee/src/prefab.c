@@ -165,7 +165,7 @@ Entity create_book(Vector3 position, float yaw, float thickness, float height) {
 }
 
 
-void create_bookshelf(Vector3 position, float yaw) {
+void create_bookcase(Vector3 position, float yaw) {
     float width = 1.5f;
     float depth = 0.5f;
     float height = 2.5f;
@@ -176,6 +176,8 @@ void create_bookshelf(Vector3 position, float yaw) {
         .position = position,
         .yaw = yaw
     });
+
+    Matrix4 transform = get_transform(parent);
 
     for (int i = -1; i < 2; i += 2) {
         Entity side = create_entity();
@@ -228,8 +230,9 @@ void create_bookshelf(Vector3 position, float yaw) {
 
             float x = accum_width + 0.5f * (w - width + shelf_thickness);
             float y = i * shelf_height + offset + 0.5f * shelf_thickness + 0.5f * h;
+            Vector4 pos = map4(transform, vec4(x * dir, y, 1.0f, 1.0f));
             create_book(
-                add3(position, vec3(x * dir, y, 1.0f)),
+                vec4_xyz(pos),
                 yaw - 90.0f,
                 w,
                 h
