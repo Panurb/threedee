@@ -130,6 +130,24 @@ Entity get_current_item(Entity player) {
 }
 
 
+bool in_player_view(Entity player, Vector3 point, float distance, float roi) {
+    Entity camera = get_player_camera(player);
+    Vector3 cam_pos = get_position(camera);
+    Vector3 to_point = sub3(point, cam_pos);
+    Vector3 forward = look_direction(camera);
+
+    if (norm3(to_point) > distance) {
+        return false;
+    }
+
+    float angle = acosf(dot3(normalized3(to_point), forward));
+    CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
+    float fov = cam->fov * 0.5f;
+
+    return angle < roi * fov;
+}
+
+
 void update_players(float time_step) {
     for (int i = 0; i < scene->components->entities; i++) {
         PlayerComponent* player = get_component(i, COMPONENT_PLAYER);

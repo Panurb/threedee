@@ -702,6 +702,31 @@ float get_collision_speed(Entity entity, Entity other, Penetration penetration) 
 }
 
 
+void apply_trigger(Entity i, Entity j, Penetration penetration) {
+    TriggerComponent* trigger = get_component(j, COMPONENT_TRIGGER);
+    TriggerComponent* trigger_other = get_component(i, COMPONENT_TRIGGER);
+    if (!trigger && !trigger_other) return;
+    if (trigger && trigger->type != TRIGGER_COLLISION) return;
+
+    if (penetration.valid) {
+        if (ArrayList_find(trigger->overlaps, &i) == -1) {
+            ArrayList_add(trigger->overlaps, &i);
+            if (trigger->on_enter) {
+                trigger->on_enter(j, i);
+            }
+        }
+    } else {
+        int k = ArrayList_find(trigger->overlaps, &i);
+        if (k != -1) {
+            ArrayList_remove(trigger->overlaps, k);
+            if (trigger->on_exit) {
+                trigger->on_exit(j, i);
+            }
+        }
+    }
+}
+
+
 void update_collisions() {
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
@@ -715,18 +740,36 @@ void update_collisions() {
         if (!collider) continue;
 
         for (Entity j = 0; j < i; j++) {
+            // TODO: Broad-phase collision detection
             ColliderComponent* other_collider = get_component(j, COMPONENT_COLLIDER);
             if (!other_collider) continue;
+
+            TriggerComponent* trigger = get_component(i, COMPONENT_TRIGGER);
+            TriggerComponent* other_trigger = get_component(j, COMPONENT_TRIGGER);
+            bool triggers = trigger
+                && trigger->type == TRIGGER_COLLISION
+                && trigger->trigger_group & other_collider->group;
+            bool other_triggers = other_trigger
+                && other_trigger->type == TRIGGER_COLLISION
+                && other_trigger->trigger_group & collider->group;
 
             // TODO: Handle asymmetric collisions
             bool collides = (COLLISION_MASKS[collider->group] & other_collider->group);
             bool other_collides = (COLLISION_MASKS[other_collider->group] & collider->group);
 
-            if (!collides && !other_collides) {
+            if (!triggers && !other_triggers && !collides && !other_collides) {
                 continue;
             }
 
             Penetration penetration = get_penetration(i, j);
+
+            if (triggers) {
+                apply_trigger(i, j, penetration);
+            }
+            if (other_triggers) {
+                apply_trigger(j, i, penetration);
+            }
+
             if (penetration.valid) {
                 float speed = get_collision_speed(i, j, penetration);
                 if (penetration.contact_manifold.points_size > 0) {

@@ -72,6 +72,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->sprite[entity];
         case COMPONENT_EMITTER:
             return scene->components->emitter[entity];
+        case COMPONENT_TRIGGER:
+            return scene->components->trigger[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;
@@ -122,6 +124,9 @@ void remove_component(Entity entity, ComponentType component_type) {
             break;
         case COMPONENT_EMITTER:
             EmitterComponent_remove(entity);
+            break;
+        case COMPONENT_TRIGGER:
+            TriggerComponent_remove(entity);
             break;
         default:
             LOG_ERROR("Unknown component type: %d", component_type);

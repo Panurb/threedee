@@ -27,6 +27,7 @@ set(SOURCES
     threedee/src/components/sound.c
     threedee/src/components/sprite.c
     threedee/src/components/transform.c
+    threedee/src/components/trigger.c
     threedee/src/components/waypoint.c
     threedee/src/components/weather.c
     threedee/src/heap.c
@@ -53,6 +54,7 @@ set(SOURCES
     threedee/src/systems/particle.c
     threedee/src/systems/physics.c
     threedee/src/systems/player.c
+    threedee/src/systems/trigger.c
     threedee/src/util.c
     threedee/src/threedee.c
 )

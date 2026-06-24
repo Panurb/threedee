@@ -17,6 +17,7 @@
 #include "components/sound.h"
 #include "components/sprite.h"
 #include "components/transform.h"
+#include "components/trigger.h"
 #include "components/waypoint.h"
 #include "components/weather.h"
 
@@ -40,6 +41,7 @@ typedef struct ComponentData {
     EnemyComponent* enemy[MAX_ENTITIES];
     SpriteComponent* sprite[MAX_ENTITIES];
     EmitterComponent* emitter[MAX_ENTITIES];
+    TriggerComponent* trigger[MAX_ENTITIES];
 } ComponentData;
 
 typedef enum ComponentType {
@@ -57,6 +59,7 @@ typedef enum ComponentType {
     COMPONENT_ENEMY,
     COMPONENT_SPRITE,
     COMPONENT_EMITTER,
+    COMPONENT_TRIGGER,
     COMPONENT_COUNT
 } ComponentType;
 

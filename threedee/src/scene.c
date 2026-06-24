@@ -45,9 +45,7 @@ void create_scene() {
 
     Level level = create_level();
 
-    create_forest(100.0f, 100.0f, 0.5f, level);
-
-    while (false) {
+    while (true) {
         int x = randi(0, level.width - 1);
         int z = randi(0, level.depth - 1);
 

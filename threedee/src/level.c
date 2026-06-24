@@ -464,6 +464,40 @@ void generate_level(Level* level, int x, int z) {
 }
 
 
+void on_enter(Entity trigger, Entity entity) {
+    LOG_INFO("Trigger entered!");
+}
+
+
+void on_exit(Entity trigger, Entity entity) {
+    LOG_INFO("Trigger exited!");
+}
+
+
+void on_stay(Entity trigger, Entity entity, float time_step) {
+    LOG_INFO("Trigger stayed!");
+}
+
+
+Entity create_jump_scare(Vector3 position) {
+    Entity entity = create_entity();
+    TransformComponent_add(entity, (TransformParameters) { .position = position });
+    TriggerComponent_add(entity,
+        (TriggerParameters) {
+            .type = TRIGGER_LOOK,
+            .trigger_group = GROUP_PLAYERS,
+            .distance = 5.0f,
+            .roi = 0.1f,
+            .on_enter = on_enter,
+            .on_exit = on_exit,
+            .on_stay = on_stay
+        }
+    );
+
+    return entity;
+}
+
+
 Level create_level() {
     Level level = {
         .width = 5,
@@ -495,6 +529,7 @@ Level create_level() {
     create_ground(100.0f, 100.0f);
 
     create_fire(vec3(0.0f, 1.0f, 0.0f), 0.5f);
+    create_jump_scare(vec3(0.0f, 1.0f, 0.0f));
 
     create_blood_dripper(vec3(2.0f, level.room_height, 2.0f));
     create_blood(vec3(2.0f, 0.0f, 2.0f), false);
@@ -607,6 +642,8 @@ Level create_level() {
             }
         }
     }
+
+    create_forest(100.0f, 100.0f, 0.5f, level);
 
     return level;
 }

@@ -13,6 +13,7 @@
 #include <time.h>
 #include <systems/draw.h>
 #include <systems/navigation.h>
+#include <systems/trigger.h>
 
 #include "resources.h"
 #include "../include/systems/sound.h"
@@ -186,6 +187,7 @@ void update(float time_step) {
     update_transforms();
     update_collisions();
     update_physics(time_step);
+    update_triggers(time_step);
     update_players(time_step);
     update_enemies(time_step);
     update_emitters(time_step);
