@@ -32,6 +32,8 @@ typedef struct PlayerComponent {
     float sprint_speed;
     float sprint_timer;
     float max_sprint;
+    Entity look_target;
+    float look_timer;
 } PlayerComponent;
 
 

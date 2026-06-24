@@ -7,26 +7,28 @@
 
 
 PlayerComponent* PlayerComponent_add(Entity entity) {
-    PlayerComponent* component = malloc(sizeof(PlayerComponent));
-    component->yaw = 0.0f;
-    component->pitch = 0.0f;
-    component->grabbed_entity = NULL_ENTITY;
-    component->examine_yaw = 0.0f;
-    component->examining = false;
-    component->inventory = ArrayList_create(sizeof(Entity));
-    component->selected_item = 0;
-    component->footstep_timer = 0.0f;
-    component->footstep_interval = 1.0f;
-    component->foot = FOOT_BOTH;
-    component->head_height = 1.0f;
-    component->view_bobbing = 0.03f;
-    component->sprinting = false;
-    component->walk_speed = 3.0f;
-    component->sprint_speed = 5.0f;
-    component->max_sprint = 2.0f;
-    component->sprint_timer = component->max_sprint;
-    scene->components->player[entity] = component;
-    return component;
+    PlayerComponent* player = malloc(sizeof(PlayerComponent));
+    player->yaw = 0.0f;
+    player->pitch = 0.0f;
+    player->grabbed_entity = NULL_ENTITY;
+    player->examine_yaw = 0.0f;
+    player->examining = false;
+    player->inventory = ArrayList_create(sizeof(Entity));
+    player->selected_item = 0;
+    player->footstep_timer = 0.0f;
+    player->footstep_interval = 1.0f;
+    player->foot = FOOT_BOTH;
+    player->head_height = 1.0f;
+    player->view_bobbing = 0.03f;
+    player->sprinting = false;
+    player->walk_speed = 3.0f;
+    player->sprint_speed = 5.0f;
+    player->max_sprint = 2.0f;
+    player->sprint_timer = player->max_sprint;
+    player->look_target = NULL_ENTITY;
+    player->look_timer = 0.0f;
+    scene->components->player[entity] = player;
+    return player;
 }
 
 

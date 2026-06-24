@@ -135,16 +135,36 @@ bool in_player_view(Entity player, Vector3 point, float distance, float roi) {
     Vector3 cam_pos = get_position(camera);
     Vector3 to_point = sub3(point, cam_pos);
     Vector3 forward = look_direction(camera);
+    float dist = norm3(to_point);
 
-    if (norm3(to_point) > distance) {
+    if (dist > distance) {
         return false;
     }
 
-    float angle = acosf(dot3(normalized3(to_point), forward));
+    to_point = div3(dist, to_point);
+
+    float angle = acosf(dot3(to_point, forward));
     CameraComponent* cam = get_component(camera, COMPONENT_CAMERA);
     float fov = cam->fov * 0.5f;
 
-    return angle < roi * fov;
+    if (angle > roi * fov) {
+        return false;
+    }
+
+    Hit hit = raycast(
+        (Ray) {
+            cam_pos,
+            to_point,
+            distance
+        },
+        GROUP_WALLS | GROUP_PLAYERS
+    );
+
+    if (hit.entity != NULL_ENTITY) {
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -182,8 +202,8 @@ void update_players(float time_step) {
         Entity camera = get_player_camera(i);
         TransformComponent* trans_cam = get_component(camera, COMPONENT_TRANSFORM);
 
-        Quaternion q_yaw = axis_angle_to_quaternion(vec3(0.0f, 1.0f, 0.0f), to_radians(player->yaw));
-        Quaternion q_pitch = axis_angle_to_quaternion(vec3(1.0f, 0.0f, 0.0f), to_radians(player->pitch));
+        Quaternion q_yaw = axis_angle_to_quaternion(vec3_up(), to_radians(player->yaw));
+        Quaternion q_pitch = axis_angle_to_quaternion(vec3_right(), to_radians(player->pitch));
 
         trans->rotation = q_yaw;
 
@@ -222,6 +242,25 @@ void update_players(float time_step) {
             trans_item->position = item_pos;
             trans_item->rotation = slerp(trans_item->rotation, item_rotation, 0.1f);
             // trans_item->rotation = item_rotation;
+        }
+
+        if (player->look_target != NULL_ENTITY) {
+            Vector3 target_pos = get_position(player->look_target);
+            float y = target_pos.y - position.y;
+            float d = norm3(sub3(target_pos, position));
+            float target_pitch = asinf(y / d);
+
+            float target_yaw = atan2f(target_pos.x - position.x, target_pos.z - position.z) + M_PI;
+
+            player->yaw = to_degrees(lerp_angle(to_radians(player->yaw), target_yaw, 0.1f));
+            player->pitch =  to_degrees(lerp_angle(to_radians(player->pitch), target_pitch, 0.1f));
+        }
+
+        if (player->look_timer > 0.0f) {
+            player->look_timer -= time_step;
+        } else {
+            player->look_timer = 0.0f;
+            player->look_target = NULL_ENTITY;
         }
     }
 }

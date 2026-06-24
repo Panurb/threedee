@@ -344,7 +344,7 @@ Entity create_blood_dripper(Vector3 position) {
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) { .position = position });
     EmitterComponent_add(i, (EmitterParameters) {
-        .spawn_rate = 1.0f,
+        .spawn_rate = randf(1.0f, 1.1f),
         .velocity = vec3(0.0f, -0.1f, 0.0f),
         .position_variance = vec3(0.1f, 0.0f, 0.1f),
         .particle_type_name = "blood"
