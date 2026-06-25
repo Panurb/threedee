@@ -19,7 +19,7 @@ typedef struct TriggerComponent {
     TriggerType type;
     float distance;
     float roi;  // fraction of FOV
-    ArrayList* overlaps;
+    ArrayList* entities;
     OnTrigger on_enter;
     OnTrigger on_exit;
     OnStay on_stay;

@@ -5,7 +5,7 @@ Entity create_player(Vector3 position);
 
 Entity get_current_item(Entity player);
 
-bool in_player_view(Entity player, Vector3 point, float distance, float roi);
+bool in_player_view(Entity player, Entity entity, float distance, float roi);
 
 void update_players(float time_step);
 

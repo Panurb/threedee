@@ -130,7 +130,8 @@ Entity get_current_item(Entity player) {
 }
 
 
-bool in_player_view(Entity player, Vector3 point, float distance, float roi) {
+bool in_player_view(Entity player, Entity entity, float distance, float roi) {
+    Vector3 point = get_position(entity);
     Entity camera = get_player_camera(player);
     Vector3 cam_pos = get_position(camera);
     Vector3 to_point = sub3(point, cam_pos);
@@ -139,6 +140,20 @@ bool in_player_view(Entity player, Vector3 point, float distance, float roi) {
 
     if (dist > distance) {
         return false;
+    }
+
+    MeshComponent* mesh = get_component(entity, COMPONENT_MESH);
+    if (mesh) {
+        Entity item = get_current_item(player);
+        LightComponent* light = get_component(get_children(item)->head->value, COMPONENT_LIGHT);
+        if (light) {
+            if (light->range < dist) {
+                return false;
+            }
+            if (!(mesh->visibility & light->visibility_mask)) {
+                return false;
+            }
+        }
     }
 
     to_point = div3(dist, to_point);

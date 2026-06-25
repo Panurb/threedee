@@ -709,16 +709,16 @@ void apply_trigger(Entity i, Entity j, Penetration penetration) {
     if (trigger && trigger->type != TRIGGER_COLLISION) return;
 
     if (penetration.valid) {
-        if (ArrayList_find(trigger->overlaps, &i) == -1) {
-            ArrayList_add(trigger->overlaps, &i);
+        if (ArrayList_find(trigger->entities, &i) == -1) {
+            ArrayList_add(trigger->entities, &i);
             if (trigger->on_enter) {
                 trigger->on_enter(j, i);
             }
         }
     } else {
-        int k = ArrayList_find(trigger->overlaps, &i);
+        int k = ArrayList_find(trigger->entities, &i);
         if (k != -1) {
-            ArrayList_remove(trigger->overlaps, k);
+            ArrayList_remove(trigger->entities, k);
             if (trigger->on_exit) {
                 trigger->on_exit(j, i);
             }

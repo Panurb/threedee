@@ -3,6 +3,7 @@
 #include "level.h"
 #include "prefab.h"
 #include "systems/navigation.h"
+#include "systems/sound.h"
 #include "perlin.h"
 
 
@@ -470,6 +471,8 @@ void player_look(Entity trigger, Entity entity) {
 
     player->look_target = trigger;
     player->look_timer = 0.5f;
+
+    add_sound(entity, "discover", 1.0f, 1.0f);
 }
 
 
@@ -485,6 +488,13 @@ Entity create_jump_scare(Vector3 position) {
             .on_enter = player_look
         }
     );
+    MeshParameters params = {
+        .mesh_filename = "quad",
+        .texture_filename = "blood",
+        .material_filename = "hidden",
+        .visibility = VISIBILITY_UV
+    };
+    MeshComponent_add(entity, params);
 
     return entity;
 }
@@ -520,7 +530,7 @@ Level create_level() {
 
     create_ground(100.0f, 100.0f);
 
-    create_fire(vec3(2.0f, 1.0f, 3.0f), 0.5f);
+    create_fire(vec3(0.0f, 1.0f, 0.0f), 0.5f);
     create_jump_scare(vec3(2.0f, 1.0f, 3.0f));
 
     create_blood_dripper(vec3(2.0f, level.room_height, 2.0f));
