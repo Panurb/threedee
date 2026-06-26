@@ -173,53 +173,30 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, floa
 
     float window_width = 1.0f;
     float wall_width = width - windows * window_width;
-    float wall_depth = depth - windows * window_width;
     float segment_width = wall_width / (float) (windows + 1);
-    float segment_depth = wall_depth / (float) (windows + 1);
 
     for (int j = 0; j < windows + 1; j++) {
         Entity window = create_entity();
-        if (width > depth) {
-            float x = position.x - 0.5f * width + 0.5f * segment_width + j * (segment_width + window_width);
-            TransformComponent_add(window, (TransformParameters) {
-                .position = vec3(x, position.y + wall_height + 0.5f * window_height, position.z),
-                .scale = vec3(segment_width, window_height, depth)
-            });
-        } else {
-            float z = position.z - 0.5f * depth + 0.5f * segment_depth + j * (segment_depth + window_width);
-            TransformComponent_add(window, (TransformParameters) {
-                .position = vec3(position.x, position.y + wall_height + 0.5f * window_height, z),
-                .scale = vec3(width, window_height, segment_depth)
-            });
-        }
+        float x = position.x - 0.5f * width + 0.5f * segment_width + j * (segment_width + window_width);
+        TransformComponent_add(window, (TransformParameters) {
+            .position = vec3(x, position.y + wall_height + 0.5f * window_height, position.z),
+            .scale = vec3(segment_width, window_height, depth)
+        });
         MeshComponent_add(window, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
         ColliderComponent_add(window, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_WALLS });
     }
 
     for (int j = 0; j < windows; j++) {
-        if (width > depth) {
-            create_frame(
-                vec3(
-                    position.x - 0.5f * width + (segment_width + window_width) * (j + 1) - 0.5f * window_width,
-                    position.y + wall_height,
-                    position.z
-                ),
-                window_width,
-                window_height,
-                depth
-            );
-        } else {
-            create_frame(
-                vec3(
-                    position.x,
-                    position.y + wall_height,
-                    position.z - 0.5f * depth + (segment_depth + window_width) * (j + 1) - 0.5f * window_width
-                ),
-                width,
-                window_height,
-                window_width
-            );
-        }
+        create_frame(
+            vec3(
+                position.x - 0.5f * width + (segment_width + window_width) * (j + 1) - 0.5f * window_width,
+                position.y + wall_height,
+                position.z
+            ),
+            window_width,
+            window_height,
+            depth
+        );
     }
 
     i = create_entity();
@@ -234,7 +211,7 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, floa
         Entity entity = node->value;
         TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
         if (trans->parent == NULL_ENTITY) {
-            rotate_around_point(entity, position, to_radians(yaw));
+            rotate_around_point(entity, position, yaw);
         }
     }
     List_delete(scene->components->added_entities);
@@ -250,18 +227,14 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float y
     float wall_height = 3.5f;
     float door_height = 2.5f;
 
-    float wall_width = (width > depth) ? (width - door_width) * 0.5f : width;
-    float wall_depth = (width > depth) ? depth : (depth - door_width) * 0.5f;
+    float wall_width = (width - door_width) * 0.5f;
+    float wall_depth = depth;
 
-    float x_offset = (width > depth) ? 0.5f * wall_width + 0.5f * door_width : 0.0f;
-    float z_offset = (width > depth) ? 0.0f : 0.5f * wall_depth + 0.5f * door_width;
-
-    float door_x_scale = (width > depth) ? door_width : wall_width;
-    float door_z_scale = (width > depth) ? wall_depth : door_width;
+    float x_offset = 0.5f * wall_width + 0.5f * door_width;
 
     Entity left_wall = create_entity();
     TransformComponent_add(left_wall, (TransformParameters) {
-        .position = vec3(position.x - x_offset, position.y + wall_height * 0.5f, position.z - z_offset),
+        .position = vec3(position.x - x_offset, position.y + wall_height * 0.5f, position.z),
         .scale = vec3(wall_width, wall_height, wall_depth)
     });
     MeshComponent_add(left_wall, (MeshParameters) {
@@ -273,7 +246,7 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float y
 
     Entity right_wall = create_entity();
     TransformComponent_add(right_wall, (TransformParameters) {
-        .position = vec3(position.x + x_offset, position.y + wall_height * 0.5f, position.z + z_offset),
+        .position = vec3(position.x + x_offset, position.y + wall_height * 0.5f, position.z),
         .scale = vec3(wall_width, wall_height, wall_depth)
     });
     MeshComponent_add(right_wall, (MeshParameters) {
@@ -286,7 +259,7 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float y
     Entity door_top = create_entity();
     TransformComponent_add(door_top, (TransformParameters) {
         .position = vec3(position.x, position.y + wall_height - 0.5f * (wall_height - door_height), position.z),
-        .scale = vec3(door_x_scale, wall_height - door_height, door_z_scale)
+        .scale = vec3(door_width, wall_height - door_height, wall_depth)
     });
     MeshComponent_add(door_top, (MeshParameters) {
         .mesh_filename = "cube",
@@ -295,25 +268,24 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float y
     });
     ColliderComponent_add(door_top, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_WALLS });
 
-    float wp_x_offset = sign(z_offset);
     float wp_z_offset = sign(x_offset);
 
     create_frame(
         vec3(position.x, position.y, position.z),
-        (width > depth) ? door_width : wall_width,
+        door_width,
         door_height,
-        (width > depth) ? wall_depth : door_width
+        wall_depth
     );
 
-    create_waypoint(vec3(position.x - wp_x_offset, position.y, position.z - wp_z_offset));
-    create_waypoint(vec3(position.x + wp_x_offset, position.y, position.z + wp_z_offset));
+    create_waypoint(vec3(position.x, position.y, position.z - wp_z_offset));
+    create_waypoint(vec3(position.x, position.y, position.z + wp_z_offset));
 
     ListNode* node;
     FOREACH(node, scene->components->added_entities) {
         Entity entity = node->value;
         TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
         if (trans->parent == NULL_ENTITY) {
-            rotate_around_point(entity, position, to_radians(yaw));
+            rotate_around_point(entity, position, yaw);
         }
     }
     List_delete(scene->components->added_entities);

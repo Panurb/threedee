@@ -6,7 +6,7 @@ TransformComponent* TransformComponent_add(Entity entity, TransformParameters pa
     TransformComponent* trans = malloc(sizeof(TransformComponent));
     trans->position = params.position;
     if (params.yaw != 0.0f) {
-        trans->rotation = axis_angle_to_quaternion((Vector3){0.0f, 1.0f, 0.0f}, to_radians(params.yaw));
+        trans->rotation = axis_angle_to_quaternion(vec3_up(), to_radians(params.yaw));
     } else {
         trans->rotation = quaternion_non_zero(params.rotation) ? params.rotation : quaternion_id();
     }

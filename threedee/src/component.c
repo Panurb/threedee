@@ -437,7 +437,7 @@ void rotate_around_point(Entity entity, Vector3 point, float yaw) {
     TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
 
     Vector3 offset = sub3(trans->position, point);
-    Quaternion q = axis_angle_to_quaternion(vec3_up(), yaw);
+    Quaternion q = axis_angle_to_quaternion(vec3_up(), to_radians(yaw));
 
     trans->position = add3(point, rotate_vector(q, offset));
     trans->rotation = quaternion_mult(q, trans->rotation);
