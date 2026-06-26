@@ -12,3 +12,5 @@ void update_players(float time_step);
 void input_players(void);
 
 Entity get_player_camera(Entity player);
+
+void player_look(Entity trigger, Entity entity);

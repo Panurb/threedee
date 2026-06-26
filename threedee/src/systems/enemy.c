@@ -8,6 +8,7 @@
 #include "util.h"
 #include "raycast.h"
 #include "systems/navigation.h"
+#include "systems/player.h"
 
 
 Entity create_enemy(Vector3 pos, float yaw) {
@@ -43,9 +44,16 @@ Entity create_enemy(Vector3 pos, float yaw) {
     });
     MeshComponent_add(mesh, (MeshParameters) {
         .mesh_filename = "enemy",
-        .texture_filename = "white",
+        .texture_filename = "black",
         .material_filename = "default",
         .visibility = VISIBILITY_ALL
+    });
+    TriggerComponent_add(i, (TriggerParameters) {
+            .type = TRIGGER_LOOK,
+            .trigger_group = GROUP_PLAYERS,
+            .distance = 20.0f,
+            .roi = 1.0f,
+            .on_enter = player_look
     });
 
     return i;

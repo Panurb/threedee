@@ -146,7 +146,7 @@ bool in_player_view(Entity player, Entity entity, float distance, float roi) {
     if (mesh) {
         Entity item = get_current_item(player);
         LightComponent* light = get_component(get_children(item)->head->value, COMPONENT_LIGHT);
-        if (light) {
+        if (light && mesh->visibility == VISIBILITY_UV) {
             if (light->range < dist) {
                 return false;
             }
@@ -175,11 +175,11 @@ bool in_player_view(Entity player, Entity entity, float distance, float roi) {
         GROUP_WALLS | GROUP_PLAYERS
     );
 
-    if (hit.entity != NULL_ENTITY) {
-        return false;
+    if (hit.entity == entity || hit.entity == NULL_ENTITY) {
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 
@@ -444,4 +444,15 @@ void input_players() {
 
 Entity get_player_camera(Entity player) {
     return get_children(player)->head->value;
+}
+
+
+void player_look(Entity trigger, Entity entity) {
+    PlayerComponent* player = get_component(entity, COMPONENT_PLAYER);
+    if (!player) return;
+
+    player->look_target = trigger;
+    player->look_timer = 0.5f;
+
+    add_sound(entity, "discover", 1.0f, 1.0f);
 }

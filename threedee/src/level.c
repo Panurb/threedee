@@ -4,6 +4,7 @@
 #include "prefab.h"
 #include "systems/navigation.h"
 #include "systems/sound.h"
+#include "systems/player.h"
 #include "perlin.h"
 
 
@@ -465,17 +466,6 @@ void generate_level(Level* level, int x, int z) {
 }
 
 
-void player_look(Entity trigger, Entity entity) {
-    PlayerComponent* player = get_component(entity, COMPONENT_PLAYER);
-    if (!player) return;
-
-    player->look_target = trigger;
-    player->look_timer = 0.5f;
-
-    add_sound(entity, "discover", 1.0f, 1.0f);
-}
-
-
 Entity create_jump_scare(Vector3 position) {
     Entity entity = create_entity();
     TransformComponent_add(entity, (TransformParameters) { .position = position });
@@ -483,8 +473,8 @@ Entity create_jump_scare(Vector3 position) {
         (TriggerParameters) {
             .type = TRIGGER_LOOK,
             .trigger_group = GROUP_PLAYERS,
-            .distance = 10.0f,
-            .roi = 0.5f,
+            .distance = 20.0f,
+            .roi = 1.0f,
             .on_enter = player_look
         }
     );
