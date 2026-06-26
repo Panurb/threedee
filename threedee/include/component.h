@@ -107,3 +107,5 @@ Vector3 local_to_world(Entity entity, Vector3 local);
 void move_to(Entity entity, Vector3 target, float speed, float time_stamp);
 void look_at(Entity entity, Vector3 target);
 void turn_to(Entity entity, Vector3 direction, float turn_speed, float time_step);
+
+void rotate_around_point(Entity entity, Vector3 point, float yaw);

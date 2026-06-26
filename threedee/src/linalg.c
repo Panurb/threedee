@@ -783,3 +783,10 @@ float mat3_get(Matrix3 m, int i, int j) {
     LOG_ERROR("Invalid indices (%d, %d) for Matrix3", i, j);
     return 0.0f;
 }
+
+
+Vector3 rotate_vector(Quaternion q, Vector3 v) {
+    Quaternion p = { v.x, v.y, v.z, 0.0f };
+    Quaternion result = quaternion_mult(quaternion_mult(q, p), quaternion_conjugate(q));
+    return vec3(result.x, result.y, result.z);
+}

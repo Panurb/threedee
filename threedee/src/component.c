@@ -431,3 +431,14 @@ void turn_to(Entity entity, Vector3 target, float turn_speed, float time_step) {
     float t = fminf(1.0f, delta_angle / angle_diff);
     trans->rotation = slerp(current_rotation, target_rotation, t);
 }
+
+
+void rotate_around_point(Entity entity, Vector3 point, float yaw) {
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+
+    Vector3 offset = sub3(trans->position, point);
+    Quaternion q = axis_angle_to_quaternion(vec3_up(), yaw);
+
+    trans->position = add3(point, rotate_vector(q, offset));
+    trans->rotation = quaternion_mult(q, trans->rotation);
+}

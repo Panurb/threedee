@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 #include "level.h"
+#include "scene.h"
 #include "prefab.h"
 #include "systems/navigation.h"
-#include "systems/sound.h"
 #include "systems/player.h"
 #include "perlin.h"
 
@@ -90,16 +90,24 @@ Entity create_floor(Vector3 position, float width, float depth, String texture_f
 }
 
 
-Entity create_wall_empty(Vector3 position, float width, float depth) {
+Entity create_wall_empty(Vector3 position, float width, float depth, float yaw) {
     float wall_height = 3.5f;
 
     Entity i = create_entity();
     TransformComponent_add(i, (TransformParameters) {
         .position = vec3(position.x, position.y + wall_height * 0.5f, position.z),
-        .scale = vec3(width, wall_height, depth)
+        .scale = vec3(width, wall_height, depth),
+        .yaw = yaw
     });
-    MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+    MeshComponent_add(i, (MeshParameters) {
+        .mesh_filename = "cube",
+        .texture_filename = "plaster",
+        .material_filename = "glass"
+    });
+    ColliderComponent_add(i, (ColliderParameters) {
+        .type = COLLIDER_CUBOID,
+        .group = GROUP_WALLS
+    });
 
     return i;
 }
@@ -150,7 +158,9 @@ void create_frame(Vector3 position, float width, float height, float depth) {
 }
 
 
-Entity create_wall_with_windows(Vector3 position, float width, float depth, int windows) {
+Entity create_wall_with_windows(Vector3 position, float width, float depth, float yaw, int windows) {
+    scene->components->added_entities = List_create();
+
     float wall_height = 1.0f;
     float window_height = 1.5f;
 
@@ -159,7 +169,7 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
     trans->position.y = position.y + wall_height * 0.5f;
     trans->scale = vec3(width, wall_height, depth);
     MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_WALLS });
 
     float window_width = 1.0f;
     float wall_width = width - windows * window_width;
@@ -183,7 +193,7 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
             });
         }
         MeshComponent_add(window, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
-        ColliderComponent_add(window, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+        ColliderComponent_add(window, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_WALLS });
     }
 
     for (int j = 0; j < windows; j++) {
@@ -217,13 +227,26 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, int 
     trans->position.y = position.y + wall_height * 1.5f + window_height;
     trans->scale = vec3(width, 1.0f, depth);
     MeshComponent_add(i, (MeshParameters) { .mesh_filename = "cube", .texture_filename = "plaster", .material_filename = "glass" });
-    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+    ColliderComponent_add(i, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_WALLS });
+
+    ListNode* node;
+    FOREACH(node, scene->components->added_entities) {
+        Entity entity = node->value;
+        TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+        if (trans->parent == NULL_ENTITY) {
+            rotate_around_point(entity, position, to_radians(yaw));
+        }
+    }
+    List_delete(scene->components->added_entities);
+    scene->components->added_entities = NULL;
 
     return i;
 }
 
 
-Entity create_wall_with_door(Vector3 position, float width, float depth, float door_width) {
+Entity create_wall_with_door(Vector3 position, float width, float depth, float yaw, float door_width) {
+    scene->components->added_entities = List_create();
+
     float wall_height = 3.5f;
     float door_height = 2.5f;
 
@@ -246,7 +269,7 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
         .texture_filename = "plaster",
         .material_filename = "glass"
     });
-    ColliderComponent_add(left_wall, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+    ColliderComponent_add(left_wall, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_WALLS });
 
     Entity right_wall = create_entity();
     TransformComponent_add(right_wall, (TransformParameters) {
@@ -258,7 +281,7 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
         .texture_filename = "plaster",
         .material_filename = "glass"
     });
-    ColliderComponent_add(right_wall, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+    ColliderComponent_add(right_wall, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_WALLS });
 
     Entity door_top = create_entity();
     TransformComponent_add(door_top, (TransformParameters) {
@@ -270,7 +293,7 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
         .texture_filename = "plaster",
         .material_filename = "glass"
     });
-    ColliderComponent_add(door_top, (ColliderParameters) { .type = COLLIDER_AABB, .group = GROUP_WALLS });
+    ColliderComponent_add(door_top, (ColliderParameters) { .type = COLLIDER_CUBOID, .group = GROUP_WALLS });
 
     float wp_x_offset = sign(z_offset);
     float wp_z_offset = sign(x_offset);
@@ -284,6 +307,17 @@ Entity create_wall_with_door(Vector3 position, float width, float depth, float d
 
     create_waypoint(vec3(position.x - wp_x_offset, position.y, position.z - wp_z_offset));
     create_waypoint(vec3(position.x + wp_x_offset, position.y, position.z + wp_z_offset));
+
+    ListNode* node;
+    FOREACH(node, scene->components->added_entities) {
+        Entity entity = node->value;
+        TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+        if (trans->parent == NULL_ENTITY) {
+            rotate_around_point(entity, position, to_radians(yaw));
+        }
+    }
+    List_delete(scene->components->added_entities);
+    scene->components->added_entities = NULL;
 
     return door_top;
 }
@@ -325,14 +359,14 @@ void create_forest(float width, float depth, float density, Level level) {
 }
 
 
-Entity create_wall(Vector3 position, float width, float depth, Wall type) {
+Entity create_wall(Vector3 position, float width, float depth, float yaw, Wall type) {
     switch (type) {
         case WALL_PLAIN:
-            return create_wall_empty(position, width, depth);
+            return create_wall_empty(position, width, depth, yaw);
         case WALL_DOOR:
-            return create_wall_with_door(position, width, depth, 1.2f);
+            return create_wall_with_door(position, width, depth, yaw, 1.2f);
         case WALL_WINDOWS:
-            return create_wall_with_windows(position, width, depth, 3);
+            return create_wall_with_windows(position, width, depth, yaw, 3);
         default:
             return NULL_ENTITY;
     }
@@ -566,10 +600,11 @@ Level create_level() {
                     pos.z + offset.z * 0.5f * level.room_depth
                 );
 
-                float width = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? level.room_width - 0.5f : 0.5f;
-                float depth = (d == DIRECTION_FRONT || d == DIRECTION_BACK) ? 0.5f : level.room_width - 0.5f;
+                float width = level.room_width - 0.5f;
+                float depth = 0.5f;
+                float yaw = wall_angle(d);
 
-                create_wall(wall_pos, width, depth, room.walls[d]);
+                create_wall(wall_pos, width, depth, yaw, room.walls[d]);
 
                 Vector3 corner = vec3(
                     pos.x + offset.x * 0.5f * level.room_width - offset.z * 0.5f * level.room_width,
@@ -577,7 +612,7 @@ Level create_level() {
                     pos.z + offset.z * 0.5f * level.room_depth - offset.x * 0.5f * level.room_depth
                 );
                 if (room.walls[d] != WALL_NONE && room.walls[d] != WALL_UNSET) {
-                    create_wall_empty(corner, 0.5f, 0.5f);
+                    create_wall_empty(corner, 0.5f, 0.5f, 0.0f);
                 }
             }
 

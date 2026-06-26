@@ -238,3 +238,5 @@ Vector3 mat3_row(Matrix3 m, int i);
 Vector3 mat3_column(Matrix3 m, int i);
 
 float mat3_get(Matrix3 m, int i, int j);
+
+Vector3 rotate_vector(Quaternion q, Vector3 v);
