@@ -7,10 +7,9 @@
 #include "scene.h"
 #include "util.h"
 #include "systems/draw.h"
-
-#include <systems/player.h>
-
+#include "systems/player.h"
 #include "systems/navigation.h"
+#include "systems/trigger.h"
 
 
 static Vector4 cube_corners[8] = {
@@ -494,14 +493,15 @@ void draw_entities() {
             continue;
         }
 
-        // draw_axes(entity);
+        draw_axes(entity);
+        draw_trigger(entity);
 
         // debug_draw_enemies();
 
         RigidBodyComponent* rb = get_component(entity, COMPONENT_RIGIDBODY);
         ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
         MeshComponent* mesh = get_component(entity, COMPONENT_MESH);
-        if (entity != scene->player && collider && mesh->mesh_index != cube_index) {
+        if (entity != scene->player && collider && mesh && mesh->mesh_index != cube_index) {
             Vector3 start = get_position(entity);
             for (int i = 0; i < collider->collisions->size; i++) {
                 Collision collision = *(Collision*)ArrayList_get(collider->collisions, i);
@@ -512,7 +512,7 @@ void draw_entities() {
                 draw_arrow(start, end, 0.01f, COLOR_BLUE);
             }
 
-            draw_collider(entity);
+            draw_collider(entity, get_color(1.0f, 0.0f, 0.0f, 0.5f));
         }
 
         if (rb) {

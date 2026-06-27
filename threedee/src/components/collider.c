@@ -102,7 +102,7 @@ Shape get_shape(Entity entity) {
 }
 
 
-void ColliderComponent_add(Entity entity, ColliderParameters parameters) {
+ColliderComponent* ColliderComponent_add(Entity entity, ColliderParameters parameters) {
     ColliderComponent* collider = malloc(sizeof(ColliderComponent));
     collider->type = parameters.type;
     collider->group = parameters.group ? parameters.group : GROUP_WALLS;
@@ -142,6 +142,8 @@ void ColliderComponent_add(Entity entity, ColliderParameters parameters) {
 
     collider->collisions = ArrayList_create(sizeof(Collision));
     scene->components->collider[entity] = collider;
+
+    return collider;
 }
 
 
@@ -155,7 +157,7 @@ void ColliderComponent_remove(Entity entity) {
 }
 
 
-void draw_collider(Entity entity) {
+void draw_collider(Entity entity, Color color) {
     ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
     if (!collider) return;
 
@@ -165,8 +167,6 @@ void draw_collider(Entity entity) {
     Matrix3 rot = quaternion_to_rotation_matrix(rotation);
     float radius = get_radius(entity);
     Vector3 half_extents = get_half_extents(entity);
-
-    Color color = get_color(1.0f, 0.0f, 0.0f, 0.5f);
 
     switch (collider->type) {
         case COLLIDER_PLANE:

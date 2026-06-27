@@ -1,7 +1,11 @@
-#include "systems\trigger.h"
+#include "systems/trigger.h"
+
+#include <stdio.h>
+
 #include "util.h"
 #include "scene.h"
 #include "systems/player.h"
+#include "render.h"
 
 
 void update_triggers(float time_step) {
@@ -40,6 +44,29 @@ void update_triggers(float time_step) {
                     }
                 }
             }
+        }
+    }
+}
+
+
+void draw_trigger(Entity entity) {
+    TriggerComponent* trigger = get_component(entity, COMPONENT_TRIGGER);
+    if (!trigger) return;
+
+    Vector3 position = get_position(entity);
+
+    Color color = get_color(1.0f, 1.0f, 0.0f, 0.5f);
+
+    switch (trigger->type) {
+        case TRIGGER_LOOK: {
+            draw_sphere(position, 0.5f, 32, color);
+            break;
+        } case TRIGGER_COLLISION: {
+            ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
+            if (collider) {
+                draw_collider(entity, color);
+            }
+            break;
         }
     }
 }

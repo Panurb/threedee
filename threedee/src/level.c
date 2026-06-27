@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "level.h"
+#include "systems/enemy.h"
 #include "scene.h"
 #include "prefab.h"
 #include "systems/navigation.h"
@@ -187,15 +188,25 @@ Entity create_wall_with_windows(Vector3 position, float width, float depth, floa
     }
 
     for (int j = 0; j < windows; j++) {
+        float x = position.x - 0.5f * width + (segment_width + window_width) * (j + 1) - 0.5f * window_width;
         create_frame(
             vec3(
-                position.x - 0.5f * width + (segment_width + window_width) * (j + 1) - 0.5f * window_width,
+                x,
                 position.y + wall_height,
                 position.z
             ),
             window_width,
             window_height,
             depth
+        );
+
+        create_window_scare(
+            vec3(
+                x,
+                0.5f,
+                position.z - 1.0f
+            ),
+            0.0f
         );
     }
 

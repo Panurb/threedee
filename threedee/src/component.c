@@ -21,8 +21,13 @@ ComponentData* ComponentData_create() {
 
 
 Entity create_entity() {
+    if (scene->components->entities >= MAX_ENTITIES) {
+        LOG_ERROR("Maximum number of entities reached: %d", MAX_ENTITIES);
+        return NULL_ENTITY;
+    }
+
     for (Entity i = 0; i < scene->components->entities; i++) {
-        if (!scene->components->transform[i]) {
+        if (!entity_exists(i)) {
             if (scene->components->added_entities) {
                 List_add(scene->components->added_entities, i);
             }
@@ -269,7 +274,7 @@ Quaternion get_rotation(Entity entity) {
 float get_yaw(Entity entity) {
     Quaternion rotation = get_rotation(entity);
     Vector3 forward = quaternion_forward(rotation);
-    return atan2f(forward.y, forward.z);
+    return to_degrees(atan2f(forward.y, forward.z));
 }
 
 
@@ -315,8 +320,8 @@ Axes get_axes_interpolated(Entity entity, float delta) {
 
 
 bool entity_exists(Entity entity) {
-    TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
-    if (coord) {
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+    if (trans) {
         return true;
     }
     return false;

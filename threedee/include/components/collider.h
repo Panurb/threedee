@@ -61,8 +61,8 @@ Vector3 get_half_extents(Entity entity);
 
 Shape get_shape(Entity entity);
 
-void ColliderComponent_add(Entity entity, ColliderParameters parameters);
+ColliderComponent* ColliderComponent_add(Entity entity, ColliderParameters parameters);
 
 void ColliderComponent_remove(Entity entity);
 
-void draw_collider(Entity entity);
+void draw_collider(Entity entity, Color color);

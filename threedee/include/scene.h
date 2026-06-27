@@ -8,6 +8,7 @@ typedef struct Scene {
     Entity camera;
     Entity screen_camera;
     Entity player;
+    Entity enemy;
     Entity weather;
     ComponentData* components;
     Vector3 gravity;

@@ -586,7 +586,6 @@ void matrix4_print(Matrix4 m) {
 
 
 Quaternion direction_to_quaternion(Vector3 fwd, Vector3 up) {
-    LOG_INFO("Forward: %f, %f, %f", fwd.x, fwd.y, fwd.z);
     Vector3 right = cross(up, fwd);
     float right_norm = norm3(right);
     if (right_norm < 1e-6f) {

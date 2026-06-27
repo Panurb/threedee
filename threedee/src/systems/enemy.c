@@ -1,8 +1,7 @@
-#include "systems/enemy.h"
-#include "components/enemy.h"
-
 #include <stdio.h>
 
+#include "systems/enemy.h"
+#include "components/enemy.h"
 #include "render.h"
 #include "scene.h"
 #include "util.h"
@@ -87,11 +86,11 @@ void update_enemies(float time_step) {
         RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
         Vector3 pos = get_position(i);
 
-        if (enemy->state != ENEMY_ATTACK && enemy->state != ENEMY_DEAD) {
-            update_vision(i);
-            Vector3 dir = vec3(enemy->desired_direction.x, pos.y, enemy->desired_direction.z);
-            turn_to(i, dir, enemy->turn_speed, time_step);
-        }
+        // if (enemy->state != ENEMY_ATTACK && enemy->state != ENEMY_DEAD) {
+        //     update_vision(i);
+        //     Vector3 dir = vec3(enemy->desired_direction.x, pos.y, enemy->desired_direction.z);
+        //     turn_to(i, dir, enemy->turn_speed, time_step);
+        // }
 
         switch (enemy->state) {
             case ENEMY_IDLE: {
@@ -162,4 +161,44 @@ void debug_draw_enemies() {
 
         draw_line(pos, add3(pos, rb->angular_velocity), 0.1f, COLOR_RED);
     }
+}
+
+
+void spawn_enemy(Entity trigger, Entity player) {
+    UNUSED(player);
+
+    if (scene->enemy != NULL_ENTITY) {
+        return;
+    }
+
+    float distance = randf(5.0f, 10.0f);
+    Vector3 forward = get_axes(trigger).back;
+    Vector3 spawn_pos = add3(get_position(trigger), mul3(distance, forward));
+    scene->enemy = create_enemy(spawn_pos, get_yaw(trigger) + 90.0f);
+    EnemyComponent* enemy = get_component(scene->enemy, COMPONENT_ENEMY);
+    enemy->state = ENEMY_STARE;
+
+    LOG_INFO("scene.enemy: %d, scene.weather: %d", scene->enemy, scene->weather);
+    if (in_player_view(player, scene->enemy, INFINITY, 1.0f)) {
+        destroy_entity_recursive(scene->enemy);
+        scene->enemy = NULL_ENTITY;
+    }
+}
+
+
+void create_window_scare(Vector3 position, float yaw) {
+    Entity entity = create_entity();
+    TransformComponent_add(entity, (TransformParameters) {
+        .position = position,
+        .yaw = yaw,
+    });
+    TriggerComponent_add(entity, (TriggerParameters) {
+        .type = TRIGGER_COLLISION,
+        .trigger_group = GROUP_PLAYERS,
+        .on_enter = spawn_enemy
+    });
+    ColliderComponent* collider = ColliderComponent_add(entity, (ColliderParameters) {
+        .type = COLLIDER_CUBOID
+    });
+    collider->group = GROUP_NONE;
 }

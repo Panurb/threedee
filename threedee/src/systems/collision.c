@@ -702,25 +702,24 @@ float get_collision_speed(Entity entity, Entity other, Penetration penetration) 
 }
 
 
-void apply_trigger(Entity i, Entity j, Penetration penetration) {
-    TriggerComponent* trigger = get_component(j, COMPONENT_TRIGGER);
-    TriggerComponent* trigger_other = get_component(i, COMPONENT_TRIGGER);
-    if (!trigger && !trigger_other) return;
-    if (trigger && trigger->type != TRIGGER_COLLISION) return;
+void apply_trigger(Entity trigger_entity, Entity entity, Penetration penetration) {
+    TriggerComponent* trigger = get_component(trigger_entity, COMPONENT_TRIGGER);
+    if (!trigger) return;
+    if (trigger->type != TRIGGER_COLLISION) return;
 
     if (penetration.valid) {
-        if (ArrayList_find(trigger->entities, &i) == -1) {
-            ArrayList_add(trigger->entities, &i);
+        if (ArrayList_find(trigger->entities, &trigger_entity) == -1) {
+            ArrayList_add(trigger->entities, &trigger_entity);
             if (trigger->on_enter) {
-                trigger->on_enter(j, i);
+                trigger->on_enter(trigger_entity, entity);
             }
         }
     } else {
-        int k = ArrayList_find(trigger->entities, &i);
+        int k = ArrayList_find(trigger->entities, &trigger_entity);
         if (k != -1) {
             ArrayList_remove(trigger->entities, k);
             if (trigger->on_exit) {
-                trigger->on_exit(j, i);
+                trigger->on_exit(trigger_entity, entity);
             }
         }
     }
@@ -757,6 +756,7 @@ void update_collisions() {
             bool collides = (COLLISION_MASKS[collider->group] & other_collider->group);
             bool other_collides = (COLLISION_MASKS[other_collider->group] & collider->group);
 
+
             if (!triggers && !other_triggers && !collides && !other_collides) {
                 continue;
             }
@@ -768,6 +768,10 @@ void update_collisions() {
             }
             if (other_triggers) {
                 apply_trigger(j, i, penetration);
+            }
+
+            if (!collides && !other_collides) {
+                continue;
             }
 
             if (penetration.valid) {

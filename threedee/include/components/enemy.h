@@ -10,6 +10,7 @@ typedef enum EnemyState {
     ENEMY_INVESTIGATE,
     ENEMY_CHASE,
     ENEMY_ATTACK,
+    ENEMY_STARE,
     ENEMY_DEAD
 } EnemyState;
 

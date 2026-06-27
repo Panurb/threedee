@@ -22,6 +22,7 @@ void create_scene() {
     scene->particles = ParticleData_create();
     scene->screen_camera = create_screen_camera();
     scene->player = create_player(zeros3());
+    scene->enemy = NULL_ENTITY;
     scene->bloom.threshold = 0.1f;
     scene->bloom.knee = 0.05f;
     scene->bloom.intensity = 0.5f;
@@ -45,7 +46,7 @@ void create_scene() {
 
     Level level = create_level();
 
-    while (true) {
+    while (false) {
         int x = randi(0, level.width - 1);
         int z = randi(0, level.depth - 1);
 
@@ -54,7 +55,7 @@ void create_scene() {
         }
 
         if (level.rooms[z][x].floor) {
-            create_enemy(vec3(
+            scene->enemy = create_enemy(vec3(
                 (x - level.width / 2) * level.room_width,
                 0.0f,
                 (z - level.depth / 2) * level.room_depth
@@ -64,6 +65,7 @@ void create_scene() {
     }
 
     scene->weather = create_entity();
+    TransformComponent_add(scene->weather, (TransformParameters) {});
     WeatherComponent_add(scene->weather, (WeatherParameters) {
         .fog_color = COLOR_SKY,
         .fog_start = 10.0f,
