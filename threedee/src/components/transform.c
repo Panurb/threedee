@@ -30,19 +30,19 @@ TransformComponent* TransformComponent_add(Entity entity, TransformParameters pa
 
 
 void TransformComponent_remove(Entity entity) {
-    TransformComponent* coord = get_component(entity, COMPONENT_TRANSFORM);
-    if (coord) {
+    TransformComponent* trans = get_component(entity, COMPONENT_TRANSFORM);
+    if (trans) {
         // if (coord->parent != -1) {
         //     List_remove(CoordinateComponent_get(coord->parent)->children, entity);
         // }
-        for (ListNode* node = coord->children->head; node; node = node->next) {
+        for (ListNode* node = trans->children->head; node; node = node->next) {
             TransformComponent* child = get_component(node->value, COMPONENT_TRANSFORM);
             if (child) {
                 child->parent = -1;
             }
         }
-        List_delete(coord->children);
-        free(coord);
+        List_delete(trans->children);
+        free(trans);
         scene->components->transform[entity] = NULL;
     }
 }

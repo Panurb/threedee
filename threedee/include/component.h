@@ -20,6 +20,7 @@
 #include "components/trigger.h"
 #include "components/waypoint.h"
 #include "components/weather.h"
+#include "components/force.h"
 
 #define MAX_ENTITIES 5000
 
@@ -42,6 +43,7 @@ typedef struct ComponentData {
     SpriteComponent* sprite[MAX_ENTITIES];
     EmitterComponent* emitter[MAX_ENTITIES];
     TriggerComponent* trigger[MAX_ENTITIES];
+    ForceComponent* force[MAX_ENTITIES];
 } ComponentData;
 
 typedef enum ComponentType {
@@ -60,6 +62,7 @@ typedef enum ComponentType {
     COMPONENT_SPRITE,
     COMPONENT_EMITTER,
     COMPONENT_TRIGGER,
+    COMPONENT_FORCE,
     COMPONENT_COUNT
 } ComponentType;
 

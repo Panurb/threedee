@@ -20,6 +20,7 @@ set(SOURCES
     threedee/src/components/controller.c
     threedee/src/components/emitter.c
     threedee/src/components/enemy.c
+    threedee/src/components/force.c
     threedee/src/components/light.c
     threedee/src/components/mesh.c
     threedee/src/components/player.c
@@ -30,6 +31,7 @@ set(SOURCES
     threedee/src/components/trigger.c
     threedee/src/components/waypoint.c
     threedee/src/components/weather.c
+    threedee/src/game.c
     threedee/src/heap.c
     threedee/src/interface.c
     threedee/src/level.c

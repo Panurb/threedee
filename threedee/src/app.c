@@ -1,24 +1,19 @@
 #define _USE_MATH_DEFINES
 
 #include <stdio.h>
-#include <math.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
-// #include <SDL_mixer.h>
 
+#include "systems/draw.h"
+#include "systems/navigation.h"
+#include "systems/trigger.h"
 #include "app.h"
-
-#include <time.h>
-#include <systems/draw.h>
-#include <systems/navigation.h>
-#include <systems/trigger.h>
-
 #include "resources.h"
-#include "../include/systems/sound.h"
+#include "systems/sound.h"
 #include "systems/collision.h"
-
 #include "settings.h"
 #include "interface.h"
 #include "render.h"
@@ -27,6 +22,7 @@
 #include "systems/player.h"
 #include "systems/enemy.h"
 #include "systems/particle.h"
+#include "game.h"
 
 
 App app;
@@ -194,6 +190,7 @@ void update(float time_step) {
     update_particles(time_step);
     update_waypoints();
     update_sounds(time_step);
+    update_game(time_step);
 
     // For overhead camera testing
     // TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);

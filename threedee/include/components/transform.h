@@ -14,7 +14,7 @@ typedef struct TransformParameters {
 } TransformParameters;
 
 
-typedef struct {
+typedef struct TransformComponent {
     Vector3 position;
     Quaternion rotation;
     Vector3 scale;

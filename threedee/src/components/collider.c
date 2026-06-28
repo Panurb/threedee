@@ -105,7 +105,7 @@ Shape get_shape(Entity entity) {
 ColliderComponent* ColliderComponent_add(Entity entity, ColliderParameters parameters) {
     ColliderComponent* collider = malloc(sizeof(ColliderComponent));
     collider->type = parameters.type;
-    collider->group = parameters.group ? parameters.group : GROUP_WALLS;
+    collider->group = parameters.group;
 
     switch (collider->type) {
         case COLLIDER_PLANE:
@@ -162,7 +162,6 @@ void draw_collider(Entity entity, Color color) {
     if (!collider) return;
 
     Vector3 position = get_position(entity);
-    Vector3 scale = get_scale(entity);
     Quaternion rotation = get_rotation(entity);
     Matrix3 rot = quaternion_to_rotation_matrix(rotation);
     float radius = get_radius(entity);

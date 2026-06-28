@@ -302,6 +302,16 @@ void init_physics(void) {
 
 
 void update_physics(float time_step) {
+    static int particle_index = -1;
+
+    if (particle_index == -1) {
+        particle_index = binary_search_filename(
+            "dust_cloud",
+            resources.particle_type_names,
+            resources.particle_types_size
+        );
+    }
+
     for (Entity i = 0; i < scene->components->entities; i++) {
         RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
         if (rb) {
@@ -312,12 +322,6 @@ void update_physics(float time_step) {
     for (Entity i = 0; i < scene->components->entities; i++) {
         update_springs(i);
     }
-
-    int particle_index = binary_search_filename(
-        "dust_cloud",
-        resources.particle_type_names,
-        resources.particle_types_size
-    );
 
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);

@@ -240,6 +240,24 @@ void create_bookcase(Vector3 position, float yaw) {
             accum_width += w;
         }
     }
+
+    Entity force = create_entity();
+    TransformComponent_add(force, (TransformParameters) {
+        .position = vec3(0.0f, 0.5f * height, 1.0f),
+        .parent = parent
+    });
+    ColliderComponent_add(force, (ColliderParameters) {
+        .type = COLLIDER_CUBOID,
+        .group = GROUP_NONE,
+        .width = width,
+        .height = height,
+        .depth = depth
+    });
+    ForceComponent_add(force, (ForceParameters) {
+        .direction = vec3(0.0f, 0.0f, -1.0f),
+        .magnitude = 10.0f,
+        .disabled = true
+    });
 }
 
 

@@ -5,6 +5,7 @@
 
 #include "scene.h"
 #include "util.h"
+#include "systems/physics.h"
 
 
 static const unsigned int COLLISION_MASKS[] = {
@@ -756,8 +757,16 @@ void update_collisions() {
             bool collides = (COLLISION_MASKS[collider->group] & other_collider->group);
             bool other_collides = (COLLISION_MASKS[other_collider->group] & collider->group);
 
+            ForceComponent* force = get_component(i, COMPONENT_FORCE);
+            ForceComponent* other_force = get_component(j, COMPONENT_FORCE);
+            bool forces = force
+                && force->enabled
+                && (force->target_group & other_collider->group);
+            bool other_forces = other_force
+                && other_force->enabled
+                && (other_force->target_group & collider->group);
 
-            if (!triggers && !other_triggers && !collides && !other_collides) {
+            if (!triggers && !other_triggers && !collides && !other_collides && !forces && !other_forces) {
                 continue;
             }
 
@@ -768,6 +777,15 @@ void update_collisions() {
             }
             if (other_triggers) {
                 apply_trigger(j, i, penetration);
+            }
+
+            if (penetration.valid) {
+                if (forces) {
+                    apply_force(j, get_position(j), mul3(force->magnitude, force->direction));
+                }
+                if (other_forces) {
+                    apply_force(i, get_position(i), mul3(other_force->magnitude, other_force->direction));
+                }
             }
 
             if (!collides && !other_collides) {

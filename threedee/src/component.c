@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "util.h"
-#include "../include/systems/input.h"
+#include "systems/input.h"
 #include "scene.h"
 #include "component.h"
 #include "components/light.h"
@@ -79,6 +79,8 @@ void* get_component(Entity entity, ComponentType component_type) {
             return scene->components->emitter[entity];
         case COMPONENT_TRIGGER:
             return scene->components->trigger[entity];
+        case COMPONENT_FORCE:
+            return scene->components->force[entity];
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
             return NULL;
@@ -132,6 +134,9 @@ void remove_component(Entity entity, ComponentType component_type) {
             break;
         case COMPONENT_TRIGGER:
             TriggerComponent_remove(entity);
+            break;
+        case COMPONENT_FORCE:
+            ForceComponent_remove(entity);
             break;
         default:
             LOG_ERROR("Unknown component type: %d", component_type);
