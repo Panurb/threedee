@@ -33,7 +33,7 @@ void main_loop() {
     time_since_last_update += delta_time;
 
     if (app.focus) {
-        while (elapsed_time > app.time_step) {
+        if (elapsed_time > app.time_step) {
             elapsed_time -= app.time_step;
             time_since_last_update = 0.0f;
             input();

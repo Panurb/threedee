@@ -17,7 +17,8 @@ Entity create_lamp(Vector3 position) {
     RigidBodyComponent_add(i, (RigidBodyParameters) {
         .mass = 1.0f,
         .friction = 0.5f,
-        .bounce = 0.5f
+        .bounce = 0.5f,
+        .dont_sleep = true
     });
     ColliderComponent_add(i, (ColliderParameters) {
         .type = COLLIDER_SPHERE,
