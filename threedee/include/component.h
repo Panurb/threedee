@@ -112,3 +112,5 @@ void look_at(Entity entity, Vector3 target);
 void turn_to(Entity entity, Vector3 direction, float turn_speed, float time_step);
 
 void rotate_around_point(Entity entity, Vector3 point, float yaw);
+
+List* get_entities_in_radius(Vector3 center, float radius, bool (*filter)(Entity));

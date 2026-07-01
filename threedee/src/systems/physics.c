@@ -290,6 +290,22 @@ bool resolve_collisions(Entity entity, float bias) {
 }
 
 
+void update_force(Entity entity, float time_step) {
+    ForceComponent* force = get_component(entity, COMPONENT_FORCE);
+    if (!force) return;
+
+    if (force->duration == 0.0f) {
+        return;
+    }
+    if (force->timer > 0.0f) {
+        force->timer -= time_step;
+    } else {
+        force->enabled = false;
+        force->timer = 0.0f;
+    }
+}
+
+
 void init_physics(void) {
     for (Entity i = 0; i < scene->components->entities; i++) {
         RigidBodyComponent* rigid_body = get_component(i, COMPONENT_RIGIDBODY);
@@ -321,6 +337,7 @@ void update_physics(float time_step) {
 
     for (Entity i = 0; i < scene->components->entities; i++) {
         update_springs(i);
+        update_force(i, time_step);
     }
 
     for (Entity i = 0; i < scene->components->entities; i++) {

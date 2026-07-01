@@ -353,8 +353,8 @@ SDL_GPUGraphicsPipeline* create_render_pipeline_3d() {
 			.sample_count = get_sample_count()
 		},
 		.depth_stencil_state = (SDL_GPUDepthStencilState){
-			.enable_depth_test = true,
-			.enable_depth_write = true,
+			.enable_depth_test = false,
+			.enable_depth_write = false,
 			.compare_op = SDL_GPU_COMPAREOP_LESS
 		},
 		.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,

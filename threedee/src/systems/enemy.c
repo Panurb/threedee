@@ -183,6 +183,10 @@ void debug_draw_enemies() {
 void spawn_enemy(Entity trigger, Entity player) {
     UNUSED(player);
 
+    if (scene->scare_level < 1) {
+        return;
+    }
+
     if (scene->enemy != NULL_ENTITY) {
         return;
     }

@@ -222,6 +222,7 @@ void do_destroy_entity_recursive(Entity entity) {
 
 
 void destroy_entity_recursive(Entity entity) {
+    LOG_INFO("Destroying entity %d and its children", entity);
     remove_parent(entity);
     do_destroy_entity_recursive(entity);
 }
@@ -451,4 +452,23 @@ void rotate_around_point(Entity entity, Vector3 point, float yaw) {
 
     trans->position = add3(point, rotate_vector(q, offset));
     trans->rotation = quaternion_mult(q, trans->rotation);
+}
+
+
+List* get_entities_in_radius(Vector3 center, float radius, bool (*filter)(Entity)) {
+    List* entities = List_create();
+    for (Entity i = 0; i < scene->components->entities; i++) {
+        if (!entity_exists(i)) continue;
+
+        Vector3 pos = get_position(i);
+        float distance = norm3(sub3(pos, center));
+        if (distance <= radius) {
+            if (!filter) {
+                List_add(entities, i);
+            } else if (filter(i)) {
+                List_add(entities, i);
+            }
+        }
+    }
+    return entities;
 }

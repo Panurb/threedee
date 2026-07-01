@@ -45,6 +45,32 @@ Entity create_lamp(Vector3 position) {
         .range = 10.0f
     });
 
+    Entity force = create_entity();
+    TransformComponent_add(force, (TransformParameters) {
+        .position = position,
+    });
+    ColliderComponent_add(force, (ColliderParameters) {
+        .type = COLLIDER_SPHERE,
+        .group = GROUP_NONE,
+        .radius = 1.0f
+    });
+    ForceComponent_add(force, (ForceParameters) {
+        .direction = vec3_forward(),
+        .magnitude = 10.0f,
+        .disabled = true,
+        .duration = 0.1f
+    });
+
+    Entity trigger = create_entity();
+    TransformComponent_add(trigger, (TransformParameters) {
+        .position = position,
+    });
+    TriggerComponent_add(trigger, (TriggerParameters) {
+        .type = TRIGGER_MANUAL,
+        .on_enter = enable_force,
+        .target_entity = force
+    });
+
     return i;
 }
 
@@ -256,7 +282,18 @@ void create_bookcase(Vector3 position, float yaw) {
     ForceComponent_add(force, (ForceParameters) {
         .direction = vec3(0.0f, 0.0f, -1.0f),
         .magnitude = 10.0f,
-        .disabled = true
+        .disabled = true,
+        .duration = 0.5f
+    });
+
+    Entity trigger = create_entity();
+    TransformComponent_add(trigger, (TransformParameters) {
+        .position = position,
+    });
+    TriggerComponent_add(trigger, (TriggerParameters) {
+        .type = TRIGGER_MANUAL,
+        .target_entity = force,
+        .on_enter = enable_force
     });
 }
 

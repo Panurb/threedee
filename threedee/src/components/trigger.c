@@ -1,7 +1,5 @@
 #include "components/trigger.h"
 
-#include <stdio.h>
-
 #include "scene.h"
 
 
@@ -15,6 +13,8 @@ TriggerComponent* TriggerComponent_add(Entity entity, TriggerParameters params) 
     trigger->on_exit = params.on_exit;
     trigger->on_stay = params.on_stay;
     trigger->trigger_group = params.trigger_group ? params.trigger_group : GROUP_ALL;
+    trigger->target_entity = params.target_entity ? params.target_entity : NULL_ENTITY;
+    trigger->level = params.level;
 
     scene->components->trigger[entity] = trigger;
 
