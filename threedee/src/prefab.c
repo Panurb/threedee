@@ -1,6 +1,42 @@
+#include <stdio.h>
+#include <systems/sound.h>
+
 #include "component.h"
 #include "linalg.h"
 #include "quaternion.h"
+#include "systems/trigger.h"
+
+
+void start_scare_timer(Entity trigger, Entity entity) {
+    UNUSED(entity);
+    TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
+    start_timer(trig->target_entity, 0.1f);
+}
+
+
+void start_scare(Entity trigger, Entity entity) {
+    UNUSED(entity);
+    TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
+    trig->timer = 1.0f;
+
+    ForceComponent* force = get_component(trigger, COMPONENT_FORCE);
+    force->enabled = true;
+
+    LightComponent* light = get_component(trig->target_entity, COMPONENT_LIGHT);
+    light->flicker_amount = 1.0f;
+}
+
+
+void end_scare(Entity trigger, Entity entity) {
+    UNUSED(entity);
+    TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
+
+    ForceComponent* force = get_component(trigger, COMPONENT_FORCE);
+    force->enabled = false;
+
+    LightComponent* light = get_component(trig->target_entity, COMPONENT_LIGHT);
+    light->flicker_amount = 0.0f;
+}
 
 
 Entity create_lamp(Vector3 position) {
@@ -18,7 +54,8 @@ Entity create_lamp(Vector3 position) {
         .mass = 1.0f,
         .friction = 0.5f,
         .bounce = 0.5f,
-        .dont_sleep = true
+        .dont_sleep = true,
+        .move_sound = "squeak"
     });
     ColliderComponent_add(i, (ColliderParameters) {
         .type = COLLIDER_SPHERE,
@@ -33,6 +70,9 @@ Entity create_lamp(Vector3 position) {
         .stiffness = 50.0f,
         .damping = 1.0f,
         .thickness = 0.015f
+    });
+    SoundComponent_add(i, (SoundParameters) {
+        // .hit_sound = "metal_hit",
     });
 
     Entity light = create_entity();
@@ -57,9 +97,15 @@ Entity create_lamp(Vector3 position) {
     });
     ForceComponent_add(force, (ForceParameters) {
         .direction = vec3_forward(),
-        .magnitude = 10.0f,
+        .magnitude = 20.0f,
         .disabled = true,
-        .duration = 0.1f
+    });
+    TriggerComponent_add(force, (TriggerParameters) {
+        .type = TRIGGER_TIMER,
+        .trigger_group = GROUP_PLAYERS,
+        .on_enter = start_scare,
+        .on_exit = end_scare,
+        .target_entity = light
     });
 
     Entity trigger = create_entity();
@@ -68,11 +114,22 @@ Entity create_lamp(Vector3 position) {
     });
     TriggerComponent_add(trigger, (TriggerParameters) {
         .type = TRIGGER_MANUAL,
-        .on_enter = enable_force,
+        .on_enter = start_scare_timer,
         .target_entity = force
     });
 
     return i;
+}
+
+
+void start_television_scare(Entity trigger, Entity entity) {
+    UNUSED(entity);
+    TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
+    LightComponent* light = get_component(trig->target_entity, COMPONENT_LIGHT);
+    light->disabled = false;
+
+    SoundComponent* sound = get_component(trig->target_entity, COMPONENT_SOUND);
+    loop_sound(trig->target_entity, "static", sound->volume, 1.0f);
 }
 
 
@@ -99,7 +156,23 @@ Entity create_television(Vector3 position, float yaw) {
         .color = COLOR_WHITE,
         .fov = 90.0f,
         .range = 5.0f,
-        .intensity = 0.25f
+        .intensity = 1.0f,
+        .disabled = true,
+        .flicker_amount = 0.5f,
+        .flicker_speed = 1.0f
+    });
+    SoundComponent_add(i, (SoundParameters) {
+        .volume = 0.5f
+    });
+
+    Entity trigger = create_entity();
+    TransformComponent_add(trigger, (TransformParameters) {
+        .position = position,
+    });
+    TriggerComponent_add(trigger, (TriggerParameters) {
+        .type = TRIGGER_MANUAL,
+        .on_enter = start_television_scare,
+        .target_entity = i
     });
 
     return i;
@@ -284,7 +357,6 @@ void create_bookcase(Vector3 position, float yaw) {
         .direction = vec3(0.0f, 0.0f, -1.0f),
         .magnitude = 10.0f,
         .disabled = true,
-        .duration = 0.5f
     });
 
     Entity trigger = create_entity();

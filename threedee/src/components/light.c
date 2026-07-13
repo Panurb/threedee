@@ -20,7 +20,9 @@ LightComponent* LightComponent_add(Entity entity, LightParameters params) {
     light->specular_color = params.color;
     light->range = params.range ? params.range : 10.0f;
     light->intensity = params.intensity ? params.intensity : 2.0f;
-    light->flicker = 1.0f;
+    light->base_intensity = light->intensity;
+    light->flicker_amount = params.flicker_amount;
+    light->flicker_speed = params.flicker_speed ? params.flicker_speed : 1.0f;
     float half_size = light->range * tanf(to_radians(light->fov) * 0.5f);
 
     switch (params.shape) {

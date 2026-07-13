@@ -12,7 +12,9 @@ typedef void (*OnStay)(Entity trigger, Entity other, float time_step);
 typedef enum TriggerType {
     TRIGGER_LOOK,
     TRIGGER_COLLISION,
-    TRIGGER_MANUAL
+    TRIGGER_MANUAL,
+    TRIGGER_TIMER,
+    TRIGGER_PERIODIC
 } TriggerType;
 
 
@@ -27,6 +29,7 @@ typedef struct TriggerComponent {
     ColliderGroup trigger_group;
     Entity target_entity;
     int level;
+    float timer;
 } TriggerComponent;
 
 

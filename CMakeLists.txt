@@ -52,6 +52,7 @@ set(SOURCES
     threedee/src/systems/draw.c
     threedee/src/systems/enemy.c
     threedee/src/systems/input.c
+    threedee/src/systems/lighting.c
     threedee/src/systems/navigation.c
     threedee/src/systems/particle.c
     threedee/src/systems/physics.c

@@ -32,6 +32,7 @@ typedef struct RigidBodyParameters {
     float gravity_scale;
     AxisLock axis_lock;
     bool dont_sleep;
+    String move_sound;
 } RigidBodyParameters;
 
 
@@ -54,6 +55,7 @@ typedef struct {
     float max_angular_speed;
     AxisLock axis_lock;
     ArrayList* springs;
+    String move_sound;
 } RigidBodyComponent;
 
 

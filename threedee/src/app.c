@@ -22,6 +22,7 @@
 #include "systems/player.h"
 #include "systems/enemy.h"
 #include "systems/particle.h"
+#include "systems/lighting.h"
 #include "game.h"
 
 
@@ -191,6 +192,7 @@ void update(float time_step) {
     update_waypoints();
     update_sounds(time_step);
     update_game(time_step);
+    update_lights(time_step);
 
     // For overhead camera testing
     // TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);

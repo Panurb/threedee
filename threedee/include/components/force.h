@@ -10,7 +10,6 @@ typedef struct ForceParameters {
     float magnitude;
     ColliderGroup target_group;
     bool disabled;
-    float duration;
 } ForceParameters;
 
 
@@ -19,8 +18,6 @@ typedef struct ForceComponent {
     Vector3 direction;
     float magnitude;
     ColliderGroup target_group;
-    float duration;
-    float timer;
 } ForceComponent;
 
 
@@ -31,3 +28,6 @@ void ForceComponent_remove(Entity entity);
 
 
 void enable_force(Entity trigger, Entity entity);
+
+
+void disable_force(Entity trigger, Entity entity);

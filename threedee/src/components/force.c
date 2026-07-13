@@ -1,10 +1,8 @@
 #include <stdlib.h>
-
-#include "components/force.h"
-
 #include <stdio.h>
 
 #include "scene.h"
+#include "components/force.h"
 
 
 ForceComponent* ForceComponent_add(Entity entity, ForceParameters params) {
@@ -13,8 +11,6 @@ ForceComponent* ForceComponent_add(Entity entity, ForceParameters params) {
     force->direction = normalized3(params.direction);
     force->magnitude = params.magnitude;
     force->target_group = params.target_group ? params.target_group : GROUP_ALL;
-    force->duration = params.duration;
-    force->timer = force->duration;
     scene->components->force[entity] = force;
     return force;
 }
@@ -31,12 +27,17 @@ void ForceComponent_remove(Entity entity) {
 
 void enable_force(Entity trigger, Entity entity) {
     UNUSED(entity);
-    TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
-    ForceComponent* force = get_component(trig->target_entity, COMPONENT_FORCE);
+    ForceComponent* force = get_component(trigger, COMPONENT_FORCE);
     if (force) {
         force->enabled = true;
-        if (force->duration) {
-            force->timer = force->duration;
-        }
+    }
+}
+
+
+void disable_force(Entity trigger, Entity entity) {
+    UNUSED(entity);
+    ForceComponent* force = get_component(trigger, COMPONENT_FORCE);
+    if (force) {
+        force->enabled = false;
     }
 }

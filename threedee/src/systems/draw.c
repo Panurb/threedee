@@ -449,8 +449,8 @@ void draw_entities() {
             if (frustum_sphere_check(frustum, light_sphere)) {
                 add_light(
                     get_transform_interpolated(entity, app.delta),
-                    light->diffuse_color,
-                    light->specular_color,
+                    brighten(light->diffuse_color, light->intensity),
+                    brighten(light->specular_color, light->intensity),
                     light->fov,
                     light->range,
                     light->visibility_mask,

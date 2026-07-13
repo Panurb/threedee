@@ -17,12 +17,14 @@ typedef struct SoundComponent {
     String loop_sound;
     float cooldown_timer;
     float cooldown;
+    float volume;
 } SoundComponent;
 
 
 typedef struct SoundParameters {
     String hit_sound;
     String loop_sound;
+    float volume;
 } SoundParameters;
 
 

@@ -28,6 +28,8 @@ typedef struct {
     float range;
     float intensity;
     Color color;
+    float flicker_amount;
+    float flicker_speed;
 } LightParameters;
 
 
@@ -39,7 +41,9 @@ typedef struct {
     Color specular_color;
     float range;
     float intensity;
-    float flicker;
+    float base_intensity;
+    float flicker_amount;
+    float flicker_speed;
     Matrix4 projection_matrix;
 } LightComponent;
 

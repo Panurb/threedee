@@ -44,17 +44,33 @@ void add_sound(Entity entity, String filename, float volume, float pitch) {
 
 void loop_sound(int entity, String filename, float volume, float pitch) {
     SoundComponent* scomp = get_component(entity, COMPONENT_SOUND);
+    if (!scomp) {
+        LOG_WARNING("Entity %d does not have a sound component, cannot loop sound %s", entity, filename);
+        return;
+    }
+
+    int free_slot = -1;
     for (int i = 0; i < scomp->size; i++) {
-        if (!scomp->events[i]) {
-            SoundEvent* event = malloc(sizeof(SoundEvent));
-            strcpy(event->filename, filename);
-            event->volume = volume;
-            event->pitch = pitch;
-            event->loop = true;
-            event->channel = -1;
-            scomp->events[i] = event;
-            break;
+        SoundEvent* event = scomp->events[i];
+        if (event) {
+            if (strcmp(event->filename, filename) == 0) {
+                event->volume = volume;
+                event->pitch = pitch;
+                return;
+            }
+        } else if (free_slot == -1) {
+            free_slot = i;
         }
+    }
+
+    if (free_slot != -1) {
+        SoundEvent* event = malloc(sizeof(SoundEvent));
+        strcpy(event->filename, filename);
+        event->volume = volume;
+        event->pitch = pitch;
+        event->loop = true;
+        event->channel = -1;
+        scomp->events[free_slot] = event;
     }
 }
 
@@ -112,7 +128,7 @@ void play_sounds(int camera) {
 
         if (scomp->loop_sound[0] != '\0') {
             if (!scomp->events[0]) {
-                loop_sound(i, scomp->loop_sound, 0.5f, 1.0f);
+                loop_sound(i, scomp->loop_sound, scomp->volume, 1.0f);
             }
         }
 

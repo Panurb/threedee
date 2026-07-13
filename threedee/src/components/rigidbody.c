@@ -32,6 +32,7 @@ RigidBodyComponent* RigidBodyComponent_add(Entity entity, RigidBodyParameters pa
         rigid_body->axis_lock.rotation_axis = normalized3(params.axis_lock.rotation_axis);
     }
     rigid_body->springs = ArrayList_create(sizeof(Spring));
+    strcpy(rigid_body->move_sound, params.move_sound);
 
     scene->components->rigid_body[entity] = rigid_body;
 

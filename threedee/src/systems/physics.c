@@ -290,22 +290,6 @@ bool resolve_collisions(Entity entity, float bias) {
 }
 
 
-void update_force(Entity entity, float time_step) {
-    ForceComponent* force = get_component(entity, COMPONENT_FORCE);
-    if (!force) return;
-
-    if (force->duration == 0.0f) {
-        return;
-    }
-    if (force->timer > 0.0f) {
-        force->timer -= time_step;
-    } else {
-        force->enabled = false;
-        force->timer = 0.0f;
-    }
-}
-
-
 void init_physics(void) {
     for (Entity i = 0; i < scene->components->entities; i++) {
         RigidBodyComponent* rigid_body = get_component(i, COMPONENT_RIGIDBODY);
@@ -330,14 +314,16 @@ void update_physics(float time_step) {
 
     for (Entity i = 0; i < scene->components->entities; i++) {
         RigidBodyComponent* rb = get_component(i, COMPONENT_RIGIDBODY);
-        if (rb) {
-            rb->on_ground = false;
-        }
-    }
+        if (!rb) continue;
 
-    for (Entity i = 0; i < scene->components->entities; i++) {
+        rb->on_ground = false;
         update_springs(i);
-        update_force(i, time_step);
+
+        float speed = norm3(rb->velocity);
+        if (rb->move_sound[0] != '\0') {
+            float volume = clamp(10.0f * speed / rb->max_speed, 0.0f, 1.0f);
+            loop_sound(i, rb->move_sound, volume, 1.0f);
+        }
     }
 
     for (Entity i = 0; i < scene->components->entities; i++) {
@@ -418,6 +404,10 @@ void update_physics(float time_step) {
             rigid_body->velocity = zeros3();
             rigid_body->angular_velocity = zeros3();
             rigid_body->asleep = true;
+            SoundComponent* sound = get_component(i, COMPONENT_SOUND);
+            if (rigid_body->move_sound[0] != '\0' && sound) {
+                stop_loop(i);
+            }
             LOG_DEBUG("Rigid body %d is asleep", i);
         }
 
