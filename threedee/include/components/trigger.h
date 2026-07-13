@@ -30,6 +30,7 @@ typedef struct TriggerComponent {
     Entity target_entity;
     int level;
     float timer;
+    float max_time;
 } TriggerComponent;
 
 
@@ -43,6 +44,7 @@ typedef struct TriggerParameters {
     ColliderGroup trigger_group;
     Entity target_entity;
     int level;
+    float max_time;
 } TriggerParameters;
 
 

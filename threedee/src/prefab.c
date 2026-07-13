@@ -9,12 +9,13 @@
 
 void start_scare_timer(Entity trigger, Entity entity) {
     UNUSED(entity);
+    LOG_INFO("Starting scare timer for trigger %d", trigger);
     TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
-    start_timer(trig->target_entity, 0.1f);
+    start_timer(trig->target_entity, trig->max_time);
 }
 
 
-void start_scare(Entity trigger, Entity entity) {
+void start_lamp_scare(Entity trigger, Entity entity) {
     UNUSED(entity);
     TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
     trig->timer = 1.0f;
@@ -27,7 +28,7 @@ void start_scare(Entity trigger, Entity entity) {
 }
 
 
-void end_scare(Entity trigger, Entity entity) {
+void end_lamp_scare(Entity trigger, Entity entity) {
     UNUSED(entity);
     TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
 
@@ -102,10 +103,10 @@ Entity create_lamp(Vector3 position) {
     });
     TriggerComponent_add(force, (TriggerParameters) {
         .type = TRIGGER_TIMER,
-        .trigger_group = GROUP_PLAYERS,
-        .on_enter = start_scare,
-        .on_exit = end_scare,
-        .target_entity = light
+        .on_enter = start_lamp_scare,
+        .on_exit = end_lamp_scare,
+        .target_entity = light,
+        .max_time = 0.1f
     });
 
     Entity trigger = create_entity();
@@ -127,9 +128,7 @@ void start_television_scare(Entity trigger, Entity entity) {
     TriggerComponent* trig = get_component(trigger, COMPONENT_TRIGGER);
     LightComponent* light = get_component(trig->target_entity, COMPONENT_LIGHT);
     light->disabled = false;
-
-    SoundComponent* sound = get_component(trig->target_entity, COMPONENT_SOUND);
-    loop_sound(trig->target_entity, "static", sound->volume, 1.0f);
+    add_sound(trig->target_entity, "static", 1.0f, 1.0f);
 }
 
 
@@ -265,6 +264,21 @@ Entity create_book(Vector3 position, float yaw, float thickness, float height) {
 }
 
 
+void start_bookcase_scare(Entity trigger, Entity entity) {
+    UNUSED(entity);
+    LOG_INFO("Starting bookcase scare for trigger %d", trigger);
+    ForceComponent* force = get_component(trigger, COMPONENT_FORCE);
+    force->enabled = true;
+}
+
+
+void end_bookcase_scare(Entity trigger, Entity entity) {
+    UNUSED(entity);
+    ForceComponent* force = get_component(trigger, COMPONENT_FORCE);
+    force->enabled = false;
+}
+
+
 void create_bookcase(Vector3 position, float yaw) {
     float width = 1.5f;
     float depth = 0.5f;
@@ -358,6 +372,12 @@ void create_bookcase(Vector3 position, float yaw) {
         .magnitude = 10.0f,
         .disabled = true,
     });
+    TriggerComponent_add(force, (TriggerParameters) {
+        .type = TRIGGER_TIMER,
+        .max_time = 0.1f,
+        .on_enter = start_bookcase_scare,
+        .on_exit = end_bookcase_scare
+    });
 
     Entity trigger = create_entity();
     TransformComponent_add(trigger, (TransformParameters) {
@@ -366,7 +386,7 @@ void create_bookcase(Vector3 position, float yaw) {
     TriggerComponent_add(trigger, (TriggerParameters) {
         .type = TRIGGER_MANUAL,
         .target_entity = force,
-        .on_enter = enable_force
+        .on_enter = start_scare_timer
     });
 }
 

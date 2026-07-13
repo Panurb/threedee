@@ -15,6 +15,8 @@ TriggerComponent* TriggerComponent_add(Entity entity, TriggerParameters params) 
     trigger->trigger_group = params.trigger_group ? params.trigger_group : GROUP_ALL;
     trigger->target_entity = params.target_entity ? params.target_entity : NULL_ENTITY;
     trigger->level = params.level;
+    trigger->timer = 0.0f;
+    trigger->max_time = params.max_time;
 
     scene->components->trigger[entity] = trigger;
 

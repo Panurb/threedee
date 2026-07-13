@@ -748,10 +748,12 @@ void update_collisions() {
             TriggerComponent* other_trigger = get_component(j, COMPONENT_TRIGGER);
             bool triggers = trigger
                 && trigger->type == TRIGGER_COLLISION
-                && trigger->trigger_group & other_collider->group;
+                && trigger->trigger_group & other_collider->group
+                && trigger->level >= scene->scare_level;
             bool other_triggers = other_trigger
                 && other_trigger->type == TRIGGER_COLLISION
-                && other_trigger->trigger_group & collider->group;
+                && other_trigger->trigger_group & collider->group
+                && other_trigger->level >= scene->scare_level;
 
             // TODO: Handle asymmetric collisions
             bool collides = (COLLISION_MASKS[collider->group] & other_collider->group);

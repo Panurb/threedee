@@ -12,6 +12,7 @@ void update_triggers(float time_step) {
     for (Entity i = 0; i < scene->components->entities; i++) {
         TriggerComponent* trigger = get_component(i, COMPONENT_TRIGGER);
         if (!trigger) continue;
+        if (trigger->level > scene->scare_level) continue;
 
         for (int j = 0; j < trigger->entities->size; j++) {
             Entity other = *(Entity*)ArrayList_get(trigger->entities, j);
@@ -50,7 +51,7 @@ void update_triggers(float time_step) {
                     if (trigger->on_stay) {
                         trigger->on_stay(i, trigger->target_entity, time_step);
                     }
-                } else {
+                } else if (trigger->timer < 0.0f) {
                     trigger->timer = 0.0f;
                     if (trigger->on_exit) {
                         trigger->on_exit(i, trigger->target_entity);

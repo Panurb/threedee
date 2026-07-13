@@ -34,6 +34,7 @@ void update_game(float time_step) {
                 trigger->on_enter(entity, scene->player);
                 destroy_entity_recursive(entity);
                 scare_timer = 10.0f;
+                scene->scare_level++;
             }
         } else {
             scare_timer = 10.0f;

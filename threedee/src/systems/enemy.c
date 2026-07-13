@@ -183,10 +183,6 @@ void debug_draw_enemies() {
 void spawn_enemy(Entity trigger, Entity player) {
     UNUSED(player);
 
-    if (scene->scare_level < 1) {
-        return;
-    }
-
     if (scene->enemy != NULL_ENTITY) {
         return;
     }
@@ -214,7 +210,8 @@ void create_window_scare(Vector3 position, float yaw) {
     TriggerComponent_add(entity, (TriggerParameters) {
         .type = TRIGGER_COLLISION,
         .trigger_group = GROUP_PLAYERS,
-        .on_enter = spawn_enemy
+        .on_enter = spawn_enemy,
+        .level = 1
     });
     ColliderComponent* collider = ColliderComponent_add(entity, (ColliderParameters) {
         .type = COLLIDER_CUBOID
@@ -234,6 +231,7 @@ void create_corner_scare(Vector3 position, float yaw) {
         .trigger_group = GROUP_PLAYERS,
         .distance = 10.0f,
         .roi = 1.0f,
-        .on_enter = spawn_enemy
+        .on_enter = spawn_enemy,
+        .level = 2
     });
 }

@@ -30,7 +30,7 @@ void add_sound(Entity entity, String filename, float volume, float pitch) {
         if (!scomp->events[i]) {
             SoundEvent* event = malloc(sizeof(SoundEvent));
             strcpy(event->filename, filename);
-            event->volume = volume;
+            event->volume = volume * scomp->volume;
             event->pitch = pitch;
             event->loop = false;
             event->channel = -1;
@@ -118,7 +118,7 @@ void play_sounds(int camera) {
 
         Vector3 position = get_position(i);
         float dist = norm3(sub3(position, get_position(camera)));
-        float max_dist = 10.0f;
+        float max_dist = 100.0f;
 
         Matrix4 camera_transform = get_transform(camera);
 
