@@ -206,7 +206,7 @@ void load_shaders() {
 
 	shaders[SHADER_FRAGMENT_SHADOW_DEPTH] = load_shader(
 		app.gpu_device, "shadow_depth.frag",
-		0, 0, 0, 0
+		1, 0, 0, 0
 	);
 
 	shaders[SHADER_FRAGMENT_POST_PROCESSING] = load_shader(

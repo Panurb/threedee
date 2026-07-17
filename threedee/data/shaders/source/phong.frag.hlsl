@@ -162,7 +162,7 @@ Output main(Input input)
         float shadow = shadow_pcf(shadow_uv, i, shadow_depth, texel_size, 3);
 
         float shadow_strength = lerp(1.0, 0.25, shadow);
-        float light_shadow_factor = lerp(0.25, shadow_strength, shadow_uv);
+        float light_shadow_factor = in_bounds ? shadow_strength : 1.0;
 
         combined_spot_intensity = max(combined_spot_intensity, spot_intensity);
         diff *= spot_intensity;
@@ -194,6 +194,7 @@ Output main(Input input)
     // Only hidden entities (ambient = 0) should be faded out
     if (material.ambient == 0.0) {
         alpha *= saturate(combined_spot_intensity);
+        if (alpha < 0.01) discard;
     }
 
     float fog_factor = saturate((fog_end - distance) / (fog_end - fog_start));

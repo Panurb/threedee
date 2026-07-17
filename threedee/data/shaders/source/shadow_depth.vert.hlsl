@@ -31,7 +31,14 @@ struct Input
     float3 tangent : TANGENT0;
 };
 
-float4 main(Input input, uint instance_id : SV_InstanceID) : SV_Position
+struct Output
+{
+    float4 position : SV_Position;
+    float2 tex_coord : TEXCOORD0;
+    int tex_index;
+};
+
+Output main(Input input, uint instance_id : SV_InstanceID)
 {
     InstanceData instance;
     if (use_instance_buffer == 0) {
@@ -42,12 +49,21 @@ float4 main(Input input, uint instance_id : SV_InstanceID) : SV_Position
 
     if ((instance.visibility & visibility_mask) == 0)
     {
-        return float4(0.0f, 0.0f, -1e6f, 0.0f);
+        Output output;
+        output.position = float4(0.0f, 0.0f, -1e6f, 0.0f);
+        output.tex_coord = float2(0.0f, 0.0f);
+        output.tex_index = 0;
+        return output;
     }
 
     float4x4 transform = instance.transform_matrix;
+    float2 tex_scale = instance.tex_scale;
+    float2 tiling = 1.0f / tex_scale;
 
-    float4 position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
+    Output output;
+    output.position = mul(mul(projection_view_matrix, transform), float4(input.position, 1.0f));
+    output.tex_coord = input.tex_coord * tiling;
+    output.tex_index = instance.tex_index;
 
-    return position;
+    return output;
 }

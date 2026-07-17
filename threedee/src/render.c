@@ -389,6 +389,18 @@ void bind_pipeline(SDL_GPURenderPass* render_pass, Pipeline pipeline) {
 			1
 		);
 	}
+
+	if (pipeline == PIPELINE_SHADOW_DEPTH) {
+		SDL_BindGPUFragmentSamplers(
+			render_pass,
+			0,
+			&(SDL_GPUTextureSamplerBinding){
+				.texture = resources.texture_array,
+				.sampler = sampler,
+			},
+			1
+		);
+	}
 }
 
 
