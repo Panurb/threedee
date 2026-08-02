@@ -102,6 +102,41 @@ Shape get_shape(Entity entity) {
 }
 
 
+AABB get_bounding_box(Entity entity) {
+    AABB bounding_box = {
+        .center = get_position(entity),
+        .half_extents = zeros3()
+    };
+
+    ColliderComponent* collider = get_component(entity, COMPONENT_COLLIDER);
+    if (!collider)
+    {
+        LOG_WARNING("No collider for entity %d", entity);
+        return bounding_box;
+    }
+    switch (collider->type)
+    {
+        case COLLIDER_PLANE:
+            bounding_box.half_extents = vec3(INFINITY, INFINITY, INFINITY);
+            break;
+        case COLLIDER_SPHERE:
+            bounding_box.half_extents = vec3(collider->radius, collider->radius, collider->radius);
+            break;
+        case COLLIDER_CUBOID:
+            bounding_box.half_extents = get_half_extents(entity);
+            break;
+        case COLLIDER_CAPSULE:
+            bounding_box.half_extents = vec3(collider->radius, collider->height / 2.0f + collider->radius, collider->radius);
+            break;
+        case COLLIDER_AABB:
+            bounding_box.half_extents = get_half_extents(entity);
+            break;
+    }
+
+    return bounding_box;
+}
+
+
 ColliderComponent* ColliderComponent_add(Entity entity, ColliderParameters parameters) {
     ColliderComponent* collider = malloc(sizeof(ColliderComponent));
     collider->type = parameters.type;

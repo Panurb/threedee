@@ -727,6 +727,28 @@ void apply_trigger(Entity trigger_entity, Entity entity, Penetration penetration
 }
 
 
+bool broad_phase_collision(Entity i, Entity j) {
+    ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
+    ColliderComponent* other_collider = get_component(j, COMPONENT_COLLIDER);
+
+    if (!collider || !other_collider) {
+        return false;
+    }
+
+    AABB aabb1 = get_bounding_box(i);
+    AABB aabb2 = get_bounding_box(j);
+
+    Vector3 min1 = sub3(aabb1.center, aabb1.half_extents);
+    Vector3 max1 = add3(aabb1.center, aabb1.half_extents);
+    Vector3 min2 = sub3(aabb2.center, aabb2.half_extents);
+    Vector3 max2 = add3(aabb2.center, aabb2.half_extents);
+
+    return (min1.x <= max2.x && max1.x >= min2.x) &&
+           (min1.y <= max2.y && max1.y >= min2.y) &&
+           (min1.z <= max2.z && max1.z >= min2.z);
+}
+
+
 void update_collisions() {
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
@@ -740,7 +762,10 @@ void update_collisions() {
         if (!collider) continue;
 
         for (Entity j = 0; j < i; j++) {
-            // TODO: Broad-phase collision detection
+            if (!broad_phase_collision(i, j)) {
+                continue;
+            }
+
             ColliderComponent* other_collider = get_component(j, COMPONENT_COLLIDER);
             if (!other_collider) continue;
 

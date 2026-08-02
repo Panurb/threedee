@@ -61,6 +61,8 @@ Vector3 get_half_extents(Entity entity);
 
 Shape get_shape(Entity entity);
 
+AABB get_bounding_box(Entity entity);
+
 ColliderComponent* ColliderComponent_add(Entity entity, ColliderParameters parameters);
 
 void ColliderComponent_remove(Entity entity);
