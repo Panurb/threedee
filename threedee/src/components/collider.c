@@ -117,7 +117,7 @@ AABB get_bounding_box(Entity entity) {
     switch (collider->type)
     {
         case COLLIDER_PLANE:
-            bounding_box.half_extents = vec3(INFINITY, INFINITY, INFINITY);
+            bounding_box.half_extents = vec3(100.0f, 100.0f, 100.0f);
             break;
         case COLLIDER_SPHERE:
             bounding_box.half_extents = vec3(collider->radius, collider->radius, collider->radius);
@@ -176,6 +176,7 @@ ColliderComponent* ColliderComponent_add(Entity entity, ColliderParameters param
     }
 
     collider->collisions = ArrayList_create(sizeof(Collision));
+    collider->last_collision = NULL_ENTITY;
     scene->components->collider[entity] = collider;
 
     return collider;

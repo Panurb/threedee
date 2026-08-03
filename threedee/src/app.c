@@ -193,6 +193,7 @@ void update(float time_step) {
     update_sounds(time_step);
     update_game(time_step);
     update_lights(time_step);
+    update_grid(scene->dynamic_grid);
 
     // For overhead camera testing
     // TransformComponent* trans = get_component(scene->camera, COMPONENT_TRANSFORM);

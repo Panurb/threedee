@@ -28,6 +28,8 @@ void create_scene() {
     scene->bloom.knee = 0.05f;
     scene->bloom.intensity = 0.5f;
     scene->bloom.strength = 0.5f;
+    scene->static_grid = create_grid();
+    scene->dynamic_grid = create_grid();
 
     TransformComponent* trans = get_component(scene->player, COMPONENT_TRANSFORM);
     scene->camera = trans->children->head->value;
@@ -46,6 +48,7 @@ void create_scene() {
     });
 
     Level level = create_level();
+    update_grid(scene->static_grid);
 
     while (false) {
         int x = randi(0, level.width - 1);

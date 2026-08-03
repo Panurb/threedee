@@ -42,6 +42,7 @@ typedef struct {
     float height;
     float depth;
     ArrayList* collisions;
+    Entity last_collision;
 } ColliderComponent;
 
 

@@ -727,25 +727,122 @@ void apply_trigger(Entity trigger_entity, Entity entity, Penetration penetration
 }
 
 
-bool broad_phase_collision(Entity i, Entity j) {
+void handle_collision(Entity i, Entity j) {
     ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
     ColliderComponent* other_collider = get_component(j, COMPONENT_COLLIDER);
+    if (!other_collider) return;
+    if (other_collider->last_collision == i) return;
 
-    if (!collider || !other_collider) {
-        return false;
+    TriggerComponent* trigger = get_component(i, COMPONENT_TRIGGER);
+    TriggerComponent* other_trigger = get_component(j, COMPONENT_TRIGGER);
+    bool triggers = trigger
+        && trigger->type == TRIGGER_COLLISION
+        && trigger->trigger_group & other_collider->group
+        && trigger->level >= scene->scare_level;
+    bool other_triggers = other_trigger
+        && other_trigger->type == TRIGGER_COLLISION
+        && other_trigger->trigger_group & collider->group
+        && other_trigger->level >= scene->scare_level;
+
+    // TODO: Handle asymmetric collisions
+    bool collides = (COLLISION_MASKS[collider->group] & other_collider->group);
+    bool other_collides = (COLLISION_MASKS[other_collider->group] & collider->group);
+
+    ForceComponent* force = get_component(i, COMPONENT_FORCE);
+    ForceComponent* other_force = get_component(j, COMPONENT_FORCE);
+    bool forces = force
+        && force->enabled
+        && (force->target_group & other_collider->group);
+    bool other_forces = other_force
+        && other_force->enabled
+        && (other_force->target_group & collider->group);
+
+    if (!triggers && !other_triggers && !collides && !other_collides && !forces && !other_forces) {
+        return;
     }
 
-    AABB aabb1 = get_bounding_box(i);
-    AABB aabb2 = get_bounding_box(j);
+    Penetration penetration = get_penetration(i, j);
 
-    Vector3 min1 = sub3(aabb1.center, aabb1.half_extents);
-    Vector3 max1 = add3(aabb1.center, aabb1.half_extents);
-    Vector3 min2 = sub3(aabb2.center, aabb2.half_extents);
-    Vector3 max2 = add3(aabb2.center, aabb2.half_extents);
+    if (triggers) {
+        apply_trigger(i, j, penetration);
+    }
+    if (other_triggers) {
+        apply_trigger(j, i, penetration);
+    }
 
-    return (min1.x <= max2.x && max1.x >= min2.x) &&
-           (min1.y <= max2.y && max1.y >= min2.y) &&
-           (min1.z <= max2.z && max1.z >= min2.z);
+    if (penetration.valid) {
+        if (forces) {
+            apply_force(j, get_position(j), mul3(force->magnitude, force->direction));
+        }
+        if (other_forces) {
+            apply_force(i, get_position(i), mul3(other_force->magnitude, other_force->direction));
+        }
+    }
+
+    if (!collides && !other_collides) {
+        return;
+    }
+
+    if (penetration.valid) {
+        float speed = get_collision_speed(i, j, penetration);
+        if (penetration.contact_manifold.points_size > 0) {
+            for (int k = 0; k < penetration.contact_manifold.points_size; k++) {
+                Vector3 contact_point = penetration.contact_manifold.points[k];
+                Collision collision = {
+                    .entity = j,
+                    .overlap = penetration.overlap,
+                    .offset = sub3(contact_point, get_position(i)),
+                    .offset_other = sub3(contact_point, get_position(j)),
+                    .speed = speed
+                };
+                ArrayList_add(collider->collisions, &collision);
+                Collision other_collision = {
+                    .entity = i,
+                    .overlap = neg3(penetration.overlap),
+                    .offset = sub3(contact_point, get_position(j)),
+                    .offset_other = sub3(contact_point, get_position(i)),
+                    .speed = speed
+                };
+                ArrayList_add(other_collider->collisions, &other_collision);
+            }
+            return;
+        }
+
+        Collision collision = {
+            .entity = j,
+            .overlap = penetration.overlap,
+            .offset = sub3(penetration.contact_point, get_position(i)),
+            .offset_other = sub3(penetration.contact_point, get_position(j)),
+            .speed = speed
+        };
+        ArrayList_add(collider->collisions, &collision);
+        Collision other_collision = {
+            .entity = i,
+            .overlap = mul3(-1.0f, penetration.overlap),
+            .offset = sub3(penetration.contact_point, get_position(j)),
+            .offset_other = sub3(penetration.contact_point, get_position(i)),
+            .speed = speed
+        };
+        ArrayList_add(other_collider->collisions, &other_collision);
+    }
+}
+
+
+void handle_grid_collisions(Entity entity, ColliderGrid* grid) {
+    Bounds bounds = get_bounds(entity);
+
+    for (int x = bounds.x_min; x <= bounds.x_max; x++) {
+        for (int y = bounds.y_min; y <= bounds.y_max; y++) {
+            for (int z = bounds.z_min; z <= bounds.z_max; z++) {
+                for (int k = 0; k < MAX_ENTITIES_PER_CELL; k++) {
+                    Entity j = grid->array[x][y][z][k];
+                    if (j == NULL_ENTITY) break;
+                    if (entity == j) continue;
+                    handle_collision(entity, j);
+                }
+            }
+        }
+    }
 }
 
 
@@ -755,112 +852,14 @@ void update_collisions() {
         if (!collider) continue;
 
         ArrayList_clear(collider->collisions);
+        collider->last_collision = NULL_ENTITY;
     }
 
     for (Entity i = 0; i < scene->components->entities; i++) {
         ColliderComponent* collider = get_component(i, COMPONENT_COLLIDER);
         if (!collider) continue;
 
-        for (Entity j = 0; j < i; j++) {
-            if (!broad_phase_collision(i, j)) {
-                continue;
-            }
-
-            ColliderComponent* other_collider = get_component(j, COMPONENT_COLLIDER);
-            if (!other_collider) continue;
-
-            TriggerComponent* trigger = get_component(i, COMPONENT_TRIGGER);
-            TriggerComponent* other_trigger = get_component(j, COMPONENT_TRIGGER);
-            bool triggers = trigger
-                && trigger->type == TRIGGER_COLLISION
-                && trigger->trigger_group & other_collider->group
-                && trigger->level >= scene->scare_level;
-            bool other_triggers = other_trigger
-                && other_trigger->type == TRIGGER_COLLISION
-                && other_trigger->trigger_group & collider->group
-                && other_trigger->level >= scene->scare_level;
-
-            // TODO: Handle asymmetric collisions
-            bool collides = (COLLISION_MASKS[collider->group] & other_collider->group);
-            bool other_collides = (COLLISION_MASKS[other_collider->group] & collider->group);
-
-            ForceComponent* force = get_component(i, COMPONENT_FORCE);
-            ForceComponent* other_force = get_component(j, COMPONENT_FORCE);
-            bool forces = force
-                && force->enabled
-                && (force->target_group & other_collider->group);
-            bool other_forces = other_force
-                && other_force->enabled
-                && (other_force->target_group & collider->group);
-
-            if (!triggers && !other_triggers && !collides && !other_collides && !forces && !other_forces) {
-                continue;
-            }
-
-            Penetration penetration = get_penetration(i, j);
-
-            if (triggers) {
-                apply_trigger(i, j, penetration);
-            }
-            if (other_triggers) {
-                apply_trigger(j, i, penetration);
-            }
-
-            if (penetration.valid) {
-                if (forces) {
-                    apply_force(j, get_position(j), mul3(force->magnitude, force->direction));
-                }
-                if (other_forces) {
-                    apply_force(i, get_position(i), mul3(other_force->magnitude, other_force->direction));
-                }
-            }
-
-            if (!collides && !other_collides) {
-                continue;
-            }
-
-            if (penetration.valid) {
-                float speed = get_collision_speed(i, j, penetration);
-                if (penetration.contact_manifold.points_size > 0) {
-                    for (int k = 0; k < penetration.contact_manifold.points_size; k++) {
-                        Vector3 contact_point = penetration.contact_manifold.points[k];
-                        Collision collision = {
-                            .entity = j,
-                            .overlap = penetration.overlap,
-                            .offset = sub3(contact_point, get_position(i)),
-                            .offset_other = sub3(contact_point, get_position(j)),
-                            .speed = speed
-                        };
-                        ArrayList_add(collider->collisions, &collision);
-                        Collision other_collision = {
-                            .entity = i,
-                            .overlap = neg3(penetration.overlap),
-                            .offset = sub3(contact_point, get_position(j)),
-                            .offset_other = sub3(contact_point, get_position(i)),
-                            .speed = speed
-                        };
-                        ArrayList_add(other_collider->collisions, &other_collision);
-                    }
-                    continue;
-                }
-
-                Collision collision = {
-                    .entity = j,
-                    .overlap = penetration.overlap,
-                    .offset = sub3(penetration.contact_point, get_position(i)),
-                    .offset_other = sub3(penetration.contact_point, get_position(j)),
-                    .speed = speed
-                };
-                ArrayList_add(collider->collisions, &collision);
-                Collision other_collision = {
-                    .entity = i,
-                    .overlap = mul3(-1.0f, penetration.overlap),
-                    .offset = sub3(penetration.contact_point, get_position(j)),
-                    .offset_other = sub3(penetration.contact_point, get_position(i)),
-                    .speed = speed
-                };
-                ArrayList_add(other_collider->collisions, &other_collision);
-            }
-        }
+        handle_grid_collisions(i, scene->static_grid);
+        handle_grid_collisions(i, scene->dynamic_grid);
     }
 }

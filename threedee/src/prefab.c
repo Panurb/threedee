@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include <systems/sound.h>
 
 #include "component.h"
 #include "linalg.h"
 #include "quaternion.h"
 #include "systems/trigger.h"
+#include "systems/sound.h"
 
 
 void start_scare_timer(Entity trigger, Entity entity) {

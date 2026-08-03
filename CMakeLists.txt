@@ -32,6 +32,7 @@ set(SOURCES
     threedee/src/components/waypoint.c
     threedee/src/components/weather.c
     threedee/src/game.c
+    threedee/src/grid.c
     threedee/src/heap.c
     threedee/src/interface.c
     threedee/src/level.c

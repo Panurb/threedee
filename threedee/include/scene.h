@@ -2,6 +2,7 @@
 
 #include "component.h"
 #include "systems/particle.h"
+#include "grid.h"
 
 
 typedef struct Scene {
@@ -20,6 +21,8 @@ typedef struct Scene {
         float intensity;
         float strength;
     } bloom;
+    ColliderGrid* static_grid;
+    ColliderGrid* dynamic_grid;
 } Scene;
 
 
